@@ -10,7 +10,7 @@ This repository provides a **self-contained, YAML-based ADR meta-model** with:
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review
 - **Validation tooling** (Python script + GitHub Actions CI)
 - **Repomix bundling** for LLM context injection
-- **6 example ADRs** from a fictional IAM department (NovaTrust Financial Services)
+- **6 example ADRs** from a fictional IAM department (NovaTrust Financial Services) — low-level implementation decisions with contended alternatives
 
 ## Philosophy
 
@@ -49,12 +49,12 @@ The GitHub Actions workflow will automatically validate your ADR against the sch
 │   └── glossary.md              # Terms, enum values, abbreviations
 ├── decisions/                   # Your ADRs go here (initially empty)
 ├── examples/                    # 6 well-formed example ADRs
-│   ├── ADR-0001-adopt-oauth2.1-for-api-authorization.yaml
-│   ├── ADR-0002-zero-trust-network-architecture.yaml
-│   ├── ADR-0003-select-pingfederate-as-enterprise-idp.yaml
-│   ├── ADR-0004-hsm-backed-key-management.yaml
-│   ├── ADR-0005-oidc-federation-partner-onboarding.yaml
-│   └── ADR-0006-privileged-access-jit-elevation.yaml
+│   ├── ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
+│   ├── ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml
+│   ├── ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml
+│   ├── ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml
+│   ├── ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml
+│   └── ADR-0006-session-enrichment-for-step-up-authentication.yaml
 ├── .skills/
 │   └── adr-author/              # Agent Skill (agentskills.io spec)
 │       ├── SKILL.md             # Skill instructions
@@ -117,16 +117,16 @@ This generates `adr-governance-bundle.md` which can be pasted into any LLM conte
 
 ## Example ADRs
 
-The `examples/` directory contains 6 interconnected ADRs from a fictional IAM department:
+The `examples/` directory contains 6 interconnected ADRs from a fictional IAM department. These are **low-level implementation decisions** — the kind of contended pattern choices you face *within* an already-adopted technology, with sizable pros and cons on each side:
 
 | ID | Title | Status |
 |----|-------|--------|
-| ADR-0001 | Adopt OAuth 2.1 for API Authorization | accepted |
-| ADR-0002 | Adopt Zero Trust Network Architecture | accepted |
-| ADR-0003 | Select PingFederate as Enterprise IdP | accepted |
-| ADR-0004 | Implement HSM-Backed Key Management | accepted |
-| ADR-0005 | Adopt OIDC Federation for Partner Onboarding | proposed |
-| ADR-0006 | Privileged Access Management with JIT Elevation | accepted |
+| ADR-0001 | Use DPoP over mTLS for Sender-Constrained Tokens | accepted |
+| ADR-0002 | Use Reference Tokens over JWTs for Gateway Introspection | accepted |
+| ADR-0003 | Use Pairwise Subject Identifiers for OIDC Relying Parties | accepted |
+| ADR-0004 | Use Ed25519 over RSA-2048 for JWT Signing Keys | accepted |
+| ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | accepted |
+| ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted |
 
 ## License
 

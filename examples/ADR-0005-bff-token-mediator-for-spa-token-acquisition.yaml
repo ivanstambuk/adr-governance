@@ -1,0 +1,365 @@
+# ADR-0005: Use Backend-for-Frontend Token Mediator for SPA Token Acquisition
+# Organization: NovaTrust Financial Services
+# Department: Identity and Access Management
+
+adr:
+  id: "ADR-0005"
+  title: "Use the Backend-for-Frontend token mediator pattern over direct SPA-to-AS authorization for single-page applications"
+  status: "accepted"
+  created_at: "2026-02-01T10:00:00Z"
+  last_modified: "2026-02-20T09:00:00Z"
+  version: "1.0"
+  project: "Customer Portal — SPA Authentication Architecture"
+  component: "SPA Token Acquisition Pattern"
+  tags:
+    ["bff", "spa", "oauth", "token-handler", "csrf", "cookie", "public-client"]
+  priority: "high"
+  decision_type: "security"
+
+authors:
+  - name: "Priya Sharma"
+    role: "API Platform Lead"
+    email: "priya.sharma@novatrust.example.com"
+  - name: "Kai Lindström"
+    role: "Mobile Platform Lead"
+    email: "kai.lindstrom@novatrust.example.com"
+
+decision_owner:
+  name: "Marcus Chen"
+  role: "Head of Identity and Access Management"
+  email: "marcus.chen@novatrust.example.com"
+
+reviewers:
+  - name: "Elena Vasquez"
+    role: "IAM Architect"
+    email: "elena.vasquez@novatrust.example.com"
+  - name: "Jonas Eriksen"
+    role: "CISO"
+    email: "jonas.eriksen@novatrust.example.com"
+  - name: "Frontend Development Lead"
+    role: "Engineering"
+    email: "frontend-lead@novatrust.example.com"
+
+approvals:
+  - name: "Marcus Chen"
+    role: "Head of IAM"
+    approved_at: "2026-02-18T10:00:00Z"
+    signature_id: "sig-bff-001"
+  - name: "Jonas Eriksen"
+    role: "CISO"
+    approved_at: "2026-02-20T09:00:00Z"
+    signature_id: "sig-bff-002"
+
+context:
+  summary: >
+    NovaTrust is rebuilding the customer banking portal as a React single-page
+    application (SPA). SPAs are public OAuth clients — they cannot hold a client secret
+    because all code runs in the browser. The SPA needs to obtain access tokens to call
+    backend APIs. Two patterns exist: (1) the SPA directly performs the OAuth 2.1
+    Authorization Code + PKCE flow and stores tokens in browser memory, or (2) a
+    Backend-for-Frontend (BFF) / Token Mediator component performs the OAuth flow
+    server-side and issues secure HTTP-only cookies to the SPA. The choice affects
+    token storage security (XSS exposure), CSRF handling, and the overall security
+    posture of the banking portal where high-value transactions are at stake.
+  business_drivers:
+    - "Customer banking portal handles payments, account management, and PSD2 consent — high-value target"
+    - "Cyber insurance underwriter flagged client-side token storage as a risk for the banking portal"
+    - "Competitor breach involved XSS-based access token theft from SPA localStorage"
+    - "PSD2 SCA and fraud prevention require defense-in-depth for token handling"
+  technical_drivers:
+    - "SPAs store tokens in JavaScript-accessible memory — vulnerable to XSS token extraction"
+    - "Browser-based token renewal (silent refresh via iframe) is fragile with third-party cookie deprecation"
+    - "BFF pattern keeps tokens server-side — SPA never sees or stores access/refresh tokens"
+    - "HTTP-only, SameSite=Strict cookies are not accessible to JavaScript — immune to XSS token theft"
+    - "BFF can be a confidential client (has a client secret) — eligible for stronger token binding"
+    - "OAuth 2.0 for Browser-Based Applications (draft-ietf-oauth-browser-based-apps) recommends the BFF pattern"
+  constraints:
+    - "SPA is React-based, served from CDN (static hosting) — SPA itself has no server-side component"
+    - "BFF must be deployed as a lightweight proxy alongside the API gateway"
+    - "Cookie domain must be first-party (same-site) to the SPA origin"
+    - "Must work with DPoP sender-constraining (ADR-0001) — BFF performs DPoP proof generation"
+  assumptions:
+    - "BFF can be a stateless reverse proxy (no session store) using encrypted cookie for state"
+    - "SameSite=Strict cookies prevent CSRF for same-origin API calls"
+    - "BFF adds < 5ms latency per proxied API request"
+    - "Content Security Policy (CSP) mitigates XSS risk, but is not a sufficient sole defense"
+
+requirements:
+  functional:
+    - id: "F-001"
+      description: "SPA must never receive, store, or have JavaScript access to access tokens or refresh tokens"
+    - id: "F-002"
+      description: "BFF performs OAuth 2.1 Authorization Code + PKCE flow as a confidential client"
+    - id: "F-003"
+      description: "BFF issues HTTP-only, Secure, SameSite=Strict cookies to the SPA for session management"
+    - id: "F-004"
+      description: "BFF generates DPoP proofs server-side and attaches them when calling backend APIs"
+  non_functional:
+    - id: "NF-001"
+      description: "BFF proxy latency < 5ms per request at p99"
+    - id: "NF-002"
+      description: "BFF must handle 2000 concurrent sessions without degradation"
+    - id: "NF-003"
+      description: "Cookie-based session must survive browser tab close and resume"
+
+alternatives:
+  - name: "Backend-for-Frontend (BFF) Token Mediator"
+    summary: >
+      A lightweight server-side component sits between the SPA and the authorization
+      server. The BFF performs the OAuth 2.1 flow as a confidential client, stores
+      tokens server-side (or in encrypted HTTP-only cookies), and the SPA authenticates
+      with the BFF using HTTP-only cookies. The SPA never touches OAuth tokens.
+    pros:
+      - "Tokens never exposed to JavaScript — immune to XSS-based token theft"
+      - "BFF is a confidential client — can hold a client secret and use stronger authentication"
+      - "HTTP-only SameSite=Strict cookies prevent both XSS access and CSRF"
+      - "Token renewal is server-side — no fragile iframe silent refresh"
+      - "BFF can generate DPoP proofs server-side with a stable keypair"
+      - "Recommended by IETF OAuth Browser-Based Applications BCP"
+      - "Content Security Policy (CSP) + BFF provides defense-in-depth"
+    cons:
+      - "Additional component to deploy, monitor, and maintain"
+      - "Adds ~2-3ms latency per proxied API request"
+      - "Cookie management adds complexity: domain alignment, expiry, rotation"
+      - "CORS configuration needed if BFF and SPA are on different subdomains"
+      - "SPA cannot make direct API calls to third-party domains — all traffic proxied through BFF"
+    estimated_cost: "medium"
+    risk: "low"
+
+  - name: "Direct SPA-to-AS with in-memory tokens"
+    summary: >
+      The SPA performs the OAuth 2.1 Authorization Code + PKCE flow directly as a
+      public client. Tokens are stored in JavaScript closures (in-memory) and never
+      persisted to localStorage or sessionStorage. Token renewal uses refresh tokens
+      with rotation.
+    pros:
+      - "No additional server component — simpler deployment"
+      - "SPA has direct access to token claims for UI decisions"
+      - "Lower barrier to entry for frontend developers"
+      - "No cookie management complexity"
+    cons:
+      - "Tokens in JavaScript memory are accessible to XSS — any injected script can extract them"
+      - "In-memory storage means tokens lost on page reload — user must re-authenticate"
+      - "Public client cannot hold client secret — weaker client authentication"
+      - "Refresh token rotation is the only defense against token theft — single-use detection is not instant"
+      - "Silent refresh via iframe breaks with third-party cookie deprecation (Chrome, Firefox)"
+      - "DPoP proof generation must happen in browser JavaScript — key material in JS is XSS-extractable"
+      - "Cyber insurance underwriter explicitly flagged this as unacceptable for banking portal"
+    estimated_cost: "low"
+    risk: "high"
+
+  - name: "Service Worker token cache with encrypted storage"
+    summary: >
+      Tokens stored in the browser via Service Worker with encrypted IndexedDB.
+      Service Worker intercepts API calls and attaches tokens, isolating them from
+      the main JavaScript thread.
+    pros:
+      - "Tokens isolated from main JS thread — Service Worker has its own scope"
+      - "Encrypted storage adds a layer of protection"
+      - "No server-side component needed"
+    cons:
+      - "Service Worker scope isolation is not a security boundary — XSS in the main thread can message the Service Worker"
+      - "Encrypted IndexedDB key must be stored somewhere accessible — chicken-and-egg problem"
+      - "Non-standard pattern — no industry consensus or IETF guidance"
+      - "Service Worker lifecycle complexity (registration, update, activation)"
+      - "Does not address the fundamental issue: browser JS environment is untrusted"
+      - "No major financial institution has adopted this pattern in production"
+    estimated_cost: "medium"
+    risk: "high"
+
+decision:
+  chosen_alternative: "Backend-for-Frontend (BFF) Token Mediator"
+  rationale:
+    - "Banking portal is a high-value target — tokens must not be accessible to JavaScript under any XSS scenario"
+    - "HTTP-only cookies are not accessible to document.cookie or JavaScript APIs — defense-in-depth against XSS"
+    - "BFF as confidential client enables stronger authentication with PingFederate (client_secret_jwt)"
+    - "IETF OAuth Browser-Based Applications BCP explicitly recommends the BFF pattern for sensitive applications"
+    - "Server-side DPoP proof generation with a stable keypair is more robust than browser-based key management"
+    - "Cyber insurance underwriter requires server-side token storage for the banking portal"
+    - "SameSite=Strict cookies eliminate CSRF without additional tokens or headers"
+  tradeoffs:
+    - "Additional BFF component to operate (~2-3ms proxy latency per API request)"
+    - "SPA cannot make direct API calls to third-party services — must proxy through BFF"
+    - "Cookie domain must match SPA origin — limits multi-domain deployment flexibility"
+    - "Frontend team must adapt to cookie-based session model instead of bearer token model"
+  decision_date: "2026-02-18"
+
+consequences:
+  positive:
+    - "Access and refresh tokens never touch the browser — zero XSS token extraction risk"
+    - "BFF confidential client authentication strengthens the OAuth client identity"
+    - "Token renewal is invisible to the SPA — no iframe hacks or refresh token rotation logic in JS"
+    - "Cyber insurance premium reduced by $30K/year with server-side token storage attestation"
+  negative:
+    - "BFF is an additional component: deployment, monitoring, on-call rotation"
+    - "~2-3ms added proxy latency per API request"
+    - "Frontend developers must use cookie-aware fetch (credentials: 'include') instead of Authorization headers"
+  security_implications:
+    data_classification: "restricted"
+    encryption:
+      at_rest: true
+      in_transit: true
+      key_management: "BFF session cookies encrypted with AES-256-GCM; cookie encryption key in HSM; token store encrypted at rest"
+    access_control:
+      iam_integration: true
+      least_privilege: true
+    audit:
+      audit_logging: true
+      retention: "7 years"
+  compliance_implications:
+    regulatory_impact:
+      psd2: "Server-side token storage satisfies SCA defense-in-depth for payment initiation flows"
+      gdpr: "Tokens containing user claims never stored in browser — reduces PII exposure surface"
+      dora: "BFF provides centralized audit point for all SPA API access"
+    required_controls:
+      - "HTTP-only, Secure, SameSite=Strict for all session cookies"
+      - "Cookie encryption with AES-256-GCM (key in HSM)"
+      - "CSRF protection via SameSite=Strict + Origin header validation"
+      - "BFF must not proxy requests to arbitrary domains — allowlist of backend APIs"
+      - "Content Security Policy deployed with strict script-src for defense-in-depth"
+  operational_implications:
+    monitoring:
+      - "BFF proxy latency p99"
+      - "BFF concurrent session count"
+      - "Cookie encryption/decryption failure rate"
+      - "OAuth token renewal failure rate (server-side)"
+    runbooks:
+      - "BFF health check failure and restart procedure"
+      - "Cookie encryption key rotation (requires session invalidation)"
+      - "Emergency BFF bypass (direct API access with short-lived bearer tokens)"
+    staffing:
+      - "0.5 FTE platform engineer for BFF operations"
+
+risk_assessment:
+  risks:
+    - id: "R-001"
+      description: "BFF outage blocks all SPA API access"
+      likelihood: "low"
+      impact: "critical"
+      mitigation:
+        - "Multi-instance BFF deployment behind load balancer with health checks"
+        - "Stateless BFF (encrypted cookie-based) — any instance can handle any request"
+        - "Emergency fallback: SPA switches to direct bearer token mode with reduced-scope tokens"
+    - id: "R-002"
+      description: "Cookie-based session expiry causes unexpected logouts"
+      likelihood: "medium"
+      impact: "low"
+      mitigation:
+        - "Cookie expiry aligned with PingFederate refresh token TTL (24 hours)"
+        - "SPA receives 401 → redirects to login page with return URL preserved"
+        - "Sliding session extension on API activity"
+    - id: "R-003"
+      description: "CSRF attack bypasses SameSite cookie protection on older browsers"
+      likelihood: "low"
+      impact: "medium"
+      mitigation:
+        - "SameSite=Strict primary defense (supported by 97%+ of browsers)"
+        - "Origin header validation as secondary defense"
+        - "Minimum browser version policy enforced for banking portal"
+  residual_risk: "low"
+
+deployment:
+  rollout_plan:
+    phases:
+      - name: "BFF Development and Staging"
+        criteria: "BFF deployed in staging; OAuth flow validated with PingFederate; cookie security verified"
+        duration_days: 30
+      - name: "Beta Rollout"
+        criteria: "Banking portal beta (5% of users) using BFF; latency and session metrics validated"
+        duration_days: 21
+      - name: "General Availability"
+        criteria: "All banking portal users on BFF; direct SPA-to-AS flow disabled"
+        duration_days: 14
+      - name: "Direct Flow Sunset"
+        criteria: "PingFederate SPA public client registration revoked; only BFF confidential client remains"
+        duration_days: 7
+  testing:
+    unit_tests: true
+    integration_tests: true
+    performance_tests:
+      qps_target: 3000
+      p99_latency_ms: 8
+    compliance_tests:
+      - "XSS simulation: verify tokens are not accessible from injected JavaScript"
+      - "Cookie attributes: verify HttpOnly, Secure, SameSite=Strict flags"
+      - "CSRF simulation: verify cross-origin POST requests are rejected"
+      - "Session expiry: verify cookie expiry triggers re-authentication"
+  rollback_plan:
+    criteria: "BFF proxy error rate > 2% or proxy latency p99 > 30ms"
+    steps:
+      - "Re-enable SPA direct-to-AS public client registration"
+      - "SPA JavaScript falls back to in-memory bearer token mode"
+      - "Investigate BFF proxy issues"
+      - "Re-deploy BFF after root cause fix"
+
+monitoring:
+  metrics:
+    - name: "bff_proxy_latency_p99_ms"
+      threshold_warning: 5
+      threshold_critical: 15
+    - name: "bff_concurrent_sessions"
+      threshold_warning: 1800
+      threshold_critical: 2200
+    - name: "bff_token_renewal_failure_rate_percent"
+      threshold_warning: 0.5
+      threshold_critical: 2
+  alerts:
+    - "PagerDuty: platform-on-call for BFF health check failures"
+    - "Slack: #iam-ops for token renewal failure rate spikes"
+  sla:
+    availability_target: "99.99%"
+    rpo: "<= 0 (stateless BFF)"
+    rto: "<= 3 minutes"
+
+dependencies:
+  internal:
+    - "PingFederate 12.x (authorization server)"
+    - "CDN (SPA static asset hosting)"
+    - "API Gateway (PingAccess) behind BFF"
+    - "HSM (cookie encryption key)"
+  external:
+    - "None — BFF is an internal component"
+
+related_adrs:
+  - id: "ADR-0001"
+    title: "Use DPoP over mTLS for sender-constrained access tokens"
+    relationship: "related"
+  - id: "ADR-0002"
+    title: "Use reference tokens for API gateway introspection"
+    relationship: "related"
+  - id: "ADR-0006"
+    title: "Use session enrichment for step-up authentication proof"
+    relationship: "depends_on"
+
+references:
+  - title: "OAuth 2.0 for Browser-Based Applications — IETF BCP"
+    url: "https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps"
+  - title: "Token Handler Pattern — Curity"
+    url: "https://curity.io/resources/learn/the-token-handler-pattern/"
+  - title: "OAuth 2.1 Authorization Framework — RFC 9700"
+    url: "https://datatracker.ietf.org/doc/html/rfc9700"
+
+lifecycle:
+  review_cycle_months: 12
+  next_review_date: "2027-02-18"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+
+audit_trail:
+  - event: "created"
+    by: "Priya Sharma"
+    at: "2026-02-01T10:00:00Z"
+  - event: "updated"
+    by: "Kai Lindström"
+    at: "2026-02-12T15:00:00Z"
+    details: "Added Service Worker alternative analysis and cyber insurance underwriter requirements"
+  - event: "approved"
+    by: "Marcus Chen"
+    at: "2026-02-18T10:00:00Z"
+  - event: "approved"
+    by: "Jonas Eriksen"
+    at: "2026-02-20T09:00:00Z"
+    details: "CISO approval with condition: CSP must be deployed as defense-in-depth alongside BFF"
