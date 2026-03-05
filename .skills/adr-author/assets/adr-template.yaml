@@ -6,7 +6,8 @@
 adr:
   id: "ADR-NNNN" # Replace with next sequential ID
   title: "" # 10-200 characters
-  status: "proposed" # proposed | accepted | superseded | deprecated | rejected | deferred
+  summary: "" # Optional: 2-4 sentence elevator pitch (max 500 chars)
+  status: "draft" # draft | proposed | accepted | superseded | deprecated | rejected | deferred
   created_at: "" # ISO 8601 datetime
   last_modified: "" # ISO 8601 datetime
   version: "0.1"
@@ -92,6 +93,7 @@ decision:
   tradeoffs:
     - ""
   decision_date: "" # ISO 8601 date (YYYY-MM-DD)
+  confidence: "medium" # low | medium | high — low-confidence decisions get shorter review cycles
 
 # --- REQUIRED ---
 consequences:
@@ -99,26 +101,12 @@ consequences:
     - ""
   negative:
     - ""
-  # Optional sub-sections:
-  security_implications:
-    data_classification: "internal" # public | internal | confidential | restricted
-    encryption:
-      at_rest: false
-      in_transit: true
-      key_management: ""
-    access_control:
-      iam_integration: false
-      least_privilege: false
-    audit:
-      audit_logging: false
-      retention: ""
-  compliance_implications:
-    regulatory_impact: {} # Map of regulation name to impact description
-    required_controls: []
-  operational_implications:
-    monitoring: []
-    runbooks: []
-    staffing: []
+
+# --- Optional ---
+confirmation:
+  description: "" # How the implementation of this decision will be verified
+  artifact_ids:
+    - "" # Jira tickets, PR URLs, test suite IDs, PoC results, benchmarks
 
 # --- Optional ---
 risk_assessment:
@@ -130,36 +118,6 @@ risk_assessment:
       mitigation:
         - ""
   residual_risk: "medium" # low | medium | high | critical
-
-# --- Optional ---
-deployment:
-  rollout_plan:
-    phases:
-      - name: ""
-        criteria: ""
-        duration_days: 14
-  testing:
-    unit_tests: false
-    integration_tests: false
-    performance_tests:
-      qps_target: 0
-      p99_latency_ms: 0
-    compliance_tests: []
-  rollback_plan:
-    criteria: ""
-    steps: []
-
-# --- Optional ---
-monitoring:
-  metrics:
-    - name: ""
-      threshold_warning: 0
-      threshold_critical: 0
-  alerts: []
-  sla:
-    availability_target: ""
-    rpo: ""
-    rto: ""
 
 # --- Optional ---
 dependencies:

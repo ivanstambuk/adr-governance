@@ -939,12 +939,12 @@ Henderson specifically advises: *"Review each ADR one month later to compare the
 
 | # | Proposal | Source | Type | Priority | Status |
 |---|----------|--------|------|----------|--------|
-| 11.1 | Add `confidence` field | Azure WAF | Schema | 🟢 High | Proposed |
-| 11.2 | Add `reviewed` audit event | Retrospectives, Henderson | Schema | 🟢 High | Proposed |
+| 11.1 | Add `confidence` field | Azure WAF | Schema | 🟢 High | ✅ Done |
+| 11.2 | Add `reviewed` audit event | Retrospectives, Henderson | Schema | 🟢 High | ✅ Done |
 | 11.3 | Decision Guardian integration | DecispherHQ | CI/CD | 🟢 High | Proposed |
-| 11.4 | Architectural Significance Test | Zimmermann | Process | 🟡 Medium | Proposed |
-| 11.5 | Retrospective questions for reviews | Cervantes & Woods | Process | 🟡 Medium | Proposed |
-| 11.6 | PoC/experiment artifact guidance | Skeptic's Guide, Zimmermann | Documentation | 🟡 Medium | Proposed |
+| 11.4 | Architectural Significance Test | Zimmermann | Process | 🟡 Medium | ✅ Done |
+| 11.5 | Retrospective questions for reviews | Cervantes & Woods | Process | 🟡 Medium | ✅ Done |
+| 11.6 | PoC/experiment artifact guidance | Skeptic's Guide, Zimmermann | Documentation | 🟡 Medium | ✅ Done |
 | 11.7 | Monitor DRF maturity | Reasoning Formats | Watch | ⚪ Low | Proposed |
 
 ---

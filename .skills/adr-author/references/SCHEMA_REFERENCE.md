@@ -11,7 +11,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 | `decision_owner` | Single accountable person |
 | `context` | Problem summary, drivers, constraints, assumptions |
 | `alternatives` | Minimum 2 alternatives with pros, cons, cost, risk |
-| `decision` | Chosen alternative, rationale, tradeoffs, date |
+| `decision` | Chosen alternative, rationale, tradeoffs, date, confidence level |
 | `consequences` | Positive/negative outcomes, security/compliance/operational implications |
 
 ## Optional Top-Level Sections
@@ -20,16 +20,15 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 |---------|-------------|
 | `reviewers` | People who reviewed the ADR |
 | `approvals` | Formal approvals with timestamps and signature IDs |
+| `confirmation` | How the decision's implementation is verified; delivery artifact IDs |
 | `requirements` | Embedded functional and non-functional requirements |
 | `risk_assessment` | Identified risks with mitigation strategies |
-| `deployment` | Rollout plan, testing, rollback |
-| `monitoring` | Metrics, alerts, SLA targets |
 | `dependencies` | Internal and external dependencies |
 | `related_adrs` | Cross-references to other ADRs |
 | `attachments` | Diagrams, runbooks, other supporting documents |
 | `references` | External links and evidence |
 | `lifecycle` | Review cadence, supersession chain, archival |
-| `audit_trail` | Immutable event log |
+| `audit_trail` | Immutable event log (events: created, updated, reviewed, approved, rejected, superseded, deprecated, archived) |
 
 ## Key Validation Rules
 

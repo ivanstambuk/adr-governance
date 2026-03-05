@@ -339,6 +339,15 @@
                     "type": "string",
                     "format": "date",
                     "description": "ISO 8601 date when the decision was made."
+                },
+                "confidence": {
+                    "type": "string",
+                    "enum": [
+                        "low",
+                        "medium",
+                        "high"
+                    ],
+                    "description": "Confidence level in this decision. Low-confidence decisions should have shorter review cycles and be prioritized for reconsideration."
                 }
             },
             "description": "The chosen alternative and its justification."
@@ -611,6 +620,7 @@
                         "enum": [
                             "created",
                             "updated",
+                            "reviewed",
                             "approved",
                             "rejected",
                             "superseded",

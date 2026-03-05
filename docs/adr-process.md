@@ -70,6 +70,23 @@ stateDiagram-v2
 
 ## 3. Workflow: Proposing a New ADR
 
+### 3.0 Should You Write an ADR? — Architectural Significance Test
+
+Not every technical decision needs a full ADR. Before starting, verify that **at least one** of the following applies:
+
+| # | Significance Criterion |
+|---|------------------------|
+| 1 | The decision affects **multiple components, teams, or services** |
+| 2 | The decision is **difficult or expensive to reverse** |
+| 3 | The decision has **security, compliance, or regulatory** implications |
+| 4 | The decision **establishes a pattern** that others will follow |
+| 5 | The decision involves a **tradeoff between quality attributes** (e.g., security vs. usability, latency vs. consistency) |
+| 6 | Someone will ask **"why did we do this?"** in 6 months |
+
+If **none** of these apply, the decision is likely not architecturally significant — just make it, document it inline (code comment, wiki, commit message), and move on.
+
+> **Source:** Adapted from Zimmermann's [Architectural Significance Test](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html). See also: *"An AD log with more than 100 entries will probably put your readers (and you) to sleep."*
+
 ### 3.1 Draft Phase
 
 1. **Create a branch** from `main`:
@@ -185,7 +202,21 @@ After an ADR is accepted, the team must verify it was actually implemented.
 
 2. Confirmation can be added in a follow-up PR after the ADR is accepted.
 
-3. **During code reviews**, reviewers should check if a proposed change **violates any accepted ADR**. If it does:
+3. **Recommended artifact types** for `confirmation.artifact_ids`:
+
+   | Prefix / Format | Example | Use When |
+   |-----------------|---------|----------|
+   | Jira / GitHub issue | `JIRA-1234`, `https://github.com/org/repo/issues/42` | Implementation tracked in an issue |
+   | Pull request | `https://github.com/org/repo/pull/142` | Code change that implements the decision |
+   | Test suite | `TEST-SUITE-auth-dpop-e2e` | Automated tests that verify the decision |
+   | Fitness function | `archunit:no-direct-db-access` | ArchUnit / architectural lint rule |
+   | PoC / Experiment | `POC-2026-03-dpop-latency-benchmark` | Proof-of-concept that validated the decision |
+   | Benchmark | `BENCH-jwt-signing-ed25519-vs-rsa` | Performance data supporting the choice |
+   | Sprint review | `SPRINT-42-review-notes` | Review meeting where implementation was demonstrated |
+
+   > The strongest decision confirmations are **empirical** — PoC results, benchmarks, and passing fitness functions carry more weight than tickets alone.
+
+4. **During code reviews**, reviewers should check if a proposed change **violates any accepted ADR**. If it does:
    - Link the relevant ADR in the review comment
    - Request the author to either update the code or propose a new superseding ADR
 
@@ -199,6 +230,20 @@ ADRs with `lifecycle.review_cycle_months` set will be flagged for periodic revie
    - Verify the decision is still valid and the context hasn't changed
    - If still valid: update `next_review_date` and add a `reviewed` event to `audit_trail`
    - If no longer valid: propose a superseding ADR or deprecate
+
+2. **Retrospective questions** — use these to guide the periodic review:
+
+   | # | Question |
+   |---|----------|
+   | 1 | Did the **consequences we predicted** actually occur? |
+   | 2 | Were there **unforeseen consequences** we should document? |
+   | 3 | Has the **context changed** since this decision was made? |
+   | 4 | Was the **confidence level** of this decision appropriate? |
+   | 5 | Have we accumulated **technical debt** from this decision? |
+   | 6 | Is this decision **still the right choice** given what we now know? |
+   | 7 | Should we trigger a **superseding ADR**? |
+
+   > These questions focus on improving the *decision-making process*, not just the architecture. Adapted from [Cervantes & Woods, "Architectural Retrospectives"](https://www.infoq.com/articles/architectural-retrospectives/).
 
 ---
 

@@ -51,6 +51,14 @@
 | `high` | Likely to occur given current conditions | Significant outage, data loss, or compliance breach |
 | `critical` | *(impact only)* | Catastrophic: regulatory penalties, major data breach, or total service loss |
 
+## Decision Confidence Levels
+
+| Level | Guidance |
+|-------|---------|
+| `low` | Decision made under time pressure or with incomplete information. Flag for early re-evaluation. |
+| `medium` | Reasonable confidence based on available evidence. Standard review cycle. |
+| `high` | Strong empirical evidence (PoC, benchmarks, prior experience). Extended review cycle acceptable. |
+
 
 ## ID Formats
 
@@ -79,6 +87,7 @@
 | `updated` | Material change to decision, alternatives, or consequences. |
 | `approved` | Formal approval by a named authority. |
 | `rejected` | Decision explicitly rejected. |
+| `reviewed` | Periodic review completed. Decision re-evaluated against current context. |
 | `superseded` | Replaced by a newer ADR. |
 | `deprecated` | Marked as no longer recommended. |
 | `archived` | Removed from active consideration. |
