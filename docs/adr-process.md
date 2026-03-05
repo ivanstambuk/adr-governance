@@ -153,10 +153,12 @@ If **none** of these apply, the decision is likely not architecturally significa
     - No self-approval (author cannot be sole approver)
 
 14. **Once approved:**
-    - Author sets status to `accepted`
+    - Author (or decision owner) sets status to `accepted`
     - Author populates `decision.decision_date`
     - Author adds entries to `approvals` with names, roles, and timestamps
-    - Author adds a `created` event to `audit_trail`
+    - Author adds an `approved` event to `audit_trail`
+
+    > **Who sets the status?** The author or decision owner updates the YAML. The branch protection rules prevent self-approval — the author cannot be the *sole* approver. Setting the status to `accepted` is a clerical action that happens *after* PR approval, not a governance action.
 
 15. **Merge the PR** to `main`. The ADR is now binding.
 
@@ -169,7 +171,20 @@ If **none** of these apply, the decision is likely not architecturally significa
 
 ---
 
-## 4. Workflow: Superseding an Existing ADR
+## 4. Workflow: Re-proposing a Deferred ADR
+
+A deferred ADR can be re-proposed when the blocking condition is resolved.
+
+1. **Determine what changed.** The author or decision owner identifies why the ADR is now ready — new information, resolved dependency, changed priority, or elapsed time.
+2. **Open a new PR** (preferred) or reopen the original PR:
+   - Update `adr.status` to `proposed`
+   - Update `context.summary` if the landscape has changed
+   - Add an `updated` event to `audit_trail` explaining why the ADR is being re-proposed
+3. Follow the standard review process (§3.3–3.4).
+
+---
+
+## 5. Workflow: Superseding an Existing ADR
 
 1. **Create a new ADR** (ADR-MMMM) following the standard proposal workflow
 2. In the new ADR, reference the old one:
@@ -186,7 +201,21 @@ If **none** of these apply, the decision is likely not architecturally significa
 
 ---
 
-## 5. Workflow: Confirming Implementation
+## 6. Workflow: Deprecating an ADR
+
+Deprecation marks a decision as no longer recommended, but not yet replaced.
+
+1. **Open a PR** that updates the existing ADR:
+   - Set `adr.status: "deprecated"`
+   - Add a `deprecated` event to `audit_trail` with reason
+2. **When to deprecate** (vs. supersede):
+   - **Deprecate** when the decision is outdated but no replacement has been decided yet
+   - **Supersede** when a new ADR has been accepted that replaces this one
+3. A deprecated ADR should eventually be either superseded by a new ADR or left as a historical record.
+
+---
+
+## 7. Workflow: Confirming Implementation
 
 After an ADR is accepted, the team must verify it was actually implemented.
 
@@ -222,7 +251,7 @@ After an ADR is accepted, the team must verify it was actually implemented.
 
 ---
 
-## 6. Periodic Review
+## 8. Periodic Review
 
 ADRs with `lifecycle.review_cycle_months` set will be flagged for periodic review.
 
@@ -245,9 +274,17 @@ ADRs with `lifecycle.review_cycle_months` set will be flagged for periodic revie
 
    > These questions focus on improving the *decision-making process*, not just the architecture. Adapted from [Cervantes & Woods, "Architectural Retrospectives"](https://www.infoq.com/articles/architectural-retrospectives/).
 
+3. **Confidence-driven review frequency.** Use `decision.confidence` to set default review cadence:
+
+   | Confidence | Recommended `review_cycle_months` | Rationale |
+   |------------|----------------------------------|----------|
+   | `low` | 6 | Decision made under pressure or with incomplete data — re-evaluate early |
+   | `medium` | 12 | Standard review cycle |
+   | `high` | 24 | Strong empirical evidence — extended cycle acceptable |
+
 ---
 
-## 7. Branch Protection Rules (Recommended)
+## 9. Branch Protection Rules (Recommended)
 
 Configure in GitHub repository settings → Branches → `main`:
 
@@ -276,9 +313,11 @@ decisions/ADR-*security*    @org/security-team
 decisions/ADR-*compliance*  @org/compliance-team
 ```
 
+> **Note:** CODEOWNERS wildcard patterns match on *filename*, not on `decision_type` inside the YAML. To ensure correct reviewer assignment, include the decision domain in the ADR filename (e.g., `ADR-0007-security-adopt-passkeys.yaml`). For more sophisticated routing, use a CI-based reviewer assignment step that reads `decision_type` from the YAML and requests the appropriate team via the GitHub API.
+
 ---
 
-## 8. Quick Reference
+## 10. Quick Reference
 
 | I want to... | Do this |
 |--------------|---------|
