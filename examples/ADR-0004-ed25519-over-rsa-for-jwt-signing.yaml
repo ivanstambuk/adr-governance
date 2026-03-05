@@ -181,6 +181,12 @@ consequences:
     - Dual-key JWKS management during 18-month RSA transition
     - Resource server verification ~0.5ms slower per token (15K vs 40K ops/sec)
     - SAML XML libraries at partner sites may need updating for Ed25519 support
+confirmation:
+  description: "Ed25519 signing validated in pre-production: 72-hour sustained load test at 50K ops/sec on Cloud HSM. All 12 internal resource servers verified EdDSA token consumption. Three legacy partners confirmed RS256 fallback path. PingFederate per-RP algorithm override tested."
+  artifact_ids:
+    - "BENCH-ed25519-hsm-72h-load-test"
+    - "TEST-SUITE-jwt-signing-ed25519-all-rps"
+    - "https://github.com/novatrust/iam-platform/pull/198"
 risk_assessment:
   risks:
     - id: R-001

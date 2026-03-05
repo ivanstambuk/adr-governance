@@ -184,6 +184,13 @@ consequences:
     - Per-request DPoP proof generation adds latency on mobile (20-40ms in secure enclave)
     - Client SDK complexity increases — DPoP proof must be correctly constructed for every request
     - Resource server validation adds ~2ms per request for JWK thumbprint comparison and signature verification
+confirmation:
+  description: "Verified via integration test suite covering all three client types (mobile, backend, partner). PingFederate DPoP nonce enforcement confirmed in staging. CDN passthrough not required — validated with Cloudflare production configuration."
+  artifact_ids:
+    - "https://github.com/novatrust/iam-platform/pull/142"
+    - "TEST-SUITE-dpop-e2e-all-clients"
+    - "POC-2026-01-dpop-cloudflare-passthrough"
+    - "BENCH-dpop-proof-gen-mobile-p99"
 risk_assessment:
   risks:
     - id: R-001
@@ -229,7 +236,7 @@ related_adrs:
 attachments:
   diagrams:
     - name: dpop-flow-sequence.png
-      path: diagrams/ADR-0001-dpop-flow-sequence.png
+      path: diagrams/ADR-0001-dpop-flow-sequence.png # Illustrative — create in your diagrams/ directory
 references:
   - title: Demonstrating Proof of Possession (DPoP) — RFC 9449
     url: https://datatracker.ietf.org/doc/html/rfc9449
