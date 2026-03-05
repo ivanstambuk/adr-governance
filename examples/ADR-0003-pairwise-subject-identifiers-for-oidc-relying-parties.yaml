@@ -6,7 +6,7 @@ adr:
   created_at: "2025-11-01T08:00:00Z"
   last_modified: "2025-12-15T11:00:00Z"
   version: "1.0"
-  schema_version: 1.0.0
+  schema_version: "1.0.0"
   project: Enterprise IdP — OIDC Claim Strategy
   component: Subject Identifier Type
   tags:
@@ -169,6 +169,7 @@ decision:
     - Cross-RP account linking requires explicit consent flow — cannot be done silently
     - PPID salt in HSM adds dependency on HSM availability for token issuance
   decision_date: "2025-12-10"
+  confidence: high
 consequences:
   positive:
     - Cross-RP user correlation eliminated for all external and partner RPs

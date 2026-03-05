@@ -6,7 +6,7 @@ adr:
   created_at: "2026-01-15T10:00:00Z"
   last_modified: "2026-02-01T16:00:00Z"
   version: "1.0"
-  schema_version: 1.0.0
+  schema_version: "1.0.0"
   project: API Authorization Layer — Token Format Strategy
   component: Access Token Format
   tags:
@@ -167,6 +167,7 @@ decision:
     - Introspection calls add ~0.8ms (cache hit) to ~4ms (cache miss) per request vs. ~0.5ms for local JWT validation
     - Cannot work in fully disconnected environments — accepted because PingAccess is always network-connected
   decision_date: "2026-01-30"
+  confidence: high
 consequences:
   positive:
     - Instant token revocation for fraud response and customer consent withdrawal

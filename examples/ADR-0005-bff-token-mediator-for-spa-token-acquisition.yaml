@@ -6,7 +6,7 @@ adr:
   created_at: "2026-02-01T10:00:00Z"
   last_modified: "2026-02-20T09:00:00Z"
   version: "1.0"
-  schema_version: 1.0.0
+  schema_version: "1.0.0"
   project: Customer Portal — SPA Authentication Architecture
   component: SPA Token Acquisition Pattern
   tags:
@@ -182,6 +182,7 @@ decision:
     - Cookie domain must match SPA origin — limits multi-domain deployment flexibility
     - Frontend team must adapt to cookie-based session model instead of bearer token model
   decision_date: "2026-02-18"
+  confidence: high
 consequences:
   positive:
     - Access and refresh tokens never touch the browser — zero XSS token extraction risk

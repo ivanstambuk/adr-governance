@@ -125,10 +125,10 @@ dependencies:
   external: []
 
 # --- Optional ---
-related_adrs:
-  - id: "ADR-NNNN"
-    title: ""
-    relationship: "related" # supersedes | superseded_by | related | depends_on | conflicts_with
+# related_adrs:
+#   - id: "ADR-0000"
+#     title: ""
+#     relationship: "related" # supersedes | superseded_by | related | depends_on | conflicts_with
 
 # --- Optional ---
 attachments:
