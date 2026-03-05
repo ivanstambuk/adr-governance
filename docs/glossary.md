@@ -64,7 +64,7 @@
 
 | Entity | Pattern | Example |
 |--------|---------|---------|
-| ADR | `ADR-NNNN` | `ADR-0001` |
+| ADR | `ADR-NNNN` or `ADR-NNNN-slug` | `ADR-0001`, `ADR-0001-dpop-over-mtls` |
 | Functional Requirement | `F-NNN` | `F-001` |
 | Non-Functional Requirement | `NF-NNN` | `NF-001` |
 | Risk | `R-NNN` | `R-001` |

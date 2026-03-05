@@ -32,7 +32,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 
 ## Key Validation Rules
 
-1. `adr.id` must match `^ADR-[0-9]{4}$`
+1. `adr.id` must match `^ADR-[0-9]{4}(-[a-z0-9]+)*$` (e.g. `ADR-0001` or `ADR-0001-dpop-over-mtls`)
 2. `adr.status` must be one of the defined enum values
 3. `alternatives` must have `minItems: 2`
 4. `decision.chosen_alternative` should match a name in `alternatives`
