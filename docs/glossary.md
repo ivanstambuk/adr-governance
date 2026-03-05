@@ -87,6 +87,7 @@
 | `updated` | Material change to decision, alternatives, or consequences. |
 | `approved` | Formal approval by a named authority. |
 | `rejected` | Decision explicitly rejected. |
+| `deferred` | Decision postponed — context or drivers insufficient to decide now. |
 | `reviewed` | Periodic review completed. Decision re-evaluated against current context. |
 | `superseded` | Replaced by a newer ADR. |
 | `deprecated` | Marked as no longer recommended. |

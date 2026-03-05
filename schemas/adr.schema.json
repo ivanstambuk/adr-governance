@@ -267,7 +267,8 @@
                     "pros": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1
                         },
                         "minItems": 1,
                         "description": "Advantages of this alternative."
@@ -275,7 +276,8 @@
                     "cons": {
                         "type": "array",
                         "items": {
-                            "type": "string"
+                            "type": "string",
+                            "minLength": 1
                         },
                         "minItems": 1,
                         "description": "Disadvantages or risks of this alternative."
@@ -318,7 +320,7 @@
             "properties": {
                 "chosen_alternative": {
                     "type": "string",
-                    "description": "Name of the selected alternative (must match an entry in alternatives)."
+                    "description": "Name of the selected alternative. Should match a name in the alternatives array (enforced by tooling, not schema)."
                 },
                 "rationale": {
                     "type": "array",
@@ -410,7 +412,7 @@
                             "id": {
                                 "type": "string",
                                 "pattern": "^R-[0-9]{3}$",
-                                "description": "Risk identifier."
+                                "description": "Risk identifier. Scoped per ADR — each ADR starts from R-001."
                             },
                             "description": {
                                 "type": "string"
@@ -625,6 +627,7 @@
                             "reviewed",
                             "approved",
                             "rejected",
+                            "deferred",
                             "superseded",
                             "deprecated",
                             "archived"
@@ -683,7 +686,7 @@
                 "id": {
                     "type": "string",
                     "pattern": "^(F|NF)-[0-9]{3}$",
-                    "description": "Functional (F-NNN) or Non-Functional (NF-NNN) requirement ID."
+                    "description": "Functional (F-NNN) or Non-Functional (NF-NNN) requirement ID. Scoped per ADR — each ADR starts from F-001 / NF-001."
                 },
                 "description": {
                     "type": "string"
