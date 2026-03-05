@@ -20,6 +20,8 @@ This document defines the process for proposing, reviewing, approving, and maint
 
 ## 2. Status Lifecycle
 
+### ASCII
+
 ```
    ┌────────┐
    │  draft │  (WIP — on feature branch, not ready for review)
@@ -46,9 +48,9 @@ This document defines the process for proposing, reviewing, approving, and maint
       ├──────────────────┐                              │
       │                  │                              │
       ▼                  ▼                              │
-   ┌──────────┐   ┌──────────┐                         │
-   │ accepted │   │ rejected │  (with reason in PR)    │
-   └──┬───────┘   └──────────┘                         │
+   ┌──────────┐   ┌──────────┐                          │
+   │ accepted │   │ rejected │  (with reason in PR)     │
+   └──┬───────┘   └──────────┘                          │
       │
       ├─────────────────────┐
       │                     │
@@ -56,6 +58,30 @@ This document defines the process for proposing, reviewing, approving, and maint
    ┌─────────────┐   ┌─────────────┐
    │ superseded  │   │ deprecated  │
    └─────────────┘   └─────────────┘
+```
+
+### Mermaid
+
+```mermaid
+stateDiagram-v2
+    [*] --> draft
+
+    draft --> proposed : Author pushes branch,\nopens PR
+
+    proposed --> proposed : No decision reached —\nreviewers Request Changes,\nauthor reworks
+    proposed --> accepted : All approvers approve PR\n→ PR merged
+    proposed --> rejected : Rejected with reason\n→ PR merged
+    proposed --> deferred : Postponed\n→ PR closed
+
+    deferred --> proposed : Reopened or new PR
+
+    accepted --> superseded : New ADR supersedes\n→ PR merged
+    accepted --> deprecated : No longer recommended\n→ PR merged
+
+    rejected --> [*]
+    deferred --> [*]
+    superseded --> [*]
+    deprecated --> [*]
 ```
 
 **Valid transitions:**
