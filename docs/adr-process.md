@@ -22,9 +22,9 @@ This document defines the process for proposing, reviewing, approving, and maint
 
 ```
    ┌────────┐
-   │  draft │  (WIP — not ready for review)
+   │  draft │  (WIP — on feature branch, not ready for review)
    └───┬────┘
-       │ author opens PR, marks status: proposed
+       │ author pushes branch, opens PR, sets status: proposed
        ▼
    ┌──────────┐
    │ proposed │  (PR open — under review)
