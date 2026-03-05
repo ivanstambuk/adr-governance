@@ -403,7 +403,7 @@ A vendor-neutral, machine-readable YAML/JSON format for structured decision docu
 - **Organizational context as knowledge graph.** CRF creates a separate, referenceable graph of policies, systems, and constraints. Decisions are validated against this context.
 - **Context validation.** DRF decisions can reference CRF entities for automatic conflict detection (e.g., "this decision conflicts with the Kubernetes Moratorium policy"). Advisory, not blocking.
 - **Bidirectional updates.** Decisions produce new organizational facts that flow back into CRF — the decision log feeds the organizational knowledge base.
-- **Constraint sourcing.** Each constraint carries a `source` (regulatory, budget, technical) — similar to our `compliance_implications.regulatory_impact` but more granular.
+- **Constraint sourcing.** Each constraint carries a `source` (regulatory, budget, technical) — more granular than our `context.constraints` field.
 - **Draft status (v0.1.0).** Still stabilizing core concepts. No significant adoption yet.
 - **Closest to our schema** in philosophy (machine-readable, validation-oriented, structured reasoning) but with a different architectural bet: two complementary specs vs. one unified schema.
 
@@ -468,7 +468,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | JSON Schema Validation | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ |
 | **Context & Problem** | | | | | | | | | | | | | | |
 | Problem Statement | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | 🟡 | 🟡 | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ |
-| Summary / Elevator Pitch | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Summary / Elevator Pitch | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
 | Business Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Technical Drivers | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Decision Drivers | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ |
@@ -579,7 +579,7 @@ Gareth Morgan is the only template that asks: *"How will compliance with this de
 
 ### 6.5 No Template Has Structured Impact Assessment — Except EdgeX
 
-EdgeX Foundry uniquely asks authors to enumerate: services/modules impacted, model/DTO changes, API impact, configuration changes, and devops impact. This is a lightweight **change impact analysis** that no other template captures. Our schema has `deployment` for rollout planning, but we don't explicitly ask "what will this decision break or change?"
+EdgeX Foundry uniquely asks authors to enumerate: services/modules impacted, model/DTO changes, API impact, configuration changes, and devops impact. This is a lightweight **change impact analysis** that no other template captures. We don't explicitly ask "what will this decision break or change?" — this would be a potential future addition under `consequences` or as a standalone `impact_assessment` section.
 
 ### 6.6 No Template Captures Rationale for Rejected Alternatives — Except Merson and DRF
 

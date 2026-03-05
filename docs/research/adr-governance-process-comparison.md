@@ -366,7 +366,7 @@ This is the **most granular state machine** among all processes surveyed. Notabl
 | Status | Nygard | AWS | ThoughtWorks | Spotify | GOV.UK | Decentraland | **adr-governance** |
 |--------|:------:|:---:|:------------:|:-------:|:------:|:------------:|:------------------:|
 | `idea` | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| `draft` | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| `draft` | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | `proposed` | ✅ | ✅ | 🟡 | ✅ | ❌ | ❌ | ✅ |
 | `review` | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | `last_call` | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
@@ -377,7 +377,7 @@ This is the **most granular state machine** among all processes surveyed. Notabl
 | `superseded` | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ |
 | `deferred` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
-**Our schema** currently supports: `proposed`, `accepted`, `superseded`, `deprecated`, `rejected`, `deferred`
+**Our schema** currently supports: `draft`, `proposed`, `accepted`, `superseded`, `deprecated`, `rejected`, `deferred`
 
 ---
 
@@ -391,7 +391,7 @@ This is the **most granular state machine** among all processes surveyed. Notabl
 | **Review** | | | | | | | |
 | Review meeting defined | ❌ | ✅ | 🟡 | ❌ | ❌ | ❌ | ❌ |
 | Reading slot in meeting | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Async review (comments) | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Async review (comments) | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | RFC phase before ADR | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | Formal last-call window | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Approval** | | | | | | | |
@@ -399,7 +399,7 @@ This is the **most granular state machine** among all processes surveyed. Notabl
 | Advisory (non-binding) | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Tiered approval bodies | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 |
 | Formal approval signatures | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| PR-based review | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ |
+| PR-based review | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ |
 | **Immutability** | | | | | | | |
 | Accepted ADRs immutable | ✅ | ✅ | 🟡 | ✅ | 🟡 | ✅ | ✅ |
 | Append-only log principle | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
