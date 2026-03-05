@@ -49,16 +49,32 @@ approvals:
     approved_at: "2026-01-25T09:00:00Z"
     signature_id: sig-dpop-002
 context:
-  summary:
-    "NovaTrust has adopted OAuth 2.1 (RFC 9700) as its API authorization framework. The specification mandates sender-constrained
-    tokens to prevent token theft and replay. Two mechanisms are standardized: OAuth 2.0 Mutual-TLS Client Authentication
-    and Certificate-Bound Access Tokens (RFC 8705) and Demonstrating Proof of Possession (DPoP, RFC 9449). Both achieve the
-    goal of binding a token to the client that requested it, but they differ fundamentally in how they work: mTLS requires
-    a client certificate presented at the TLS layer, while DPoP uses application-layer proof JWTs signed with an ephemeral
-    keypair. We must choose one mechanism as the primary sender-constraining method for all client types — public mobile apps,
-    confidential backend services, and partner API consumers.
+  summary: |
+    NovaTrust has adopted OAuth 2.1 (RFC 9700) as its API authorization framework. The specification
+    mandates sender-constrained tokens to prevent token theft and replay. Two mechanisms are
+    standardized: mTLS certificate-bound tokens (RFC 8705) and DPoP proof-of-possession (RFC 9449).
 
-    "
+    Both bind a token to the client that requested it, but differ in *where* binding happens: mTLS
+    at the TLS layer, DPoP at the application layer via signed JWTs.
+
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant AS as PingFederate (AS)
+        participant GW as PingAccess (Gateway)
+        participant RS as Resource Server
+
+        C->>C: Generate ephemeral keypair
+        C->>AS: Token Request + DPoP Proof (JWT signed with ephemeral key)
+        AS->>AS: Validate DPoP proof, bind token to JWK thumbprint
+        AS->>C: Access Token (cnf.jkt = thumbprint)
+        C->>GW: API Request + Authorization: DPoP <token> + DPoP: <proof>
+        GW->>GW: Validate DPoP proof signature + cnf.jkt binding
+        GW->>RS: Forward (authenticated, sender-verified)
+    ```
+
+    We must choose one mechanism as the primary sender-constraining method for all client types —
+    public mobile apps, confidential backend services, and partner API consumers.
   business_drivers:
     - PSD2 SCA compliance requires sender-constrained tokens for payment APIs
     - Mobile banking app (3M+ users) cannot manage X.509 client certificates
@@ -160,16 +176,16 @@ alternatives:
     rejection_rationale: Dual validation logic at every resource server doubles the testing matrix. CDN mTLS passthrough problem persists for the confidential client path. Operational complexity of maintaining two key management systems outweighs the marginal benefit.
 decision:
   chosen_alternative: DPoP (RFC 9449)
-  rationale:
+  rationale: |
     - Only mechanism that works for all three client types without infrastructure modifications
     - Survives CDN TLS termination — eliminates the $50K/year Cloudflare mTLS passthrough cost
     - Mobile app (3M+ users) cannot manage X.509 certificates — DPoP ephemeral keys are generated locally
     - Partner bank proxies frequently strip client certificates — DPoP is an HTTP header, not a TLS artifact
     - Single validation path at resource servers reduces testing surface and operational complexity
     - PingFederate 12.x DPoP nonce support provides replay protection equivalent to mTLS session binding
-  tradeoffs:
+  tradeoffs: |
     - ~500 bytes additional overhead per API request for the DPoP proof header
-    - Client SDKs must implement DPoP proof generation (ath, htm, htu claims) — added integration effort
+    - Client SDKs must implement DPoP proof generation (`ath`, `htm`, `htu` claims) — added integration effort
     - Clock skew tolerance window (±60 seconds) may need tuning per client population
     - Foregoing mTLS's hardware-level binding for software-level ephemeral keys — accepted risk for mobile
   decision_date: "2026-01-24"
@@ -226,17 +242,7 @@ dependencies:
   external:
     - Cloudflare CDN (no changes required — DPoP is application-layer)
     - Partner API consumers (must implement DPoP proof generation)
-related_adrs:
-  - id: ADR-0004
-    title: Use Ed25519 over RSA-2048 for JWT signing keys
-    relationship: related
-  - id: ADR-0002
-    title: Use reference tokens for API gateway introspection
-    relationship: related
-attachments:
-  diagrams:
-    - name: dpop-flow-sequence.png
-      path: diagrams/ADR-0001-dpop-flow-sequence.png # Illustrative — create in your diagrams/ directory
+
 references:
   - title: Demonstrating Proof of Possession (DPoP) — RFC 9449
     url: https://datatracker.ietf.org/doc/html/rfc9449

@@ -1,255 +1,230 @@
 adr:
   id: ADR-0002
   title: Use opaque reference tokens with introspection over self-contained JWTs for API gateway authorization
-  summary: Issue opaque reference tokens instead of self-contained JWTs, enabling instant revocation via introspection while keeping PII out of access logs.
+  summary: Issue opaque reference tokens instead of self-contained JWTs, enabling instant revocation via introspection while
+    keeping PII out of access logs.
   status: accepted
-  created_at: "2026-01-15T10:00:00Z"
-  last_modified: "2026-02-01T16:00:00Z"
-  version: "1.0"
-  schema_version: "1.0.0"
+  created_at: '2026-01-15T10:00:00Z'
+  last_modified: '2026-02-01T16:00:00Z'
+  version: '1.0'
+  schema_version: 1.0.0
   project: API Authorization Layer — Token Format Strategy
   component: Access Token Format
   tags:
-    - oauth
-    - token-introspection
-    - reference-tokens
-    - jwt
-    - rfc7662
-    - api-gateway
+  - oauth
+  - token-introspection
+  - reference-tokens
+  - jwt
+  - rfc7662
+  - api-gateway
   priority: high
   decision_type: technology
 authors:
-  - name: Priya Sharma
-    role: API Platform Lead
-    email: priya.sharma@novatrust.example.com
-  - name: Elena Vasquez
-    role: IAM Architect
-    email: elena.vasquez@novatrust.example.com
+- name: Priya Sharma
+  role: API Platform Lead
+  email: priya.sharma@novatrust.example.com
+- name: Elena Vasquez
+  role: IAM Architect
+  email: elena.vasquez@novatrust.example.com
 decision_owner:
   name: Marcus Chen
   role: Head of Identity and Access Management
   email: marcus.chen@novatrust.example.com
 reviewers:
-  - name: Tomasz Kowalski
-    role: Network Security Architect
-    email: tomasz.kowalski@novatrust.example.com
-  - name: Jonas Eriksen
-    role: CISO
-    email: jonas.eriksen@novatrust.example.com
+- name: Tomasz Kowalski
+  role: Network Security Architect
+  email: tomasz.kowalski@novatrust.example.com
+- name: Jonas Eriksen
+  role: CISO
+  email: jonas.eriksen@novatrust.example.com
 approvals:
-  - name: Marcus Chen
-    role: Head of IAM
-    approved_at: "2026-01-30T11:00:00Z"
-    signature_id: sig-reftok-001
-  - name: Jonas Eriksen
-    role: CISO
-    approved_at: "2026-02-01T09:00:00Z"
-    signature_id: sig-reftok-002
+- name: Marcus Chen
+  role: Head of IAM
+  approved_at: '2026-01-30T11:00:00Z'
+  signature_id: sig-reftok-001
+- name: Jonas Eriksen
+  role: CISO
+  approved_at: '2026-02-01T09:00:00Z'
+  signature_id: sig-reftok-002
 context:
-  summary:
-    "With OAuth 2.1 adopted, NovaTrust must decide the format of access tokens issued by PingFederate. Self-contained
-    JWTs encode all claims (scopes, subject, cnf, expiry) directly in the token, allowing offline validation by resource servers.
-    Opaque reference tokens are short random strings that resource servers resolve via the Token Introspection endpoint (RFC
-    7662). This is a classic tradeoff: JWTs give low-latency validation but cannot be instantly revoked, while reference tokens
-    give instant revocation but require an introspection call per request. Our API gateway (PingAccess) sits in front of all
-    200+ APIs and is the primary enforcement point. The choice affects latency, revocation capability, token size in logs,
-    and regulatory auditability.
-
-    "
+  summary: |
+    With OAuth 2.1 adopted, NovaTrust must decide the format of access tokens issued by PingFederate. Self-contained JWTs encode all claims (scopes, subject, cnf, expiry) directly in the token, allowing offline validation by resource servers. Opaque reference tokens are short random strings that resource servers resolve via the Token Introspection endpoint (RFC 7662). This is a classic tradeoff: JWTs give low-latency validation but cannot be instantly revoked, while reference tokens give instant revocation but require an introspection call per request. Our API gateway (PingAccess) sits in front of all 200+ APIs and is the primary enforcement point. The choice affects latency, revocation capability, token size in logs, and regulatory auditability.
   business_drivers:
-    - PSD2 requires instant consent revocation — customer must be able to revoke bank access immediately
-    - GDPR right to erasure implies immediate token invalidation upon account deletion
-    - Fraud detection team needs ability to kill sessions within seconds, not minutes
-    - Compliance audit requires centralized proof of token validity at time of access
+  - PSD2 requires instant consent revocation — customer must be able to revoke bank access immediately
+  - GDPR right to erasure implies immediate token invalidation upon account deletion
+  - Fraud detection team needs ability to kill sessions within seconds, not minutes
+  - Compliance audit requires centralized proof of token validity at time of access
   technical_drivers:
-    - Self-contained JWTs cannot be revoked before expiry without a distributed deny-list
-    - JWT deny-lists require propagation to all resource servers — eventual consistency problem
-    - PingAccess already has a high-performance introspection client with caching support
-    - Token introspection response is a single audit record of active/inactive status
-    - JWTs in access logs leak PII (subject, email, scopes) — requires log scrubbing
+  - Self-contained JWTs cannot be revoked before expiry without a distributed deny-list
+  - JWT deny-lists require propagation to all resource servers — eventual consistency problem
+  - PingAccess already has a high-performance introspection client with caching support
+  - Token introspection response is a single audit record of active/inactive status
+  - JWTs in access logs leak PII (subject, email, scopes) — requires log scrubbing
   constraints:
-    - API gateway (PingAccess) is the single enforcement point — all traffic is proxied
-    - PingFederate introspection endpoint must handle 5000 QPS sustained
-    - "Token validation latency budget: < 10ms at p99 (including introspection + cache)"
-    - Must work with DPoP sender-constraining (ADR-0001)
+  - API gateway (PingAccess) is the single enforcement point — all traffic is proxied
+  - PingFederate introspection endpoint must handle 5000 QPS sustained
+  - 'Token validation latency budget: < 10ms at p99 (including introspection + cache)'
+  - Must work with DPoP sender-constraining (ADR-0001)
   assumptions:
-    - PingAccess introspection cache with 30-second TTL provides acceptable revocation latency
-    - PingFederate introspection endpoint can sustain 5000 QPS with current cluster sizing
-    - Reference tokens do not leak claims in client-side storage or network logs
+  - PingAccess introspection cache with 30-second TTL provides acceptable revocation latency
+  - PingFederate introspection endpoint can sustain 5000 QPS with current cluster sizing
+  - Reference tokens do not leak claims in client-side storage or network logs
 requirements:
   functional:
-    - id: F-001
-      description: Access tokens must be revocable within 30 seconds of revocation request
-    - id: F-002
-      description: API gateway must resolve token to full claim set via introspection before forwarding request
-    - id: F-003
-      description: Introspection response must include DPoP confirmation (`cnf.jkt`) for sender validation
+  - id: F-001
+    description: Access tokens must be revocable within 30 seconds of revocation request
+  - id: F-002
+    description: API gateway must resolve token to full claim set via introspection before forwarding request
+  - id: F-003
+    description: Introspection response must include DPoP confirmation (`cnf.jkt`) for sender validation
   non_functional:
-    - id: NF-001
-      description: Token introspection latency < 5ms at p99 with caching enabled
-    - id: NF-002
-      description: PingFederate introspection endpoint availability 99.99%
-    - id: NF-003
-      description: Token value must not contain PII when stored in access logs
+  - id: NF-001
+    description: Token introspection latency < 5ms at p99 with caching enabled
+  - id: NF-002
+    description: PingFederate introspection endpoint availability 99.99%
+  - id: NF-003
+    description: Token value must not contain PII when stored in access logs
 alternatives:
-  - name: Opaque reference tokens with introspection
-    summary:
-      "PingFederate issues short opaque strings (128-bit random). PingAccess calls the introspection endpoint (RFC 7662)
-      on each request, caching the response for a configurable TTL (default 30 seconds). Revocation is immediate at the authorization
-      server; cached entries expire within TTL.
-
-      "
-    pros:
-      - Instant revocation — token marked inactive immediately at PingFederate
-      - No PII in the token itself — safe to log, store, and transmit
-      - Smaller token size (~32 bytes vs ~800 bytes for JWT) — less bandwidth and storage
-      - "Centralized audit: introspection logs prove token was active at time of access"
-      - Token format changes (new claims) do not require client or resource server updates
-    cons:
-      - Every request requires an introspection call (mitigated by caching)
-      - Introspection endpoint is a runtime dependency — outage blocks all API access
-      - Cache TTL creates a revocation latency window (default 30 seconds)
-      - No offline validation — disconnected resource servers cannot validate tokens
-    estimated_cost: medium
-    risk: medium
-  - name: Self-contained JWTs with short lifetime
-    summary:
-      "PingFederate issues signed JWTs containing all claims. Resource servers validate the signature and expiry locally
-      without contacting the authorization server. Short token lifetime (5 minutes) limits the revocation gap.
-
-      "
-    pros:
-      - No runtime dependency on introspection endpoint — fully offline validation
-      - Zero additional latency per request — signature verification is ~0.5ms
-      - Resource servers can extract claims directly from the token
-      - Well-understood pattern with extensive library support
-    cons:
-      - Cannot be revoked before expiry — 5-minute window of unrevocable access
-      - PII embedded in JWT (sub, email, scopes) appears in logs, browser history, and caches
-      - 5-minute revocation gap violates PSD2 instant revocation interpretation
-      - Large token size (~800 bytes) — multiplied by DPoP proof header, total overhead ~1.3KB per request
-      - Adding or changing claims requires updating all resource server validation logic
-      - "GDPR: token deletion does not remove PII already logged in transit"
-    estimated_cost: low
-    risk: high
-    rejection_rationale: 5-minute revocation gap violates PSD2 instant revocation interpretation. PII embedded in JWT appears in logs, violating GDPR data minimization. Adding or changing claims requires updating all resource server validation logic.
-  - name: JWT with distributed deny-list (Redis)
-    summary:
-      "Issue JWTs but maintain a Redis-backed deny-list. Resource servers check the deny-list on every request. Revoked
-      token JTIs are pushed to Redis; resource servers query before accepting.
-
-      "
-    pros:
-      - Adds revocation capability to JWTs
-      - Resource servers still validate signature offline for non-revoked tokens
-    cons:
-      - Redis deny-list is a distributed runtime dependency — same availability concern as introspection
-      - Deny-list propagation has eventual consistency — cache invalidation is hard
-      - PII still embedded in JWT — logging and GDPR concerns remain
-      - Custom implementation — no standardized protocol (unlike RFC 7662 introspection)
-      - "Two validation steps per request: signature verification + deny-list lookup"
-      - Deny-list grows unbounded unless TTL matches token expiry — memory pressure
-    estimated_cost: medium
-    risk: high
-    rejection_rationale: Redis deny-list has the same availability concern as introspection but is a custom, non-standard solution. PII remains embedded in JWTs. Deny-list propagation has eventual consistency — same revocation gap problem as plain JWTs.
+- name: Opaque reference tokens with introspection
+  summary: |
+    PingFederate issues short opaque strings (128-bit random). PingAccess calls the introspection endpoint (RFC 7662) on each request, caching the response for a configurable TTL (default 30 seconds). Revocation is immediate at the authorization server; cached entries expire within TTL.
+  pros:
+  - Instant revocation — token marked inactive immediately at PingFederate
+  - No PII in the token itself — safe to log, store, and transmit
+  - Smaller token size (~32 bytes vs ~800 bytes for JWT) — less bandwidth and storage
+  - 'Centralized audit: introspection logs prove token was active at time of access'
+  - Token format changes (new claims) do not require client or resource server updates
+  cons:
+  - Every request requires an introspection call (mitigated by caching)
+  - Introspection endpoint is a runtime dependency — outage blocks all API access
+  - Cache TTL creates a revocation latency window (default 30 seconds)
+  - No offline validation — disconnected resource servers cannot validate tokens
+  estimated_cost: medium
+  risk: medium
+- name: Self-contained JWTs with short lifetime
+  summary: |
+    PingFederate issues signed JWTs containing all claims. Resource servers validate the signature and expiry locally without contacting the authorization server. Short token lifetime (5 minutes) limits the revocation gap.
+  pros:
+  - No runtime dependency on introspection endpoint — fully offline validation
+  - Zero additional latency per request — signature verification is ~0.5ms
+  - Resource servers can extract claims directly from the token
+  - Well-understood pattern with extensive library support
+  cons:
+  - Cannot be revoked before expiry — 5-minute window of unrevocable access
+  - PII embedded in JWT (sub, email, scopes) appears in logs, browser history, and caches
+  - 5-minute revocation gap violates PSD2 instant revocation interpretation
+  - Large token size (~800 bytes) — multiplied by DPoP proof header, total overhead ~1.3KB per request
+  - Adding or changing claims requires updating all resource server validation logic
+  - 'GDPR: token deletion does not remove PII already logged in transit'
+  estimated_cost: low
+  risk: high
+  rejection_rationale: 5-minute revocation gap violates PSD2 instant revocation interpretation. PII embedded in JWT appears
+    in logs, violating GDPR data minimization. Adding or changing claims requires updating all resource server validation
+    logic.
+- name: JWT with distributed deny-list (Redis)
+  summary: |
+    Issue JWTs but maintain a Redis-backed deny-list. Resource servers check the deny-list on every request. Revoked token JTIs are pushed to Redis; resource servers query before accepting.
+  pros:
+  - Adds revocation capability to JWTs
+  - Resource servers still validate signature offline for non-revoked tokens
+  cons:
+  - Redis deny-list is a distributed runtime dependency — same availability concern as introspection
+  - Deny-list propagation has eventual consistency — cache invalidation is hard
+  - PII still embedded in JWT — logging and GDPR concerns remain
+  - Custom implementation — no standardized protocol (unlike RFC 7662 introspection)
+  - 'Two validation steps per request: signature verification + deny-list lookup'
+  - Deny-list grows unbounded unless TTL matches token expiry — memory pressure
+  estimated_cost: medium
+  risk: high
+  rejection_rationale: Redis deny-list has the same availability concern as introspection but is a custom, non-standard solution.
+    PII remains embedded in JWTs. Deny-list propagation has eventual consistency — same revocation gap problem as plain JWTs.
 decision:
   chosen_alternative: Opaque reference tokens with introspection
-  rationale:
-    - "PSD2 instant revocation: opaque tokens can be revoked in < 1 second at PingFederate; cache TTL provides 30-second worst-case"
-    - "No PII in the token: access logs can retain tokens without GDPR scrubbing obligations"
+  rationale: |
+    - PSD2 instant revocation: opaque tokens can be revoked in < 1 second at PingFederate; cache TTL provides 30-second worst-case
+    - No PII in the token: access logs can retain tokens without GDPR scrubbing obligations
     - PingAccess introspection caching (30s TTL) measured at 0.8ms p99 cache-hit latency in load test — well within 10ms budget
     - Centralized introspection provides auditable proof of token status at exact time of API access
-    - "Simpler operational model: one revocation mechanism (mark inactive) vs. distributed deny-list synchronization"
+    - Simpler operational model: one revocation mechanism (mark inactive) vs. distributed deny-list synchronization
     - Token format evolution (new claims, changed scopes) is transparent to resource servers — only introspection response changes
-  tradeoffs:
+  tradeoffs: |
     - Runtime dependency on PingFederate introspection endpoint — mitigated by multi-node cluster and PingAccess cache
     - 30-second cache TTL means a revoked token may be accepted for up to 30 seconds after revocation
     - Introspection calls add ~0.8ms (cache hit) to ~4ms (cache miss) per request vs. ~0.5ms for local JWT validation
     - Cannot work in fully disconnected environments — accepted because PingAccess is always network-connected
-  decision_date: "2026-01-30"
+  decision_date: '2026-01-30'
   confidence: high
 consequences:
   positive:
-    - Instant token revocation for fraud response and customer consent withdrawal
-    - GDPR-safe token format — no PII leakage in logs, caches, or browser storage
-    - Auditable introspection trail for every API access decision
-    - Smaller wire format reduces bandwidth across 200+ APIs at 5000 QPS
+  - Instant token revocation for fraud response and customer consent withdrawal
+  - GDPR-safe token format — no PII leakage in logs, caches, or browser storage
+  - Auditable introspection trail for every API access decision
+  - Smaller wire format reduces bandwidth across 200+ APIs at 5000 QPS
   negative:
-    - PingFederate introspection endpoint becomes Tier-0 dependency
-    - 30-second revocation latency window due to PingAccess caching
-    - Slightly higher per-request latency (0.8ms cache-hit vs 0.5ms JWT verification)
+  - PingFederate introspection endpoint becomes Tier-0 dependency
+  - 30-second revocation latency window due to PingAccess caching
+  - Slightly higher per-request latency (0.8ms cache-hit vs 0.5ms JWT verification)
 risk_assessment:
   risks:
-    - id: R-001
-      description: PingFederate introspection endpoint outage blocks all API traffic
-      likelihood: low
-      impact: critical
-      mitigation:
-        - Multi-node PingFederate cluster with active-active introspection
-        - PingAccess serves cached introspection responses during brief outages (stale-while-revalidate)
-        - "Emergency fallback: PingAccess switches to JWT validation mode with pre-distributed signing keys"
-    - id: R-002
-      description: Introspection cache TTL creates a 30-second revocation gap exploited by attacker
-      likelihood: low
-      impact: medium
-      mitigation:
-        - Emergency cache purge API reduces gap to < 2 seconds
-        - DPoP sender-constraining prevents stolen token use even within the gap
-        - Fraud detection triggers cache purge automatically on flagged accounts
-    - id: R-003
-      description: Introspection endpoint becomes a bottleneck at high QPS
-      likelihood: medium
-      impact: medium
-      mitigation:
-        - Load-tested at 10,000 QPS sustained with current 4-node PingFederate cluster
-        - "Horizontal scaling plan: add 2 nodes per 5000 QPS increment"
-        - Cache hit ratio > 95% means actual introspection calls are ~250 QPS
+  - id: R-001
+    description: PingFederate introspection endpoint outage blocks all API traffic
+    likelihood: low
+    impact: critical
+    mitigation:
+    - Multi-node PingFederate cluster with active-active introspection
+    - PingAccess serves cached introspection responses during brief outages (stale-while-revalidate)
+    - 'Emergency fallback: PingAccess switches to JWT validation mode with pre-distributed signing keys'
+  - id: R-002
+    description: Introspection cache TTL creates a 30-second revocation gap exploited by attacker
+    likelihood: low
+    impact: medium
+    mitigation:
+    - Emergency cache purge API reduces gap to < 2 seconds
+    - DPoP sender-constraining prevents stolen token use even within the gap
+    - Fraud detection triggers cache purge automatically on flagged accounts
+  - id: R-003
+    description: Introspection endpoint becomes a bottleneck at high QPS
+    likelihood: medium
+    impact: medium
+    mitigation:
+    - Load-tested at 10,000 QPS sustained with current 4-node PingFederate cluster
+    - 'Horizontal scaling plan: add 2 nodes per 5000 QPS increment'
+    - Cache hit ratio > 95% means actual introspection calls are ~250 QPS
   residual_risk: low
 dependencies:
   internal:
-    - PingFederate 12.x (introspection endpoint)
-    - PingAccess 8.x (introspection client with caching)
-    - HSM infrastructure for token store encryption
+  - PingFederate 12.x (introspection endpoint)
+  - PingAccess 8.x (introspection client with caching)
+  - HSM infrastructure for token store encryption
   external:
-    - None — introspection is an internal call between PingAccess and PingFederate
-related_adrs:
-  - id: ADR-0001
-    title: Use DPoP over mTLS for sender-constrained access tokens
-    relationship: related
-  - id: ADR-0005
-    title: Use Backend-for-Frontend token mediator for SPA token acquisition
-    relationship: related
-attachments:
-  diagrams:
-    - name: introspection-flow.png
-      path: diagrams/ADR-0002-introspection-flow.png
+  - None — introspection is an internal call between PingAccess and PingFederate
 references:
-  - title: OAuth 2.0 Token Introspection — RFC 7662
-    url: https://datatracker.ietf.org/doc/html/rfc7662
-  - title: OAuth 2.1 Authorization Framework — RFC 9700
-    url: https://datatracker.ietf.org/doc/html/rfc9700
-  - title: PingFederate Token Management Documentation
-    url: https://docs.pingidentity.com/pingfederate/latest/token-management.html
+- title: OAuth 2.0 Token Introspection — RFC 7662
+  url: https://datatracker.ietf.org/doc/html/rfc7662
+- title: OAuth 2.1 Authorization Framework — RFC 9700
+  url: https://datatracker.ietf.org/doc/html/rfc9700
+- title: PingFederate Token Management Documentation
+  url: https://docs.pingidentity.com/pingfederate/latest/token-management.html
 lifecycle:
   review_cycle_months: 12
-  next_review_date: "2027-01-30"
+  next_review_date: '2027-01-30'
   superseded_by: null
   supersedes: null
   archival:
     archived_at: null
     archive_reason: null
 audit_trail:
-  - event: created
-    by: Priya Sharma
-    at: "2026-01-15T10:00:00Z"
-  - event: updated
-    by: Elena Vasquez
-    at: "2026-01-22T09:00:00Z"
-    details: Added introspection cache latency benchmarks from staging load test
-  - event: approved
-    by: Marcus Chen
-    at: "2026-01-30T11:00:00Z"
-  - event: approved
-    by: Jonas Eriksen
-    at: "2026-02-01T09:00:00Z"
-    details: "CISO condition: emergency cache purge API must be implemented before GA"
+- event: created
+  by: Priya Sharma
+  at: '2026-01-15T10:00:00Z'
+- event: updated
+  by: Elena Vasquez
+  at: '2026-01-22T09:00:00Z'
+  details: Added introspection cache latency benchmarks from staging load test
+- event: approved
+  by: Marcus Chen
+  at: '2026-01-30T11:00:00Z'
+- event: approved
+  by: Jonas Eriksen
+  at: '2026-02-01T09:00:00Z'
+  details: 'CISO condition: emergency cache purge API must be implemented before GA'

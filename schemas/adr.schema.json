@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/ivanstambuk/adr-governance/schemas/adr.schema.json/1.0.0",
     "title": "Architecture Decision Record",
-    "description": "Self-contained ADR meta-model for governed architectural decisions. Each ADR embeds all context, requirements, alternatives, risk assessment, deployment plans, and audit trails.",
+    "description": "Self-contained ADR meta-model for governed architectural decisions. Each ADR embeds all context, requirements, alternatives, risk assessment, deployment plans, and audit trails. All string fields support Markdown including embedded Mermaid diagrams via code fences.",
     "version": "1.0.0",
     "type": "object",
     "required": [
@@ -189,7 +189,7 @@
                 "summary": {
                     "type": "string",
                     "minLength": 20,
-                    "description": "Narrative summary of the problem and context."
+                    "description": "Narrative summary of the problem and context. Supports Markdown with embedded Mermaid diagrams, code blocks, and rich formatting."
                 },
                 "business_drivers": {
                     "type": "array",
@@ -262,7 +262,7 @@
                     },
                     "summary": {
                         "type": "string",
-                        "description": "Brief description of the alternative."
+                        "description": "Description of the alternative. Supports Markdown with embedded Mermaid diagrams, code blocks, and rich formatting."
                     },
                     "pros": {
                         "type": "array",
@@ -323,19 +323,13 @@
                     "description": "Name of the selected alternative. Should match a name in the alternatives array (enforced by tooling, not schema)."
                 },
                 "rationale": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "minItems": 1,
-                    "description": "Reasons supporting this choice."
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Reasons supporting this choice. Supports Markdown with embedded Mermaid diagrams, code blocks, and rich formatting."
                 },
                 "tradeoffs": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "Acknowledged tradeoffs accepted with this decision."
+                    "type": "string",
+                    "description": "Acknowledged tradeoffs accepted with this decision. Supports Markdown."
                 },
                 "decision_date": {
                     "type": "string",
@@ -381,7 +375,7 @@
             "properties": {
                 "description": {
                     "type": "string",
-                    "description": "How the implementation of this decision will be verified. E.g. code review, ArchUnit test, design review, load test."
+                    "description": "How the implementation of this decision will be verified. Supports Markdown. E.g. code review, ArchUnit test, design review, load test."
                 },
                 "artifact_ids": {
                     "type": "array",
@@ -477,63 +471,6 @@
                 }
             },
             "description": "Internal and external dependencies."
-        },
-        "related_adrs": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": [
-                    "id",
-                    "title"
-                ],
-                "additionalProperties": false,
-                "properties": {
-                    "id": {
-                        "type": "string",
-                        "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)*$"
-                    },
-                    "title": {
-                        "type": "string"
-                    },
-                    "relationship": {
-                        "type": "string",
-                        "enum": [
-                            "supersedes",
-                            "superseded_by",
-                            "related",
-                            "depends_on",
-                            "conflicts_with"
-                        ],
-                        "description": "Nature of the relationship to the referenced ADR."
-                    }
-                }
-            },
-            "description": "Cross-references to other ADRs. Each ADR remains self-contained; these are navigational pointers only."
-        },
-        "attachments": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "diagrams": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/attachment"
-                    }
-                },
-                "runbooks": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/attachment"
-                    }
-                },
-                "other": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/$defs/attachment"
-                    }
-                }
-            },
-            "description": "References to supporting diagrams, runbooks, or other documents."
         },
         "references": {
             "type": "array",
@@ -690,23 +627,6 @@
                 },
                 "description": {
                     "type": "string"
-                }
-            }
-        },
-        "attachment": {
-            "type": "object",
-            "required": [
-                "name",
-                "path"
-            ],
-            "additionalProperties": false,
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "path": {
-                    "type": "string",
-                    "description": "Relative path within the repository."
                 }
             }
         }

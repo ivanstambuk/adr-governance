@@ -1,263 +1,247 @@
 adr:
   id: ADR-0004
   title: Use Ed25519 (EdDSA) over RSA-2048 for JWT and assertion signing keys
-  summary: Migrate from RSA-2048 (RS256) to Ed25519 (EdDSA) for all JWT/JWS signing to achieve 20x throughput improvement, eliminating the PingFederate CPU bottleneck.
+  summary: Migrate from RSA-2048 (RS256) to Ed25519 (EdDSA) for all JWT/JWS signing to achieve 20x throughput improvement,
+    eliminating the PingFederate CPU bottleneck.
   status: accepted
-  created_at: "2025-11-20T09:00:00Z"
-  last_modified: "2025-12-20T10:00:00Z"
-  version: "1.0"
-  schema_version: "1.0.0"
+  created_at: '2025-11-20T09:00:00Z'
+  last_modified: '2025-12-20T10:00:00Z'
+  version: '1.0'
+  schema_version: 1.0.0
   project: Cryptographic Infrastructure — Signing Key Strategy
   component: JWT Signing Algorithm
   tags:
-    - cryptography
-    - ed25519
-    - eddsa
-    - rsa
-    - jwt
-    - jws
-    - rfc8037
-    - performance
+  - cryptography
+  - ed25519
+  - eddsa
+  - rsa
+  - jwt
+  - jws
+  - rfc8037
+  - performance
   priority: high
   decision_type: technology
 authors:
-  - name: Tomasz Kowalski
-    role: Network Security Architect
-    email: tomasz.kowalski@novatrust.example.com
-  - name: Elena Vasquez
-    role: IAM Architect
-    email: elena.vasquez@novatrust.example.com
+- name: Tomasz Kowalski
+  role: Network Security Architect
+  email: tomasz.kowalski@novatrust.example.com
+- name: Elena Vasquez
+  role: IAM Architect
+  email: elena.vasquez@novatrust.example.com
 decision_owner:
   name: Jonas Eriksen
   role: CISO
   email: jonas.eriksen@novatrust.example.com
 reviewers:
-  - name: Marcus Chen
-    role: Head of IAM
-    email: marcus.chen@novatrust.example.com
-  - name: Kai Lindström
-    role: Mobile Platform Lead
-    email: kai.lindstrom@novatrust.example.com
+- name: Marcus Chen
+  role: Head of IAM
+  email: marcus.chen@novatrust.example.com
+- name: Kai Lindström
+  role: Mobile Platform Lead
+  email: kai.lindstrom@novatrust.example.com
 approvals:
-  - name: Jonas Eriksen
-    role: CISO
-    approved_at: "2025-12-18T14:00:00Z"
-    signature_id: sig-ed25519-001
-  - name: Marcus Chen
-    role: Head of IAM
-    approved_at: "2025-12-19T10:00:00Z"
-    signature_id: sig-ed25519-002
+- name: Jonas Eriksen
+  role: CISO
+  approved_at: '2025-12-18T14:00:00Z'
+  signature_id: sig-ed25519-001
+- name: Marcus Chen
+  role: Head of IAM
+  approved_at: '2025-12-19T10:00:00Z'
+  signature_id: sig-ed25519-002
 context:
-  summary:
-    'NovaTrust''s PingFederate IdP and all JWT-producing services currently use RS256 (RSA-2048 with PKCS#1 v1.5 padding)
-    for signing ID tokens, access tokens (when issued as JWTs), SAML assertions, and DPoP proofs. With 5000+ token issuances
-    per second at peak, RSA-2048 signing is the primary CPU bottleneck on the PingFederate cluster. EdDSA with Ed25519 (RFC
-    8037, JWS algorithm "EdDSA") offers vastly superior signing performance, smaller key sizes, and resistance to implementation
-    pitfalls (no padding oracle attacks, no nonce reuse vulnerabilities as in ECDSA). However, Ed25519 is newer and has less
-    universal library support than RSA. We must choose the signing algorithm for all new JWT/JWS production.
-
-    '
+  summary: |
+    NovaTrust's PingFederate IdP and all JWT-producing services currently use RS256 (RSA-2048 with PKCS#1 v1.5 padding) for signing ID tokens, access tokens (when issued as JWTs), SAML assertions, and DPoP proofs. With 5000+ token issuances per second at peak, RSA-2048 signing is the primary CPU bottleneck on the PingFederate cluster. EdDSA with Ed25519 (RFC 8037, JWS algorithm "EdDSA") offers vastly superior signing performance, smaller key sizes, and resistance to implementation pitfalls (no padding oracle attacks, no nonce reuse vulnerabilities as in ECDSA). However, Ed25519 is newer and has less universal library support than RSA. We must choose the signing algorithm for all new JWT/JWS production.
   business_drivers:
-    - PingFederate cluster CPU at 78% during peak — projected to exceed capacity in 6 months
-    - Avoiding $120K/year in additional PingFederate cluster nodes by reducing signing CPU
-    - Mobile app token validation latency impacts UX — faster verification is a competitive advantage
+  - PingFederate cluster CPU at 78% during peak — projected to exceed capacity in 6 months
+  - Avoiding $120K/year in additional PingFederate cluster nodes by reducing signing CPU
+  - Mobile app token validation latency impacts UX — faster verification is a competitive advantage
   technical_drivers:
-    - "RSA-2048 signing: ~1500 ops/sec per core; Ed25519 signing: ~30,000 ops/sec per core (20x faster)"
-    - "RSA-2048 verification: ~40,000 ops/sec per core; Ed25519 verification: ~15,000 ops/sec per core"
-    - "Ed25519 key: 32 bytes; RSA-2048 key: 256 bytes — JWK set transmission is 8x smaller"
-    - Ed25519 is deterministic (no random nonce) — eliminates ECDSA-style nonce reuse attacks
-    - "JWS compact serialization with Ed25519 signature: 64 bytes vs RSA-2048: 256 bytes"
-    - PingFederate 12.x added EdDSA support in Q3 2025
+  - 'RSA-2048 signing: ~1500 ops/sec per core; Ed25519 signing: ~30,000 ops/sec per core (20x faster)'
+  - 'RSA-2048 verification: ~40,000 ops/sec per core; Ed25519 verification: ~15,000 ops/sec per core'
+  - 'Ed25519 key: 32 bytes; RSA-2048 key: 256 bytes — JWK set transmission is 8x smaller'
+  - Ed25519 is deterministic (no random nonce) — eliminates ECDSA-style nonce reuse attacks
+  - 'JWS compact serialization with Ed25519 signature: 64 bytes vs RSA-2048: 256 bytes'
+  - PingFederate 12.x added EdDSA support in Q3 2025
   constraints:
-    - Cloud HSM must support Ed25519 key generation and signing (PKCS#11 with CKM_EDDSA)
-    - All resource servers and relying parties must support Ed25519 verification
-    - SAML assertion signing must use a supported XML signature algorithm
-    - Must maintain RSA-2048 for legacy partner integrations that cannot upgrade
+  - Cloud HSM must support Ed25519 key generation and signing (PKCS#11 with CKM_EDDSA)
+  - All resource servers and relying parties must support Ed25519 verification
+  - SAML assertion signing must use a supported XML signature algorithm
+  - Must maintain RSA-2048 for legacy partner integrations that cannot upgrade
   assumptions:
-    - Cloud HSM supports Ed25519 via CKM_EDDSA mechanism (verified in vendor documentation)
-    - All modern JWT libraries (jose4j, nimbus-jose, PyJWT, jsonwebtoken) support EdDSA verification
-    - SAML XML Signature for Ed25519 is supported via http://www.w3.org/2021/04/xmldsig-more#eddsa-ed25519
-    - Legacy partners (3 of 15) will migrate to Ed25519 within 18 months
+  - Cloud HSM supports Ed25519 via CKM_EDDSA mechanism (verified in vendor documentation)
+  - All modern JWT libraries (jose4j, nimbus-jose, PyJWT, jsonwebtoken) support EdDSA verification
+  - SAML XML Signature for Ed25519 is supported via http://www.w3.org/2021/04/xmldsig-more#eddsa-ed25519
+  - Legacy partners (3 of 15) will migrate to Ed25519 within 18 months
 requirements:
   functional:
-    - id: F-001
-      description: All new JWT/JWS tokens signed with EdDSA (Ed25519) algorithm
-    - id: F-002
-      description: JWKS endpoint publishes both Ed25519 and RSA-2048 keys during transition period
-    - id: F-003
-      description: Legacy partners continue receiving RS256-signed tokens until they support EdDSA
+  - id: F-001
+    description: All new JWT/JWS tokens signed with EdDSA (Ed25519) algorithm
+  - id: F-002
+    description: JWKS endpoint publishes both Ed25519 and RSA-2048 keys during transition period
+  - id: F-003
+    description: Legacy partners continue receiving RS256-signed tokens until they support EdDSA
   non_functional:
-    - id: NF-001
-      description: Token signing throughput must increase by at least 10x per core
-    - id: NF-002
-      description: Token signing latency p99 < 1ms (including HSM round-trip)
-    - id: NF-003
-      description: JWS compact serialization total size reduced by at least 30% compared to RS256
+  - id: NF-001
+    description: Token signing throughput must increase by at least 10x per core
+  - id: NF-002
+    description: Token signing latency p99 < 1ms (including HSM round-trip)
+  - id: NF-003
+    description: JWS compact serialization total size reduced by at least 30% compared to RS256
 alternatives:
-  - name: EdDSA with Ed25519 (RFC 8037)
-    summary:
-      "Use the EdDSA algorithm with Ed25519 curve for all JWT/JWS signing. Ed25519 provides 128-bit security with 32-byte
-      keys and 64-byte signatures. Signing is deterministic (no random nonce), eliminating nonce-related vulnerabilities.
-
-      "
-    pros:
-      - 20x faster signing than RSA-2048 — directly addresses PingFederate CPU bottleneck
-      - Deterministic signatures — no nonce reuse vulnerability (unlike ECDSA with P-256)
-      - 64-byte signatures vs 256-byte RSA — 75% reduction in JWS signature size
-      - 32-byte keys vs 256-byte RSA public keys — smaller JWKS responses
-      - No padding oracle attacks — Ed25519 has no padding scheme
-      - 128-bit security level — equivalent to RSA-3072 or ECDSA P-256
-      - "Growing industry adoption: Signal, SSH, TLS 1.3, FIDO2 all use Ed25519"
-    cons:
-      - "Not universally supported: 3 legacy partner integrations require RS256"
-      - Cloud HSM EdDSA support is newer — less operational track record
-      - Verification is 2.5x slower than RSA-2048 verification (matters for resource servers)
-      - SAML XML Signature Ed25519 support requires relying parties to upgrade XML libraries
-      - Ed25519 is Curve25519-based — not NIST-approved (may matter for US government partners)
-    estimated_cost: medium
-    risk: low
-  - name: ECDSA with P-256 (ES256)
-    summary:
-      "Use ECDSA with the NIST P-256 curve (JWS algorithm ES256). Provides 128-bit security with smaller keys and signatures
-      than RSA.
-
-      "
-    pros:
-      - Widely supported — NIST P-256 is the most common elliptic curve
-      - Smaller signatures than RSA (64 bytes DER-encoded, typically 70-72 bytes)
-      - 5-10x faster signing than RSA-2048
-      - NIST-approved curve — satisfies US government compliance requirements
-    cons:
-      - "Non-deterministic: requires a secure random nonce per signature — nonce reuse leaks the private key"
-      - Sony PS3 and Bitcoin ECDSA nonce-reuse incidents demonstrate real-world risk
-      - Requires RFC 6979 deterministic ECDSA for safety — not all libraries implement it by default
-      - Signing is 3x slower than Ed25519
-      - P-256 curve has concerns about NIST backdoor potential (Dual_EC_DRBG precedent)
-      - HSM implementations may not use RFC 6979 — must verify per HSM vendor
-    estimated_cost: medium
-    risk: medium
-    rejection_rationale: Non-deterministic signatures require secure random nonce per signature — nonce reuse leaks the private key (real-world incidents with Sony PS3 and Bitcoin). 3x slower signing than Ed25519. P-256 backdoor concerns from NIST Dual_EC_DRBG precedent.
-  - name: RSA-2048 with PS256 (RSASSA-PSS)
-    summary:
-      "Upgrade from RS256 (PKCS#1 v1.5) to PS256 (RSASSA-PSS) padding while keeping RSA-2048 keys. Addresses padding
-      oracle vulnerabilities without changing key type.
-
-      "
-    pros:
-      - No key type change — all libraries already support RSA
-      - PSS padding eliminates PKCS#1 v1.5 padding oracle attacks
-      - Universal partner compatibility
-    cons:
-      - Does not address the CPU bottleneck — signing throughput remains ~1500 ops/sec per core
-      - PingFederate cluster still needs $120K/year in additional capacity
-      - 256-byte signatures — no size reduction
-      - RSA-2048 approaching end of recommended lifetime (NIST recommends RSA-3072 after 2030)
-    estimated_cost: low
-    risk: low
-    rejection_rationale: Does not address the CPU bottleneck — signing throughput remains ~1500 ops/sec. PingFederate cluster would still require $120K/year in additional nodes. RSA-2048 approaching NIST end-of-life recommendation (RSA-3072 after 2030).
+- name: EdDSA with Ed25519 (RFC 8037)
+  summary: |
+    Use the EdDSA algorithm with Ed25519 curve for all JWT/JWS signing. Ed25519 provides 128-bit security with 32-byte keys and 64-byte signatures. Signing is deterministic (no random nonce), eliminating nonce-related vulnerabilities.
+  pros:
+  - 20x faster signing than RSA-2048 — directly addresses PingFederate CPU bottleneck
+  - Deterministic signatures — no nonce reuse vulnerability (unlike ECDSA with P-256)
+  - 64-byte signatures vs 256-byte RSA — 75% reduction in JWS signature size
+  - 32-byte keys vs 256-byte RSA public keys — smaller JWKS responses
+  - No padding oracle attacks — Ed25519 has no padding scheme
+  - 128-bit security level — equivalent to RSA-3072 or ECDSA P-256
+  - 'Growing industry adoption: Signal, SSH, TLS 1.3, FIDO2 all use Ed25519'
+  cons:
+  - 'Not universally supported: 3 legacy partner integrations require RS256'
+  - Cloud HSM EdDSA support is newer — less operational track record
+  - Verification is 2.5x slower than RSA-2048 verification (matters for resource servers)
+  - SAML XML Signature Ed25519 support requires relying parties to upgrade XML libraries
+  - Ed25519 is Curve25519-based — not NIST-approved (may matter for US government partners)
+  estimated_cost: medium
+  risk: low
+- name: ECDSA with P-256 (ES256)
+  summary: |
+    Use ECDSA with the NIST P-256 curve (JWS algorithm ES256). Provides 128-bit security with smaller keys and signatures than RSA.
+  pros:
+  - Widely supported — NIST P-256 is the most common elliptic curve
+  - Smaller signatures than RSA (64 bytes DER-encoded, typically 70-72 bytes)
+  - 5-10x faster signing than RSA-2048
+  - NIST-approved curve — satisfies US government compliance requirements
+  cons:
+  - 'Non-deterministic: requires a secure random nonce per signature — nonce reuse leaks the private key'
+  - Sony PS3 and Bitcoin ECDSA nonce-reuse incidents demonstrate real-world risk
+  - Requires RFC 6979 deterministic ECDSA for safety — not all libraries implement it by default
+  - Signing is 3x slower than Ed25519
+  - P-256 curve has concerns about NIST backdoor potential (Dual_EC_DRBG precedent)
+  - HSM implementations may not use RFC 6979 — must verify per HSM vendor
+  estimated_cost: medium
+  risk: medium
+  rejection_rationale: Non-deterministic signatures require secure random nonce per signature — nonce reuse leaks the private
+    key (real-world incidents with Sony PS3 and Bitcoin). 3x slower signing than Ed25519. P-256 backdoor concerns from NIST
+    Dual_EC_DRBG precedent.
+- name: RSA-2048 with PS256 (RSASSA-PSS)
+  summary: |
+    Upgrade from RS256 (PKCS#1 v1.5) to PS256 (RSASSA-PSS) padding while keeping RSA-2048 keys. Addresses padding oracle vulnerabilities without changing key type.
+  pros:
+  - No key type change — all libraries already support RSA
+  - PSS padding eliminates PKCS#1 v1.5 padding oracle attacks
+  - Universal partner compatibility
+  cons:
+  - Does not address the CPU bottleneck — signing throughput remains ~1500 ops/sec per core
+  - PingFederate cluster still needs $120K/year in additional capacity
+  - 256-byte signatures — no size reduction
+  - RSA-2048 approaching end of recommended lifetime (NIST recommends RSA-3072 after 2030)
+  estimated_cost: low
+  risk: low
+  rejection_rationale: Does not address the CPU bottleneck — signing throughput remains ~1500 ops/sec. PingFederate cluster
+    would still require $120K/year in additional nodes. RSA-2048 approaching NIST end-of-life recommendation (RSA-3072 after
+    2030).
 decision:
   chosen_alternative: EdDSA with Ed25519 (RFC 8037)
-  rationale:
+  rationale: |
     - 20x signing throughput improvement directly solves PingFederate CPU bottleneck — avoids $120K/year in additional nodes
     - Deterministic signatures eliminate the nonce-reuse risk class entirely — superior to ECDSA P-256
     - 75% signature size reduction improves wire efficiency across 200+ APIs at 5000 QPS
     - 128-bit security equivalent to ECDSA P-256 without the nonce-related attack surface
-    - "Industry momentum: Ed25519 is the default in SSH, Signal, TLS 1.3, and FIDO2"
+    - Industry momentum: Ed25519 is the default in SSH, Signal, TLS 1.3, and FIDO2
     - Legacy partner compatibility maintained via dual-key JWKS (Ed25519 primary, RSA-2048 fallback)
-  tradeoffs:
+  tradeoffs: |
     - Verification is 2.5x slower than RSA-2048 — accepted because resource servers are not CPU-bound on verification
     - 3 legacy partners require RS256 fallback — dual-key JWKS maintained for 18-month transition
     - Not NIST-approved — accepted because NovaTrust has no US government compliance requirement
     - Cloud HSM Ed25519 support is newer — mitigated by vendor SLA and pre-production validation
-  decision_date: "2025-12-18"
+  decision_date: '2025-12-18'
   confidence: medium
 consequences:
   positive:
-    - PingFederate signing capacity increased 20x — cluster can handle 100K tokens/sec on current hardware
-    - Estimated $120K/year savings by avoiding additional PingFederate nodes
-    - JWS token size reduced by ~192 bytes per token (signature + key reference)
-    - Nonce-reuse vulnerability class eliminated by design
+  - PingFederate signing capacity increased 20x — cluster can handle 100K tokens/sec on current hardware
+  - Estimated $120K/year savings by avoiding additional PingFederate nodes
+  - JWS token size reduced by ~192 bytes per token (signature + key reference)
+  - Nonce-reuse vulnerability class eliminated by design
   negative:
-    - Dual-key JWKS management during 18-month RSA transition
-    - Resource server verification ~0.5ms slower per token (15K vs 40K ops/sec)
-    - SAML XML libraries at partner sites may need updating for Ed25519 support
+  - Dual-key JWKS management during 18-month RSA transition
+  - Resource server verification ~0.5ms slower per token (15K vs 40K ops/sec)
+  - SAML XML libraries at partner sites may need updating for Ed25519 support
 confirmation:
-  description: "Ed25519 signing validated in pre-production: 72-hour sustained load test at 50K ops/sec on Cloud HSM. All 12 internal resource servers verified EdDSA token consumption. Three legacy partners confirmed RS256 fallback path. PingFederate per-RP algorithm override tested."
+  description: 'Ed25519 signing validated in pre-production: 72-hour sustained load test at 50K ops/sec on Cloud HSM. All
+    12 internal resource servers verified EdDSA token consumption. Three legacy partners confirmed RS256 fallback path. PingFederate
+    per-RP algorithm override tested.'
   artifact_ids:
-    - "BENCH-ed25519-hsm-72h-load-test"
-    - "TEST-SUITE-jwt-signing-ed25519-all-rps"
-    - "https://github.com/novatrust/iam-platform/pull/198"
+  - BENCH-ed25519-hsm-72h-load-test
+  - TEST-SUITE-jwt-signing-ed25519-all-rps
+  - https://github.com/novatrust/iam-platform/pull/198
 risk_assessment:
   risks:
-    - id: R-001
-      description: Cloud HSM EdDSA implementation has a bug causing signing failures at scale
-      likelihood: low
-      impact: high
-      mitigation:
-        - "Pre-production load test: 50K signing operations per second sustained for 72 hours"
-        - "Emergency fallback: switch kid to RSA-2048 key in JWKS (< 5 minute switchover)"
-        - HSM vendor SLA with 4-hour critical incident response
-    - id: R-002
-      description: Partner relying parties cannot verify Ed25519 signatures
-      likelihood: medium
-      impact: medium
-      mitigation:
-        - "Dual-key JWKS: RS256 fallback for partners that cannot upgrade"
-        - "Per-RP algorithm override in PingFederate: specific partners get RS256 tokens"
-        - 18-month migration plan with quarterly check-ins per partner
-    - id: R-003
-      description: Future regulatory requirement mandates NIST-approved curves only
-      likelihood: low
-      impact: medium
-      mitigation:
-        - Ed25519 to P-256 migration path documented and tested
-        - Monitor NIST post-quantum cryptography standardization for Ed448/Ed25519 inclusion
-        - PingFederate supports ES256 as fallback algorithm
+  - id: R-001
+    description: Cloud HSM EdDSA implementation has a bug causing signing failures at scale
+    likelihood: low
+    impact: high
+    mitigation:
+    - 'Pre-production load test: 50K signing operations per second sustained for 72 hours'
+    - 'Emergency fallback: switch kid to RSA-2048 key in JWKS (< 5 minute switchover)'
+    - HSM vendor SLA with 4-hour critical incident response
+  - id: R-002
+    description: Partner relying parties cannot verify Ed25519 signatures
+    likelihood: medium
+    impact: medium
+    mitigation:
+    - 'Dual-key JWKS: RS256 fallback for partners that cannot upgrade'
+    - 'Per-RP algorithm override in PingFederate: specific partners get RS256 tokens'
+    - 18-month migration plan with quarterly check-ins per partner
+  - id: R-003
+    description: Future regulatory requirement mandates NIST-approved curves only
+    likelihood: low
+    impact: medium
+    mitigation:
+    - Ed25519 to P-256 migration path documented and tested
+    - Monitor NIST post-quantum cryptography standardization for Ed448/Ed25519 inclusion
+    - PingFederate supports ES256 as fallback algorithm
   residual_risk: low
 dependencies:
   internal:
-    - Cloud HSM with CKM_EDDSA support
-    - PingFederate 12.x (EdDSA signing support)
-    - All resource servers (JWT verification library updates)
+  - Cloud HSM with CKM_EDDSA support
+  - PingFederate 12.x (EdDSA signing support)
+  - All resource servers (JWT verification library updates)
   external:
-    - Cloud HSM provider (EdDSA firmware support)
-    - Partner relying parties (EdDSA verification capability)
-related_adrs:
-  - id: ADR-0001
-    title: Use DPoP over mTLS for sender-constrained access tokens
-    relationship: related
-  - id: ADR-0003
-    title: Use pairwise subject identifiers for OIDC relying parties
-    relationship: related
+  - Cloud HSM provider (EdDSA firmware support)
+  - Partner relying parties (EdDSA verification capability)
 references:
-  - title: CFRG Edwards-Curve Digital Signature Algorithm (EdDSA) — RFC 8032
-    url: https://datatracker.ietf.org/doc/html/rfc8032
-  - title: CFRG Elliptic Curves for JOSE — RFC 8037
-    url: https://datatracker.ietf.org/doc/html/rfc8037
-  - title: JSON Web Algorithms (JWA) — RFC 7518
-    url: https://datatracker.ietf.org/doc/html/rfc7518
-  - title: Ed25519 Performance Benchmarks — libsodium
-    url: https://doc.libsodium.org/public-key_cryptography/public-key_signatures
+- title: CFRG Edwards-Curve Digital Signature Algorithm (EdDSA) — RFC 8032
+  url: https://datatracker.ietf.org/doc/html/rfc8032
+- title: CFRG Elliptic Curves for JOSE — RFC 8037
+  url: https://datatracker.ietf.org/doc/html/rfc8037
+- title: JSON Web Algorithms (JWA) — RFC 7518
+  url: https://datatracker.ietf.org/doc/html/rfc7518
+- title: Ed25519 Performance Benchmarks — libsodium
+  url: https://doc.libsodium.org/public-key_cryptography/public-key_signatures
 lifecycle:
   review_cycle_months: 12
-  next_review_date: "2026-12-18"
+  next_review_date: '2026-12-18'
   superseded_by: null
   supersedes: null
   archival:
     archived_at: null
     archive_reason: null
 audit_trail:
-  - event: created
-    by: Tomasz Kowalski
-    at: "2025-11-20T09:00:00Z"
-  - event: updated
-    by: Elena Vasquez
-    at: "2025-12-05T10:00:00Z"
-    details: Added ECDSA P-256 nonce-reuse risk analysis and HSM CKM_EDDSA verification
-  - event: approved
-    by: Jonas Eriksen
-    at: "2025-12-18T14:00:00Z"
-    details: "CISO approval with condition: algorithm downgrade protection must be enforced at all resource servers"
-  - event: approved
-    by: Marcus Chen
-    at: "2025-12-19T10:00:00Z"
+- event: created
+  by: Tomasz Kowalski
+  at: '2025-11-20T09:00:00Z'
+- event: updated
+  by: Elena Vasquez
+  at: '2025-12-05T10:00:00Z'
+  details: Added ECDSA P-256 nonce-reuse risk analysis and HSM CKM_EDDSA verification
+- event: approved
+  by: Jonas Eriksen
+  at: '2025-12-18T14:00:00Z'
+  details: 'CISO approval with condition: algorithm downgrade protection must be enforced at all resource servers'
+- event: approved
+  by: Marcus Chen
+  at: '2025-12-19T10:00:00Z'

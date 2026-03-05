@@ -91,21 +91,45 @@ When reviewing, check for:
 3. **Rationale strength**: Does the rationale clearly connect to the drivers and requirements?
 4. **Risk coverage**: Are the major risks identified with realistic mitigations?
 5. **Compliance**: Are regulatory implications addressed if the decision touches data, access, or infrastructure?
-6. **Consistency**: Do `related_adrs` references point to valid ADR IDs? Does the `chosen_alternative` name match an entry in `alternatives`?
+6. **Consistency**: Does the `chosen_alternative` name match an entry in `alternatives`? Are `lifecycle.supersedes`/`superseded_by` consistent?
 7. **Audit trail**: Is the trail consistent with the status?
 8. **Rejection rationale**: For each non-chosen alternative, is `rejection_rationale` populated explaining why it was not selected?
+9. **Diagram quality**: Are embedded Mermaid diagrams used where a visual would clarify architecture or flow?
 
 ## How to supersede an ADR
 
 1. Create a new ADR (ADR-MMMM) following the standard proposal workflow.
 2. In the **new** ADR:
    - Set `lifecycle.supersedes: "ADR-NNNN"`
-   - Add a `related_adrs` entry: `{ id: "ADR-NNNN", title: "...", relationship: supersedes }`
 3. When the new ADR is accepted, **update the old ADR** in the same PR:
    - Set `adr.status: "superseded"`
    - Set `lifecycle.superseded_by: "ADR-MMMM"`
-   - Add a `related_adrs` entry: `{ id: "ADR-MMMM", title: "...", relationship: superseded_by }`
    - Add an audit trail entry: `event: "superseded"`
+
+## Markdown-native fields
+
+The following fields support **full Markdown** including embedded Mermaid diagrams via code fences:
+
+- `context.summary` — narrative problem statement; embed architecture diagrams here
+- `alternatives[].summary` — describe each option; embed comparison diagrams
+- `decision.rationale` — explain *why*; use bullet lists, headers, or diagrams
+- `decision.tradeoffs` — what was given up
+- `confirmation.description` — verification evidence
+
+Use YAML literal block scalars (`|`) for multiline content. Example:
+
+```yaml
+context:
+  summary: |
+    The system currently uses approach X.
+
+    ```mermaid
+    graph LR
+        A --> B --> C
+    ```
+
+    We need to decide between X and Y.
+```
 
 ## Reference documentation
 

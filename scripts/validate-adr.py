@@ -151,63 +151,49 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
 
 
 def validate_cross_references(all_data: dict[str, dict]):
-    """Check cross-file referential integrity.
+    """Check cross-file referential integrity via lifecycle supersession chain.
 
     Args:
         all_data: mapping of filepath → parsed YAML data
     """
     warnings = []
-    # Collect all known ADR IDs and their related_adrs
+    # Collect all known ADR IDs and their lifecycle supersession fields
     known_ids = set()
     id_to_filepath = {}
-    id_to_related = {}  # adr_id -> list of (ref_id, relationship)
+    id_to_supersedes = {}       # adr_id -> supersedes value
+    id_to_superseded_by = {}    # adr_id -> superseded_by value
     for filepath, data in all_data.items():
         if isinstance(data, dict):
             adr_id = data.get("adr", {}).get("id", "")
             if adr_id:
                 known_ids.add(adr_id)
                 id_to_filepath[adr_id] = filepath
-                related = data.get("related_adrs", [])
-                id_to_related[adr_id] = [
-                    (e.get("id", ""), e.get("relationship", ""))
-                    for e in related if isinstance(e, dict)
-                ]
+                lifecycle = data.get("lifecycle", {})
+                sup = lifecycle.get("supersedes")
+                sup_by = lifecycle.get("superseded_by")
+                if sup:
+                    id_to_supersedes[adr_id] = sup
+                if sup_by:
+                    id_to_superseded_by[adr_id] = sup_by
 
-    # Check related_adrs references exist
-    for filepath, data in all_data.items():
-        if not isinstance(data, dict):
-            continue
-        related = data.get("related_adrs", [])
-        if not related:
-            continue
-        for entry in related:
-            if isinstance(entry, dict):
-                ref_id = entry.get("id", "")
-                if ref_id and ref_id not in known_ids:
-                    warnings.append(
-                        f"  {filepath}: related_adrs references '{ref_id}' which is not found in the validated set"
-                    )
-
-    # Check bidirectional relationship symmetry
-    inverse_relationship = {
-        "supersedes": "superseded_by",
-        "superseded_by": "supersedes",
-    }
-    for adr_id, relations in id_to_related.items():
-        for ref_id, relationship in relations:
-            if relationship in inverse_relationship and ref_id in id_to_related:
-                expected_inverse = inverse_relationship[relationship]
-                partner_rels = id_to_related[ref_id]
-                has_inverse = any(
-                    r_id == adr_id and r_rel == expected_inverse
-                    for r_id, r_rel in partner_rels
+    # Check supersession symmetry: if A supersedes B, B should have superseded_by A
+    for adr_id, target_id in id_to_supersedes.items():
+        if target_id in known_ids:
+            if target_id not in id_to_superseded_by or id_to_superseded_by[target_id] != adr_id:
+                warnings.append(
+                    f"  {id_to_filepath.get(adr_id, adr_id)}: '{adr_id}' declares "
+                    f"lifecycle.supersedes '{target_id}', but '{target_id}' does not have "
+                    f"lifecycle.superseded_by '{adr_id}'"
                 )
-                if not has_inverse:
-                    warnings.append(
-                        f"  {id_to_filepath.get(adr_id, adr_id)}: '{adr_id}' declares "
-                        f"'{relationship}' to '{ref_id}', but '{ref_id}' does not have "
-                        f"matching '{expected_inverse}' back to '{adr_id}'"
-                    )
+
+    for adr_id, target_id in id_to_superseded_by.items():
+        if target_id in known_ids:
+            if target_id not in id_to_supersedes or id_to_supersedes[target_id] != adr_id:
+                warnings.append(
+                    f"  {id_to_filepath.get(adr_id, adr_id)}: '{adr_id}' declares "
+                    f"lifecycle.superseded_by '{target_id}', but '{target_id}' does not have "
+                    f"lifecycle.supersedes '{adr_id}'"
+                )
 
     return warnings
 

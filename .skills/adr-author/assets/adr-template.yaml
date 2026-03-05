@@ -89,9 +89,10 @@ alternatives:
 decision:
   chosen_alternative: "" # Must match a name in alternatives
   rationale:
-    - ""
-  tradeoffs:
-    - ""
+    | # Markdown — explain why this alternative was chosen. Supports mermaid diagrams.
+    Why this was chosen...
+  tradeoffs: | # Markdown — acknowledged tradeoffs accepted with this decision.
+    What we're giving up...
   decision_date: "" # ISO 8601 date (YYYY-MM-DD)
   confidence: "medium" # low | medium | high — low-confidence decisions get shorter review cycles
 
@@ -123,18 +124,6 @@ risk_assessment:
 dependencies:
   internal: []
   external: []
-
-# --- Optional ---
-# related_adrs:
-#   - id: "ADR-0000"
-#     title: ""
-#     relationship: "related" # supersedes | superseded_by | related | depends_on | conflicts_with
-
-# --- Optional ---
-attachments:
-  diagrams: []
-  runbooks: []
-  other: []
 
 # --- Optional ---
 references:

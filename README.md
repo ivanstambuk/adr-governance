@@ -85,9 +85,9 @@ Each ADR YAML file contains these sections:
 | `adr` | ✅ | ID, title, status, timestamps, project, tags, priority, decision type |
 | `authors` | ✅ | Who drafted the ADR |
 | `decision_owner` | ✅ | Single accountable person |
-| `context` | ✅ | Problem summary, business/technical drivers, constraints, assumptions |
-| `alternatives` | ✅ | At least 2 alternatives with pros, cons, cost, risk |
-| `decision` | ✅ | Chosen alternative, rationale, tradeoffs, date |
+| `context` | ✅ | Problem summary (**Markdown**), business/technical drivers, constraints |
+| `alternatives` | ✅ | At least 2 alternatives with summary (**Markdown**), pros, cons, cost, risk |
+| `decision` | ✅ | Chosen alternative, rationale (**Markdown**), tradeoffs (**Markdown**), date |
 | `consequences` | ✅ | Positive and negative outcomes |
 | `confirmation` | | How the decision's implementation is verified; delivery artifact IDs |
 | `reviewers` | | People who reviewed |
@@ -95,9 +95,12 @@ Each ADR YAML file contains these sections:
 | `requirements` | | Embedded functional and non-functional requirements |
 | `risk_assessment` | | Risks with likelihood, impact, mitigations |
 | `dependencies` | | Internal and external dependencies |
-| `related_adrs` | | Cross-references (navigational only) |
-| `lifecycle` | | Review cadence, supersession chain |
+| `references` | | External references, standards, evidence |
+| `lifecycle` | | Review cadence, supersession chain, archival |
 | `audit_trail` | | Immutable append-only event log |
+
+> **Markdown-native fields** support full Markdown including embedded Mermaid diagrams via code fences. Use YAML literal block scalars (`|`) for multiline content.
+
 
 ## Agent Skill
 
@@ -117,6 +120,18 @@ To create a single-file bundle of the core project (excluding examples and CI):
 ```
 
 This generates `adr-governance-bundle.md` which can be pasted into any LLM context window.
+
+## Rendering ADRs to Markdown
+
+To render ADR YAML files to polished Markdown (with Mermaid passthrough):
+
+```bash
+# Single file to stdout
+python3 scripts/render-adr.py examples/ADR-0001-*.yaml
+
+# All examples to a directory
+python3 scripts/render-adr.py --output-dir rendered/ examples/
+```
 
 ## Example ADRs
 

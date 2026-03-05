@@ -25,8 +25,8 @@
 - Non-Functional Requirement: `NF-NNN` (e.g., `NF-001`) — scoped per ADR
 - Risk: `R-NNN` (e.g., `R-001`) — scoped per ADR
 
-## ADR Relationships
-`supersedes` | `superseded_by` | `related` | `depends_on` | `conflicts_with`
+## Lifecycle Supersession
+Tracked via `lifecycle.supersedes` and `lifecycle.superseded_by` (ADR ID strings).
 
 ## Audit Trail Events
 `created` | `updated` | `reviewed` | `approved` | `rejected` | `deferred` | `superseded` | `deprecated` | `archived`

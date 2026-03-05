@@ -69,15 +69,16 @@
 | Non-Functional Requirement | `NF-NNN` | `NF-001` |
 | Risk | `R-NNN` | `R-001` |
 
-## Relationships Between ADRs
+## ADR Supersession (Lifecycle)
 
-| Relationship | Meaning |
-|--------------|---------|
-| `supersedes` | This ADR replaces the referenced ADR. |
-| `superseded_by` | This ADR has been replaced by the referenced ADR. |
-| `related` | Informational relationship; the decisions are connected but independent. |
-| `depends_on` | This ADR's validity depends on the referenced ADR remaining `accepted`. |
-| `conflicts_with` | These ADRs contain tensions that should be reviewed together. |
+Supersession is tracked via `lifecycle.supersedes` and `lifecycle.superseded_by` fields.
+
+- **`lifecycle.supersedes`** — ADR ID that this decision replaces (set on the **new** ADR).
+- **`lifecycle.superseded_by`** — ADR ID that replaces this decision (set on the **old** ADR).
+
+> Both fields must be set symmetrically when one ADR supersedes another. The validator checks this.
+
+
 
 ## Audit Trail Events
 
