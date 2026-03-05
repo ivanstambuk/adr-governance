@@ -37,8 +37,8 @@
             "properties": {
                 "id": {
                     "type": "string",
-                    "pattern": "^ADR-[0-9]{4}$",
-                    "description": "Unique identifier in ADR-NNNN format."
+                    "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)*$",
+                    "description": "Unique identifier in ADR-NNNN or ADR-NNNN-slug format."
                 },
                 "title": {
                     "type": "string",
@@ -488,7 +488,7 @@
                 "properties": {
                     "id": {
                         "type": "string",
-                        "pattern": "^ADR-[0-9]{4}$"
+                        "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)*$"
                     },
                     "title": {
                         "type": "string"
@@ -573,6 +573,7 @@
                         "string",
                         "null"
                     ],
+                    "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)*$",
                     "description": "ADR ID that supersedes this one, if any."
                 },
                 "supersedes": {
@@ -580,6 +581,7 @@
                         "string",
                         "null"
                     ],
+                    "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)*$",
                     "description": "ADR ID that this one supersedes, if any."
                 },
                 "archival": {
@@ -657,10 +659,12 @@
             "additionalProperties": false,
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                 },
                 "role": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1
                 },
                 "email": {
                     "type": "string",
