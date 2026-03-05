@@ -1,264 +1,271 @@
 adr:
   id: ADR-0006
   title: Use IdP session enrichment over custom JWE cookies for persisting step-up authentication proof
+  summary: Persist step-up authentication proof via PingFederate session enrichment and acr claims rather than custom JWE cookies, keeping all auth state in the IdP.
   status: accepted
-  created_at: '2026-02-10T08:00:00Z'
-  last_modified: '2026-02-28T14:00:00Z'
-  version: '1.0'
+  created_at: "2026-02-10T08:00:00Z"
+  last_modified: "2026-02-28T14:00:00Z"
+  version: "1.0"
   schema_version: 1.0.0
   project: Transaction Security — Step-Up Authentication
   component: Step-Up Proof Persistence Mechanism
   tags:
-  - step-up
-  - session-enrichment
-  - jwe
-  - rfc9470
-  - transaction-signing
-  - mfa
+    - step-up
+    - session-enrichment
+    - jwe
+    - rfc9470
+    - transaction-signing
+    - mfa
   priority: high
   decision_type: technology
 authors:
-- name: Elena Vasquez
-  role: IAM Architect
-  email: elena.vasquez@novatrust.example.com
-- name: Marcus Chen
-  role: Head of IAM
-  email: marcus.chen@novatrust.example.com
+  - name: Elena Vasquez
+    role: IAM Architect
+    email: elena.vasquez@novatrust.example.com
+  - name: Marcus Chen
+    role: Head of IAM
+    email: marcus.chen@novatrust.example.com
 decision_owner:
   name: Jonas Eriksen
   role: CISO
   email: jonas.eriksen@novatrust.example.com
 reviewers:
-- name: Priya Sharma
-  role: API Platform Lead
-  email: priya.sharma@novatrust.example.com
-- name: Tomasz Kowalski
-  role: Network Security Architect
-  email: tomasz.kowalski@novatrust.example.com
-- name: DPO
-  role: Data Protection Officer
-  email: dpo@novatrust.example.com
+  - name: Priya Sharma
+    role: API Platform Lead
+    email: priya.sharma@novatrust.example.com
+  - name: Tomasz Kowalski
+    role: Network Security Architect
+    email: tomasz.kowalski@novatrust.example.com
+  - name: DPO
+    role: Data Protection Officer
+    email: dpo@novatrust.example.com
 approvals:
-- name: Jonas Eriksen
-  role: CISO
-  approved_at: '2026-02-27T10:00:00Z'
-  signature_id: sig-stepup-001
-- name: Marcus Chen
-  role: Head of IAM
-  approved_at: '2026-02-28T09:00:00Z'
-  signature_id: sig-stepup-002
+  - name: Jonas Eriksen
+    role: CISO
+    approved_at: "2026-02-27T10:00:00Z"
+    signature_id: sig-stepup-001
+  - name: Marcus Chen
+    role: Head of IAM
+    approved_at: "2026-02-28T09:00:00Z"
+    signature_id: sig-stepup-002
 context:
-  summary: 'NovaTrust''s banking APIs require step-up authentication for high-value operations: wire transfers > €10K, beneficiary
+  summary:
+    "NovaTrust's banking APIs require step-up authentication for high-value operations: wire transfers > €10K, beneficiary
     management, and PSD2 dynamic linking for payment initiation. When a user triggers a high-value operation, the API gateway
     (PingAccess) challenges the user for additional authentication (biometric, FIDO2, or OTP) via RFC 9470 `insufficient_user_authentication`.
     After successful step-up, the system must persist proof that the user has completed the higher authentication level so
     that subsequent high-value requests within a time window do not re-challenge. Two patterns exist: (A) enrich the IdP session
-    (PingFederate) with the authentication level and let the access token''s `acr` claim reflect it, or (B) issue a custom
+    (PingFederate) with the authentication level and let the access token's `acr` claim reflect it, or (B) issue a custom
     JWE-encrypted cookie directly from the API gateway containing the step-up proof. This decision determines how step-up
     proof is created, stored, validated, and eventually expired.
 
-    '
+    "
   business_drivers:
-  - 'PSD2 Dynamic Linking: payment initiation requires proof of SCA with transaction binding'
-  - 'Customer friction: re-challenging for every high-value operation within a session degrades UX'
-  - Fraud team needs centralized visibility into step-up authentication events
-  - Audit trail must prove authentication level at exact time of each high-value operation
+    - "PSD2 Dynamic Linking: payment initiation requires proof of SCA with transaction binding"
+    - "Customer friction: re-challenging for every high-value operation within a session degrades UX"
+    - Fraud team needs centralized visibility into step-up authentication events
+    - Audit trail must prove authentication level at exact time of each high-value operation
   technical_drivers:
-  - PingAccess can trigger step-up via RFC 9470 `insufficient_user_authentication` error response
-  - PingFederate session supports authentication level tracking (ACR values) natively
-  - JWE cookie approach requires custom crypto key management outside the IdP
-  - Access token `acr` claim provides standards-based proof of authentication context class
-  - Session enrichment integrates with PingFederate's built-in session timeout and ACR policies
+    - PingAccess can trigger step-up via RFC 9470 `insufficient_user_authentication` error response
+    - PingFederate session supports authentication level tracking (ACR values) natively
+    - JWE cookie approach requires custom crypto key management outside the IdP
+    - Access token `acr` claim provides standards-based proof of authentication context class
+    - Session enrichment integrates with PingFederate's built-in session timeout and ACR policies
   constraints:
-  - 'Step-up proof must expire independently of the base session (max_age for high assurance: 15 minutes)'
-  - API gateway (PingAccess) is the enforcement point — must validate step-up proof before proxying
-  - Must work with the BFF pattern (ADR-0005) — SPA does not manage tokens directly
-  - PingFederate session store must handle the additional metadata without capacity issues
+    - "Step-up proof must expire independently of the base session (max_age for high assurance: 15 minutes)"
+    - API gateway (PingAccess) is the enforcement point — must validate step-up proof before proxying
+    - Must work with the BFF pattern (ADR-0005) — SPA does not manage tokens directly
+    - PingFederate session store must handle the additional metadata without capacity issues
   assumptions:
-  - PingFederate's session enrichment can store custom attributes (acr_at timestamp) per session
-  - Token refresh via BFF will acquire a new access token with updated `acr` claim
-  - PingAccess can evaluate `acr` claim in the access token for step-up enforcement
-  - 15-minute max_age for high assurance is acceptable to the fraud team
+    - PingFederate's session enrichment can store custom attributes (acr_at timestamp) per session
+    - Token refresh via BFF will acquire a new access token with updated `acr` claim
+    - PingAccess can evaluate `acr` claim in the access token for step-up enforcement
+    - 15-minute max_age for high assurance is acceptable to the fraud team
 requirements:
   functional:
-  - id: F-001
-    description: After successful step-up, access tokens must contain an acr claim reflecting the higher authentication level
-  - id: F-002
-    description: Step-up proof must expire after a configurable max_age (default 15 minutes) independent of the base session
-  - id: F-003
-    description: API gateway must reject high-value operations when acr claim does not meet the required level
-  - id: F-004
-    description: Step-up events must be logged in PingFederate audit trail with correlation to the triggering transaction
+    - id: F-001
+      description: After successful step-up, access tokens must contain an acr claim reflecting the higher authentication level
+    - id: F-002
+      description: Step-up proof must expire after a configurable max_age (default 15 minutes) independent of the base session
+    - id: F-003
+      description: API gateway must reject high-value operations when acr claim does not meet the required level
+    - id: F-004
+      description: Step-up events must be logged in PingFederate audit trail with correlation to the triggering transaction
   non_functional:
-  - id: NF-001
-    description: Step-up challenge-to-proof latency < 2 seconds (including MFA verification)
-  - id: NF-002
-    description: Token refresh with enriched session must complete in < 500ms
-  - id: NF-003
-    description: No additional cookies or local storage beyond the existing BFF session cookie
+    - id: NF-001
+      description: Step-up challenge-to-proof latency < 2 seconds (including MFA verification)
+    - id: NF-002
+      description: Token refresh with enriched session must complete in < 500ms
+    - id: NF-003
+      description: No additional cookies or local storage beyond the existing BFF session cookie
 alternatives:
-- name: IdP session enrichment (Approach A)
-  summary: 'After successful step-up MFA, PingFederate enriches the user''s IdP session with the achieved authentication context
-    class (e.g., `urn:novatrust:acr:high`) and the timestamp of the step-up event. On the next token refresh, the BFF obtains
-    a new access token whose `acr` claim reflects the elevated level. PingAccess validates the `acr` claim and `auth_time`
-    to enforce max_age. When max_age expires, the next high-value request triggers a new step-up challenge.
+  - name: IdP session enrichment (Approach A)
+    summary:
+      "After successful step-up MFA, PingFederate enriches the user's IdP session with the achieved authentication context
+      class (e.g., `urn:novatrust:acr:high`) and the timestamp of the step-up event. On the next token refresh, the BFF obtains
+      a new access token whose `acr` claim reflects the elevated level. PingAccess validates the `acr` claim and `auth_time`
+      to enforce max_age. When max_age expires, the next high-value request triggers a new step-up challenge.
 
-    '
-  pros:
-  - 'Standards-based: acr claim in access token is defined by OIDC Core §2'
-  - 'Centralized at the IdP: all step-up state managed by PingFederate — single source of truth'
-  - 'No custom crypto: no need to generate, encrypt, or manage JWE keys outside the IdP'
-  - 'Audit trail: PingFederate logs step-up events with session correlation — fraud team has visibility'
-  - 'max_age enforcement: PingFederate natively supports `max_age` parameter on authorize requests'
-  - Token refresh via BFF acquires updated acr — no custom token issuance logic
-  - Integrates with existing PingAccess token validation — acr claim check is a configuration change
-  cons:
-  - Requires a token refresh after step-up to get updated acr claim — brief delay (~300ms)
-  - Step-up state is tied to the IdP session — if session is lost, step-up proof is lost
-  - PingFederate session store must accommodate additional attributes per session
-  - 'Multi-region: session enrichment must replicate across PingFederate cluster nodes'
-  estimated_cost: low
-  risk: low
-- name: Custom JWE cookie (Approach B)
-  summary: 'After successful step-up MFA, the API gateway (PingAccess) issues a JWE-encrypted cookie containing the step-up
-    proof: authentication level, timestamp, and transaction reference. PingAccess validates the JWE cookie on subsequent requests
-    to high-value endpoints. The cookie has a short Max-Age (15 minutes) for expiry.
+      "
+    pros:
+      - "Standards-based: acr claim in access token is defined by OIDC Core §2"
+      - "Centralized at the IdP: all step-up state managed by PingFederate — single source of truth"
+      - "No custom crypto: no need to generate, encrypt, or manage JWE keys outside the IdP"
+      - "Audit trail: PingFederate logs step-up events with session correlation — fraud team has visibility"
+      - "max_age enforcement: PingFederate natively supports `max_age` parameter on authorize requests"
+      - Token refresh via BFF acquires updated acr — no custom token issuance logic
+      - Integrates with existing PingAccess token validation — acr claim check is a configuration change
+    cons:
+      - Requires a token refresh after step-up to get updated acr claim — brief delay (~300ms)
+      - Step-up state is tied to the IdP session — if session is lost, step-up proof is lost
+      - PingFederate session store must accommodate additional attributes per session
+      - "Multi-region: session enrichment must replicate across PingFederate cluster nodes"
+    estimated_cost: low
+    risk: low
+  - name: Custom JWE cookie (Approach B)
+    summary:
+      "After successful step-up MFA, the API gateway (PingAccess) issues a JWE-encrypted cookie containing the step-up
+      proof: authentication level, timestamp, and transaction reference. PingAccess validates the JWE cookie on subsequent requests
+      to high-value endpoints. The cookie has a short Max-Age (15 minutes) for expiry.
 
-    '
-  pros:
-  - No IdP session dependency — step-up proof is self-contained in the cookie
-  - No token refresh delay — cookie is issued immediately after step-up
-  - Works even if PingFederate session is lost or rotated
-  - Gateway controls the full lifecycle — no IdP configuration changes needed
-  cons:
-  - 'Custom crypto required: JWE key generation, rotation, and sharing across PingAccess nodes'
-  - Cookie is an additional credential — increases the attack surface
-  - JWE key management is outside PingFederate — not governed by IdP key lifecycle policies
-  - 'No centralized audit: step-up events logged at the gateway, not the IdP — fragmented audit trail'
-  - 'Non-standard: no IETF or OIDC specification for gateway-issued step-up cookies'
-  - 'CSRF protection: additional cookie requires careful SameSite configuration'
-  - Cookie encryption key compromise allows forging step-up proofs — critical risk
-  - Must implement custom max_age logic — PingAccess does not natively track cookie-based auth levels
-  estimated_cost: high
-  risk: medium
-- name: 'Hybrid: enriched session with JWE fallback for session loss'
-  summary: 'Primary path uses IdP session enrichment (Approach A). Additionally, the BFF issues a JWE-encrypted cookie as
-    a fallback in case the PingFederate session is lost. PingAccess checks acr claim first, then falls back to JWE cookie.
+      "
+    pros:
+      - No IdP session dependency — step-up proof is self-contained in the cookie
+      - No token refresh delay — cookie is issued immediately after step-up
+      - Works even if PingFederate session is lost or rotated
+      - Gateway controls the full lifecycle — no IdP configuration changes needed
+    cons:
+      - "Custom crypto required: JWE key generation, rotation, and sharing across PingAccess nodes"
+      - Cookie is an additional credential — increases the attack surface
+      - JWE key management is outside PingFederate — not governed by IdP key lifecycle policies
+      - "No centralized audit: step-up events logged at the gateway, not the IdP — fragmented audit trail"
+      - "Non-standard: no IETF or OIDC specification for gateway-issued step-up cookies"
+      - "CSRF protection: additional cookie requires careful SameSite configuration"
+      - Cookie encryption key compromise allows forging step-up proofs — critical risk
+      - Must implement custom max_age logic — PingAccess does not natively track cookie-based auth levels
+    estimated_cost: high
+    risk: medium
+    rejection_rationale: Requires custom JWE key management outside the IdP — key compromise allows forging step-up proofs. Non-standard approach with no IETF or OIDC specification. Fragmented audit trail (gateway vs IdP) hinders fraud investigation.
+  - name: "Hybrid: enriched session with JWE fallback for session loss"
+    summary:
+      "Primary path uses IdP session enrichment (Approach A). Additionally, the BFF issues a JWE-encrypted cookie as
+      a fallback in case the PingFederate session is lost. PingAccess checks acr claim first, then falls back to JWE cookie.
 
-    '
-  pros:
-  - Resilient to PingFederate session loss
-  - Standards-based primary path with fallback safety net
-  cons:
-  - All cons of both approaches combined
-  - 'Two validation paths at PingAccess: acr claim check + JWE cookie check'
-  - JWE cookie fallback may mask session management issues instead of surfacing them
-  - 'Double the key management overhead: IdP signing keys + JWE encryption keys'
-  - Testing matrix is doubled — must validate both paths independently
-  - 'Operational complexity: which path was used? Debugging requires checking both'
-  estimated_cost: high
-  risk: medium
+      "
+    pros:
+      - Resilient to PingFederate session loss
+      - Standards-based primary path with fallback safety net
+    cons:
+      - All cons of both approaches combined
+      - "Two validation paths at PingAccess: acr claim check + JWE cookie check"
+      - JWE cookie fallback may mask session management issues instead of surfacing them
+      - "Double the key management overhead: IdP signing keys + JWE encryption keys"
+      - Testing matrix is doubled — must validate both paths independently
+      - "Operational complexity: which path was used? Debugging requires checking both"
+    estimated_cost: high
+    risk: medium
+    rejection_rationale: Combines the complexity of both approaches without clear benefit. Two validation paths double the testing matrix. JWE cookie fallback may mask session management issues rather than surfacing them for resolution.
 decision:
   chosen_alternative: IdP session enrichment (Approach A)
   rationale:
-  - 'Standards-based: acr claim and max_age are OIDC Core primitives — no custom protocol needed'
-  - 'Single source of truth: PingFederate manages all authentication state — no parallel state outside IdP'
-  - 'No custom crypto: eliminates JWE key management, rotation, and the risk of key compromise'
-  - 'Centralized audit: PingFederate logs all step-up events with session IDs — fraud team query a single system'
-  - 'PingAccess policy configuration: ''require acr=urn:novatrust:acr:high with max_age=900 for /api/payments/** '' — declarative,
-    not custom code'
-  - Token refresh delay (~300ms) is acceptable — BFF handles refresh transparently before proxying the request
-  - Session replication across PingFederate cluster is already operational for base session — marginal additional load
+    - "Standards-based: acr claim and max_age are OIDC Core primitives — no custom protocol needed"
+    - "Single source of truth: PingFederate manages all authentication state — no parallel state outside IdP"
+    - "No custom crypto: eliminates JWE key management, rotation, and the risk of key compromise"
+    - "Centralized audit: PingFederate logs all step-up events with session IDs — fraud team query a single system"
+    - "PingAccess policy configuration: 'require acr=urn:novatrust:acr:high with max_age=900 for /api/payments/** ' — declarative,
+      not custom code"
+    - Token refresh delay (~300ms) is acceptable — BFF handles refresh transparently before proxying the request
+    - Session replication across PingFederate cluster is already operational for base session — marginal additional load
   tradeoffs:
-  - Token refresh round-trip adds ~300ms after step-up — user sees brief delay before high-value operation proceeds
-  - PingFederate session loss requires re-authentication including step-up — accepted as correct security behavior
-  - Session store grows by ~100 bytes per enriched session — negligible at current scale (100K active sessions)
-  - 'Multi-data-center: session replication lag (< 500ms) may cause brief inconsistency after step-up in cross-DC scenario'
-  decision_date: '2026-02-27'
+    - Token refresh round-trip adds ~300ms after step-up — user sees brief delay before high-value operation proceeds
+    - PingFederate session loss requires re-authentication including step-up — accepted as correct security behavior
+    - Session store grows by ~100 bytes per enriched session — negligible at current scale (100K active sessions)
+    - "Multi-data-center: session replication lag (< 500ms) may cause brief inconsistency after step-up in cross-DC scenario"
+  decision_date: "2026-02-27"
 consequences:
   positive:
-  - No custom cryptographic material to manage — step-up proof lifecycle governed by IdP
-  - 'PSD2 dynamic linking: acr claim provides auditable proof of SCA at transaction time'
-  - Fraud team has single query point (PingFederate audit logs) for all step-up events
-  - 'PingAccess enforcement is declarative: ACR + max_age policy per URL pattern'
+    - No custom cryptographic material to manage — step-up proof lifecycle governed by IdP
+    - "PSD2 dynamic linking: acr claim provides auditable proof of SCA at transaction time"
+    - Fraud team has single query point (PingFederate audit logs) for all step-up events
+    - "PingAccess enforcement is declarative: ACR + max_age policy per URL pattern"
   negative:
-  - ~300ms token refresh delay after step-up MFA
-  - Session loss requires full re-authentication including step-up
-  - PingFederate session store carries additional enrichment attributes
+    - ~300ms token refresh delay after step-up MFA
+    - Session loss requires full re-authentication including step-up
+    - PingFederate session store carries additional enrichment attributes
 risk_assessment:
   risks:
-  - id: R-001
-    description: PingFederate session replication lag causes step-up proof not visible on other cluster nodes
-    likelihood: low
-    impact: medium
-    mitigation:
-    - PingFederate session affinity via PingAccess (sticky sessions to origin node)
-    - Session replication verified < 500ms in load testing
-    - User retry (re-submit transaction) resolves transient replication lag
-  - id: R-002
-    description: Token refresh storm after mass step-up events (e.g., batch payment processing)
-    likelihood: low
-    impact: medium
-    mitigation:
-    - BFF rate-limits token refresh requests with exponential backoff
-    - PingFederate token endpoint capacity tested at 10K refreshes/sec
-    - Batch payments use service-account tokens — not subject to user step-up flow
-  - id: R-003
-    description: max_age too short (15 min) causes excessive re-challenges for legitimate multi-step workflows
-    likelihood: medium
-    impact: low
-    mitigation:
-    - 'Workflow-aware max_age: payment wizard operations share a single step-up window'
-    - max_age configurable per URL pattern — administrative workflows can have 30-minute window
-    - UX research validates 15-minute window is acceptable for 95% of user journeys
+    - id: R-001
+      description: PingFederate session replication lag causes step-up proof not visible on other cluster nodes
+      likelihood: low
+      impact: medium
+      mitigation:
+        - PingFederate session affinity via PingAccess (sticky sessions to origin node)
+        - Session replication verified < 500ms in load testing
+        - User retry (re-submit transaction) resolves transient replication lag
+    - id: R-002
+      description: Token refresh storm after mass step-up events (e.g., batch payment processing)
+      likelihood: low
+      impact: medium
+      mitigation:
+        - BFF rate-limits token refresh requests with exponential backoff
+        - PingFederate token endpoint capacity tested at 10K refreshes/sec
+        - Batch payments use service-account tokens — not subject to user step-up flow
+    - id: R-003
+      description: max_age too short (15 min) causes excessive re-challenges for legitimate multi-step workflows
+      likelihood: medium
+      impact: low
+      mitigation:
+        - "Workflow-aware max_age: payment wizard operations share a single step-up window"
+        - max_age configurable per URL pattern — administrative workflows can have 30-minute window
+        - UX research validates 15-minute window is acceptable for 95% of user journeys
   residual_risk: low
 dependencies:
   internal:
-  - PingFederate 12.x (session enrichment, acr claim issuance)
-  - PingAccess 8.x (ACR policy enforcement)
-  - BFF (ADR-0005) for step-up challenge mediation
-  - MFA provider (FIDO2 / biometric / OTP)
+    - PingFederate 12.x (session enrichment, acr claim issuance)
+    - PingAccess 8.x (ACR policy enforcement)
+    - BFF (ADR-0005) for step-up challenge mediation
+    - MFA provider (FIDO2 / biometric / OTP)
   external:
-  - None — all components are internal
+    - None — all components are internal
 related_adrs:
-- id: ADR-0001
-  title: Use DPoP over mTLS for sender-constrained access tokens
-  relationship: related
-- id: ADR-0002
-  title: Use reference tokens for API gateway introspection
-  relationship: related
-- id: ADR-0005
-  title: Use Backend-for-Frontend token mediator for SPA token acquisition
-  relationship: depends_on
+  - id: ADR-0001
+    title: Use DPoP over mTLS for sender-constrained access tokens
+    relationship: related
+  - id: ADR-0002
+    title: Use reference tokens for API gateway introspection
+    relationship: related
+  - id: ADR-0005
+    title: Use Backend-for-Frontend token mediator for SPA token acquisition
+    relationship: depends_on
 references:
-- title: OAuth 2.0 Step-Up Authentication Challenge Protocol — RFC 9470
-  url: https://datatracker.ietf.org/doc/html/rfc9470
-- title: OpenID Connect Core 1.0 — §2 acr Claim
-  url: https://openid.net/specs/openid-connect-core-1_0.html#IDToken
-- title: PSD2 RTS on Strong Customer Authentication — EBA
-  url: https://www.eba.europa.eu/regulation-and-policy/payment-services-and-electronic-money/regulatory-technical-standards-on-strong-customer-authentication-and-common-and-secure-communication
-- title: PingFederate Session Management Documentation
-  url: https://docs.pingidentity.com/pingfederate/latest/session-management.html
+  - title: OAuth 2.0 Step-Up Authentication Challenge Protocol — RFC 9470
+    url: https://datatracker.ietf.org/doc/html/rfc9470
+  - title: OpenID Connect Core 1.0 — §2 acr Claim
+    url: https://openid.net/specs/openid-connect-core-1_0.html#IDToken
+  - title: PSD2 RTS on Strong Customer Authentication — EBA
+    url: https://www.eba.europa.eu/regulation-and-policy/payment-services-and-electronic-money/regulatory-technical-standards-on-strong-customer-authentication-and-common-and-secure-communication
+  - title: PingFederate Session Management Documentation
+    url: https://docs.pingidentity.com/pingfederate/latest/session-management.html
 lifecycle:
   review_cycle_months: 6
-  next_review_date: '2026-08-27'
+  next_review_date: "2026-08-27"
   superseded_by: null
   supersedes: null
   archival:
     archived_at: null
     archive_reason: null
 audit_trail:
-- event: created
-  by: Elena Vasquez
-  at: '2026-02-10T08:00:00Z'
-- event: updated
-  by: Marcus Chen
-  at: '2026-02-20T11:00:00Z'
-  details: Added hybrid approach analysis and PSD2 dynamic linking requirements
-- event: approved
-  by: Jonas Eriksen
-  at: '2026-02-27T10:00:00Z'
-  details: 'CISO approval with condition: max_age must be 15 minutes maximum for payment endpoints'
-- event: approved
-  by: Marcus Chen
-  at: '2026-02-28T09:00:00Z'
+  - event: created
+    by: Elena Vasquez
+    at: "2026-02-10T08:00:00Z"
+  - event: updated
+    by: Marcus Chen
+    at: "2026-02-20T11:00:00Z"
+    details: Added hybrid approach analysis and PSD2 dynamic linking requirements
+  - event: approved
+    by: Jonas Eriksen
+    at: "2026-02-27T10:00:00Z"
+    details: "CISO approval with condition: max_age must be 15 minutes maximum for payment endpoints"
+  - event: approved
+    by: Marcus Chen
+    at: "2026-02-28T09:00:00Z"

@@ -1,245 +1,252 @@
 adr:
   id: ADR-0003
   title: Use pairwise pseudonymous subject identifiers over public subject identifiers for OIDC relying parties
+  summary: Switch from public to pairwise pseudonymous subject identifiers (PPID) to prevent cross-RP user correlation, satisfying GDPR data minimization and eIDAS 2.0 unlinkability.
   status: accepted
-  created_at: '2025-11-01T08:00:00Z'
-  last_modified: '2025-12-15T11:00:00Z'
-  version: '1.0'
+  created_at: "2025-11-01T08:00:00Z"
+  last_modified: "2025-12-15T11:00:00Z"
+  version: "1.0"
   schema_version: 1.0.0
   project: Enterprise IdP — OIDC Claim Strategy
   component: Subject Identifier Type
   tags:
-  - oidc
-  - pairwise-sub
-  - privacy
-  - gdpr
-  - claim-strategy
-  - pseudonymization
+    - oidc
+    - pairwise-sub
+    - privacy
+    - gdpr
+    - claim-strategy
+    - pseudonymization
   priority: high
   decision_type: security
 authors:
-- name: Elena Vasquez
-  role: IAM Architect
-  email: elena.vasquez@novatrust.example.com
-- name: Aisha Mbeki
-  role: Privacy Engineer
-  email: aisha.mbeki@novatrust.example.com
+  - name: Elena Vasquez
+    role: IAM Architect
+    email: elena.vasquez@novatrust.example.com
+  - name: Aisha Mbeki
+    role: Privacy Engineer
+    email: aisha.mbeki@novatrust.example.com
 decision_owner:
   name: Marcus Chen
   role: Head of Identity and Access Management
   email: marcus.chen@novatrust.example.com
 reviewers:
-- name: Jonas Eriksen
-  role: CISO
-  email: jonas.eriksen@novatrust.example.com
-- name: DPO
-  role: Data Protection Officer
-  email: dpo@novatrust.example.com
-- name: Priya Sharma
-  role: API Platform Lead
-  email: priya.sharma@novatrust.example.com
+  - name: Jonas Eriksen
+    role: CISO
+    email: jonas.eriksen@novatrust.example.com
+  - name: DPO
+    role: Data Protection Officer
+    email: dpo@novatrust.example.com
+  - name: Priya Sharma
+    role: API Platform Lead
+    email: priya.sharma@novatrust.example.com
 approvals:
-- name: Marcus Chen
-  role: Head of IAM
-  approved_at: '2025-12-10T09:00:00Z'
-  signature_id: sig-ppid-001
-- name: DPO
-  role: Data Protection Officer
-  approved_at: '2025-12-14T11:00:00Z'
-  signature_id: sig-ppid-002
+  - name: Marcus Chen
+    role: Head of IAM
+    approved_at: "2025-12-10T09:00:00Z"
+    signature_id: sig-ppid-001
+  - name: DPO
+    role: Data Protection Officer
+    approved_at: "2025-12-14T11:00:00Z"
+    signature_id: sig-ppid-002
 context:
-  summary: 'NovaTrust''s PingFederate IdP issues OIDC ID tokens with a `sub` claim to all relying parties (RPs). The OIDC
+  summary:
+    "NovaTrust's PingFederate IdP issues OIDC ID tokens with a `sub` claim to all relying parties (RPs). The OIDC
     Core specification (§8) defines two subject identifier types: `public` (same `sub` value for a user across all RPs) and
-    `pairwise` (unique pseudonymous `sub` per RP). Currently, all RPs receive the same public `sub` — the user''s internal
+    `pairwise` (unique pseudonymous `sub` per RP). Currently, all RPs receive the same public `sub` — the user's internal
     UUID. This allows any two colluding RPs to correlate users across services. With 35+ internal RPs, 15 partner bank RPs,
     and upcoming EUDI Wallet relying party integrations, the GDPR data minimization principle and eIDAS 2.0 unlinkability
     requirements demand that we prevent cross-RP user correlation unless explicitly authorized.
 
-    '
+    "
   business_drivers:
-  - GDPR Article 5(1)(c) data minimization — relying parties receive more identifying data than necessary
-  - eIDAS 2.0 / EUDI Wallet unlinkability requirement — wallet RPs must not correlate users across verifiers
-  - 'Dutch DPA (Autoriteit Persoonsgegevens) audit finding: cross-RP correlation risk rated ''high'''
-  - Partner bank RPs have contractual data silo obligations — public sub violates data partitioning agreements
+    - GDPR Article 5(1)(c) data minimization — relying parties receive more identifying data than necessary
+    - eIDAS 2.0 / EUDI Wallet unlinkability requirement — wallet RPs must not correlate users across verifiers
+    - "Dutch DPA (Autoriteit Persoonsgegevens) audit finding: cross-RP correlation risk rated 'high'"
+    - Partner bank RPs have contractual data silo obligations — public sub violates data partitioning agreements
   technical_drivers:
-  - Public sub (internal UUID) leaks user identity to all RPs regardless of consent
-  - Cross-RP correlation is trivially possible when all RPs share the same sub value
-  - PingFederate supports pairwise sub natively via sector identifier and salt-based PPID generation
-  - OIDC Core §8 pairwise algorithm is deterministic — same user always gets same sub for same RP
+    - Public sub (internal UUID) leaks user identity to all RPs regardless of consent
+    - Cross-RP correlation is trivially possible when all RPs share the same sub value
+    - PingFederate supports pairwise sub natively via sector identifier and salt-based PPID generation
+    - OIDC Core §8 pairwise algorithm is deterministic — same user always gets same sub for same RP
   constraints:
-  - Internal workforce SSO RPs may need public sub for identity correlation (HR, payroll, helpdesk)
-  - PingFederate must support both public and pairwise simultaneously per RP registration
-  - Migration must not break existing RP user databases that key on the current public sub
-  - Pairwise sub must be deterministic — user gets same sub for same RP across sessions
+    - Internal workforce SSO RPs may need public sub for identity correlation (HR, payroll, helpdesk)
+    - PingFederate must support both public and pairwise simultaneously per RP registration
+    - Migration must not break existing RP user databases that key on the current public sub
+    - Pairwise sub must be deterministic — user gets same sub for same RP across sessions
   assumptions:
-  - PingFederate's PPID implementation uses HMAC-SHA256(sector_id + user_id + salt) — collision-resistant
-  - RPs can re-key their user databases from public sub to pairwise sub with a one-time migration
-  - Internal workforce RPs can be grouped in a shared sector identifier to maintain correlation within the sector
+    - PingFederate's PPID implementation uses HMAC-SHA256(sector_id + user_id + salt) — collision-resistant
+    - RPs can re-key their user databases from public sub to pairwise sub with a one-time migration
+    - Internal workforce RPs can be grouped in a shared sector identifier to maintain correlation within the sector
 requirements:
   functional:
-  - id: F-001
-    description: All external and partner RPs must receive pairwise pseudonymous sub values
-  - id: F-002
-    description: Internal workforce RPs grouped by sector identifier may receive shared sub within their sector
-  - id: F-003
-    description: The same user must receive the same pairwise sub for the same RP across all sessions (deterministic)
+    - id: F-001
+      description: All external and partner RPs must receive pairwise pseudonymous sub values
+    - id: F-002
+      description: Internal workforce RPs grouped by sector identifier may receive shared sub within their sector
+    - id: F-003
+      description: The same user must receive the same pairwise sub for the same RP across all sessions (deterministic)
   non_functional:
-  - id: NF-001
-    description: PPID generation must add < 1ms to token issuance latency
-  - id: NF-002
-    description: Pairwise sub must be a 128-bit hex string (32 characters) — no PII derivable from the value
-  - id: NF-003
-    description: PPID salt must be stored in HSM and never exposed to application layer
+    - id: NF-001
+      description: PPID generation must add < 1ms to token issuance latency
+    - id: NF-002
+      description: Pairwise sub must be a 128-bit hex string (32 characters) — no PII derivable from the value
+    - id: NF-003
+      description: PPID salt must be stored in HSM and never exposed to application layer
 alternatives:
-- name: Pairwise pseudonymous subject identifiers (PPID)
-  summary: 'PingFederate generates a unique `sub` per RP using HMAC-SHA256(sector_id + user_id + salt). External and partner
-    RPs each receive a distinct, unlinkable identifier. Internal workforce RPs share a sector identifier so HR, payroll, and
-    helpdesk can still correlate users within their sector.
+  - name: Pairwise pseudonymous subject identifiers (PPID)
+    summary:
+      "PingFederate generates a unique `sub` per RP using HMAC-SHA256(sector_id + user_id + salt). External and partner
+      RPs each receive a distinct, unlinkable identifier. Internal workforce RPs share a sector identifier so HR, payroll, and
+      helpdesk can still correlate users within their sector.
 
-    '
-  pros:
-  - Prevents cross-RP user correlation — two partner RPs cannot link the same user
-  - 'GDPR data minimization: sub value is pseudonymous — no PII derivable'
-  - 'eIDAS 2.0 unlinkability: satisfies wallet RP requirements for credential presentation'
-  - 'Deterministic: same user always gets same sub for same RP — no session-to-session drift'
-  - Sector grouping allows controlled correlation for legitimate business needs (workforce apps)
-  - PingFederate native support — no custom code required
-  cons:
-  - 'Migration effort: existing RPs must re-key user databases from public sub to pairwise sub'
-  - Account linking across RPs becomes impossible without explicit user consent and IdP mediation
-  - 'Debugging and support: ''which user is sub abc123?'' requires IdP lookup — not human-readable'
-  - PPID salt is a critical secret — compromise allows pre-computation of all pairwise values
-  - Sector identifier assignment requires governance — incorrect grouping defeats purpose
-  estimated_cost: medium
-  risk: low
-- name: Public subject identifiers with contractual controls
-  summary: 'Continue using the user''s internal UUID as the public sub for all RPs, but enforce cross-RP correlation restrictions
-    via contractual agreements and API usage auditing.
+      "
+    pros:
+      - Prevents cross-RP user correlation — two partner RPs cannot link the same user
+      - "GDPR data minimization: sub value is pseudonymous — no PII derivable"
+      - "eIDAS 2.0 unlinkability: satisfies wallet RP requirements for credential presentation"
+      - "Deterministic: same user always gets same sub for same RP — no session-to-session drift"
+      - Sector grouping allows controlled correlation for legitimate business needs (workforce apps)
+      - PingFederate native support — no custom code required
+    cons:
+      - "Migration effort: existing RPs must re-key user databases from public sub to pairwise sub"
+      - Account linking across RPs becomes impossible without explicit user consent and IdP mediation
+      - "Debugging and support: 'which user is sub abc123?' requires IdP lookup — not human-readable"
+      - PPID salt is a critical secret — compromise allows pre-computation of all pairwise values
+      - Sector identifier assignment requires governance — incorrect grouping defeats purpose
+    estimated_cost: medium
+    risk: low
+  - name: Public subject identifiers with contractual controls
+    summary:
+      "Continue using the user's internal UUID as the public sub for all RPs, but enforce cross-RP correlation restrictions
+      via contractual agreements and API usage auditing.
 
-    '
-  pros:
-  - No migration effort — RPs continue using existing sub values
-  - Simple debugging — sub is the user's UUID, directly queryable
-  - Account linking across RPs is straightforward
-  cons:
-  - Cross-RP correlation is trivially possible despite contractual prohibitions
-  - Contracts are not enforced technically — a colluding partner can correlate silently
-  - 'GDPR data minimization violation: providing full UUID when a pseudonym suffices'
-  - Dutch DPA explicitly flagged this as high-risk in their 2025 audit
-  - eIDAS 2.0 unlinkability requirement cannot be met with public identifiers
-  - API auditing detects correlation after the fact, not preventing it
-  estimated_cost: low
-  risk: high
-- name: Encrypted subject identifiers (JWE-wrapped sub)
-  summary: 'Issue the sub as a JWE-encrypted blob per RP, where only the RP can decrypt its own sub. Different encryption
-    keys per RP prevent cross-RP correlation.
+      "
+    pros:
+      - No migration effort — RPs continue using existing sub values
+      - Simple debugging — sub is the user's UUID, directly queryable
+      - Account linking across RPs is straightforward
+    cons:
+      - Cross-RP correlation is trivially possible despite contractual prohibitions
+      - Contracts are not enforced technically — a colluding partner can correlate silently
+      - "GDPR data minimization violation: providing full UUID when a pseudonym suffices"
+      - Dutch DPA explicitly flagged this as high-risk in their 2025 audit
+      - eIDAS 2.0 unlinkability requirement cannot be met with public identifiers
+      - API auditing detects correlation after the fact, not preventing it
+    estimated_cost: low
+    risk: high
+    rejection_rationale: Cross-RP correlation is trivially possible despite contractual controls. Dutch DPA explicitly flagged this as high-risk. eIDAS 2.0 unlinkability cannot be met with public identifiers. Contracts are not technically enforceable.
+  - name: Encrypted subject identifiers (JWE-wrapped sub)
+    summary:
+      "Issue the sub as a JWE-encrypted blob per RP, where only the RP can decrypt its own sub. Different encryption
+      keys per RP prevent cross-RP correlation.
 
-    '
-  pros:
-  - Prevents cross-RP correlation via encryption rather than pseudonymization
-  - RP-specific decryption keys provide cryptographic isolation
-  cons:
-  - 'Non-standard: OIDC Core does not define encrypted sub — breaks spec compliance'
-  - RP must manage decryption keys and decrypt sub on every token receipt
-  - 'Significantly larger sub values (JWE overhead: ~200 bytes vs 32-byte PPID)'
-  - Key rotation for JWE-encrypted subs requires coordinated rollover with every RP
-  - PingFederate does not support this natively — requires custom plugin development
-  - Debugging is harder than PPID — sub is opaque even to the IdP without RP key
-  estimated_cost: high
-  risk: high
+      "
+    pros:
+      - Prevents cross-RP correlation via encryption rather than pseudonymization
+      - RP-specific decryption keys provide cryptographic isolation
+    cons:
+      - "Non-standard: OIDC Core does not define encrypted sub — breaks spec compliance"
+      - RP must manage decryption keys and decrypt sub on every token receipt
+      - "Significantly larger sub values (JWE overhead: ~200 bytes vs 32-byte PPID)"
+      - Key rotation for JWE-encrypted subs requires coordinated rollover with every RP
+      - PingFederate does not support this natively — requires custom plugin development
+      - Debugging is harder than PPID — sub is opaque even to the IdP without RP key
+    estimated_cost: high
+    risk: high
+    rejection_rationale: Non-standard — OIDC Core does not define encrypted sub, breaking spec compliance. JWE overhead makes sub ~200 bytes vs 32-byte PPID. PingFederate does not support this natively, requiring custom plugin development and per-RP key management.
 decision:
   chosen_alternative: Pairwise pseudonymous subject identifiers (PPID)
   rationale:
-  - 'Standards-compliant: OIDC Core §8 defines pairwise as a first-class subject identifier type'
-  - Dutch DPA audit finding directly addressed — cross-RP correlation eliminated by design
-  - eIDAS 2.0 unlinkability requirement met for upcoming EUDI Wallet RP integrations
-  - PingFederate native support eliminates custom development — configuration-only change
-  - Sector grouping provides pragmatic exception for internal workforce RPs that legitimately need correlation
-  - HMAC-SHA256 PPID generation is deterministic and collision-resistant — no session-to-session drift
+    - "Standards-compliant: OIDC Core §8 defines pairwise as a first-class subject identifier type"
+    - Dutch DPA audit finding directly addressed — cross-RP correlation eliminated by design
+    - eIDAS 2.0 unlinkability requirement met for upcoming EUDI Wallet RP integrations
+    - PingFederate native support eliminates custom development — configuration-only change
+    - Sector grouping provides pragmatic exception for internal workforce RPs that legitimately need correlation
+    - HMAC-SHA256 PPID generation is deterministic and collision-resistant — no session-to-session drift
   tradeoffs:
-  - 'One-time migration: 35+ internal RPs and 15 partner RPs must re-key user databases'
-  - Support team loses ability to look up user by sub without IdP reverse-lookup tool
-  - Cross-RP account linking requires explicit consent flow — cannot be done silently
-  - PPID salt in HSM adds dependency on HSM availability for token issuance
-  decision_date: '2025-12-10'
+    - "One-time migration: 35+ internal RPs and 15 partner RPs must re-key user databases"
+    - Support team loses ability to look up user by sub without IdP reverse-lookup tool
+    - Cross-RP account linking requires explicit consent flow — cannot be done silently
+    - PPID salt in HSM adds dependency on HSM availability for token issuance
+  decision_date: "2025-12-10"
 consequences:
   positive:
-  - Cross-RP user correlation eliminated for all external and partner RPs
-  - 'GDPR data minimization: sub values are pseudonymous with no derivable PII'
-  - 'eIDAS 2.0 readiness: pairwise sub satisfies unlinkability for wallet credential presentation'
-  - Dutch DPA audit finding resolved — risk downgraded from 'high' to 'low'
+    - Cross-RP user correlation eliminated for all external and partner RPs
+    - "GDPR data minimization: sub values are pseudonymous with no derivable PII"
+    - "eIDAS 2.0 readiness: pairwise sub satisfies unlinkability for wallet credential presentation"
+    - Dutch DPA audit finding resolved — risk downgraded from 'high' to 'low'
   negative:
-  - 3-month migration project for RP user database re-keying
-  - Support team requires new tooling for user-to-sub reverse lookup
-  - PPID salt in HSM creates an additional HSM dependency for token issuance
+    - 3-month migration project for RP user database re-keying
+    - Support team requires new tooling for user-to-sub reverse lookup
+    - PPID salt in HSM creates an additional HSM dependency for token issuance
 risk_assessment:
   risks:
-  - id: R-001
-    description: PPID salt compromised — attacker can pre-compute all pairwise sub values
-    likelihood: low
-    impact: high
-    mitigation:
-    - Salt stored exclusively in HSM — never in configuration files or environment variables
-    - HSM access restricted to PingFederate service account via PKCS#11
-    - Salt rotation procedure documented with controlled re-generation of all PPID values
-  - id: R-002
-    description: RP migration breaks user account continuity during re-keying
-    likelihood: medium
-    impact: medium
-    mitigation:
-    - Migration toolkit provides dual-lookup (old public sub + new pairwise sub) for 90-day transition
-    - Per-RP migration with dedicated support and rollback to public sub if critical issues
-    - Staging validation with synthetic users before production cutover
-  - id: R-003
-    description: Incorrect sector identifier grouping allows unintended cross-RP correlation
-    likelihood: low
-    impact: medium
-    mitigation:
-    - Sector identifier assignment requires IAM Architecture Board approval
-    - Annual audit of sector groupings against business justification
-    - 'Default: every new RP gets its own unique sector identifier'
+    - id: R-001
+      description: PPID salt compromised — attacker can pre-compute all pairwise sub values
+      likelihood: low
+      impact: high
+      mitigation:
+        - Salt stored exclusively in HSM — never in configuration files or environment variables
+        - HSM access restricted to PingFederate service account via PKCS#11
+        - Salt rotation procedure documented with controlled re-generation of all PPID values
+    - id: R-002
+      description: RP migration breaks user account continuity during re-keying
+      likelihood: medium
+      impact: medium
+      mitigation:
+        - Migration toolkit provides dual-lookup (old public sub + new pairwise sub) for 90-day transition
+        - Per-RP migration with dedicated support and rollback to public sub if critical issues
+        - Staging validation with synthetic users before production cutover
+    - id: R-003
+      description: Incorrect sector identifier grouping allows unintended cross-RP correlation
+      likelihood: low
+      impact: medium
+      mitigation:
+        - Sector identifier assignment requires IAM Architecture Board approval
+        - Annual audit of sector groupings against business justification
+        - "Default: every new RP gets its own unique sector identifier"
   residual_risk: low
 dependencies:
   internal:
-  - PingFederate 12.x (pairwise sub support)
-  - HSM infrastructure (PPID salt storage)
-  - IAM Architecture Board (sector identifier governance)
+    - PingFederate 12.x (pairwise sub support)
+    - HSM infrastructure (PPID salt storage)
+    - IAM Architecture Board (sector identifier governance)
   external:
-  - Partner bank RPs (must accept new sub values during migration)
+    - Partner bank RPs (must accept new sub values during migration)
 related_adrs:
-- id: ADR-0004
-  title: Use Ed25519 over RSA-2048 for JWT signing keys
-  relationship: related
-- id: ADR-0001
-  title: Use DPoP over mTLS for sender-constrained access tokens
-  relationship: related
+  - id: ADR-0004
+    title: Use Ed25519 over RSA-2048 for JWT signing keys
+    relationship: related
+  - id: ADR-0001
+    title: Use DPoP over mTLS for sender-constrained access tokens
+    relationship: related
 references:
-- title: OpenID Connect Core 1.0 — §8 Subject Identifier Types
-  url: https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes
-- title: GDPR Article 5(1)(c) — Data Minimization
-  url: https://gdpr-info.eu/art-5-gdpr/
-- title: eIDAS 2.0 Regulation — Unlinkability Requirements
-  url: https://eur-lex.europa.eu/eli/reg/2024/1183/oj
+  - title: OpenID Connect Core 1.0 — §8 Subject Identifier Types
+    url: https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes
+  - title: GDPR Article 5(1)(c) — Data Minimization
+    url: https://gdpr-info.eu/art-5-gdpr/
+  - title: eIDAS 2.0 Regulation — Unlinkability Requirements
+    url: https://eur-lex.europa.eu/eli/reg/2024/1183/oj
 lifecycle:
   review_cycle_months: 12
-  next_review_date: '2026-12-10'
+  next_review_date: "2026-12-10"
   superseded_by: null
   supersedes: null
   archival:
     archived_at: null
     archive_reason: null
 audit_trail:
-- event: created
-  by: Elena Vasquez
-  at: '2025-11-01T08:00:00Z'
-- event: updated
-  by: Aisha Mbeki
-  at: '2025-11-20T14:00:00Z'
-  details: Added Dutch DPA audit finding reference and eIDAS 2.0 unlinkability analysis
-- event: approved
-  by: Marcus Chen
-  at: '2025-12-10T09:00:00Z'
-- event: approved
-  by: DPO
-  at: '2025-12-14T11:00:00Z'
-  details: 'DPO approval with condition: PPID salt must be in HSM, and reverse-lookup must be audit-logged'
+  - event: created
+    by: Elena Vasquez
+    at: "2025-11-01T08:00:00Z"
+  - event: updated
+    by: Aisha Mbeki
+    at: "2025-11-20T14:00:00Z"
+    details: Added Dutch DPA audit finding reference and eIDAS 2.0 unlinkability analysis
+  - event: approved
+    by: Marcus Chen
+    at: "2025-12-10T09:00:00Z"
+  - event: approved
+    by: DPO
+    at: "2025-12-14T11:00:00Z"
+    details: "DPO approval with condition: PPID salt must be in HSM, and reverse-lookup must be audit-logged"
