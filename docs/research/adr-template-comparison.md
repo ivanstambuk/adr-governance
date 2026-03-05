@@ -462,146 +462,81 @@ Our custom YAML-based meta-model with JSON Schema (Draft 2020-12) validation.
 
 Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | ❌ = Absent
 
-### 4.1 Matrix A — Classic Templates (Templates 1–7) vs. adr-governance
-
-| Feature / Section | Nygard | MADR 4.0 | smadr | Tyree–Ak | Y-Stmt | Alexan. | Biz Case | **ours** |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Metadata** | | | | | | | | |
-| Unique ID | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Title | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | ✅ | ✅ |
-| Status | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| Date(s) | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Author(s) | ❌ | 🟡 | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Decision Owner | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Tags / Category | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Priority | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Schema Version | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| JSON Schema Validation | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Context & Problem** | | | | | | | | |
-| Problem Statement | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | 🟡 | ✅ |
-| Business Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Technical Drivers | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Constraints | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Assumptions | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Decision Drivers | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ |
-| **Requirements** | | | | | | | | |
-| Functional Requirements | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ✅ |
-| Non-Functional Requirements | ❌ | ❌ | ❌ | 🟡 | 🟡 | ❌ | ❌ | ✅ |
-| **Alternatives Analysis** | | | | | | | | |
-| Multiple Options Listed | ❌ | ✅ | ✅ | ✅ | 🟡 | ❌ | ✅ | ✅ |
-| Pros per Option | ❌ | ✅ | ✅ | 🟡 | ❌ | ❌ | 🟡 | ✅ |
-| Cons per Option | ❌ | ✅ | ✅ | 🟡 | ❌ | ❌ | 🟡 | ✅ |
-| Cost Estimate per Option | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Risk Rating per Option | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| SWOT per Option | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| **Decision** | | | | | | | | |
-| Chosen Option | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Explicit Rationale Section | ❌ | 🟡 | 🟡 | ✅ | ❌ | ❌ | ❌ | ✅ |
-| Tradeoffs | 🟡 | 🟡 | 🟡 | ❌ | ✅ | ❌ | ❌ | ✅ |
-| Decision Date | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Consequences** | | | | | | | | |
-| Positive Consequences | 🟡 | ✅ | ✅ | 🟡 | 🟡 | 🟡 | ❌ | ✅ |
-| Negative Consequences | 🟡 | ✅ | ✅ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
-| Security Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Compliance Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Operational Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Confirmation / Validation | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Governance & Traceability** | | | | | | | | |
-| Stakeholders (RACI-like) | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
-| Formal Approvals | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Audit Trail | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Change Log (with PR links) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Use Case Traceability | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Governance Enforcement | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Impact Assessment (structured) | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ |
-| **Risk & Compliance** | | | | | | | | |
-| Risk Assessment (overall) | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Compliance Audit Table | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Context Validation (policy conflict) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Operational** | | | | | | | | |
-| Deployment Plan (phased) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Rollback Plan | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Monitoring (metrics + thresholds) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| SLA (availability, RPO, RTO) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Cross-References** | | | | | | | | |
-| Related Decisions | ❌ | 🟡 | ✅ | ✅ | ❌ | 🟡 | ❌ | ✅ |
-| Related Requirements | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | 🟡 |
-| Related Principles | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Dependencies (int/ext) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Lifecycle** | | | | | | | | |
-| Review Cadence | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Supersession Chain | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Archival Policy | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-
-### 4.2 Matrix B — Newer Templates (Templates 8–13) vs. adr-governance
-
-| Feature / Section | Planguage | EdgeX | Merson | NHS Wales | G. Morgan | DRF | **ours** |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Metadata** | | | | | | | |
-| Unique ID | ✅ | ❌ | 🟡 | ❌ | 🟡 | ✅ | ✅ |
-| Title | 🟡 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Status | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
-| Date(s) | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
-| Author(s) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Decision Owner | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Tags / Category | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Priority | ✅ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ |
-| Schema Version | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| JSON Schema Validation | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ |
-| **Context & Problem** | | | | | | | |
-| Problem Statement | 🟡 | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ |
-| Business Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Technical Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Constraints | ❌ | ❌ | 🟡 | ❌ | ❌ | ✅ | ✅ |
-| Assumptions | ✅ | ❌ | 🟡 | ❌ | ❌ | ✅ | ✅ |
-| Decision Drivers | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ |
-| Summary / Executive Pitch | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| **Alternatives Analysis** | | | | | | | |
-| Multiple Options Listed | ❌ | 🟡 | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Pros per Option | ❌ | ❌ | ❌ | ✅ | 🟡 | ❌ | ✅ |
-| Cons per Option | ❌ | ❌ | ❌ | ✅ | 🟡 | ❌ | ✅ |
-| Fact/Opinion Separation | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| Visual Comparison Matrices | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
-| Risk Rating per Option | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Decision** | | | | | | | |
-| Chosen Option | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Explicit Rationale Section | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ |
-| Tradeoffs | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Rationale for Rejected Options | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **Consequences** | | | | | | | |
-| Positive Consequences | ❌ | ❌ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
-| Negative Consequences | ❌ | ❌ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
-| Security Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Compliance Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Operational Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Confirmation / Validation | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
-| **Governance & Traceability** | | | | | | | |
-| Stakeholders | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | 🟡 |
-| Formal Approvals | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Audit Trail | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Change Log (with PR links) | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Use Case Traceability | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Governance Enforcement | ❌ | ❌ | ❌ | 🟡 | ✅ | ❌ | ❌ |
-| Impact Assessment (structured) | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Context Validation (policy conflict) | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| **Risk & Compliance** | | | | | | | |
-| Risk Assessment (overall) | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Constraint Sourcing (regulatory/budget/tech) | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟡 |
-| **Operational** | | | | | | | |
-| Deployment Plan (phased) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Rollback Plan | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Monitoring (metrics + thresholds) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| SLA (availability, RPO, RTO) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Cross-References** | | | | | | | |
-| Related Decisions | ❌ | ✅ | ❌ | 🟡 | ❌ | 🟡 | ✅ |
-| Org Context Graph (CRF) | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
-| Dependencies (int/ext) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Lifecycle** | | | | | | | |
-| Review Cadence | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ✅ |
-| Supersession Chain | ❌ | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ |
-| Bidirectional Updates | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Feature | Nygard | MADR | smadr | Tyree-Ak | Y-Stmt | Alexan. | BizCase | Plangu. | EdgeX | Merson | NHS-W | G.Morg | DRF | **ours** |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Metadata** | | | | | | | | | | | | | | |
+| Unique ID | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ | 🟡 | ✅ | ✅ |
+| Title | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Status | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Date(s) | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
+| Author(s) | ❌ | 🟡 | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Decision Owner | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Tags / Category | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Priority | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ |
+| Schema Version | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| JSON Schema Validation | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ |
+| **Context & Problem** | | | | | | | | | | | | | | |
+| Problem Statement | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | 🟡 | 🟡 | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ |
+| Summary / Elevator Pitch | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Business Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Technical Drivers | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Decision Drivers | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ |
+| Constraints | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ✅ | ✅ |
+| Assumptions | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ | ❌ | ✅ | ✅ |
+| **Requirements** | | | | | | | | | | | | | | |
+| Functional Requirements | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ✅ |
+| Non-Functional Req. | ❌ | ❌ | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ✅ |
+| **Alternatives Analysis** | | | | | | | | | | | | | | |
+| Multiple Options | ❌ | ✅ | ✅ | ✅ | 🟡 | ❌ | ✅ | ❌ | 🟡 | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Pros per Option | ❌ | ✅ | ✅ | 🟡 | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ✅ | 🟡 | ❌ | ✅ |
+| Cons per Option | ❌ | ✅ | ✅ | 🟡 | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ✅ | 🟡 | ❌ | ✅ |
+| Cost Estimate / Option | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Risk Rating / Option | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| SWOT per Option | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Fact/Opinion Separation | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Visual Comparison Matrix | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| **Decision** | | | | | | | | | | | | | | |
+| Chosen Option | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Explicit Rationale Section | ❌ | 🟡 | 🟡 | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Tradeoffs | 🟡 | 🟡 | 🟡 | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Rationale for Rejected | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Decision Date | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
+| **Consequences** | | | | | | | | | | | | | | |
+| Positive Consequences | 🟡 | ✅ | ✅ | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
+| Negative Consequences | 🟡 | ✅ | ✅ | 🟡 | ✅ | 🟡 | ❌ | ❌ | ❌ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
+| Security Impl. (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Compliance Impl. (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Operational Impl. (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Confirmation / Validation | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Governance & Traceability** | | | | | | | | | | | | | | |
+| Stakeholders | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | 🟡 |
+| Formal Approvals | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Audit Trail | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Change Log (with PR links) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Use Case Traceability | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Governance Enforcement | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ | ❌ | ❌ |
+| Impact Assessment (structured) | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Context Validation (policy) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **Risk & Compliance** | | | | | | | | | | | | | | |
+| Risk Assessment (overall) | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Compliance Audit Table | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Constraint Sourcing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟡 |
+| **Operational** | | | | | | | | | | | | | | |
+| Deployment Plan (phased) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Rollback Plan | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Monitoring (metrics) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| SLA (avail, RPO, RTO) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Cross-References** | | | | | | | | | | | | | | |
+| Related Decisions | ❌ | 🟡 | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ | 🟡 | ✅ |
+| Related Principles | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Org Context Graph (CRF) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Dependencies (int/ext) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Lifecycle** | | | | | | | | | | | | | | |
+| Review Cadence | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ✅ |
+| Supersession Chain | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ |
+| Archival Policy | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Bidirectional Updates | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 
 ---
 
@@ -672,7 +607,7 @@ Merson's template explicitly includes reasoning for significant alternatives tha
 | **`confirmation`** | MADR 4.0, NHS Wales | "How will we verify this decision was implemented correctly?" — links decision to validation. NHS Wales extends this with ownership and enforcement questions. | ✅ **Add** |
 | **`governance_enforcement`** | Gareth Morgan | "How will compliance be monitored? Who is accountable?" — bridges decision to operational enforcement. | ⚠️ **Consider** |
 | **`impact_assessment`** | EdgeX Foundry | Structured list of systems/APIs/configurations impacted. Lightweight change impact analysis. | ⚠️ **Consider** |
-| **`rationale_for_rejected`** | Merson, DRF | Explicit reasoning for why significant alternatives were *not* chosen. | ⚠️ **Consider** |
+| **`rationale_for_rejected`** | Merson, DRF | Explicit reasoning for why significant alternatives were *not* chosen. | ✅ **Add** |
 | **`summary`** | NHS Wales | Executive elevator pitch (2–4 sentences). Helps stakeholders triage ADRs without reading the full document. | ⚠️ **Consider** |
 
 ---
@@ -703,7 +638,7 @@ These are all enterprise-grade extensions that we invented. They should be prese
 | **`extension_fields` (x-*)** | smadr | ✅ **Add** | Allowing custom `x-*` prefixed fields in the schema gives teams flexibility without breaking validation. Simple to implement in JSON Schema via `patternProperties`. |
 | **`summary`** | NHS Wales | ✅ **Add** | Executive elevator pitch (2–4 sentences). Enables stakeholder triage without reading full ADRs. Trivial to add as a string field in `adr` metadata. |
 | **`impact_assessment`** | EdgeX Foundry | ⚠️ **Consider** | Structured list of impacted systems, APIs, configurations. Useful for change-heavy decisions. Could be added under `consequences` or as a standalone section. |
-| **`rationale_for_rejected`** | Merson, DRF | ⚠️ **Consider** | Per-alternative rejection reasoning. Our `alternatives[].cons` partially covers this, but explicit "why not" for each rejected option is clearer. Could be a new optional field on each alternative: `rejection_rationale`. |
+| **`rationale_for_rejected`** | Merson, DRF | ✅ **Add** | Per-alternative rejection reasoning. Our `alternatives[].cons` partially covers this, but explicit "why not" for each rejected option is clearer. Add as a new optional field on each alternative: `rejection_rationale`. |
 | **`related_principles`** | Tyree–Akerman | ⚠️ **Consider** | Links decisions to enterprise architecture principles. Valuable for organizations with a formal principles registry (e.g., TOGAF). Add if/when we have a principles registry. |
 | **`risk_per_option` (3D)** | smadr | ❌ **Skip** | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with the overall `risk_assessment` section provides equivalent coverage. |
 | **`neutral_consequences`** | MADR 4.0 | ❌ **Skip** | Neutral consequences are rarely informative. Our positive/negative split is sufficient. |
@@ -776,7 +711,7 @@ The expanded survey surfaced several **newly identified gaps** worth closing:
 | 🟢 High | `summary` | NHS Wales | Add to `adr` metadata |
 | 🟢 High | `extension_fields` (x-*) | smadr | Add via `patternProperties` |
 | 🟡 Medium | `impact_assessment` | EdgeX Foundry | Consider adding under `consequences` |
-| 🟡 Medium | `rationale_for_rejected` | Merson, DRF | Consider per-alternative field |
+| � High | `rationale_for_rejected` | Merson, DRF | Add as per-alternative field |
 | ⚪ Low | `context_validation` | DRF | Watch for DRF maturity |
 
 The tradeoff remains **weight**: a full `adr-governance` ADR is significantly heavier than a Nygard or MADR record. This is acceptable for our use case (enterprise IAM decisions in regulated financial services) but would be overkill for a startup documenting database choices.
