@@ -1,0 +1,24 @@
+# CODEOWNERS — ADR Governance
+#
+# Copy this file to `.github/CODEOWNERS` and customize the team handles
+# to match your GitHub organization.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# All ADRs require architect approval
+decisions/                       @org/architecture-team
+
+# Security decisions additionally require CISO
+decisions/ADR-*security*         @org/security-team
+
+# Compliance decisions additionally require DPO
+decisions/ADR-*compliance*       @org/compliance-team
+
+# Schema changes require architect approval
+schemas/                         @org/architecture-team
+
+# Process documentation changes require architect approval
+docs/                            @org/architecture-team
+
+# Validation script changes require architect approval
+scripts/                         @org/architecture-team

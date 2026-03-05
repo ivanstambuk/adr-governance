@@ -41,7 +41,7 @@ jobs:
       - name: Validate examples/
         run: |
           if [ -d "examples" ] && [ "$(ls -A examples/*.yaml 2>/dev/null)" ]; then
-            python3 scripts/validate-adr.py examples/
+            python3 scripts/validate-adr.py --strict examples/
           else
             echo "No ADR files in examples/ — skipping validation"
           fi

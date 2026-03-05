@@ -15,6 +15,7 @@
         "useGitignore": true,
         "customPatterns": [
             "examples/**",
+            "docs/research/**",
             ".github/**",
             "*.lock",
             "node_modules/**",
