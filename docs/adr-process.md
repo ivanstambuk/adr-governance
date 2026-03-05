@@ -1,9 +1,26 @@
 # ADR Governance Process
 
 > **Status:** Normative
-> **Last updated:** 2026-03-05
+> **Last updated:** 2026-03-06
 
 This document defines the process for proposing, reviewing, approving, and maintaining Architecture Decision Records (ADRs) in this repository. The process is **GitOps-based**: all state transitions happen through Git commits and pull requests.
+
+### Quick Reference
+
+| I want to... | Do this |
+|--------------|---------|
+| Start a new decision | Branch → create YAML in `decisions/` with `status: draft` → iterate |
+| Submit for review | Set `status: proposed` → open PR → assign reviewers |
+| Approve a decision | Approve the PR → author sets `status: accepted` → merge |
+| Reject a decision | Comment reason → author sets `status: rejected` → merge (preserve history) |
+| Defer a decision | Comment reason → author sets `status: deferred` → close PR with label |
+| Supersede a decision | Create new ADR referencing old one → accept new → update old to `superseded` |
+| Deprecate a decision | Set `status: deprecated` + audit event → merge |
+| Archive a decision | Set `lifecycle.archival` fields + `archived` audit event → merge |
+| Confirm implementation | Add `confirmation.description` + `confirmation.artifact_ids` in follow-up PR |
+| Periodic review | Check `lifecycle.next_review_date` → verify or supersede |
+
+> See the full sections below for detailed workflows.
 
 ---
 
@@ -245,13 +262,47 @@ After an ADR is accepted, the team must verify it was actually implemented.
 
    > The strongest decision confirmations are **empirical** — PoC results, benchmarks, and passing fitness functions carry more weight than tickets alone.
 
+   > **Schema note:** The `confirmation.artifact_ids` field in the schema accepts arbitrary strings. Use the prefixes above for consistency. See [`adr.schema.json`](../schemas/adr.schema.json) → `confirmation` definition.
+
 4. **During code reviews**, reviewers should check if a proposed change **violates any accepted ADR**. If it does:
    - Link the relevant ADR in the review comment
    - Request the author to either update the code or propose a new superseding ADR
 
 ---
 
-## 8. Periodic Review
+## 8. Archival
+
+Archival is for decisions that are no longer active and should be removed from regular consideration. Archival is distinct from supersession (replaced by a newer ADR) and deprecation (no longer recommended).
+
+**When to archive:**
+- A `superseded` ADR whose successor has been accepted **and** confirmed
+- A `deprecated` ADR whose replacement is fully operational
+- A `rejected` ADR that is no longer relevant to revisit
+
+**How to archive:**
+
+1. Update the ADR YAML:
+   ```yaml
+   lifecycle:
+     archival:
+       archived_at: "2026-06-15T10:00:00Z"
+       archive_reason: "Superseded by ADR-0008; original decision fully replaced and confirmed."
+   ```
+2. Add an `archived` event to `audit_trail`:
+   ```yaml
+   audit_trail:
+     - event: archived
+       by: Elena Vasquez
+       at: "2026-06-15T10:00:00Z"
+       details: "Superseded by ADR-0008. Successor confirmed in production."
+   ```
+3. Submit as a PR and merge.
+
+> **Never delete an ADR.** Archival preserves the decision record for historical reference and audit compliance. Archived ADRs remain in the `decisions/` directory.
+
+---
+
+## 9. Periodic Review
 
 ADRs with `lifecycle.review_cycle_months` set will be flagged for periodic review.
 
@@ -282,9 +333,25 @@ ADRs with `lifecycle.review_cycle_months` set will be flagged for periodic revie
    | `medium` | 12 | Standard review cycle |
    | `high` | 24 | Strong empirical evidence — extended cycle acceptable |
 
+
 ---
 
-## 9. Branch Protection Rules (Recommended)
+
+## 10. Schema Versioning Policy
+
+Each ADR records the schema version it was authored against in `adr.schema_version`.
+
+| Rule | Detail |
+|------|--------|
+| **Schema version is pinned at creation time** | When an ADR is created, set `schema_version` to the current version of `adr.schema.json`. |
+| **Existing ADRs are NOT updated** when the schema evolves | If the schema adds new optional fields, old ADRs remain valid without modification. |
+| **Backward compatibility is required** | New schema versions MUST validate all existing ADRs without errors. Only add optional fields; never make previously-optional fields required. |
+| **Breaking changes require migration** | If a required field is added or renamed, provide a migration script and bump the major version. Update `schema_version` in affected ADRs. |
+| **Current version** | `1.0.0` (see `schemas/adr.schema.json`) |
+
+---
+
+## 11. Branch Protection Rules (Recommended)
 
 Configure in GitHub repository settings → Branches → `main`:
 
@@ -314,18 +381,3 @@ decisions/ADR-*compliance*  @org/compliance-team
 ```
 
 > **Note:** CODEOWNERS wildcard patterns match on *filename*, not on `decision_type` inside the YAML. To ensure correct reviewer assignment, include the decision domain in the ADR filename (e.g., `ADR-0007-security-adopt-passkeys.yaml`). For more sophisticated routing, use a CI-based reviewer assignment step that reads `decision_type` from the YAML and requests the appropriate team via the GitHub API.
-
----
-
-## 10. Quick Reference
-
-| I want to... | Do this |
-|--------------|---------|
-| Start a new decision | Branch → create YAML in `decisions/` with `status: draft` → iterate |
-| Submit for review | Set `status: proposed` → open PR → assign reviewers |
-| Approve a decision | Approve the PR → author sets `status: accepted` → merge |
-| Reject a decision | Comment reason → author sets `status: rejected` → merge (preserve history) |
-| Defer a decision | Comment reason → author sets `status: deferred` → close PR with label |
-| Supersede a decision | Create new ADR referencing old one → accept new → update old to `superseded` |
-| Confirm implementation | Add `confirmation.description` + `confirmation.artifact_ids` in follow-up PR |
-| Periodic review | Check `lifecycle.next_review_date` → verify or supersede |
