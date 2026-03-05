@@ -490,7 +490,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | Chosen Option | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Explicit Rationale Section | ❌ | 🟡 | 🟡 | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ |
 | Tradeoffs | 🟡 | 🟡 | 🟡 | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Rationale for Rejected | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| Rationale for Rejected | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
 | Decision Date | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
 | **Consequences** | | | | | | | | | | | | | | |
 | Positive Consequences | 🟡 | ✅ | ✅ | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
@@ -618,9 +618,9 @@ These are enterprise-grade extensions that should be preserved and documented as
 
 | Candidate Field | Source Template | Recommendation | Rationale |
 |----------------|----------------|----------------|-----------|
-| **`extension_fields` (x-*)** | smadr | ✅ **Add** | Allowing custom `x-*` prefixed fields in the schema gives teams flexibility without breaking validation. Simple to implement in JSON Schema via `patternProperties`. |
-| **`summary`** | NHS Wales | ✅ **Add** | Executive elevator pitch (2–4 sentences). Enables stakeholder triage without reading full ADRs. Trivial to add as a string field in `adr` metadata. |
-| **`rationale_for_rejected`** | Merson, DRF | ✅ **Add** | Per-alternative rejection reasoning. Our `alternatives[].cons` partially covers this, but explicit "why not" for each rejected option is clearer. Add as a new optional field on each alternative: `rejection_rationale`. |
+| ~~**`extension_fields` (x-*)**~~ | smadr | ✅ **Done** | Added via `patternProperties` at top level. Any `x-` prefixed field is accepted. |
+| ~~**`summary`**~~ | NHS Wales | ✅ **Done** | Added as optional string field (max 500 chars) in `adr` metadata. |
+| ~~**`rationale_for_rejected`**~~ | Merson, DRF | ✅ **Done** | Added as optional `rejection_rationale` field on each alternative. |
 | **`impact_assessment`** | EdgeX Foundry | ⚠️ **Consider** | Structured list of impacted systems, APIs, configurations. Useful for change-heavy decisions. Could be added under `consequences` or as a standalone section. |
 | **`related_principles`** | Tyree–Akerman | ⚠️ **Consider** | Links decisions to enterprise architecture principles. Valuable for organizations with a formal principles registry (e.g., TOGAF). Add if/when we have a principles registry. |
 | **`risk_per_option` (3D)** | smadr | ❌ **Skip** | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with the overall `risk_assessment` section provides equivalent coverage. |
@@ -690,9 +690,9 @@ The expanded survey surfaced several **features worth adding**:
 
 | Priority | Field | Source | Action |
 |----------|-------|--------|--------|
-| 🟢 High | `summary` | NHS Wales | Add to `adr` metadata |
-| 🟢 High | `extension_fields` (x-*) | smadr | Add via `patternProperties` |
-| 🟢 High | `rationale_for_rejected` | Merson, DRF | Add as per-alternative field |
+| ~~🟢 High~~ | ~~`summary`~~ | ~~NHS Wales~~ | ✅ Done — added to `adr` metadata |
+| ~~🟢 High~~ | ~~`extension_fields` (x-*)~~ | ~~smadr~~ | ✅ Done — added via `patternProperties` |
+| ~~🟢 High~~ | ~~`rationale_for_rejected`~~ | ~~Merson, DRF~~ | ✅ Done — added as per-alternative field |
 | 🟡 Medium | `impact_assessment` | EdgeX Foundry | Consider adding under `consequences` |
 | ⚪ Low | `context_validation` | DRF | Watch for DRF maturity |
 

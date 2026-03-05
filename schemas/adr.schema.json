@@ -298,6 +298,10 @@
                             "critical"
                         ],
                         "description": "Overall risk level of this alternative."
+                    },
+                    "rejection_rationale": {
+                        "type": "string",
+                        "description": "Why this alternative was not chosen. Only applicable to rejected alternatives. Inspired by Merson/DRF."
                     }
                 }
             },
