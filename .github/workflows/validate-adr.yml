@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - "decisions/**"
+      - "examples/**"
       - "schemas/**"
+      - "scripts/validate-adr.py"
   push:
     branches: [main]
     paths:
       - "decisions/**"
+      - "examples/**"
       - "schemas/**"
+      - "scripts/validate-adr.py"
 
 jobs:
   validate:
@@ -26,15 +30,23 @@ jobs:
       - name: Install dependencies
         run: pip install jsonschema pyyaml
 
-      - name: Validate ADRs
+      - name: Validate decisions/
         run: |
           if [ -d "decisions" ] && [ "$(ls -A decisions/*.yaml 2>/dev/null)" ]; then
-            python3 scripts/validate-adr.py decisions/
+            python3 scripts/validate-adr.py --strict decisions/
           else
             echo "No ADR files in decisions/ — skipping validation"
           fi
 
-      - name: YAML lint
+      - name: Validate examples/
+        run: |
+          if [ -d "examples" ] && [ "$(ls -A examples/*.yaml 2>/dev/null)" ]; then
+            python3 scripts/validate-adr.py examples/
+          else
+            echo "No ADR files in examples/ — skipping validation"
+          fi
+
+      - name: YAML lint (decisions)
         uses: ibiqlik/action-yamllint@v3
         with:
           file_or_dir: decisions/
@@ -46,3 +58,16 @@ jobs:
               truthy:
                 check-keys: false
         if: hashFiles('decisions/*.yaml') != ''
+
+      - name: YAML lint (examples)
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          file_or_dir: examples/
+          config_data: |
+            extends: default
+            rules:
+              line-length:
+                max: 200
+              truthy:
+                check-keys: false
+        if: hashFiles('examples/*.yaml') != ''
