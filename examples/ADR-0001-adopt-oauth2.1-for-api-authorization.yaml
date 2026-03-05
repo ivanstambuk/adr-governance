@@ -1,0 +1,323 @@
+# ADR-0001: Adopt OAuth 2.1 for API Authorization
+# Organization: NovaTrust Financial Services
+# Department: Identity and Access Management
+
+adr:
+  id: "ADR-0001"
+  title: "Adopt OAuth 2.1 as the standard API authorization framework"
+  status: "accepted"
+  created_at: "2026-01-10T09:00:00Z"
+  last_modified: "2026-01-25T14:30:00Z"
+  version: "1.0"
+  project: "Enterprise API Gateway Modernization"
+  component: "API Authorization Layer"
+  tags: ["oauth", "authorization", "api-security", "iam"]
+  priority: "critical"
+  decision_type: "security"
+
+authors:
+  - name: "Elena Vasquez"
+    role: "IAM Architect"
+    email: "elena.vasquez@novatrust.example.com"
+
+decision_owner:
+  name: "Marcus Chen"
+  role: "Head of Identity and Access Management"
+  email: "marcus.chen@novatrust.example.com"
+
+reviewers:
+  - name: "Priya Sharma"
+    role: "API Platform Lead"
+    email: "priya.sharma@novatrust.example.com"
+  - name: "Jonas Eriksen"
+    role: "Security Officer"
+    email: "jonas.eriksen@novatrust.example.com"
+  - name: "Aisha Mbeki"
+    role: "Compliance Analyst"
+    email: "aisha.mbeki@novatrust.example.com"
+
+approvals:
+  - name: "Marcus Chen"
+    role: "Head of IAM"
+    approved_at: "2026-01-24T10:00:00Z"
+    signature_id: "sig-oauth-001"
+  - name: "Jonas Eriksen"
+    role: "CISO"
+    approved_at: "2026-01-25T09:00:00Z"
+    signature_id: "sig-oauth-002"
+
+context:
+  summary: >
+    NovaTrust's API landscape has grown to over 200 internal and partner-facing APIs.
+    The current authorization model is a mix of API keys, basic auth, and OAuth 2.0
+    with the implicit grant. PSD2 and DORA regulations require stronger authorization
+    controls, token binding, and auditability. The implicit grant is deprecated in
+    OAuth 2.1, and our current token lifetimes and rotation policies do not meet
+    the new regulatory bar. We need a unified authorization framework.
+  business_drivers:
+    - "PSD2 Strong Customer Authentication compliance"
+    - "DORA ICT risk management framework alignment"
+    - "Partner API onboarding takes 6+ weeks due to inconsistent auth flows"
+    - "Reduce authorization-related incidents (currently 15% of P1 incidents)"
+  technical_drivers:
+    - "Deprecation of OAuth 2.0 implicit grant (RFC 9700)"
+    - "Need for sender-constrained tokens (DPoP / mTLS)"
+    - "Centralized token introspection for audit trails"
+    - "Support for fine-grained scopes and Rich Authorization Requests (RFC 9396)"
+  constraints:
+    - "Must integrate with existing PingFederate 12.x deployment"
+    - "Partner APIs must remain backward-compatible for 12 months"
+    - "No downtime for token issuance during migration"
+  assumptions:
+    - "PingFederate 12.x supports OAuth 2.1 profiles natively"
+    - "Partner migration can be phased over 12 months"
+    - "Internal teams will adopt within 6 months"
+
+requirements:
+  functional:
+    - id: "F-001"
+      description: "Issue access tokens using Authorization Code + PKCE for all clients"
+    - id: "F-002"
+      description: "Support Rich Authorization Requests for transaction-level consent"
+    - id: "F-003"
+      description: "Provide token introspection endpoint for resource servers"
+  non_functional:
+    - id: "NF-001"
+      description: "Token issuance latency p99 < 200ms"
+    - id: "NF-002"
+      description: "99.99% availability for the authorization server"
+    - id: "NF-003"
+      description: "All tokens must be sender-constrained (DPoP or mTLS)"
+
+alternatives:
+  - name: "OAuth 2.1 via PingFederate"
+    summary: "Adopt OAuth 2.1 using existing PingFederate deployment with DPoP support"
+    pros:
+      - "Aligns with IETF best current practice (RFC 9700)"
+      - "Eliminates deprecated implicit grant"
+      - "Native DPoP and PKCE support in PingFederate 12.x"
+      - "Rich Authorization Requests for fine-grained consent"
+    cons:
+      - "Requires PingFederate license upgrade for DPoP"
+      - "Partner migration effort across 200+ integrations"
+    estimated_cost: "medium"
+    risk: "low"
+
+  - name: "Custom token service"
+    summary: "Build a bespoke authorization service with JWT issuance"
+    pros:
+      - "Full control over token format and claims"
+      - "No vendor dependency"
+    cons:
+      - "Significant development and maintenance effort"
+      - "Security risks from custom cryptographic implementation"
+      - "No RFC compliance certification"
+      - "Regulatory auditors prefer standards-based solutions"
+    estimated_cost: "high"
+    risk: "high"
+
+  - name: "API keys with enhanced rotation"
+    summary: "Keep API keys but add automated rotation and IP allowlisting"
+    pros:
+      - "Minimal migration effort"
+      - "Simple to understand"
+    cons:
+      - "Does not meet PSD2 SCA requirements"
+      - "No support for delegated authorization or scopes"
+      - "API keys are bearer tokens with no sender binding"
+      - "Regulatory non-compliance risk"
+    estimated_cost: "low"
+    risk: "critical"
+
+decision:
+  chosen_alternative: "OAuth 2.1 via PingFederate"
+  rationale:
+    - "Only alternative that meets PSD2 and DORA requirements"
+    - "Eliminates deprecated flows (implicit grant) per RFC 9700"
+    - "DPoP sender-constraining prevents token theft and replay"
+    - "Leverages existing PingFederate investment and team expertise"
+    - "Rich Authorization Requests enable transaction-level consent for PSD2"
+  tradeoffs:
+    - "License cost increase for DPoP module (~€40K/year)"
+    - "12-month partner migration window creates dual-stack complexity"
+    - "Slightly higher token issuance latency due to DPoP proof validation"
+  decision_date: "2026-01-24"
+
+consequences:
+  positive:
+    - "Unified authorization framework across all 200+ APIs"
+    - "PSD2 and DORA compliance for authorization flows"
+    - "Partner onboarding reduced from 6 weeks to 1 week with standard flows"
+    - "Elimination of bearer token theft as an attack vector (DPoP)"
+  negative:
+    - "12-month migration project with dedicated team"
+    - "Increased PingFederate license cost"
+    - "Operational complexity during dual-stack transition period"
+  security_implications:
+    data_classification: "confidential"
+    encryption:
+      at_rest: true
+      in_transit: true
+      key_management: "HSM-backed signing keys via PingFederate KeyStore"
+    access_control:
+      iam_integration: true
+      least_privilege: true
+    audit:
+      audit_logging: true
+      retention: "7 years"
+  compliance_implications:
+    regulatory_impact:
+      psd2: "Satisfies Strong Customer Authentication via OAuth 2.1 + PKCE + DPoP"
+      dora: "Token lifecycle management aligns with ICT risk management requirements"
+      gdpr: "Scope-based consent model supports data minimization principle"
+    required_controls:
+      - "Sender-constrained tokens (DPoP) for all confidential clients"
+      - "Token lifetime max 5 minutes for access tokens"
+      - "Refresh token rotation with revocation on reuse detection"
+      - "Centralized audit logging of all token issuance and introspection events"
+  operational_implications:
+    monitoring:
+      - "Token issuance rate and latency"
+      - "DPoP proof validation failure rate"
+      - "Token introspection cache hit ratio"
+    runbooks:
+      - "PingFederate cluster failover procedure"
+      - "Emergency token revocation (mass revoke)"
+      - "DPoP signing key rotation"
+    staffing:
+      - "1 IAM engineer for PingFederate operations"
+      - "0.5 FTE for partner migration support"
+
+risk_assessment:
+  risks:
+    - id: "R-001"
+      description: "Partner migration delays cause extended dual-stack period"
+      likelihood: "medium"
+      impact: "medium"
+      mitigation:
+        - "Automated migration toolkit with self-service portal"
+        - "Dedicated partner liaison for top-10 integrations"
+        - "Hard deadline with 3-month grace period"
+    - id: "R-002"
+      description: "PingFederate DPoP module has undiscovered bugs"
+      likelihood: "low"
+      impact: "high"
+      mitigation:
+        - "Extensive pre-production testing with all client types"
+        - "Fallback to mTLS sender-constraining if DPoP issues arise"
+        - "Vendor support contract with 4-hour SLA"
+  residual_risk: "low"
+
+deployment:
+  rollout_plan:
+    phases:
+      - name: "Internal Pilot"
+        criteria: "3 internal APIs migrated; all functional and compliance tests pass"
+        duration_days: 30
+      - name: "Internal Rollout"
+        criteria: "All internal APIs migrated; implicit grant disabled internally"
+        duration_days: 60
+      - name: "Partner Migration"
+        criteria: "Top-20 partners migrated; self-service portal live"
+        duration_days: 180
+      - name: "Legacy Sunset"
+        criteria: "Implicit grant fully disabled; all clients on OAuth 2.1"
+        duration_days: 90
+  testing:
+    unit_tests: true
+    integration_tests: true
+    performance_tests:
+      qps_target: 5000
+      p99_latency_ms: 200
+    compliance_tests:
+      - "PSD2 SCA flow verification"
+      - "DPoP proof binding validation"
+      - "Token lifetime enforcement"
+      - "Refresh token rotation and reuse detection"
+  rollback_plan:
+    criteria: "Token issuance error rate > 1% or DPoP validation failures > 5%"
+    steps:
+      - "Re-enable legacy OAuth 2.0 flows on load balancer"
+      - "Route traffic to legacy PingFederate cluster"
+      - "Notify partners of rollback and timeline"
+      - "Open incident and conduct postmortem"
+
+monitoring:
+  metrics:
+    - name: "token_issuance_latency_p99_ms"
+      threshold_warning: 150
+      threshold_critical: 300
+    - name: "dpop_validation_failure_rate_percent"
+      threshold_warning: 1
+      threshold_critical: 5
+    - name: "authorization_server_availability_percent"
+      threshold_warning: 99.99
+      threshold_critical: 99.95
+  alerts:
+    - "PagerDuty: on-call IAM engineer for critical thresholds"
+    - "Slack: #iam-ops channel for warning thresholds"
+  sla:
+    availability_target: "99.99%"
+    rpo: "<= 1 minute"
+    rto: "<= 10 minutes"
+
+dependencies:
+  internal:
+    - "PingFederate 12.x cluster"
+    - "HSM key management infrastructure"
+    - "API Gateway (PingAccess)"
+    - "Centralized logging platform (ELK)"
+  external:
+    - "Ping Identity vendor support"
+    - "Partner API consumers (200+ integrations)"
+
+related_adrs:
+  - id: "ADR-0003"
+    title: "Select PingFederate as enterprise identity provider"
+    relationship: "depends_on"
+  - id: "ADR-0004"
+    title: "Implement HSM-backed key management for all cryptographic operations"
+    relationship: "depends_on"
+
+attachments:
+  diagrams:
+    - name: "oauth2.1-flow-diagram.png"
+      path: "diagrams/ADR-0001-oauth2.1-flow.png"
+  runbooks:
+    - name: "dpop-key-rotation-runbook.md"
+      path: "runbooks/dpop-key-rotation.md"
+
+references:
+  - title: "OAuth 2.1 Authorization Framework (RFC 9700)"
+    url: "https://datatracker.ietf.org/doc/html/rfc9700"
+  - title: "Demonstrating Proof of Possession (DPoP) - RFC 9449"
+    url: "https://datatracker.ietf.org/doc/html/rfc9449"
+  - title: "Rich Authorization Requests (RFC 9396)"
+    url: "https://datatracker.ietf.org/doc/html/rfc9396"
+  - title: "PSD2 Strong Customer Authentication - EBA Guidelines"
+    url: "https://www.eba.europa.eu/regulation-and-policy/payment-services-and-electronic-money"
+
+lifecycle:
+  review_cycle_months: 12
+  next_review_date: "2027-01-24"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+
+audit_trail:
+  - event: "created"
+    by: "Elena Vasquez"
+    at: "2026-01-10T09:00:00Z"
+  - event: "updated"
+    by: "Elena Vasquez"
+    at: "2026-01-20T11:00:00Z"
+    details: "Added DPoP alternative analysis after vendor consultation"
+  - event: "approved"
+    by: "Marcus Chen"
+    at: "2026-01-24T10:00:00Z"
+  - event: "approved"
+    by: "Jonas Eriksen"
+    at: "2026-01-25T09:00:00Z"
+    details: "CISO approval with condition: DPoP mandatory for all confidential clients"

@@ -1,0 +1,198 @@
+# ADR Template
+# Copy this file and fill in all sections.
+# Required sections are marked. Optional sections can be removed if not applicable.
+
+# --- REQUIRED ---
+adr:
+  id: "ADR-NNNN" # Replace with next sequential ID
+  title: "" # 10-200 characters
+  status: "proposed" # proposed | accepted | superseded | deprecated | rejected | deferred
+  created_at: "" # ISO 8601 datetime
+  last_modified: "" # ISO 8601 datetime
+  version: "0.1"
+  project: ""
+  component: "" # Optional: specific component affected
+  tags: [] # Categorization tags
+  priority: "medium" # low | medium | high | critical
+  decision_type: "technology" # technology | process | organizational | vendor | security | compliance
+
+# --- REQUIRED ---
+authors:
+  - name: ""
+    role: ""
+    email: ""
+
+# --- REQUIRED ---
+decision_owner:
+  name: ""
+  role: ""
+  email: ""
+
+# --- Optional ---
+reviewers:
+  - name: ""
+    role: ""
+    email: ""
+
+# --- Optional ---
+approvals:
+  - name: ""
+    role: ""
+    approved_at: null # ISO 8601 datetime when approved, null if pending
+    signature_id: null
+
+# --- REQUIRED ---
+context:
+  summary: >
+    Describe the problem, the current state, and why a decision is needed.
+  business_drivers:
+    - ""
+  technical_drivers:
+    - ""
+  constraints:
+    - ""
+  assumptions:
+    - ""
+
+# --- Optional ---
+requirements:
+  functional:
+    - id: "F-001"
+      description: ""
+  non_functional:
+    - id: "NF-001"
+      description: ""
+
+# --- REQUIRED: minimum 2 alternatives ---
+alternatives:
+  - name: ""
+    summary: ""
+    pros:
+      - ""
+    cons:
+      - ""
+    estimated_cost: "medium" # low | medium | high
+    risk: "medium" # low | medium | high | critical
+
+  - name: ""
+    summary: ""
+    pros:
+      - ""
+    cons:
+      - ""
+    estimated_cost: "medium"
+    risk: "medium"
+
+# --- REQUIRED ---
+decision:
+  chosen_alternative: "" # Must match a name in alternatives
+  rationale:
+    - ""
+  tradeoffs:
+    - ""
+  decision_date: "" # ISO 8601 date (YYYY-MM-DD)
+
+# --- REQUIRED ---
+consequences:
+  positive:
+    - ""
+  negative:
+    - ""
+  # Optional sub-sections:
+  security_implications:
+    data_classification: "internal" # public | internal | confidential | restricted
+    encryption:
+      at_rest: false
+      in_transit: true
+      key_management: ""
+    access_control:
+      iam_integration: false
+      least_privilege: false
+    audit:
+      audit_logging: false
+      retention: ""
+  compliance_implications:
+    regulatory_impact: {} # Map of regulation name to impact description
+    required_controls: []
+  operational_implications:
+    monitoring: []
+    runbooks: []
+    staffing: []
+
+# --- Optional ---
+risk_assessment:
+  risks:
+    - id: "R-001"
+      description: ""
+      likelihood: "medium" # low | medium | high
+      impact: "medium" # low | medium | high | critical
+      mitigation:
+        - ""
+  residual_risk: "medium" # low | medium | high | critical
+
+# --- Optional ---
+deployment:
+  rollout_plan:
+    phases:
+      - name: ""
+        criteria: ""
+        duration_days: 14
+  testing:
+    unit_tests: false
+    integration_tests: false
+    performance_tests:
+      qps_target: 0
+      p99_latency_ms: 0
+    compliance_tests: []
+  rollback_plan:
+    criteria: ""
+    steps: []
+
+# --- Optional ---
+monitoring:
+  metrics:
+    - name: ""
+      threshold_warning: 0
+      threshold_critical: 0
+  alerts: []
+  sla:
+    availability_target: ""
+    rpo: ""
+    rto: ""
+
+# --- Optional ---
+dependencies:
+  internal: []
+  external: []
+
+# --- Optional ---
+related_adrs:
+  - id: "ADR-NNNN"
+    title: ""
+    relationship: "related" # supersedes | superseded_by | related | depends_on | conflicts_with
+
+# --- Optional ---
+attachments:
+  diagrams: []
+  runbooks: []
+
+# --- Optional ---
+references:
+  - title: ""
+    url: ""
+
+# --- Optional ---
+lifecycle:
+  review_cycle_months: 12
+  next_review_date: "" # ISO 8601 date
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+
+# --- REQUIRED: append-only ---
+audit_trail:
+  - event: "created"
+    by: ""
+    at: "" # ISO 8601 datetime

@@ -1,0 +1,24 @@
+{
+    "output": {
+        "filePath": "adr-governance-bundle.md",
+        "style": "markdown"
+    },
+    "include": [
+        "schemas/**",
+        "docs/**",
+        "decisions/**",
+        ".skills/**",
+        "scripts/**",
+        "README.md"
+    ],
+    "ignore": {
+        "useGitignore": true,
+        "customPatterns": [
+            "examples/**",
+            ".github/**",
+            "*.lock",
+            "node_modules/**",
+            "adr-governance-bundle.md"
+        ]
+    }
+}

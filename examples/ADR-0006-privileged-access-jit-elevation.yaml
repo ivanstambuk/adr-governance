@@ -1,0 +1,247 @@
+# ADR-0006: Adopt Privileged Access Management with Just-in-Time Elevation
+# Organization: NovaTrust Financial Services
+# Department: Identity and Access Management
+
+adr:
+  id: "ADR-0006"
+  title: "Adopt privileged access management with just-in-time elevation for production systems"
+  status: "accepted"
+  created_at: "2026-02-10T08:00:00Z"
+  last_modified: "2026-02-28T14:00:00Z"
+  version: "1.0"
+  project: "Privileged Access Security Programme"
+  component: "Privileged Access Management"
+  tags: ["pam", "jit", "privileged-access", "least-privilege", "compliance"]
+  priority: "high"
+  decision_type: "security"
+
+authors:
+  - name: "Marcus Chen"
+    role: "Head of IAM"
+    email: "marcus.chen@novatrust.example.com"
+
+decision_owner:
+  name: "Jonas Eriksen"
+  role: "CISO"
+  email: "jonas.eriksen@novatrust.example.com"
+
+reviewers:
+  - name: "Lisa Park"
+    role: "SRE Lead"
+    email: "lisa.park@novatrust.example.com"
+  - name: "DPO"
+    role: "Data Protection Officer"
+    email: "dpo@novatrust.example.com"
+
+approvals:
+  - name: "Jonas Eriksen"
+    role: "CISO"
+    approved_at: "2026-02-27T10:00:00Z"
+    signature_id: "sig-pam-001"
+
+context:
+  summary: >
+    NovaTrust has 45 standing admin accounts with persistent access to production
+    databases, Kubernetes clusters, and HSMs. DORA and PCI DSS require privileged
+    access to be time-limited, audited, and approved. A 2025 incident involved
+    a compromised admin credential used for data exfiltration over 72 hours before
+    detection. Just-in-time (JIT) elevation eliminates standing privileges and
+    introduces approval workflows for all production access.
+  business_drivers:
+    - "DORA Article 9: ICT access control and privileged access management"
+    - "PCI DSS 4.0 requirement 7: restrict access by business need-to-know"
+    - "2025 incident: compromised admin credential undetected for 72 hours"
+  technical_drivers:
+    - "45 standing admin accounts across production systems"
+    - "No approval workflow for privileged access"
+    - "No session recording for admin operations"
+  constraints:
+    - "Must support hybrid: cloud Kubernetes + on-premises databases"
+    - "Emergency break-glass access must remain available"
+  assumptions:
+    - "Teams will adopt request-based access within 3 months"
+    - "Approval SLA of 15 minutes is acceptable for planned work"
+
+requirements:
+  functional:
+    - id: "F-001"
+      description: "All production access requires JIT request with approval"
+    - id: "F-002"
+      description: "Privileged sessions recorded with tamper-evident storage"
+    - id: "F-003"
+      description: "Break-glass emergency access with post-incident review"
+  non_functional:
+    - id: "NF-001"
+      description: "Access provisioning latency < 30 seconds after approval"
+    - id: "NF-002"
+      description: "Session recording storage retention 2 years"
+
+alternatives:
+  - name: "HashiCorp Vault with dynamic secrets"
+    summary: "Use Vault for JIT credential issuance with TTL-limited database and SSH creds"
+    pros:
+      - "Dynamic credential generation eliminates standing accounts"
+      - "TTL-based automatic expiration"
+      - "Integrates with Kubernetes service accounts"
+      - "Open-source with enterprise support option"
+    cons:
+      - "No built-in approval workflow (requires custom integration)"
+      - "No native session recording"
+      - "Vault itself becomes a critical dependency"
+    estimated_cost: "medium"
+    risk: "medium"
+
+  - name: "CyberArk Privileged Access Manager"
+    summary: "Enterprise PAM with session recording, JIT, and approval workflows"
+    pros:
+      - "Full-featured PAM: JIT, approvals, session recording, analytics"
+      - "Strong regulatory compliance track record"
+      - "Built-in break-glass procedures"
+    cons:
+      - "High license cost"
+      - "Complex deployment and ongoing management"
+      - "Vendor lock-in for PAM workflows"
+    estimated_cost: "high"
+    risk: "low"
+
+decision:
+  chosen_alternative: "HashiCorp Vault with dynamic secrets"
+  rationale:
+    - "Dynamic secrets eliminate standing credentials entirely"
+    - "Open-source core reduces vendor lock-in"
+    - "Integrates natively with Kubernetes and cloud IAM"
+    - "Approval workflow implemented via Vault Sentinel policies + Slack integration"
+    - "Session recording addressed via separate tool (Teleport)"
+  tradeoffs:
+    - "Requires custom approval workflow integration (not built-in)"
+    - "Session recording requires additional tool (Teleport)"
+    - "Vault cluster is a Tier-0 dependency"
+  decision_date: "2026-02-27"
+
+consequences:
+  positive:
+    - "Zero standing privileges in production"
+    - "Every access request audited with approval chain"
+    - "Credential TTL limits exposure window to minutes"
+  negative:
+    - "Vault cluster management overhead"
+    - "Need separate Teleport deployment for session recording"
+  security_implications:
+    data_classification: "restricted"
+    encryption:
+      at_rest: true
+      in_transit: true
+      key_management: "Vault auto-unseal via HSM (ADR-0004)"
+    access_control:
+      iam_integration: true
+      least_privilege: true
+    audit:
+      audit_logging: true
+      retention: "2 years"
+  compliance_implications:
+    regulatory_impact:
+      dora: "Satisfies privileged access management requirements (Article 9)"
+      pci_dss: "Satisfies requirement 7 and 8 for access control"
+    required_controls:
+      - "JIT access with maximum TTL of 4 hours"
+      - "Dual-approval for Tier-0 systems (databases, HSMs)"
+      - "Break-glass access triggers automatic incident review"
+  operational_implications:
+    monitoring:
+      - "JIT request volume and approval latency"
+      - "Credential TTL expiration events"
+      - "Break-glass usage frequency"
+    runbooks:
+      - "Vault cluster recovery"
+      - "Break-glass incident review procedure"
+    staffing:
+      - "1 platform engineer for Vault operations"
+
+risk_assessment:
+  risks:
+    - id: "R-001"
+      description: "Vault cluster outage blocks all production access"
+      likelihood: "low"
+      impact: "critical"
+      mitigation:
+        - "Multi-node Vault cluster with automatic failover"
+        - "Break-glass procedure bypasses Vault via sealed envelope credentials"
+  residual_risk: "low"
+
+deployment:
+  rollout_plan:
+    phases:
+      - name: "Vault Deployment"
+        criteria: "Vault cluster operational; dynamic secrets for staging databases"
+        duration_days: 30
+      - name: "Production Migration"
+        criteria: "All standing admin accounts disabled; JIT mandatory"
+        duration_days: 60
+  testing:
+    unit_tests: true
+    integration_tests: true
+    performance_tests:
+      qps_target: 500
+      p99_latency_ms: 1000
+    compliance_tests:
+      - "Standing privilege elimination verification"
+      - "TTL enforcement test"
+  rollback_plan:
+    criteria: "JIT provisioning failure rate > 5%"
+    steps:
+      - "Re-enable standing admin accounts"
+      - "Investigate Vault cluster health"
+
+monitoring:
+  metrics:
+    - name: "jit_provisioning_latency_p99_ms"
+      threshold_warning: 15000
+      threshold_critical: 30000
+    - name: "break_glass_usage_count_per_week"
+      threshold_warning: 1
+      threshold_critical: 3
+  alerts:
+    - "PagerDuty: platform-on-call for Vault issues"
+    - "Slack: #security-ops for break-glass events"
+  sla:
+    availability_target: "99.99%"
+    rpo: "<= 1 minute"
+    rto: "<= 5 minutes"
+
+dependencies:
+  internal:
+    - "HSM infrastructure (ADR-0004)"
+    - "Kubernetes platform"
+  external:
+    - "HashiCorp (vendor support)"
+
+related_adrs:
+  - id: "ADR-0002"
+    title: "Adopt Zero Trust Network Architecture"
+    relationship: "related"
+  - id: "ADR-0004"
+    title: "Implement HSM-backed key management"
+    relationship: "depends_on"
+
+references:
+  - title: "HashiCorp Vault Dynamic Secrets"
+    url: "https://developer.hashicorp.com/vault/docs/secrets"
+  - title: "DORA Article 9 - ICT Risk Management"
+    url: "https://eur-lex.europa.eu/eli/reg/2022/2554/oj"
+
+lifecycle:
+  review_cycle_months: 6
+  next_review_date: "2026-08-27"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+
+audit_trail:
+  - event: "created"
+    by: "Marcus Chen"
+    at: "2026-02-10T08:00:00Z"
+  - event: "approved"
+    by: "Jonas Eriksen"
+    at: "2026-02-27T10:00:00Z"
