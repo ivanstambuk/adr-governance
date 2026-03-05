@@ -26,23 +26,29 @@ This document defines the process for proposing, reviewing, approving, and maint
    └───┬────┘
        │ author pushes branch, opens PR, sets status: proposed
        ▼
-   ┌──────────┐
-   │ proposed │  (PR open — under review)
-   └──┬───┬───┘
-      │   │
-      │   └─────────────────┐
-      │                     │ not enough info / bad timing
-      │                     ▼
-      │              ┌──────────┐
-      │              │ deferred │  (revisit later)
-      │              └──────────┘
-      │
-      ├──────────────────┐
-      │                  │
-      ▼                  ▼
-   ┌──────────┐   ┌──────────┐
-   │ accepted │   │ rejected │  (with reason in PR)
-   └──┬───────┘   └──────────┘
+   ┌──────────┐◄─────────────────────────────────────────────┐
+   │ proposed │  (PR open — under review)                    │
+   └──┬───┬───┘                                              │
+      │   │                                                  │
+      │   ├─────────────────┐                                │
+      │   │                 │ not enough info / bad timing    │
+      │   │                 ▼                                 │
+      │   │          ┌──────────┐                             │
+      │   │          │ deferred │  (parked — PR closed)       │
+      │   │          └──────────┘                             │
+      │   │                                                  │
+      │   └─────────────────────────────────────────────┐    │
+      │              discussed but no decision reached  │    │
+      │              → reviewers "Request Changes"      │    │
+      │              → action items in PR comments      │    │
+      │              → author reworks & pushes ─────────┼────┘
+      │                                                 │
+      ├──────────────────┐                              │
+      │                  │                              │
+      ▼                  ▼                              │
+   ┌──────────┐   ┌──────────┐                         │
+   │ accepted │   │ rejected │  (with reason in PR)    │
+   └──┬───────┘   └──────────┘                         │
       │
       ├─────────────────────┐
       │                     │
@@ -57,6 +63,7 @@ This document defines the process for proposing, reviewing, approving, and maint
 | From | To | Trigger |
 |------|----|---------|
 | `draft` | `proposed` | Author opens a PR |
+| `proposed` | `proposed` | Reviewed but no decision reached — reviewers request changes, author reworks and pushes new commits. PR stays open. |
 | `proposed` | `accepted` | All required approvers approve the PR |
 | `proposed` | `rejected` | Approvers reject with documented reason |
 | `proposed` | `deferred` | Decision postponed; PR closed with `deferred` label |
