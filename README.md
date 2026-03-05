@@ -85,6 +85,7 @@ Each ADR YAML file contains these sections:
 | `alternatives` | ✅ | At least 2 alternatives with pros, cons, cost, risk |
 | `decision` | ✅ | Chosen alternative, rationale, tradeoffs, date |
 | `consequences` | ✅ | Positive and negative outcomes |
+| `confirmation` | | How the decision's implementation is verified; delivery artifact IDs |
 | `reviewers` | | People who reviewed |
 | `approvals` | | Formal approvals with timestamps |
 | `requirements` | | Embedded functional and non-functional requirements |

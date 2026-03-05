@@ -14,7 +14,8 @@
 
 | Status | Meaning |
 |--------|---------|
-| `proposed` | ADR is drafted and under review. Not yet binding. |
+| `draft` | ADR is being authored. Not ready for review. |
+| `proposed` | ADR is complete and under review. Not yet binding. |
 | `accepted` | Decision has been formally approved and is in effect. |
 | `superseded` | Replaced by a newer ADR (see `lifecycle.superseded_by`). |
 | `deprecated` | Still technically active but no longer recommended. Will be superseded or rejected. |

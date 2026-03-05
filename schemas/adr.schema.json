@@ -44,6 +44,7 @@
                 "status": {
                     "type": "string",
                     "enum": [
+                        "draft",
                         "proposed",
                         "accepted",
                         "superseded",
@@ -348,6 +349,24 @@
                 }
             },
             "description": "Consequences and implications of the decision."
+        },
+        "confirmation": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "description": "How the implementation of this decision will be verified. E.g. code review, ArchUnit test, design review, load test."
+                },
+                "artifact_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Delivery artifact references that confirm implementation. E.g. Jira tickets, PR URLs, test suite IDs, sprint items."
+                }
+            },
+            "description": "How compliance with this ADR is confirmed. Links the decision to its verification evidence."
         },
         "risk_assessment": {
             "type": "object",
