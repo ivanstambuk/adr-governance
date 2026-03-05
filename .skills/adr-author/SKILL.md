@@ -48,6 +48,8 @@ Ask the user for:
 5. **Constraints**: What are the non-negotiable boundaries?
 6. **Alternatives**: At least 2 options with pros, cons, estimated cost, and risk level
 7. **Recommendation**: Which alternative and why?
+8. **Summary**: 2-4 sentence elevator pitch for stakeholder triage (max 500 chars)
+9. **Confidence**: `low` | `medium` | `high` — how confident are we in this decision?
 
 ### Step 3: Generate the ADR YAML
 
@@ -58,9 +60,9 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 - `decision_owner` — who is accountable
 - `context` — summary, business_drivers, technical_drivers, constraints, assumptions
 - `requirements` — embedded functional and non-functional requirements
-- `alternatives` — at least 2, each with name, summary, pros, cons, estimated_cost, risk
-- `decision` — chosen_alternative, rationale, tradeoffs, decision_date
-- `consequences` — positive, negative, security_implications, compliance_implications, operational_implications
+- `alternatives` — at least 2, each with name, summary, pros, cons, estimated_cost, risk, rejection_rationale (for non-chosen alternatives)
+- `decision` — chosen_alternative, rationale, tradeoffs, decision_date, confidence
+- `consequences` — positive, negative
 - `risk_assessment` — identified risks with likelihood, impact, mitigation
 - `audit_trail` — initial `created` event
 
@@ -91,6 +93,7 @@ When reviewing, check for:
 5. **Compliance**: Are regulatory implications addressed if the decision touches data, access, or infrastructure?
 6. **Consistency**: Do `related_adrs` references point to valid ADR IDs? Does the `chosen_alternative` name match an entry in `alternatives`?
 7. **Audit trail**: Is the trail consistent with the status?
+8. **Rejection rationale**: For each non-chosen alternative, is `rejection_rationale` populated explaining why it was not selected?
 
 ## How to supersede an ADR
 
@@ -103,7 +106,7 @@ When reviewing, check for:
 
 ## Reference documentation
 
-- See [the glossary](references/GLOSSARY.md) for all enum values and term definitions
+- See [the glossary](../../docs/glossary.md) for all enum values and term definitions
 - See [the JSON Schema](references/SCHEMA_REFERENCE.md) for the full meta-model specification
 - See example ADRs in the repository's `examples/` directory for well-formed samples
 

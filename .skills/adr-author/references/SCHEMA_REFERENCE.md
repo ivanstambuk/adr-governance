@@ -12,7 +12,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 | `context` | Problem summary, drivers, constraints, assumptions |
 | `alternatives` | Minimum 2 alternatives with pros, cons, cost, risk |
 | `decision` | Chosen alternative, rationale, tradeoffs, date, confidence level |
-| `consequences` | Positive/negative outcomes, security/compliance/operational implications |
+| `consequences` | Positive and negative outcomes |
 
 ## Optional Top-Level Sections
 
