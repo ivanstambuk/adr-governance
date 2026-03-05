@@ -50,14 +50,6 @@
 | `high` | Likely to occur given current conditions | Significant outage, data loss, or compliance breach |
 | `critical` | *(impact only)* | Catastrophic: regulatory penalties, major data breach, or total service loss |
 
-## Data Classification
-
-| Level | Description |
-|-------|-------------|
-| `public` | Freely available. No confidentiality requirements. |
-| `internal` | For internal use only. Not intended for external parties. |
-| `confidential` | Sensitive business or personal data. Access restricted to need-to-know. |
-| `restricted` | Highest sensitivity. Regulatory controls apply (e.g., PCI DSS, GDPR Art. 9). |
 
 ## ID Formats
 

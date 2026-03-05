@@ -1,358 +1,256 @@
-# ADR-0001: Use DPoP over mTLS for Sender-Constrained Access Tokens
-# Organization: NovaTrust Financial Services
-# Department: Identity and Access Management
-
 adr:
-  id: "ADR-0001"
-  title: "Use DPoP over mTLS as the sender-constraining mechanism for OAuth 2.1 access tokens"
-  status: "accepted"
-  created_at: "2026-01-10T09:00:00Z"
-  last_modified: "2026-01-25T14:30:00Z"
-  version: "1.0"
-  schema_version: "1.0.0"
-  project: "API Authorization Layer — OAuth 2.1 Implementation"
-  component: "Token Sender Constraining"
+  id: ADR-0001
+  title: Use DPoP over mTLS as the sender-constraining mechanism for OAuth 2.1 access tokens
+  status: accepted
+  created_at: '2026-01-10T09:00:00Z'
+  last_modified: '2026-01-25T14:30:00Z'
+  version: '1.0'
+  schema_version: 1.0.0
+  project: API Authorization Layer — OAuth 2.1 Implementation
+  component: Token Sender Constraining
   tags:
-    ["oauth", "dpop", "mtls", "sender-constraining", "token-binding", "rfc9449"]
-  priority: "high"
-  decision_type: "technology"
-
+  - oauth
+  - dpop
+  - mtls
+  - sender-constraining
+  - token-binding
+  - rfc9449
+  priority: high
+  decision_type: technology
 authors:
-  - name: "Elena Vasquez"
-    role: "IAM Architect"
-    email: "elena.vasquez@novatrust.example.com"
-  - name: "Kai Lindström"
-    role: "Mobile Platform Lead"
-    email: "kai.lindstrom@novatrust.example.com"
-
+- name: Elena Vasquez
+  role: IAM Architect
+  email: elena.vasquez@novatrust.example.com
+- name: Kai Lindström
+  role: Mobile Platform Lead
+  email: kai.lindstrom@novatrust.example.com
 decision_owner:
-  name: "Marcus Chen"
-  role: "Head of Identity and Access Management"
-  email: "marcus.chen@novatrust.example.com"
-
+  name: Marcus Chen
+  role: Head of Identity and Access Management
+  email: marcus.chen@novatrust.example.com
 reviewers:
-  - name: "Priya Sharma"
-    role: "API Platform Lead"
-    email: "priya.sharma@novatrust.example.com"
-  - name: "Jonas Eriksen"
-    role: "CISO"
-    email: "jonas.eriksen@novatrust.example.com"
-  - name: "Raj Patel"
-    role: "CDN / Edge Infrastructure Lead"
-    email: "raj.patel@novatrust.example.com"
-
+- name: Priya Sharma
+  role: API Platform Lead
+  email: priya.sharma@novatrust.example.com
+- name: Jonas Eriksen
+  role: CISO
+  email: jonas.eriksen@novatrust.example.com
+- name: Raj Patel
+  role: CDN / Edge Infrastructure Lead
+  email: raj.patel@novatrust.example.com
 approvals:
-  - name: "Marcus Chen"
-    role: "Head of IAM"
-    approved_at: "2026-01-24T10:00:00Z"
-    signature_id: "sig-dpop-001"
-  - name: "Jonas Eriksen"
-    role: "CISO"
-    approved_at: "2026-01-25T09:00:00Z"
-    signature_id: "sig-dpop-002"
-
+- name: Marcus Chen
+  role: Head of IAM
+  approved_at: '2026-01-24T10:00:00Z'
+  signature_id: sig-dpop-001
+- name: Jonas Eriksen
+  role: CISO
+  approved_at: '2026-01-25T09:00:00Z'
+  signature_id: sig-dpop-002
 context:
-  summary: >
-    NovaTrust has adopted OAuth 2.1 (RFC 9700) as its API authorization framework.
-    The specification mandates sender-constrained tokens to prevent token theft and
-    replay. Two mechanisms are standardized: OAuth 2.0 Mutual-TLS Client Authentication
-    and Certificate-Bound Access Tokens (RFC 8705) and Demonstrating Proof of Possession
-    (DPoP, RFC 9449). Both achieve the goal of binding a token to the client that
-    requested it, but they differ fundamentally in how they work: mTLS requires a
-    client certificate presented at the TLS layer, while DPoP uses application-layer
-    proof JWTs signed with an ephemeral keypair. We must choose one mechanism as the
-    primary sender-constraining method for all client types — public mobile apps,
+  summary: 'NovaTrust has adopted OAuth 2.1 (RFC 9700) as its API authorization framework. The specification mandates sender-constrained
+    tokens to prevent token theft and replay. Two mechanisms are standardized: OAuth 2.0 Mutual-TLS Client Authentication
+    and Certificate-Bound Access Tokens (RFC 8705) and Demonstrating Proof of Possession (DPoP, RFC 9449). Both achieve the
+    goal of binding a token to the client that requested it, but they differ fundamentally in how they work: mTLS requires
+    a client certificate presented at the TLS layer, while DPoP uses application-layer proof JWTs signed with an ephemeral
+    keypair. We must choose one mechanism as the primary sender-constraining method for all client types — public mobile apps,
     confidential backend services, and partner API consumers.
-  business_drivers:
-    - "PSD2 SCA compliance requires sender-constrained tokens for payment APIs"
-    - "Mobile banking app (3M+ users) cannot manage X.509 client certificates"
-    - "CDN provider (Cloudflare) terminates TLS before traffic reaches our infrastructure"
-    - "Partner banks need a mechanism that works through their corporate proxies"
-  technical_drivers:
-    - "mTLS requires client certificate provisioning and lifecycle management per device"
-    - "CDN TLS termination strips client certificates — requires costly mTLS passthrough or re-origination"
-    - "DPoP proofs are application-layer and survive any TLS termination or proxy chain"
-    - "PingFederate 12.x supports both DPoP (RFC 9449) and mTLS (RFC 8705) natively"
-    - "Existing API gateway (PingAccess) can validate DPoP proofs without TLS configuration changes"
-  constraints:
-    - "Must work for public clients (mobile app) that cannot hold X.509 certificates securely"
-    - "Must survive CDN TLS termination (Cloudflare) without requiring mTLS passthrough configuration"
-    - "Must not require changes to partner bank network egress proxies"
-    - "PingFederate 12.x is the authorization server — mechanism must be natively supported"
-  assumptions:
-    - "Mobile app can generate and store an ephemeral asymmetric keypair in the device secure enclave"
-    - "All resource servers can parse and validate the DPoP HTTP header"
-    - "DPoP nonce support in PingFederate is available for replay protection"
 
+    '
+  business_drivers:
+  - PSD2 SCA compliance requires sender-constrained tokens for payment APIs
+  - Mobile banking app (3M+ users) cannot manage X.509 client certificates
+  - CDN provider (Cloudflare) terminates TLS before traffic reaches our infrastructure
+  - Partner banks need a mechanism that works through their corporate proxies
+  technical_drivers:
+  - mTLS requires client certificate provisioning and lifecycle management per device
+  - CDN TLS termination strips client certificates — requires costly mTLS passthrough or re-origination
+  - DPoP proofs are application-layer and survive any TLS termination or proxy chain
+  - PingFederate 12.x supports both DPoP (RFC 9449) and mTLS (RFC 8705) natively
+  - Existing API gateway (PingAccess) can validate DPoP proofs without TLS configuration changes
+  constraints:
+  - Must work for public clients (mobile app) that cannot hold X.509 certificates securely
+  - Must survive CDN TLS termination (Cloudflare) without requiring mTLS passthrough configuration
+  - Must not require changes to partner bank network egress proxies
+  - PingFederate 12.x is the authorization server — mechanism must be natively supported
+  assumptions:
+  - Mobile app can generate and store an ephemeral asymmetric keypair in the device secure enclave
+  - All resource servers can parse and validate the DPoP HTTP header
+  - DPoP nonce support in PingFederate is available for replay protection
 requirements:
   functional:
-    - id: "F-001"
-      description: "Every access token issued by PingFederate must be bound to the requesting client's proof key"
-    - id: "F-002"
-      description: "Resource servers must validate the DPoP proof JWT on every request and reject tokens without valid proof"
-    - id: "F-003"
-      description: "Token binding must work for public clients (mobile), confidential clients (backend), and partner clients"
+  - id: F-001
+    description: Every access token issued by PingFederate must be bound to the requesting client's proof key
+  - id: F-002
+    description: Resource servers must validate the DPoP proof JWT on every request and reject tokens without valid proof
+  - id: F-003
+    description: Token binding must work for public clients (mobile), confidential clients (backend), and partner clients
   non_functional:
-    - id: "NF-001"
-      description: "DPoP proof generation on mobile must complete in < 50ms (including secure enclave signature)"
-    - id: "NF-002"
-      description: "DPoP proof validation at the resource server must add < 5ms latency per request at p99"
-    - id: "NF-003"
-      description: "No changes to existing TLS termination or CDN configuration required"
-
+  - id: NF-001
+    description: DPoP proof generation on mobile must complete in < 50ms (including secure enclave signature)
+  - id: NF-002
+    description: DPoP proof validation at the resource server must add < 5ms latency per request at p99
+  - id: NF-003
+    description: No changes to existing TLS termination or CDN configuration required
 alternatives:
-  - name: "DPoP (RFC 9449)"
-    summary: >
-      Application-layer proof of possession using signed JWTs. The client generates
-      an ephemeral asymmetric keypair, includes the public key in token requests, and
-      presents a signed DPoP proof JWT with every API call. The access token's `cnf`
-      claim contains a `jkt` thumbprint of the DPoP key.
-    pros:
-      - "Works for public clients — no certificate provisioning needed; keypair generated locally"
-      - "Application-layer mechanism survives any TLS termination, CDN, or proxy chain"
-      - "Ephemeral keys reduce blast radius — compromise of one key affects only that session"
-      - "Built-in replay protection via server-issued nonces (RFC 9449 §8)"
-      - "No infrastructure changes to CDN, load balancers, or API gateways"
-      - "Supported natively by PingFederate 12.x and PingAccess 8.x"
-    cons:
-      - "Every API request must include an additional DPoP header (bandwidth overhead ~500 bytes)"
-      - "Client-side implementation complexity — must generate proof JWT per request with correct `ath`, `htm`, `htu` claims"
-      - "Clock skew between client and server can cause proof rejection — requires nonce-based mitigation"
-      - "Newer standard (2023) — less battle-tested than mTLS in production at scale"
-      - "No hardware-level key protection guarantee unless explicitly using device secure enclave APIs"
-    estimated_cost: "medium"
-    risk: "low"
+- name: DPoP (RFC 9449)
+  summary: 'Application-layer proof of possession using signed JWTs. The client generates an ephemeral asymmetric keypair,
+    includes the public key in token requests, and presents a signed DPoP proof JWT with every API call. The access token''s
+    `cnf` claim contains a `jkt` thumbprint of the DPoP key.
 
-  - name: "mTLS Certificate-Bound Tokens (RFC 8705)"
-    summary: >
-      TLS-layer proof of possession using X.509 client certificates. The client
-      presents a certificate during the TLS handshake, and the access token's `cnf`
-      claim contains an `x5t#S256` thumbprint of the certificate. Resource servers
-      verify the certificate thumbprint matches.
-    pros:
-      - "Mature, well-understood mechanism — widely deployed in financial services"
-      - "TLS-layer binding is transparent to application code"
-      - "Stronger hardware binding when using smart cards or TPM-backed certificates"
-      - "No per-request proof generation — certificate is presented once during TLS handshake"
-    cons:
-      - "Not viable for public clients (mobile app) — X.509 certificate provisioning at scale is impractical"
-      - "CDN TLS termination strips client certificates — requires expensive mTLS passthrough ($50K/year Cloudflare Enterprise add-on)"
-      - "Partner corporate proxies frequently strip or re-originate client certificates"
-      - "Certificate lifecycle management (issuance, renewal, revocation) adds operational burden per client"
-      - "Requires PKI infrastructure and CA trust chain management"
-      - "Self-signed client certificates complicate trust validation at resource servers"
-    estimated_cost: "high"
-    risk: "medium"
+    '
+  pros:
+  - Works for public clients — no certificate provisioning needed; keypair generated locally
+  - Application-layer mechanism survives any TLS termination, CDN, or proxy chain
+  - Ephemeral keys reduce blast radius — compromise of one key affects only that session
+  - Built-in replay protection via server-issued nonces (RFC 9449 §8)
+  - No infrastructure changes to CDN, load balancers, or API gateways
+  - Supported natively by PingFederate 12.x and PingAccess 8.x
+  cons:
+  - Every API request must include an additional DPoP header (bandwidth overhead ~500 bytes)
+  - Client-side implementation complexity — must generate proof JWT per request with correct `ath`, `htm`, `htu` claims
+  - Clock skew between client and server can cause proof rejection — requires nonce-based mitigation
+  - Newer standard (2023) — less battle-tested than mTLS in production at scale
+  - No hardware-level key protection guarantee unless explicitly using device secure enclave APIs
+  estimated_cost: medium
+  risk: low
+- name: mTLS Certificate-Bound Tokens (RFC 8705)
+  summary: 'TLS-layer proof of possession using X.509 client certificates. The client presents a certificate during the TLS
+    handshake, and the access token''s `cnf` claim contains an `x5t#S256` thumbprint of the certificate. Resource servers
+    verify the certificate thumbprint matches.
 
-  - name: "Hybrid: DPoP for public clients, mTLS for confidential clients"
-    summary: >
-      Use DPoP for mobile/SPA public clients and mTLS for server-to-server
-      confidential clients, choosing the mechanism per client type.
-    pros:
-      - "Each client type uses its optimal mechanism"
-      - "Confidential servers benefit from TLS-layer binding without per-request overhead"
-    cons:
-      - "Dual validation logic at every resource server — must support both `jkt` and `x5t#S256` in `cnf` claims"
-      - "Testing matrix doubles — every API flow must be validated with both mechanisms"
-      - "CDN mTLS passthrough problem still exists for the confidential client path"
-      - "Operational complexity: two key management systems, two debugging procedures"
-      - "PingFederate token policies must branch on client type, increasing configuration surface"
-    estimated_cost: "high"
-    risk: "medium"
+    '
+  pros:
+  - Mature, well-understood mechanism — widely deployed in financial services
+  - TLS-layer binding is transparent to application code
+  - Stronger hardware binding when using smart cards or TPM-backed certificates
+  - No per-request proof generation — certificate is presented once during TLS handshake
+  cons:
+  - Not viable for public clients (mobile app) — X.509 certificate provisioning at scale is impractical
+  - CDN TLS termination strips client certificates — requires expensive mTLS passthrough ($50K/year Cloudflare Enterprise
+    add-on)
+  - Partner corporate proxies frequently strip or re-originate client certificates
+  - Certificate lifecycle management (issuance, renewal, revocation) adds operational burden per client
+  - Requires PKI infrastructure and CA trust chain management
+  - Self-signed client certificates complicate trust validation at resource servers
+  estimated_cost: high
+  risk: medium
+- name: 'Hybrid: DPoP for public clients, mTLS for confidential clients'
+  summary: 'Use DPoP for mobile/SPA public clients and mTLS for server-to-server confidential clients, choosing the mechanism
+    per client type.
 
+    '
+  pros:
+  - Each client type uses its optimal mechanism
+  - Confidential servers benefit from TLS-layer binding without per-request overhead
+  cons:
+  - Dual validation logic at every resource server — must support both `jkt` and `x5t#S256` in `cnf` claims
+  - Testing matrix doubles — every API flow must be validated with both mechanisms
+  - CDN mTLS passthrough problem still exists for the confidential client path
+  - 'Operational complexity: two key management systems, two debugging procedures'
+  - PingFederate token policies must branch on client type, increasing configuration surface
+  estimated_cost: high
+  risk: medium
 decision:
-  chosen_alternative: "DPoP (RFC 9449)"
+  chosen_alternative: DPoP (RFC 9449)
   rationale:
-    - "Only mechanism that works for all three client types without infrastructure modifications"
-    - "Survives CDN TLS termination — eliminates the $50K/year Cloudflare mTLS passthrough cost"
-    - "Mobile app (3M+ users) cannot manage X.509 certificates — DPoP ephemeral keys are generated locally"
-    - "Partner bank proxies frequently strip client certificates — DPoP is an HTTP header, not a TLS artifact"
-    - "Single validation path at resource servers reduces testing surface and operational complexity"
-    - "PingFederate 12.x DPoP nonce support provides replay protection equivalent to mTLS session binding"
+  - Only mechanism that works for all three client types without infrastructure modifications
+  - Survives CDN TLS termination — eliminates the $50K/year Cloudflare mTLS passthrough cost
+  - Mobile app (3M+ users) cannot manage X.509 certificates — DPoP ephemeral keys are generated locally
+  - Partner bank proxies frequently strip client certificates — DPoP is an HTTP header, not a TLS artifact
+  - Single validation path at resource servers reduces testing surface and operational complexity
+  - PingFederate 12.x DPoP nonce support provides replay protection equivalent to mTLS session binding
   tradeoffs:
-    - "~500 bytes additional overhead per API request for the DPoP proof header"
-    - "Client SDKs must implement DPoP proof generation (ath, htm, htu claims) — added integration effort"
-    - "Clock skew tolerance window (±60 seconds) may need tuning per client population"
-    - "Foregoing mTLS's hardware-level binding for software-level ephemeral keys — accepted risk for mobile"
-  decision_date: "2026-01-24"
-
+  - ~500 bytes additional overhead per API request for the DPoP proof header
+  - Client SDKs must implement DPoP proof generation (ath, htm, htu claims) — added integration effort
+  - Clock skew tolerance window (±60 seconds) may need tuning per client population
+  - Foregoing mTLS's hardware-level binding for software-level ephemeral keys — accepted risk for mobile
+  decision_date: '2026-01-24'
 consequences:
   positive:
-    - "Unified sender-constraining across mobile, backend, and partner clients"
-    - "No CDN or proxy configuration changes required — tokens are bound at the application layer"
-    - "Ephemeral keypairs limit blast radius — compromised key affects only one session"
-    - "PSD2 sender-constraining requirement satisfied for all payment API flows"
+  - Unified sender-constraining across mobile, backend, and partner clients
+  - No CDN or proxy configuration changes required — tokens are bound at the application layer
+  - Ephemeral keypairs limit blast radius — compromised key affects only one session
+  - PSD2 sender-constraining requirement satisfied for all payment API flows
   negative:
-    - "Per-request DPoP proof generation adds latency on mobile (20-40ms in secure enclave)"
-    - "Client SDK complexity increases — DPoP proof must be correctly constructed for every request"
-    - "Resource server validation adds ~2ms per request for JWK thumbprint comparison and signature verification"
-  security_implications:
-    data_classification: "confidential"
-    encryption:
-      at_rest: true
-      in_transit: true
-      key_management: "Ephemeral DPoP keys stored in device secure enclave (iOS Keychain / Android Keystore); server-side token signing keys in HSM"
-    access_control:
-      iam_integration: true
-      least_privilege: true
-    audit:
-      audit_logging: true
-      retention: "7 years"
-  compliance_implications:
-    regulatory_impact:
-      psd2: "DPoP sender-constraining satisfies SCA token binding requirements per EBA RTS"
-      dora: "Application-layer proof provides auditable binding between token and client identity"
-    required_controls:
-      - "DPoP nonce enforcement for replay protection (PingFederate config: dpop.nonce.required=true)"
-      - "Maximum DPoP proof lifetime of 120 seconds"
-      - "Resource servers must reject tokens presented without a valid DPoP proof header"
-      - "DPoP key rotation on token refresh — new keypair per refresh cycle"
-  operational_implications:
-    monitoring:
-      - "DPoP proof validation failure rate per resource server"
-      - "Clock skew rejection rate by client population (mobile vs backend)"
-      - "DPoP nonce issuance rate (indicator of replay attempts)"
-    runbooks:
-      - "DPoP clock skew tolerance adjustment procedure"
-      - "Emergency DPoP bypass for incident response (fallback to bearer + IP allowlist)"
-      - "Mobile SDK DPoP key rotation troubleshooting"
-    staffing:
-      - "0.5 FTE IAM engineer for DPoP monitoring and client SDK support"
-
+  - Per-request DPoP proof generation adds latency on mobile (20-40ms in secure enclave)
+  - Client SDK complexity increases — DPoP proof must be correctly constructed for every request
+  - Resource server validation adds ~2ms per request for JWK thumbprint comparison and signature verification
 risk_assessment:
   risks:
-    - id: "R-001"
-      description: "Mobile devices with significant clock skew cause DPoP proof rejection at scale"
-      likelihood: "medium"
-      impact: "medium"
-      mitigation:
-        - "Server-issued DPoP nonce eliminates dependency on client clock accuracy"
-        - "Monitoring dashboard tracks rejection rate segmented by client OS version"
-        - "Configurable tolerance window (default 60s, max 120s) per resource server"
-    - id: "R-002"
-      description: "DPoP proof generation overhead degrades mobile app UX on older devices"
-      likelihood: "low"
-      impact: "low"
-      mitigation:
-        - "Pre-generate DPoP proof during network idle time (proof-ahead pattern)"
-        - "Benchmark on minimum supported device tier (iPhone 12 / Pixel 6)"
-    - id: "R-003"
-      description: "Third-party API consumers unfamiliar with DPoP fail to implement correctly"
-      likelihood: "medium"
-      impact: "medium"
-      mitigation:
-        - "Provide DPoP client libraries in Java, Python, and JavaScript"
-        - "Developer portal with interactive DPoP proof generator and validator"
-        - "Dedicated partner integration support during onboarding"
-  residual_risk: "low"
-
-deployment:
-  rollout_plan:
-    phases:
-      - name: "Internal Backend Services"
-        criteria: "3 internal services sending DPoP-bound tokens; validation passing in staging"
-        duration_days: 21
-      - name: "Mobile App Beta"
-        criteria: "DPoP proof generation integrated in iOS and Android SDKs; beta group (5K users) validated"
-        duration_days: 30
-      - name: "Mobile App GA"
-        criteria: "DPoP enforced for all mobile token requests; bearer fallback disabled"
-        duration_days: 14
-      - name: "Partner API Consumers"
-        criteria: "Top-10 partners migrated to DPoP; self-service onboarding docs published"
-        duration_days: 60
-  testing:
-    unit_tests: true
-    integration_tests: true
-    performance_tests:
-      qps_target: 5000
-      p99_latency_ms: 5
-    compliance_tests:
-      - "DPoP proof binding: token rejected when presented without matching proof"
-      - "DPoP nonce enforcement: proof without server nonce rejected"
-      - "Replay protection: reused proof JWT rejected"
-      - "Clock skew: proof with timestamp beyond tolerance window rejected"
-  rollback_plan:
-    criteria: "DPoP validation failure rate > 5% or mobile app token acquisition error rate > 2%"
-    steps:
-      - "Disable DPoP enforcement at PingAccess (set dpop.required=false)"
-      - "Fall back to bearer tokens with IP-based rate limiting"
-      - "Notify partner API consumers of temporary bearer token acceptance"
-      - "Root cause analysis and mobile SDK patch release"
-
-monitoring:
-  metrics:
-    - name: "dpop_proof_validation_failure_rate_percent"
-      threshold_warning: 1
-      threshold_critical: 5
-    - name: "dpop_clock_skew_rejection_rate_percent"
-      threshold_warning: 0.5
-      threshold_critical: 2
-    - name: "dpop_proof_generation_latency_mobile_p99_ms"
-      threshold_warning: 40
-      threshold_critical: 80
-  alerts:
-    - "PagerDuty: on-call IAM engineer for DPoP validation failure spike"
-    - "Slack: #iam-ops for clock skew rejection anomalies"
-  sla:
-    availability_target: "99.99%"
-    rpo: "<= 1 minute"
-    rto: "<= 10 minutes"
-
+  - id: R-001
+    description: Mobile devices with significant clock skew cause DPoP proof rejection at scale
+    likelihood: medium
+    impact: medium
+    mitigation:
+    - Server-issued DPoP nonce eliminates dependency on client clock accuracy
+    - Monitoring dashboard tracks rejection rate segmented by client OS version
+    - Configurable tolerance window (default 60s, max 120s) per resource server
+  - id: R-002
+    description: DPoP proof generation overhead degrades mobile app UX on older devices
+    likelihood: low
+    impact: low
+    mitigation:
+    - Pre-generate DPoP proof during network idle time (proof-ahead pattern)
+    - Benchmark on minimum supported device tier (iPhone 12 / Pixel 6)
+  - id: R-003
+    description: Third-party API consumers unfamiliar with DPoP fail to implement correctly
+    likelihood: medium
+    impact: medium
+    mitigation:
+    - Provide DPoP client libraries in Java, Python, and JavaScript
+    - Developer portal with interactive DPoP proof generator and validator
+    - Dedicated partner integration support during onboarding
+  residual_risk: low
 dependencies:
   internal:
-    - "PingFederate 12.x (authorization server with DPoP support)"
-    - "PingAccess 8.x (API gateway with DPoP proof validation)"
-    - "Mobile SDK team (iOS/Android DPoP proof generation)"
-    - "HSM infrastructure for server-side token signing keys"
+  - PingFederate 12.x (authorization server with DPoP support)
+  - PingAccess 8.x (API gateway with DPoP proof validation)
+  - Mobile SDK team (iOS/Android DPoP proof generation)
+  - HSM infrastructure for server-side token signing keys
   external:
-    - "Cloudflare CDN (no changes required — DPoP is application-layer)"
-    - "Partner API consumers (must implement DPoP proof generation)"
-
+  - Cloudflare CDN (no changes required — DPoP is application-layer)
+  - Partner API consumers (must implement DPoP proof generation)
 related_adrs:
-  - id: "ADR-0004"
-    title: "Use Ed25519 over RSA-2048 for JWT signing keys"
-    relationship: "related"
-  - id: "ADR-0002"
-    title: "Use reference tokens for API gateway introspection"
-    relationship: "related"
-
+- id: ADR-0004
+  title: Use Ed25519 over RSA-2048 for JWT signing keys
+  relationship: related
+- id: ADR-0002
+  title: Use reference tokens for API gateway introspection
+  relationship: related
 attachments:
   diagrams:
-    - name: "dpop-flow-sequence.png"
-      path: "diagrams/ADR-0001-dpop-flow-sequence.png"
-
+  - name: dpop-flow-sequence.png
+    path: diagrams/ADR-0001-dpop-flow-sequence.png
 references:
-  - title: "Demonstrating Proof of Possession (DPoP) — RFC 9449"
-    url: "https://datatracker.ietf.org/doc/html/rfc9449"
-  - title: "OAuth 2.0 Mutual-TLS Client Authentication — RFC 8705"
-    url: "https://datatracker.ietf.org/doc/html/rfc8705"
-  - title: "OAuth 2.1 Authorization Framework — RFC 9700"
-    url: "https://datatracker.ietf.org/doc/html/rfc9700"
-  - title: "PingFederate DPoP Configuration Guide"
-    url: "https://docs.pingidentity.com/pingfederate/latest/dpop.html"
-
+- title: Demonstrating Proof of Possession (DPoP) — RFC 9449
+  url: https://datatracker.ietf.org/doc/html/rfc9449
+- title: OAuth 2.0 Mutual-TLS Client Authentication — RFC 8705
+  url: https://datatracker.ietf.org/doc/html/rfc8705
+- title: OAuth 2.1 Authorization Framework — RFC 9700
+  url: https://datatracker.ietf.org/doc/html/rfc9700
+- title: PingFederate DPoP Configuration Guide
+  url: https://docs.pingidentity.com/pingfederate/latest/dpop.html
 lifecycle:
   review_cycle_months: 12
-  next_review_date: "2027-01-24"
+  next_review_date: '2027-01-24'
   superseded_by: null
   supersedes: null
   archival:
     archived_at: null
     archive_reason: null
-
 audit_trail:
-  - event: "created"
-    by: "Elena Vasquez"
-    at: "2026-01-10T09:00:00Z"
-  - event: "updated"
-    by: "Kai Lindström"
-    at: "2026-01-18T14:00:00Z"
-    details: "Added mobile secure enclave benchmarks and CDN cost analysis"
-  - event: "approved"
-    by: "Marcus Chen"
-    at: "2026-01-24T10:00:00Z"
-  - event: "approved"
-    by: "Jonas Eriksen"
-    at: "2026-01-25T09:00:00Z"
-    details: "CISO approval with condition: DPoP nonce must be mandatory, not optional"
+- event: created
+  by: Elena Vasquez
+  at: '2026-01-10T09:00:00Z'
+- event: updated
+  by: Kai Lindström
+  at: '2026-01-18T14:00:00Z'
+  details: Added mobile secure enclave benchmarks and CDN cost analysis
+- event: approved
+  by: Marcus Chen
+  at: '2026-01-24T10:00:00Z'
+- event: approved
+  by: Jonas Eriksen
+  at: '2026-01-25T09:00:00Z'
+  details: 'CISO approval with condition: DPoP nonce must be mandatory, not optional'

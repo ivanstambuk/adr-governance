@@ -84,13 +84,11 @@ Each ADR YAML file contains these sections:
 | `context` | ✅ | Problem summary, business/technical drivers, constraints, assumptions |
 | `alternatives` | ✅ | At least 2 alternatives with pros, cons, cost, risk |
 | `decision` | ✅ | Chosen alternative, rationale, tradeoffs, date |
-| `consequences` | ✅ | Positive/negative outcomes, security/compliance/operational implications |
+| `consequences` | ✅ | Positive and negative outcomes |
 | `reviewers` | | People who reviewed |
 | `approvals` | | Formal approvals with timestamps |
 | `requirements` | | Embedded functional and non-functional requirements |
 | `risk_assessment` | | Risks with likelihood, impact, mitigations |
-| `deployment` | | Rollout phases, testing, rollback plan |
-| `monitoring` | | Metrics, alerts, SLA targets |
 | `dependencies` | | Internal and external dependencies |
 | `related_adrs` | | Cross-references (navigational only) |
 | `lifecycle` | | Review cadence, supersession chain |
