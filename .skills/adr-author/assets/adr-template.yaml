@@ -10,6 +10,7 @@ adr:
   created_at: "" # ISO 8601 datetime
   last_modified: "" # ISO 8601 datetime
   version: "0.1"
+  schema_version: "1.0.0"
   project: ""
   component: "" # Optional: specific component affected
   tags: [] # Categorization tags
