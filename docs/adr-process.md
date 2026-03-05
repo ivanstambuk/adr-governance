@@ -66,17 +66,17 @@ This document defines the process for proposing, reviewing, approving, and maint
 stateDiagram-v2
     [*] --> draft
 
-    draft --> proposed : Author pushes branch,\nopens PR
+    draft --> proposed : Author pushes branch,<br>opens PR
 
-    proposed --> proposed : No decision reached —\nreviewers Request Changes,\nauthor reworks
-    proposed --> accepted : All approvers approve PR\n→ PR merged
-    proposed --> rejected : Rejected with reason\n→ PR merged
-    proposed --> deferred : Postponed\n→ PR closed
+    proposed --> proposed : No decision reached —<br>reviewers Request Changes,<br>author reworks
+    proposed --> accepted : All approvers approve PR<br>→ PR merged
+    proposed --> rejected : Rejected with reason<br>→ PR merged
+    proposed --> deferred : Postponed<br>→ PR closed
 
     deferred --> proposed : Reopened or new PR
 
-    accepted --> superseded : New ADR supersedes\n→ PR merged
-    accepted --> deprecated : No longer recommended\n→ PR merged
+    accepted --> superseded : New ADR supersedes<br>→ PR merged
+    accepted --> deprecated : No longer recommended<br>→ PR merged
 
     rejected --> [*]
     deferred --> [*]
