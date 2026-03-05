@@ -1,0 +1,173 @@
+adr:
+  id: ADR-0000
+  title: Adopt schema-governed ADR process for architectural decision management
+  summary: Establish a formal, schema-validated ADR governance process using YAML files, JSON Schema validation, and GitOps workflows for managing architectural decisions.
+  status: accepted
+  created_at: "2026-03-05T09:00:00Z"
+  last_modified: "2026-03-05T18:00:00Z"
+  version: "1.0"
+  schema_version: "1.0.0"
+  project: ADR Governance
+  component: Decision Management Process
+  tags:
+    - governance
+    - adr
+    - process
+    - meta
+  priority: critical
+  decision_type: process
+authors:
+  - name: Ivan Stambuk
+    role: Principal Architect
+    email: ivan.stambuk@novatrust.example.com
+decision_owner:
+  name: Ivan Stambuk
+  role: Principal Architect
+  email: ivan.stambuk@novatrust.example.com
+context:
+  summary:
+    "NovaTrust's architecture team makes dozens of significant decisions per year — technology choices, security
+    protocols, vendor selections, and process changes. These decisions are currently captured in meeting notes,
+    Confluence pages, and Slack threads, leading to lost context, repeated discussions, and inconsistent
+    application. We need a structured, version-controlled, machine-readable format for recording architectural
+    decisions with full audit trails."
+  business_drivers:
+    - Regulatory auditors require proof of architectural decision rationale and approval chain
+    - New team members spend weeks re-discovering decisions that were never formally documented
+    - Repeated discussions on already-decided topics waste engineering time
+  technical_drivers:
+    - Machine-readable format enables automated validation, CI enforcement, and AI-assisted authoring
+    - Git-based workflow provides immutable audit trail for free
+    - Schema validation catches incomplete or inconsistent ADRs before they're merged
+    - Structured YAML enables cross-referencing and lifecycle management
+  constraints:
+    - Must work with GitHub as the primary code hosting platform
+    - Must be adoptable by teams without specialized tooling (YAML is human-readable)
+    - Must support formal approval workflows for regulated financial services
+  assumptions:
+    - Teams are comfortable with Git-based workflows and pull requests
+    - JSON Schema validation tooling is available in CI (Python, GitHub Actions)
+    - ADR volume will remain under 100 active decisions per year
+alternatives:
+  - name: Schema-governed YAML ADRs with JSON Schema validation
+    summary:
+      "Custom YAML-based ADR meta-model with JSON Schema (Draft 2020-12) validation. Each ADR is a self-contained
+      YAML file validated against a comprehensive schema. GitOps workflow drives all state transitions."
+    pros:
+      - Machine-readable and human-readable — YAML is approachable for all team members
+      - JSON Schema provides automated validation in CI — catches errors before merge
+      - Self-contained — each ADR has all context needed to understand the decision
+      - Formal approval workflow with signature IDs — satisfies regulatory audit requirements
+      - Append-only audit trail — immutable record of all lifecycle events
+      - Lifecycle management — periodic review, supersession chain, archival
+      - Agent Skill integration — AI-assisted authoring with schema awareness
+    cons:
+      - More structured than lightweight markdown ADRs — higher authoring overhead
+      - Schema evolution requires backward-compatible versioning
+      - YAML syntax errors can be confusing for non-technical stakeholders
+    estimated_cost: low
+    risk: low
+  - name: Markdown ADRs with MADR 4.0 template
+    summary: "Use the widely adopted MADR 4.0 markdown template. ADRs are markdown files with optional YAML frontmatter."
+    pros:
+      - Most widely adopted ADR format — largest community
+      - Simple to author — just markdown
+      - YAML frontmatter provides lightweight metadata
+    cons:
+      - No schema validation — inconsistency across ADRs is common
+      - No formal approval workflow — decision-makers are informational only
+      - No audit trail — lifecycle events are not tracked
+      - No lifecycle management — no review cadence, no archival
+      - Free-text format makes machine parsing unreliable
+    estimated_cost: low
+    risk: medium
+    rejection_rationale: Lacks formal approval workflow, audit trail, and schema validation required for regulated financial services. Free-text markdown makes automated quality checks unreliable.
+  - name: Confluence-based decision pages
+    summary: "Record decisions in Confluence pages with a standardized template. Approvals managed via Confluence page approvals."
+    pros:
+      - Familiar tool — already used by most teams
+      - Rich formatting and embedded diagrams
+      - Confluence page approval workflow exists
+    cons:
+      - Not version-controlled — no Git history, no immutable audit trail
+      - No schema validation — template adherence is voluntary
+      - Difficult to cross-reference decisions systematically
+      - Vendor lock-in to Atlassian
+      - No CI integration — cannot enforce quality gates
+    estimated_cost: low
+    risk: high
+    rejection_rationale: Not version-controlled — no immutable audit trail for regulatory compliance. No schema validation. Vendor lock-in to Atlassian. Cannot integrate with CI for automated enforcement.
+decision:
+  chosen_alternative: Schema-governed YAML ADRs with JSON Schema validation
+  rationale:
+    - Machine-readable YAML with JSON Schema validation catches errors automatically — essential at scale
+    - Formal approval workflow with signature IDs satisfies SOC 2 and regulatory audit requirements
+    - Append-only audit trail in each ADR provides immutable decision history
+    - Lifecycle management prevents decision rot via periodic review triggers
+    - GitOps workflow means all state transitions are Git commits — free immutable audit trail
+    - Agent Skill enables AI-assisted ADR authoring with schema awareness
+  tradeoffs:
+    - Higher authoring overhead than simple markdown — accepted because consistency and validation matter more at enterprise scale
+    - Schema evolution requires careful backward-compatible versioning — managed via versioning policy
+    - YAML syntax learning curve for non-technical stakeholders — mitigated by template and examples
+  decision_date: "2026-03-05"
+  confidence: high
+consequences:
+  positive:
+    - All architectural decisions documented with full context and rationale
+    - Automated validation ensures consistency across all ADRs
+    - Formal approval chain satisfies regulatory audit requirements
+    - Periodic review prevents decision rot
+    - AI-assisted authoring reduces friction
+  negative:
+    - Higher authoring overhead than lightweight markdown ADRs
+    - Teams must learn YAML and the ADR schema (mitigated by template and examples)
+    - Schema evolution requires careful management
+confirmation:
+  description: "ADR governance process validated by authoring 7 example ADRs (ADR-0001 through ADR-0007) covering technology, security, and process decisions across accepted and rejected statuses."
+  artifact_ids:
+    - "examples/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml"
+    - "examples/ADR-0007-centralized-secret-store-for-api-keys.yaml"
+    - "TEST-SUITE-validate-adr-all-examples"
+risk_assessment:
+  risks:
+    - id: R-001
+      description: Teams find the schema too heavy and revert to informal decision-making
+      likelihood: medium
+      impact: high
+      mitigation:
+        - Provide a comprehensive template with comments
+        - Agent Skill generates ADR scaffolding automatically
+        - Start with high-priority decisions only — don't ADR everything
+    - id: R-002
+      description: Schema evolution breaks existing ADRs
+      likelihood: low
+      impact: medium
+      mitigation:
+        - Schema versioning policy requires backward compatibility
+        - Only add optional fields in minor versions
+        - Migration scripts for breaking changes
+  residual_risk: low
+dependencies:
+  internal:
+    - GitHub Actions CI pipeline for schema validation
+    - Python 3.x with jsonschema and pyyaml libraries
+  external:
+    - JSON Schema specification (Draft 2020-12)
+lifecycle:
+  review_cycle_months: 24
+  next_review_date: "2028-03-05"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+audit_trail:
+  - event: created
+    by: Ivan Stambuk
+    at: "2026-03-05T09:00:00Z"
+    details: Initial ADR governance process design based on research of 14 ADR templates and 6 governance processes
+  - event: approved
+    by: Ivan Stambuk
+    at: "2026-03-05T18:00:00Z"
+    details: Process adopted after authoring 7 example ADRs and validating schema, CI, and Agent Skill integration

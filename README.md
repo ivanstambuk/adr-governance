@@ -46,15 +46,19 @@ The GitHub Actions workflow will automatically validate your ADR against the sch
 ├── schemas/
 │   └── adr.schema.json          # JSON Schema (Draft 2020-12) for ADRs
 ├── docs/
-│   └── glossary.md              # Terms, enum values, abbreviations
-├── decisions/                   # Your ADRs go here (initially empty)
-├── examples/                    # 6 well-formed example ADRs
+│   ├── adr-process.md           # Normative governance process
+│   ├── glossary.md              # Terms, enum values, abbreviations
+│   └── research/                # Template & process comparison research
+├── decisions/                   # Your ADRs go here
+│   └── ADR-0000-adopt-governed-adr-process.yaml  # Meta-ADR
+├── examples/                    # 7 well-formed example ADRs
 │   ├── ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
 │   ├── ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml
 │   ├── ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml
 │   ├── ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml
 │   ├── ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml
-│   └── ADR-0006-session-enrichment-for-step-up-authentication.yaml
+│   ├── ADR-0006-session-enrichment-for-step-up-authentication.yaml
+│   └── ADR-0007-centralized-secret-store-for-api-keys.yaml
 ├── .skills/
 │   └── adr-author/              # Agent Skill (agentskills.io spec)
 │       ├── SKILL.md             # Skill instructions
@@ -116,7 +120,7 @@ This generates `adr-governance-bundle.md` which can be pasted into any LLM conte
 
 ## Example ADRs
 
-The `examples/` directory contains 6 interconnected ADRs from a fictional IAM department. These are **low-level implementation decisions** — the kind of contended pattern choices you face *within* an already-adopted technology, with sizable pros and cons on each side:
+The `examples/` directory contains 7 interconnected ADRs from a fictional IAM department. These are **low-level implementation decisions** — the kind of contended pattern choices you face *within* an already-adopted technology, with sizable pros and cons on each side:
 
 | ID | Title | Status |
 |----|-------|--------|
@@ -126,6 +130,9 @@ The `examples/` directory contains 6 interconnected ADRs from a fictional IAM de
 | ADR-0004 | Use Ed25519 over RSA-2048 for JWT Signing Keys | accepted |
 | ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | accepted |
 | ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted |
+| ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** |
+
+Additionally, `decisions/ADR-0000` is a meta-ADR documenting the decision to adopt this governance process.
 
 ## License
 
