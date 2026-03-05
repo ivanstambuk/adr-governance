@@ -29,7 +29,13 @@ This document surveys and compares the major Architecture Decision Record (ADR) 
 | 5 | **Y-Statements** | Olaf Zimmermann, SATURN 2012 | 2012 | Single structured sentence | [ozimmer.ch](https://ozimmer.ch) |
 | 6 | **Alexandrian** | Pattern language tradition | ~2015 | Markdown (Pattern form) | [github.com/joelparkerhenderson/adr](https://github.com/joelparkerhenderson/architecture-decision-record) |
 | 7 | **Business Case** | Joel Parker Henderson | ~2018 | Markdown | [github.com/joelparkerhenderson/adr](https://github.com/joelparkerhenderson/architecture-decision-record) |
-| 8 | **adr-governance** | NovaTrust / this repo | 2026 | YAML + JSON Schema (Draft 2020-12) | `schemas/adr.schema.json` |
+| 8 | **Planguage** | Tom Gilb (via Henderson repo) | ~2012 | Keyword-structured text | [ICCGI 2012 Tutorial](https://www.iaria.org/conferences2012/filesICCGI12/Tutorial%20Specifying%20Effective%20Non-func.pdf) |
+| 9 | **EdgeX Foundry** | Linux Foundation EdgeX project | ~2020 | Markdown | [edgexfoundry.org](https://docs.edgexfoundry.org/2.3/design/adr/template/) |
+| 10 | **Merson** | Paulo Merson (CMU/SEI) | 2023 | Markdown | [github.com/pmerson/ADR-template](https://github.com/pmerson/ADR-template) |
+| 11 | **NHS Wales** | GIG Cymru / NHS Wales | ~2024 | Markdown (MkDocs-flavored) | [github.com/joelparkerhenderson/adr](https://github.com/joelparkerhenderson/architecture-decision-record/blob/main/locales/en/templates/decision-record-template-by-gig-cymru-nhs-wales) |
+| 12 | **Gareth Morgan** | Gareth Morgan (Solution Architecture) | 2024 | Markdown + HTML tables | [linkedin.com](https://www.linkedin.com/pulse/solution-architecture-decisions-gareth-morgan-0r5xe/) |
+| 13 | **DRF** | reasoning-formats org | 2024 | YAML/JSON (dual spec: DRF + CRF) | [github.com/reasoning-formats](https://github.com/reasoning-formats/reasoning-formats) |
+| 14 | **adr-governance** | NovaTrust / this repo | 2026 | YAML + JSON Schema (Draft 2020-12) | `schemas/adr.schema.json` |
 
 ---
 
@@ -237,7 +243,173 @@ Oriented toward management stakeholders and financial justification.
 
 ---
 
-### 3.8 adr-governance (This Repo)
+### 3.8 Planguage (Tom Gilb)
+
+A decision template adapted from Tom Gilb's "Planguage" — a planning language originally designed for specifying non-functional requirements with quantitative rigor.
+
+**Sections (Keywords):**
+
+| Section (Keyword) | Required | Content |
+|---------|----------|---------|
+| Tag | ✅ | Unique, persistent identifier |
+| Gist | ✅ | Brief summary of the requirement or area addressed |
+| Requirement | ✅ | The text detailing the requirement itself |
+| Rationale | ✅ | Reasoning that justifies the requirement |
+| Priority | ✅ | Statement of priority and claim on resources |
+| Stakeholders | ✅ | Parties materially affected by the requirement |
+| Status | ✅ | `draft`, `reviewed`, `committed`, etc. |
+| Owner | ✅ | Person responsible for implementing |
+| Author | ✅ | Person who wrote the requirement |
+| Revision | ✅ | Version number for the statement |
+| Date | ✅ | Date of the most recent revision |
+| Assumptions | ✅ | Anything that could cause problems if untrue now or later |
+| Risks | ✅ | Anything that could cause malfunction, delay, or negative impacts |
+| Defined | Optional | Definition of a term (recommends using a glossary instead) |
+
+**Characteristics:**
+- **QA/requirements-engineering lens.** The only ADR template rooted in non-functional requirements specification methodology.
+- **Quantitative mindset.** Planguage was designed for measurable quality attributes — e.g., "Response time ≤ 200ms for 95th percentile." This influences the template toward precision.
+- **"Tag" as persistent ID** — similar to our `adr.id`, predating all other templates' use of IDs.
+- **Explicit `Assumptions` and `Risks`** — shared with Tyree–Akerman. Unique among lightweight templates.
+- **`Owner` vs `Author` distinction** — separates who wrote it from who is accountable. Only our schema and this template make this distinction.
+- **No alternatives analysis, no consequences, no deployment, no monitoring.**
+- **Niche adoption.** Primarily used in Gilb's consulting practice and academic settings. Not widely adopted in open-source ADR workflows.
+
+---
+
+### 3.9 EdgeX Foundry (Linux Foundation)
+
+The official ADR template for EdgeX Foundry, a Linux Foundation open-source IoT platform. Used for all architecturally significant changes to the EdgeX codebase.
+
+**Sections:**
+
+| Section | Required | Content |
+|---------|----------|---------|
+| Submitters | ✅ | Name (Organization) — who proposed the ADR |
+| Change Log | ✅ | State transitions with dates and PR URLs |
+| Referenced Use Case(s) | ✅ | Links to approved use case documents |
+| Context | ✅ | Architectural significance justification + high-level approach |
+| Proposed Design | ✅ | Services/modules impacted, model/DTO changes, API changes, config changes, devops impact |
+| Considerations | ✅ | Alternatives, concerns, issues raised in debate; resolution status |
+| Decision | ✅ | Implementation details, caveats, future considerations, unmet requirements |
+| Other Related ADRs | Optional | Links with relevance annotations |
+| References | Optional | External resources |
+
+**Characteristics:**
+- **Change Log with PR links.** The only template that mandates a structured change log with pull request URLs for each state transition. This creates a **built-in audit trail** via git.
+- **Use case traceability.** Mandates `Referenced Use Case(s)` — the ADR must link to at least one approved use case. This enforces requirements traceability.
+- **Impact-analysis-oriented `Proposed Design`.** Explicitly asks for: services/modules impacted, model/DTO changes, API impact, configuration impact, and devops impact. This is a structured **impact assessment** — unique among templates.
+- **`Considerations` as debate log.** Records alternatives and concerns raised during review, with resolution notes. Functions as a lightweight decision journal.
+- **No structured consequences, no risk assessment, no monitoring, no formal approval.**
+- **Significant adoption.** Used by a major Linux Foundation project with dozens of contributors and enterprise backing.
+
+---
+
+### 3.10 Merson (CMU/SEI)
+
+A Nygard-derived template by Paulo Merson of Carnegie Mellon's Software Engineering Institute. Famous for explicitly separating **Rationale** as its own section.
+
+**Sections:**
+
+| Section | Required | Content |
+|---------|----------|---------|
+| Title (with number) | ✅ | "ADR N: brief decision title" |
+| Context (in body) | ✅ | Forces that influence the decision (technological, cost, project-local) |
+| Decision | ✅ | Response to the forces. Active voice: "We will…" |
+| Rationale | ✅ | **Why** the decision was made. Also covers rationale for significant rejected alternatives. May include assumptions, constraints, evaluation results. |
+| Status | ✅ | `Proposed`, `Accepted`, `Deprecated`, `Superseded` |
+| Consequences | ✅ | Resulting context. All consequences, not just positive. |
+
+**Characteristics:**
+- **Explicit `Rationale` section** — the defining innovation. Merson's argument: "Why is more important than how" (Richards & Ford, *Fundamentals of Software Architecture*). In Nygard's template, rationale is buried in Context or Decision. Merson forces it to stand alone.
+- **Rationale covers rejected alternatives** — the rationale section explicitly includes reasoning for significant alternatives that were *not* chosen. This partially compensates for the lack of a formal alternatives section.
+- **Lean (5 sections).** Only one section more than Nygard, but the added section is arguably the most important.
+- **SEI backing.** Associated with *Documenting Software Architectures: Views and Beyond* (Bass, Clements, Kazman). Used in O'Reilly architecture katas (Farmacy Food).
+- **No metadata, no alternatives list, no risk assessment, no deployment, no monitoring.**
+- **Moderate adoption.** Popular in educational settings and architecture kata competitions.
+
+---
+
+### 3.11 NHS Wales (GIG Cymru)
+
+An ADR template designed by and for NHS Wales (GIG Cymru), a national healthcare system. Notable for coming from a **regulated public-sector** environment where decisions must withstand audit and governance scrutiny.
+
+**Sections:**
+
+| Section | Required | Content |
+|---------|----------|---------|
+| Title | ✅ | Free-form title |
+| Status (admonition) | ✅ | `Proposed`, `Under Review`, `Accepted`, `Rejected`, `Superseded`, `Deprecated` |
+| Updated (date) | ✅ | ISO 8601 date |
+| Summary | ✅ | Executive summary / elevator pitch (2–4 sentences) |
+| Drivers | ✅ | Why this decision is being made *now* — motivations, needs, problems |
+| Options | ✅ | Factual description of each option (no opinions — analysis is separate) |
+| Options Analysis | ✅ | Per-option assessment: Pro / Con / Other; considers cost, complexity, risks, alignment, impact |
+| Recommendation | ✅ | Final decision with explicit justification against drivers |
+| → Consequences | Optional | Expected outcomes: Pro / Con / Other |
+| → Confirmation | Optional | How implementation will be verified + ongoing compliance ensured + metrics for success + ownership |
+| More Information | Optional | Supplementary context, participants, consensus process, re-evaluation triggers |
+
+**Characteristics:**
+- **Fact/opinion separation.** `Options` is strictly factual; `Options Analysis` is where judgment lives. This separation reduces cognitive bias during option presentation.
+- **Extended `Confirmation` section.** Goes beyond MADR's confirmation by asking: "Who is responsible for overseeing this, and what happens if the decision is not followed?" — explicit ownership and enforcement.
+- **`Drivers` as temporal motivator.** Not just "what are the forces" but "why *now*" — adds urgency context.
+- **6 statuses** — includes `Under Review` and `Deprecated` alongside the standard set. Most templates have 3–4.
+- **MkDocs integration.** Uses MkDocs admonition syntax for status display, suggesting tight integration with documentation-as-code pipelines.
+- **Healthcare governance context.** Designed for NHS digital architecture teams where decisions must satisfy clinical safety, data protection (UK GDPR), and NHS Digital standards.
+
+---
+
+### 3.12 Gareth Morgan (Solution Architecture Decisions)
+
+A template by Gareth Morgan focused on solution architecture decisions with a strong governance and visual comparison emphasis.
+
+**Sections:**
+
+| Section | Required | Content |
+|---------|----------|---------|
+| Title (with number) | ✅ | `[000] Title` — numbered for cataloging |
+| Context | ✅ | Problem(s) the ADR addresses and why they exist |
+| Decided Approach | ✅ | The architecturally significant decision and how it addresses the problems |
+| Consequences | ✅ | Impact on architecture characteristics and functional requirements |
+| Governance | ✅ | How outcomes will be monitored; how compliance will be ensured |
+| Options Analysis | Optional | Trade-off analysis with traffic-light comparison matrices |
+| → High-Level Overview | Optional | Summary matrix (Ease of Implementation, Timescales, Strategic Value) |
+| → Functional Requirements | Optional | Per-scenario fit matrix across options |
+| → Non-Functional Requirements | Optional | Per-architecture-characteristic fit matrix across options |
+
+**Characteristics:**
+- **Explicit `Governance` section.** The only template with a dedicated governance section asking: *"How will the outcomes of this decision be monitored? How will compliance with this decision be ensured?"* This bridges the gap between decision-making and decision-enforcement.
+- **Traffic-light comparison matrices.** Uses color-coded HTML tables (green/amber/red with +/- prefixes) for visual option comparison across three dimensions: high-level summary, functional requirements, and non-functional requirements. Highly stakeholder-friendly.
+- **Architecture characteristics framing.** Non-functional requirements are explicitly framed as "architecture characteristics" (à la Richards & Ford), assessed per option.
+- **Strategic Value assessment.** The high-level overview matrix includes "Strategic Value" — no other template evaluates options against strategic/tactical positioning.
+- **No metadata (beyond number), no risk assessment, no deployment, no monitoring, no audit trail.**
+
+---
+
+### 3.13 DRF — Decision Reasoning Format (reasoning-formats)
+
+A vendor-neutral, machine-readable YAML/JSON format for structured decision documentation. Not an ADR template per se, but a **complementary specification** designed to add structured reasoning to decisions.
+
+**Structure (two complementary specs):**
+
+| Spec | Purpose | Key Fields |
+|------|---------|------------|
+| **DRF** (Decision Reasoning Format) | Documents what was decided and why | `id`, `title`, `intent`, `context` (constraints with source, objectives with priority), `reasoning` (patterns: risk-based, comparative), `assumptions`, `tensions` (tradeoffs), `synthesis` (decision + rationale + alternatives), `meta` (status, timestamps) |
+| **CRF** (Context Reasoning Format) | Models organizational knowledge as a graph | `entities` (organizations, systems, policies, facts, capabilities), `relationships` (owns, depends_on, constrains, supersedes), `validity` (temporal bounds), `provenance` |
+
+**Characteristics:**
+- **Reasoning-first philosophy.** Captures *how* and *why*, not just *what*. Explicitly models assumptions, tensions/tradeoffs, and reasoning patterns used.
+- **Organizational context as knowledge graph.** CRF creates a separate, referenceable graph of policies, systems, and constraints. Decisions are validated against this context.
+- **Context validation.** DRF decisions can reference CRF entities for automatic conflict detection (e.g., "this decision conflicts with the Kubernetes Moratorium policy"). Advisory, not blocking.
+- **Bidirectional updates.** Decisions produce new organizational facts that flow back into CRF — the decision log feeds the organizational knowledge base.
+- **Constraint sourcing.** Each constraint carries a `source` (regulatory, budget, technical) — similar to our `compliance_implications.regulatory_impact` but more granular.
+- **Draft status (v0.1.0).** Still stabilizing core concepts. No significant adoption yet.
+- **Closest to our schema** in philosophy (machine-readable, validation-oriented, structured reasoning) but with a different architectural bet: two complementary specs vs. one unified schema.
+
+---
+
+### 3.14 adr-governance (This Repo)
 
 Our custom YAML-based meta-model with JSON Schema (Draft 2020-12) validation.
 
@@ -290,7 +462,9 @@ Our custom YAML-based meta-model with JSON Schema (Draft 2020-12) validation.
 
 Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | ❌ = Absent
 
-| Feature / Section | Nygard | MADR 4.0 | smadr | Tyree–Akerman | Y-Stmt | Alexandrian | Biz Case | **adr-governance** |
+### 4.1 Matrix A — Classic Templates (Templates 1–7) vs. adr-governance
+
+| Feature / Section | Nygard | MADR 4.0 | smadr | Tyree–Ak | Y-Stmt | Alexan. | Biz Case | **ours** |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Metadata** | | | | | | | | |
 | Unique ID | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
@@ -301,7 +475,6 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | Decision Owner | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Tags / Category | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
 | Priority | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Decision Type | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
 | Schema Version | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | JSON Schema Validation | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Context & Problem** | | | | | | | | |
@@ -323,30 +496,31 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | SWOT per Option | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Decision** | | | | | | | | |
 | Chosen Option | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Rationale | 🟡 | ✅ | ✅ | ✅ | 🟡 | 🟡 | ✅ | ✅ |
+| Explicit Rationale Section | ❌ | 🟡 | 🟡 | ✅ | ❌ | ❌ | ❌ | ✅ |
 | Tradeoffs | 🟡 | 🟡 | 🟡 | ❌ | ✅ | ❌ | ❌ | ✅ |
 | Decision Date | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Consequences** | | | | | | | | |
 | Positive Consequences | 🟡 | ✅ | ✅ | 🟡 | 🟡 | 🟡 | ❌ | ✅ |
 | Negative Consequences | 🟡 | ✅ | ✅ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
-| Neutral Consequences | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Security Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Compliance Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Operational Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Confirmation / Validation | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Governance** | | | | | | | | |
+| **Governance & Traceability** | | | | | | | | |
 | Stakeholders (RACI-like) | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
-| Reviewers | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Formal Approvals | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Audit Trail | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Change Log (with PR links) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Use Case Traceability | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Governance Enforcement | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Impact Assessment (structured) | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ |
 | **Risk & Compliance** | | | | | | | | |
 | Risk Assessment (overall) | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Risk per Option (3-dimensional) | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Compliance Audit Table | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Context Validation (policy conflict) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Operational** | | | | | | | | |
 | Deployment Plan (phased) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Testing Matrix | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Rollback Plan | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Monitoring (metrics + thresholds) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | SLA (availability, RPO, RTO) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
@@ -354,13 +528,80 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | Related Decisions | ❌ | 🟡 | ✅ | ✅ | ❌ | 🟡 | ❌ | ✅ |
 | Related Requirements | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | 🟡 |
 | Related Principles | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Related Artifacts | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
-| External References | ❌ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 | ✅ |
 | Dependencies (int/ext) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Lifecycle** | | | | | | | | |
 | Review Cadence | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Supersession Chain | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Archival Policy | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+
+### 4.2 Matrix B — Newer Templates (Templates 8–13) vs. adr-governance
+
+| Feature / Section | Planguage | EdgeX | Merson | NHS Wales | G. Morgan | DRF | **ours** |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Metadata** | | | | | | | |
+| Unique ID | ✅ | ❌ | 🟡 | ❌ | 🟡 | ✅ | ✅ |
+| Title | 🟡 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Status | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Date(s) | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
+| Author(s) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Decision Owner | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Tags / Category | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Priority | ✅ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ |
+| Schema Version | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| JSON Schema Validation | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ |
+| **Context & Problem** | | | | | | | |
+| Problem Statement | 🟡 | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ |
+| Business Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Technical Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Constraints | ❌ | ❌ | 🟡 | ❌ | ❌ | ✅ | ✅ |
+| Assumptions | ✅ | ❌ | 🟡 | ❌ | ❌ | ✅ | ✅ |
+| Decision Drivers | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ |
+| Summary / Executive Pitch | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Alternatives Analysis** | | | | | | | |
+| Multiple Options Listed | ❌ | 🟡 | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Pros per Option | ❌ | ❌ | ❌ | ✅ | 🟡 | ❌ | ✅ |
+| Cons per Option | ❌ | ❌ | ❌ | ✅ | 🟡 | ❌ | ✅ |
+| Fact/Opinion Separation | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Visual Comparison Matrices | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Risk Rating per Option | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Decision** | | | | | | | |
+| Chosen Option | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Explicit Rationale Section | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Tradeoffs | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Rationale for Rejected Options | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **Consequences** | | | | | | | |
+| Positive Consequences | ❌ | ❌ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
+| Negative Consequences | ❌ | ❌ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
+| Security Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Compliance Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Operational Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Confirmation / Validation | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| **Governance & Traceability** | | | | | | | |
+| Stakeholders | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | 🟡 |
+| Formal Approvals | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Audit Trail | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Change Log (with PR links) | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Use Case Traceability | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Governance Enforcement | ❌ | ❌ | ❌ | 🟡 | ✅ | ❌ | ❌ |
+| Impact Assessment (structured) | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Context Validation (policy conflict) | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| **Risk & Compliance** | | | | | | | |
+| Risk Assessment (overall) | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Constraint Sourcing (regulatory/budget/tech) | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟡 |
+| **Operational** | | | | | | | |
+| Deployment Plan (phased) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Rollback Plan | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Monitoring (metrics + thresholds) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| SLA (availability, RPO, RTO) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Cross-References** | | | | | | | |
+| Related Decisions | ❌ | ✅ | ❌ | 🟡 | ❌ | 🟡 | ✅ |
+| Org Context Graph (CRF) | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Dependencies (int/ext) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Lifecycle** | | | | | | | |
+| Review Cadence | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ✅ |
+| Supersession Chain | ❌ | 🟡 | 🟡 | ✅ | ❌ | ❌ | ✅ |
+| Bidirectional Updates | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 
 ---
 
@@ -375,6 +616,12 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | **Y-Statements** | Compression of entire decision into one sentence. Forces extreme clarity. | Niche — used as summaries |
 | **Alexandrian** | "Resulting Context" framing — consequences as input for next decision. | Niche — pattern language community |
 | **Business Case** | SWOT analysis and cost analysis per candidate. Management-facing. External opinions section. | Moderate — vendor selection |
+| **Planguage** | Owner/Author distinction. Priority as a structured field. QA-oriented keyword system from requirements engineering. | Niche — Gilb consulting/academic |
+| **EdgeX Foundry** | Change Log with PR links (built-in audit trail). Mandatory use case traceability. Structured impact assessment (API, DTO, model, config, devops). | Significant — Linux Foundation IoT |
+| **Merson** | Explicit standalone `Rationale` section. Rationale for rejected alternatives. "Why > How" philosophy (Richards & Ford). | Moderate — SEI/academic/katas |
+| **NHS Wales** | Fact/opinion separation (Options vs. Analysis). Extended confirmation with ownership+enforcement. `Under Review` and `Deprecated` statuses. Healthcare governance context. Summary/elevator pitch. | Growing — UK public sector |
+| **Gareth Morgan** | Dedicated `Governance` section (monitoring + compliance enforcement). Traffic-light visual comparison matrices. Strategic Value scoring per option. Architecture characteristics framing. | Moderate — solution architecture |
+| **DRF** | Reasoning-first philosophy. Organizational context as knowledge graph (CRF). Context validation with conflict detection. Bidirectional updates (decisions → org facts). Constraint sourcing. | Pre-release (v0.1.0) |
 | **adr-governance** | Structured security/compliance/operational implications. Phased deployment plans with rollback. Monitoring with metric thresholds and SLA. Formal approval workflow. Lifecycle management (review cadence, archival). Append-only audit trail. | New — this repo only |
 
 ---
@@ -392,7 +639,7 @@ These exist only in our `adr-governance` schema. The closest competitor is **sma
 
 ### 6.2 No Template Has Deployment/Rollback Planning
 
-None of the seven standard templates include:
+None of the thirteen external templates include:
 - Phased rollout criteria
 - Testing matrices (unit, integration, performance, compliance)
 - Rollback criteria and procedures
@@ -406,12 +653,27 @@ Only our schema links a decision to its runtime monitoring:
 - Alert routing
 - SLA targets (availability, RPO, RTO)
 
-### 6.4 Two Features We're Missing
+### 6.4 No Template Has Decision Governance Enforcement — Except Morgan
 
-| Feature | Source | Value |
-|---------|--------|-------|
-| **Confirmation** | MADR 4.0 | "How will we verify this decision was implemented correctly?" — links decision to validation (code review, automated test, ArchUnit). Useful for ensuring decisions don't rot. |
-| **Decision Drivers** (explicit) | MADR 4.0, smadr | Our `context` has `business_drivers` and `technical_drivers` but not a unified `decision_drivers` list. MADR's approach of listing drivers as enumerated forces is slightly more scannable, though our split into business/technical is more informative. |
+Gareth Morgan is the only template that asks: *"How will compliance with this decision be ensured?"* This is distinct from MADR's `Confirmation` (which asks "how do we verify implementation?") — Morgan asks about **ongoing enforcement**, not just initial validation. Our schema has `audit_trail` and `lifecycle.review_cycle_months` which partially address this, but we lack an explicit governance enforcement field.
+
+### 6.5 No Template Has Structured Impact Assessment — Except EdgeX
+
+EdgeX Foundry uniquely asks authors to enumerate: services/modules impacted, model/DTO changes, API impact, configuration changes, and devops impact. This is a lightweight **change impact analysis** that no other template captures. Our schema has `deployment` for rollout planning, but we don't explicitly ask "what will this decision break or change?"
+
+### 6.6 No Template Captures Rationale for Rejected Alternatives — Except Merson and DRF
+
+Merson's template explicitly includes reasoning for significant alternatives that were *not* chosen in its `Rationale` section. DRF similarly stores alternatives with their rejection reasoning in `synthesis`. Our `alternatives` section captures pros/cons for each option, but we don't have a dedicated field explaining *why* rejected alternatives were rejected. The rationale is implied by the chosen option's `rationale` field, but it's not explicit.
+
+### 6.7 Features We're Missing
+
+| Feature | Source | Value | Priority |
+|---------|--------|-------|----------|
+| **`confirmation`** | MADR 4.0, NHS Wales | "How will we verify this decision was implemented correctly?" — links decision to validation. NHS Wales extends this with ownership and enforcement questions. | ✅ **Add** |
+| **`governance_enforcement`** | Gareth Morgan | "How will compliance be monitored? Who is accountable?" — bridges decision to operational enforcement. | ⚠️ **Consider** |
+| **`impact_assessment`** | EdgeX Foundry | Structured list of systems/APIs/configurations impacted. Lightweight change impact analysis. | ⚠️ **Consider** |
+| **`rationale_for_rejected`** | Merson, DRF | Explicit reasoning for why significant alternatives were *not* chosen. | ⚠️ **Consider** |
+| **`summary`** | NHS Wales | Executive elevator pitch (2–4 sentences). Helps stakeholders triage ADRs without reading the full document. | ⚠️ **Consider** |
 
 ---
 
@@ -437,13 +699,17 @@ These are all enterprise-grade extensions that we invented. They should be prese
 
 | Candidate Field | Source Template | Recommendation | Rationale |
 |----------------|----------------|----------------|-----------|
-| **`confirmation`** | MADR 4.0 | ✅ **Add** | Answers "how do we verify this decision was implemented?" Lightweight field (free text) with high value for preventing decision rot. Could be a field under `decision` or a new top-level section. |
+| **`confirmation`** | MADR 4.0, NHS Wales | ✅ **Add** | Answers "how do we verify this decision was implemented?" NHS Wales extends this with ownership and enforcement. Could be a field under `decision` or a new top-level section with `description` (free text) and `artifacts` (list of verification artifact IDs). |
+| **`extension_fields` (x-*)** | smadr | ✅ **Add** | Allowing custom `x-*` prefixed fields in the schema gives teams flexibility without breaking validation. Simple to implement in JSON Schema via `patternProperties`. |
+| **`summary`** | NHS Wales | ✅ **Add** | Executive elevator pitch (2–4 sentences). Enables stakeholder triage without reading full ADRs. Trivial to add as a string field in `adr` metadata. |
+| **`impact_assessment`** | EdgeX Foundry | ⚠️ **Consider** | Structured list of impacted systems, APIs, configurations. Useful for change-heavy decisions. Could be added under `consequences` or as a standalone section. |
+| **`rationale_for_rejected`** | Merson, DRF | ⚠️ **Consider** | Per-alternative rejection reasoning. Our `alternatives[].cons` partially covers this, but explicit "why not" for each rejected option is clearer. Could be a new optional field on each alternative: `rejection_rationale`. |
+| **`related_principles`** | Tyree–Akerman | ⚠️ **Consider** | Links decisions to enterprise architecture principles. Valuable for organizations with a formal principles registry (e.g., TOGAF). Add if/when we have a principles registry. |
+| **`risk_per_option` (3D)** | smadr | ❌ **Skip** | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with the overall `risk_assessment` section provides equivalent coverage. |
 | **`neutral_consequences`** | MADR 4.0 | ❌ **Skip** | Neutral consequences are rarely informative. Our positive/negative split is sufficient. |
 | **`decision_drivers`** (unified list) | MADR / smadr | ❌ **Skip** | Our `business_drivers` + `technical_drivers` split is more informative than a flat list. |
-| **`related_principles`** | Tyree–Akerman | ⚠️ **Consider** | Links decisions to enterprise architecture principles. Valuable for organizations with a formal principles registry (e.g., TOGAF). Add if/when we have a principles registry. |
 | **`swot_per_option`** | Business Case | ❌ **Skip** | Overlaps with our pros/cons/cost/risk per alternative. SWOT is a management lens, not an engineering lens. |
-| **`risk_per_option` (3D)** | smadr | ⚠️ **Consider** | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field (low/medium/high/critical) combined with the overall `risk_assessment` section provides similar coverage. The 3D model could be adopted as an alternative structure for the per-option risk field if our users need more granularity. |
-| **`extension_fields` (x-*)** | smadr | ✅ **Add** | Allowing custom `x-*` prefixed fields in the schema gives teams flexibility without breaking validation. Simple to implement in JSON Schema via `patternProperties`. |
+| **`context_validation`** | DRF | ❌ **Skip (for now)** | DRF's organizational context graph (CRF) is architecturally novel but requires building a separate knowledge graph infrastructure. Worth revisiting when DRF matures past v0.1.0. |
 
 ### 7.3 What to Document
 
@@ -458,38 +724,41 @@ This prevents future confusion about whether they come from a standard.
 ## 8. Template Positioning Map
 
 ```
-                    ┌─────────────────────────────────────────────┐
-                    │              COMPREHENSIVENESS               │
-   Minimal ◄───────┼─────────────────────────────────────────────►│ Maximal
-                    │                                             │
-                    │  Y-Stmt    Nygard    Alexandrian    MADR    │
-                    │   (1)      (5)        (4)          (10)    │
-                    │                                             │
-                    │                      smadr      Tyree-Akerman
-                    │                      (15)         (14)      │
-                    │                                             │
-                    │                        Business Case        │
-                    │                           (12)              │
-                    │                                             │
-                    │                          adr-governance     │
-                    │                              (20+)          │
-                    └─────────────────────────────────────────────┘
+                    ┌──────────────────────────────────────────────────────┐
+                    │                 COMPREHENSIVENESS                     │
+   Minimal ◄───────┼──────────────────────────────────────────────────────►│ Maximal
+                    │                                                      │
+                    │  Y-Stmt    Nygard    Alexandrian    MADR    NHS Wales │
+                    │   (1)    Merson(5)    (4)          (10)      (11)    │
+                    │                                                      │
+                    │           Planguage    EdgeX   smadr   Tyree-Akerman │
+                    │            (14)        (9)    (15)       (14)        │
+                    │                                                      │
+                    │                 G.Morgan    Business Case    DRF     │
+                    │                  (6+)         (12)          (10)     │
+                    │                                                      │
+                    │                              adr-governance           │
+                    │                                  (20+)               │
+                    └──────────────────────────────────────────────────────┘
 
-   Human-readable ◄──────────────────────────────────────────────► Machine-readable
-                    │                                             │
-                    │  Nygard  Alexandrian  MADR    smadr         │
-                    │  Y-Stmt  Tyree-Ak    Biz Case              │
-                    │                                             │
-                    │                          adr-governance     │
-                    │                          (YAML + JSON Schema)│
-                    └─────────────────────────────────────────────┘
+   Human-readable ◄──────────────────────────────────────────────────────► Machine-readable
+                    │                                                      │
+                    │  Nygard  Alexandrian  MADR  NHS Wales  EdgeX         │
+                    │  Y-Stmt  Merson  Tyree-Ak  G.Morgan                 │
+                    │  Planguage            Biz Case                      │
+                    │                                                      │
+                    │                          smadr    DRF                │
+                    │                                                      │
+                    │                          adr-governance              │
+                    │                          (YAML + JSON Schema)        │
+                    └──────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 9. Conclusion
 
-Our `adr-governance` schema sits at the **maximum comprehensiveness** end of the ADR template spectrum. It is the only template that combines:
+Having surveyed **14 templates** (13 external + our own), we can now position `adr-governance` with much higher confidence. Our schema sits at the **maximum comprehensiveness** end of the ADR template spectrum. It is the only template that combines:
 
 - MADR-style alternatives analysis with pros/cons
 - Tyree–Akerman-style enterprise governance (assumptions, constraints, related artifacts)
@@ -499,9 +768,70 @@ Our `adr-governance` schema sits at the **maximum comprehensiveness** end of the
 - Formal approval workflow — **unique to us**
 - Machine-readable YAML with JSON Schema validation
 
-The tradeoff is **weight**: a full `adr-governance` ADR is significantly heavier than a Nygard or MADR record. This is acceptable for our use case (enterprise IAM decisions in regulated financial services) but would be overkill for a startup documenting database choices.
+The expanded survey surfaced several **newly identified gaps** worth closing:
 
-The only gap worth closing immediately is the **`confirmation`** field from MADR 4.0, and optionally the **`x-*` extension fields** from smadr for custom metadata flexibility.
+| Priority | Field | Source | Action |
+|----------|-------|--------|--------|
+| 🟢 High | `confirmation` | MADR 4.0 + NHS Wales | Add to schema |
+| 🟢 High | `summary` | NHS Wales | Add to `adr` metadata |
+| 🟢 High | `extension_fields` (x-*) | smadr | Add via `patternProperties` |
+| 🟡 Medium | `impact_assessment` | EdgeX Foundry | Consider adding under `consequences` |
+| 🟡 Medium | `rationale_for_rejected` | Merson, DRF | Consider per-alternative field |
+| ⚪ Low | `context_validation` | DRF | Watch for DRF maturity |
+
+The tradeoff remains **weight**: a full `adr-governance` ADR is significantly heavier than a Nygard or MADR record. This is acceptable for our use case (enterprise IAM decisions in regulated financial services) but would be overkill for a startup documenting database choices.
+
+The closest philosophical neighbor is **DRF** (reasoning-first, machine-readable, validation-oriented), but it takes a fundamentally different architectural approach (two complementary specs vs. one unified schema) and is still in early draft (v0.1.0). Worth monitoring.
+
+---
+
+## 10. ADR Ecosystem Insights
+
+The Henderson repository and related sources contain several important concepts beyond templates that are relevant to ADR governance:
+
+### 10.1 Fitness Functions for Decisions as Code
+
+**Fitness functions** are objective automated checks that verify decisions are being maintained. They make decisions testable and assurable.
+
+- **Connection:** A decision record documents the decision; a fitness function *assures* the decision.
+- **Example:** Decision = "We use event sourcing for audit requirements." Fitness function = CI test that all state changes produce events.
+- **Tools:** [ArchUnit](https://www.archunit.org/) (Java), [ArchUnitTS](https://github.com/LukasNiessen/ArchUnitTS) (TypeScript/JavaScript).
+- **AI-assisted:** Henderson suggests using LLMs as fitness function evaluators, asking them to audit code/schemas against the decision log.
+- **Relevance to us:** Our `confirmation` field (when added) could reference fitness functions. Our CI pipeline already validates ADR YAML — this is itself a fitness function.
+
+### 10.2 Decision Guardian — PR-Level Enforcement
+
+[Decision Guardian](https://github.com/DecispherHQ/decision-guardian) automatically surfaces relevant ADRs on pull requests when a developer modifies code covered by those decisions. Works with any CI system and as a pre-commit hook.
+
+- **Relevance:** Addresses Gareth Morgan's "governance enforcement" question — decisions are surfaced *at the moment they're most likely to be violated*.
+- **Action:** Evaluate for integration with our GitHub Actions CI pipeline.
+
+### 10.3 Teamwork Advice (Henderson)
+
+Key practical insights from teams using ADRs at scale:
+
+1. **Name the directory `decisions/` not `adrs/`** — teams document more (vendor decisions, planning decisions, scheduling decisions) when the directory name uses plain language.
+2. **Mutability works better than immutability in practice** — insert new info with date stamps rather than creating a new ADR for every update. "Living document" approach.
+3. **Lead with "why" not "what"** — ADRs are not valuable if they're just after-the-fact paperwork.
+4. **After-action reviews** — review each ADR one month later to compare the documented expectations with actual practice.
+
+### 10.4 Related Formalisms
+
+The Henderson repo references several pre-ADR decision documentation formalisms that influenced the field:
+
+| Formalism | Full Name | Relevance |
+|-----------|-----------|----------|
+| **IBIS** | Issue-Based Information System | Question → Position → Argument structure. Influenced dialogue mapping. |
+| **QOC** | Questions, Options, Criteria | Similar to ADR alternatives analysis. Academic predecessor. |
+| **DRL** | Decision Representation Language | Formal decision trees. More rigorous than ADR prose. |
+| **REMAP** | Representation and Maintenance of Process Knowledge | Process-oriented decision capture. |
+| **DRF** | Decision Reasoning Format | Modern YAML/JSON successor. See Section 3.13. |
+
+### 10.5 Company-Specific ADR Guidance
+
+- **[AWS Prescriptive Guidance](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html):** Formal ADR process with lifecycle (Proposed → Review → Accepted/Rejected → Superseded). Recommends that ADRs are consulted during code and architectural reviews. Treats ADRs as immutable after acceptance.
+- **[RedHat](https://www.redhat.com/architect/architecture-decision-records):** Advocates ADRs for enterprise architects.
+- **[GitHub ADR org](https://adr.github.io/):** Maintains MADR and the broader ADR standards ecosystem.
 
 ---
 
@@ -517,3 +847,13 @@ The only gap worth closing immediately is the **`confirmation`** field from MADR
 8. ISO/IEC/IEEE 42030:2019. "Architecture Evaluation Framework."
 9. ThoughtWorks Technology Radar. "Lightweight Architecture Decision Records." [thoughtworks.com](https://www.thoughtworks.com/radar/techniques/lightweight-architecture-decision-records)
 10. Spotify Engineering. "When Should I Write an Architecture Decision Record?" [atspotify.com](https://engineering.atspotify.com/2020/04/when-should-i-write-an-architecture-decision-record/)
+11. Gilb, T. (~2012). "Specifying Effective Non-functional Requirements." [ICCGI 2012 Tutorial](https://www.iaria.org/conferences2012/filesICCGI12/Tutorial%20Specifying%20Effective%20Non-func.pdf)
+12. EdgeX Foundry. "ADR Template." [edgexfoundry.org](https://docs.edgexfoundry.org/2.3/design/adr/template/)
+13. Merson, P. (2023). "ADR Template." [github.com/pmerson](https://github.com/pmerson/ADR-template)
+14. Morgan, G. (2024). "Solution Architecture Decisions." [linkedin.com](https://www.linkedin.com/pulse/solution-architecture-decisions-gareth-morgan-0r5xe/)
+15. GIG Cymru / NHS Wales. "ADR Template." [github.com/joelparkerhenderson](https://github.com/joelparkerhenderson/architecture-decision-record/blob/main/locales/en/templates/decision-record-template-by-gig-cymru-nhs-wales)
+16. Reasoning Formats (2024). "Decision Reasoning Format (DRF) & Context Reasoning Format (CRF)." [github.com/reasoning-formats](https://github.com/reasoning-formats/reasoning-formats)
+17. Richards, M. & Ford, N. (2020). "Fundamentals of Software Architecture." O'Reilly Media.
+18. Bass, L., Clements, P. & Kazman, R. (2012). "Documenting Software Architectures: Views and Beyond." Addison-Wesley.
+19. AWS Prescriptive Guidance. "ADR Process." [docs.aws.amazon.com](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html)
+20. Decipher HQ. "Decision Guardian." [github.com/DecispherHQ](https://github.com/DecispherHQ/decision-guardian)
