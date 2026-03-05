@@ -20,47 +20,6 @@ This document defines the process for proposing, reviewing, approving, and maint
 
 ## 2. Status Lifecycle
 
-### ASCII
-
-```
-   ┌────────┐
-   │  draft │  (WIP — on feature branch, not ready for review)
-   └───┬────┘
-       │ author pushes branch, opens PR, sets status: proposed
-       ▼
-   ┌──────────┐◄─────────────────────────────────────────────┐
-   │ proposed │  (PR open — under review)                    │
-   └──┬───┬───┘                                              │
-      │   │                                                  │
-      │   ├─────────────────┐                                │
-      │   │                 │ not enough info / bad timing   │
-      │   │                 ▼                                │
-      │   │          ┌──────────┐                            │
-      │   │          │ deferred │  (parked — PR closed)      │
-      │   │          └──────────┘                            │
-      │   │                                                  │
-      │   └─────────────────────────────────────────────┐    │
-      │              discussed but no decision reached  │    │
-      │              → reviewers "Request Changes"      │    │
-      │              → action items in PR comments      │    │
-      │              → author reworks & pushes ─────────┼────┘
-      │                                                 │
-      ├──────────────────┐                              │
-      │                  │                              │
-      ▼                  ▼                              │
-   ┌──────────┐   ┌──────────┐                          │
-   │ accepted │   │ rejected │  (with reason in PR)     │
-   └──┬───────┘   └──────────┘                          │
-      │
-      ├─────────────────────┐
-      │                     │
-      ▼                     ▼
-   ┌─────────────┐   ┌─────────────┐
-   │ superseded  │   │ deprecated  │
-   └─────────────┘   └─────────────┘
-```
-
-### Mermaid
 
 ```mermaid
 stateDiagram-v2
@@ -68,20 +27,28 @@ stateDiagram-v2
 
     draft --> proposed : Author pushes branch,<br>opens PR
 
-    proposed --> proposed : No decision reached —<br>reviewers Request Changes,<br>author reworks
+    proposed --> proposed : No decision reached —<br>reviewers Request Changes,<br>action items in PR comments,<br>author reworks & pushes
     proposed --> accepted : All approvers approve PR<br>→ PR merged
-    proposed --> rejected : Rejected with reason<br>→ PR merged
-    proposed --> deferred : Postponed<br>→ PR closed
+    proposed --> rejected : Rejected with documented reason<br>→ PR merged (preserves history)
+    proposed --> deferred : Postponed<br>→ PR closed with label
 
-    deferred --> proposed : Reopened or new PR
+    deferred --> proposed : Author reopens<br>or opens new PR
 
-    accepted --> superseded : New ADR supersedes<br>→ PR merged
+    accepted --> superseded : New ADR accepted<br>that replaces this one<br>→ PR merged
     accepted --> deprecated : No longer recommended<br>→ PR merged
 
     rejected --> [*]
     deferred --> [*]
     superseded --> [*]
     deprecated --> [*]
+
+    note right of draft : WIP on feature branch.<br>Not ready for review.
+    note right of proposed : PR is open.<br>Under active review.
+    note right of deferred : Parked — revisit later.<br>PR is closed.
+    note left of accepted : Decision is binding.<br>ADR is immutable.
+    note right of rejected : Decision log entry.<br>Preserved for historical record.
+    note left of superseded : Replaced by newer ADR.<br>See lifecycle.superseded_by.
+    note left of deprecated : Still in codebase but<br>no longer recommended.
 ```
 
 **Valid transitions:**
