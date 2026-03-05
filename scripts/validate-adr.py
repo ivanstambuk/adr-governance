@@ -83,6 +83,7 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
             "rejected": "rejected",
             "superseded": "superseded",
             "deprecated": "deprecated",
+            "deferred": "deferred",
         }
 
         if status in status_to_expected_event and audit_trail:
@@ -114,6 +115,38 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
                         f"  [strict] '{section}' is missing or empty — recommended for accepted ADRs"
                     )
 
+        # Check for invalid state transitions (status vs audit trail events)
+        invalid_event_for_status = {
+            "draft": {"approved", "superseded", "deprecated"},
+            "proposed": {"superseded", "deprecated"},
+            "rejected": {"approved", "superseded", "deprecated"},
+            "deferred": {"approved", "superseded", "deprecated"},
+        }
+        if status in invalid_event_for_status and audit_trail:
+            for bad_event in invalid_event_for_status[status]:
+                if bad_event in audit_events:
+                    warnings.append(
+                        f"  audit_trail: status is '{status}' but audit_trail contains "
+                        f"'{bad_event}' event — invalid state transition"
+                    )
+
+        # Check confidence ↔ review cycle consistency (strict only)
+        if strict:
+            confidence = decision.get("confidence", "")
+            lifecycle = data.get("lifecycle", {})
+            review_months = lifecycle.get("review_cycle_months")
+            if confidence and review_months is not None:
+                if confidence == "low" and review_months > 6:
+                    warnings.append(
+                        f"  [strict] decision.confidence is 'low' but lifecycle.review_cycle_months "
+                        f"is {review_months} — recommended ≤6 months for low-confidence decisions"
+                    )
+                if confidence == "high" and review_months < 12:
+                    warnings.append(
+                        f"  [strict] decision.confidence is 'high' but lifecycle.review_cycle_months "
+                        f"is {review_months} — extended cycle (≥12 months) is acceptable for high-confidence decisions"
+                    )
+
     return errors, warnings
 
 
@@ -124,15 +157,23 @@ def validate_cross_references(all_data: dict[str, dict]):
         all_data: mapping of filepath → parsed YAML data
     """
     warnings = []
-    # Collect all known ADR IDs
+    # Collect all known ADR IDs and their related_adrs
     known_ids = set()
+    id_to_filepath = {}
+    id_to_related = {}  # adr_id -> list of (ref_id, relationship)
     for filepath, data in all_data.items():
         if isinstance(data, dict):
             adr_id = data.get("adr", {}).get("id", "")
             if adr_id:
                 known_ids.add(adr_id)
+                id_to_filepath[adr_id] = filepath
+                related = data.get("related_adrs", [])
+                id_to_related[adr_id] = [
+                    (e.get("id", ""), e.get("relationship", ""))
+                    for e in related if isinstance(e, dict)
+                ]
 
-    # Check related_adrs references
+    # Check related_adrs references exist
     for filepath, data in all_data.items():
         if not isinstance(data, dict):
             continue
@@ -145,6 +186,27 @@ def validate_cross_references(all_data: dict[str, dict]):
                 if ref_id and ref_id not in known_ids:
                     warnings.append(
                         f"  {filepath}: related_adrs references '{ref_id}' which is not found in the validated set"
+                    )
+
+    # Check bidirectional relationship symmetry
+    inverse_relationship = {
+        "supersedes": "superseded_by",
+        "superseded_by": "supersedes",
+    }
+    for adr_id, relations in id_to_related.items():
+        for ref_id, relationship in relations:
+            if relationship in inverse_relationship and ref_id in id_to_related:
+                expected_inverse = inverse_relationship[relationship]
+                partner_rels = id_to_related[ref_id]
+                has_inverse = any(
+                    r_id == adr_id and r_rel == expected_inverse
+                    for r_id, r_rel in partner_rels
+                )
+                if not has_inverse:
+                    warnings.append(
+                        f"  {id_to_filepath.get(adr_id, adr_id)}: '{adr_id}' declares "
+                        f"'{relationship}' to '{ref_id}', but '{ref_id}' does not have "
+                        f"matching '{expected_inverse}' back to '{adr_id}'"
                     )
 
     return warnings
