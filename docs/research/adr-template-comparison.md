@@ -288,79 +288,79 @@ Our custom YAML-based meta-model with JSON Schema (Draft 2020-12) validation.
 
 ## 4. Feature Comparison Matrix
 
-Legend: ✅ = Present and structured | ◐ = Present but free-text/minimal | ✗ = Absent
+Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | ❌ = Absent
 
 | Feature / Section | Nygard | MADR 4.0 | smadr | Tyree–Akerman | Y-Stmt | Alexandrian | Biz Case | **adr-governance** |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Metadata** | | | | | | | | |
-| Unique ID | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Title | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ✅ | ✅ |
-| Status | ✅ | ✅ | ✅ | ✅ | ✗ | ✗ | ✅ | ✅ |
-| Date(s) | ✗ | ✅ | ✅ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Author(s) | ✗ | ◐ | ✅ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Decision Owner | ✗ | ◐ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Tags / Category | ✗ | ✗ | ✅ | ✅ | ✗ | ✗ | ✗ | ✅ |
-| Priority | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Decision Type | ✗ | ✗ | ✅ | ✅ | ✗ | ✗ | ✗ | ✅ |
-| Schema Version | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| JSON Schema Validation | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✗ | ✅ |
+| Unique ID | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Title | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | ✅ | ✅ |
+| Status | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Date(s) | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Author(s) | ❌ | 🟡 | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Decision Owner | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Tags / Category | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Priority | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Decision Type | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Schema Version | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| JSON Schema Validation | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Context & Problem** | | | | | | | | |
-| Problem Statement | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ◐ | ✅ |
-| Business Drivers | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Technical Drivers | ✗ | ◐ | ◐ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Constraints | ✗ | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✅ |
-| Assumptions | ✗ | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✅ |
-| Decision Drivers | ✗ | ✅ | ✅ | ✗ | ◐ | ✗ | ✗ | ✗ |
+| Problem Statement | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | 🟡 | ✅ |
+| Business Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Technical Drivers | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Constraints | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Assumptions | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Decision Drivers | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ |
 | **Requirements** | | | | | | | | |
-| Functional Requirements | ✗ | ✗ | ✗ | ◐ | ✗ | ✗ | ✗ | ✅ |
-| Non-Functional Requirements | ✗ | ✗ | ✗ | ◐ | ◐ | ✗ | ✗ | ✅ |
+| Functional Requirements | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ✅ |
+| Non-Functional Requirements | ❌ | ❌ | ❌ | 🟡 | 🟡 | ❌ | ❌ | ✅ |
 | **Alternatives Analysis** | | | | | | | | |
-| Multiple Options Listed | ✗ | ✅ | ✅ | ✅ | ◐ | ✗ | ✅ | ✅ |
-| Pros per Option | ✗ | ✅ | ✅ | ◐ | ✗ | ✗ | ◐ | ✅ |
-| Cons per Option | ✗ | ✅ | ✅ | ◐ | ✗ | ✗ | ◐ | ✅ |
-| Cost Estimate per Option | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ | ✅ |
-| Risk Rating per Option | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| SWOT per Option | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ | ✗ |
+| Multiple Options Listed | ❌ | ✅ | ✅ | ✅ | 🟡 | ❌ | ✅ | ✅ |
+| Pros per Option | ❌ | ✅ | ✅ | 🟡 | ❌ | ❌ | 🟡 | ✅ |
+| Cons per Option | ❌ | ✅ | ✅ | 🟡 | ❌ | ❌ | 🟡 | ✅ |
+| Cost Estimate per Option | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Risk Rating per Option | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| SWOT per Option | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Decision** | | | | | | | | |
 | Chosen Option | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Rationale | ◐ | ✅ | ✅ | ✅ | ◐ | ◐ | ✅ | ✅ |
-| Tradeoffs | ◐ | ◐ | ◐ | ✗ | ✅ | ✗ | ✗ | ✅ |
-| Decision Date | ✗ | ✅ | ✅ | ✗ | ✗ | ✗ | ✗ | ✅ |
+| Rationale | 🟡 | ✅ | ✅ | ✅ | 🟡 | 🟡 | ✅ | ✅ |
+| Tradeoffs | 🟡 | 🟡 | 🟡 | ❌ | ✅ | ❌ | ❌ | ✅ |
+| Decision Date | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Consequences** | | | | | | | | |
-| Positive Consequences | ◐ | ✅ | ✅ | ◐ | ◐ | ◐ | ✗ | ✅ |
-| Negative Consequences | ◐ | ✅ | ✅ | ◐ | ✅ | ◐ | ✗ | ✅ |
-| Neutral Consequences | ✗ | ✅ | ✅ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Security Implications (structured) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Compliance Implications (structured) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Operational Implications (structured) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Confirmation / Validation | ✗ | ✅ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Positive Consequences | 🟡 | ✅ | ✅ | 🟡 | 🟡 | 🟡 | ❌ | ✅ |
+| Negative Consequences | 🟡 | ✅ | ✅ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
+| Neutral Consequences | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Security Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Compliance Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Operational Implications (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Confirmation / Validation | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Governance** | | | | | | | | |
-| Stakeholders (RACI-like) | ✗ | ✅ | ✗ | ✗ | ✗ | ✗ | ✗ | ◐ |
-| Reviewers | ✗ | ◐ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Formal Approvals | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Audit Trail | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✗ | ✅ |
+| Stakeholders (RACI-like) | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
+| Reviewers | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Formal Approvals | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Audit Trail | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Risk & Compliance** | | | | | | | | |
-| Risk Assessment (overall) | ✗ | ✗ | ◐ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Risk per Option (3-dimensional) | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| Residual Risk | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Compliance Audit Table | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Risk Assessment (overall) | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Risk per Option (3-dimensional) | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Compliance Audit Table | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Operational** | | | | | | | | |
-| Deployment Plan (phased) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Testing Matrix | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Rollback Plan | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Monitoring (metrics + thresholds) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| SLA (availability, RPO, RTO) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
+| Deployment Plan (phased) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Testing Matrix | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Rollback Plan | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Monitoring (metrics + thresholds) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| SLA (availability, RPO, RTO) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Cross-References** | | | | | | | | |
-| Related Decisions | ✗ | ◐ | ✅ | ✅ | ✗ | ◐ | ✗ | ✅ |
-| Related Requirements | ✗ | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ◐ |
-| Related Principles | ✗ | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✗ |
-| Related Artifacts | ✗ | ✗ | ✗ | ✅ | ✗ | ✗ | ✗ | ✅ |
-| External References | ✗ | ◐ | ✅ | ✗ | ✗ | ✗ | ◐ | ✅ |
-| Dependencies (int/ext) | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
+| Related Decisions | ❌ | 🟡 | ✅ | ✅ | ❌ | 🟡 | ❌ | ✅ |
+| Related Requirements | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | 🟡 |
+| Related Principles | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Related Artifacts | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ |
+| External References | ❌ | 🟡 | ✅ | ❌ | ❌ | ❌ | 🟡 | ✅ |
+| Dependencies (int/ext) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | **Lifecycle** | | | | | | | | |
-| Review Cadence | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Supersession Chain | ◐ | ◐ | ◐ | ✗ | ✗ | ✗ | ✗ | ✅ |
-| Archival Policy | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✅ |
+| Review Cadence | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Supersession Chain | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Archival Policy | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
