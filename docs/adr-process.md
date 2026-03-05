@@ -31,11 +31,11 @@ This document defines the process for proposing, reviewing, approving, and maint
    └──┬───┬───┘                                              │
       │   │                                                  │
       │   ├─────────────────┐                                │
-      │   │                 │ not enough info / bad timing    │
-      │   │                 ▼                                 │
-      │   │          ┌──────────┐                             │
-      │   │          │ deferred │  (parked — PR closed)       │
-      │   │          └──────────┘                             │
+      │   │                 │ not enough info / bad timing   │
+      │   │                 ▼                                │
+      │   │          ┌──────────┐                            │
+      │   │          │ deferred │  (parked — PR closed)      │
+      │   │          └──────────┘                            │
       │   │                                                  │
       │   └─────────────────────────────────────────────┐    │
       │              discussed but no decision reached  │    │
@@ -60,16 +60,18 @@ This document defines the process for proposing, reviewing, approving, and maint
 
 **Valid transitions:**
 
-| From | To | Trigger |
-|------|----|---------|
-| `draft` | `proposed` | Author opens a PR |
-| `proposed` | `proposed` | Reviewed but no decision reached — reviewers request changes, author reworks and pushes new commits. PR stays open. |
-| `proposed` | `accepted` | All required approvers approve the PR |
-| `proposed` | `rejected` | Approvers reject with documented reason |
-| `proposed` | `deferred` | Decision postponed; PR closed with `deferred` label |
-| `deferred` | `proposed` | Author reopens or opens new PR |
-| `accepted` | `superseded` | New ADR accepted that replaces this one |
-| `accepted` | `deprecated` | Decision no longer recommended |
+| ADR Status (from) | ADR Status (to) | PR State | Trigger |
+|:------------------:|:----------------:|:--------:|---------|
+| `draft` | `proposed` | **opened** | Author pushes branch and opens PR |
+| `proposed` | `proposed` | **open** (changes requested) | Reviewed but no decision — reviewers request changes, author reworks |
+| `proposed` | `accepted` | **merged** | All required approvers approve the PR |
+| `proposed` | `rejected` | **merged** | Approvers reject — ADR is merged to preserve the historical record |
+| `proposed` | `deferred` | **closed** | Decision postponed; PR closed with `deferred` label |
+| `deferred` | `proposed` | **opened** (new or reopened) | Author reopens or opens new PR |
+| `accepted` | `superseded` | **merged** (via superseding ADR's PR) | New ADR accepted that replaces this one |
+| `accepted` | `deprecated` | **merged** (standalone PR) | Decision no longer recommended |
+
+> **Why are rejected ADRs merged?** Rejected ADRs are part of the decision log — they document *why* an option was evaluated and not pursued. Closing the PR without merging would lose this history from `main`.
 
 ---
 
