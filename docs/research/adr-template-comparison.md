@@ -747,8 +747,205 @@ The Henderson repo references several pre-ADR decision documentation formalisms 
 ### 10.5 Company-Specific ADR Guidance
 
 - **[AWS Prescriptive Guidance](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html):** Formal ADR process with lifecycle (Proposed → Review → Accepted/Rejected → Superseded). Recommends that ADRs are consulted during code and architectural reviews. Treats ADRs as immutable after acceptance.
+- **[Microsoft Azure Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/architect-role/architecture-decision-record):** Positions ADRs as "one of the most important deliverables of a solution architect." Key advice: record **confidence level** per decision (low-confidence decisions get prioritized for reconsideration). Emphasizes **append-only** log and storing ADRs openly in the workload's documentation repository.
 - **[RedHat](https://www.redhat.com/architect/architecture-decision-records):** Advocates ADRs for enterprise architects.
-- **[GitHub ADR org](https://adr.github.io/):** Maintains MADR and the broader ADR standards ecosystem.
+- **[GitHub ADR org](https://adr.github.io/):** Maintains MADR and the broader ADR standards ecosystem. Hosts the canonical template index and tooling list.
+
+### 10.6 Architectural Decisions — The Making Of (Zimmermann)
+
+[Olaf Zimmermann's comprehensive post](https://ozimmer.ch/practices/2020/04/27/ArchitectureDecisionMaking.html) provides a history of architecture decision recording since the late 1990s. Key insights:
+
+1. **Y-Statements evolved from enterprise overengineering.** Zimmermann's earlier meta-models (IBM ARC-100, SOAD PhD project) were too heavy to maintain. The Y-statement was born from a sponsor saying: *"Can you fit each decision on one presentation slide?"*
+2. **Good vs. bad justifications.** Good: "We performed a PoC and the results were convincing." Bad: "Everybody does it" or "Experience with this will look great on my resume."
+3. **Don't overdo it.** "An AD log with more than 100 entries will probably put your readers (and you) to sleep." Focus on architecturally significant requirements only.
+4. **Definition of Done for ADs.** Zimmermann proposes a [DoD for Architectural Decisions](https://ozimmer.ch/practices/2020/05/22/ADDefinitionOfDone.html) and an [Architectural Significance Test](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html).
+- **Relevance to us:** Consider adding a **significance test checklist** to the ADR process — a quick filter to avoid trivial decisions getting full ADR treatment.
+
+### 10.7 Skeptical Architecture (Cervantes & Woods)
+
+[A Skeptic's Guide to Software Architecture Decisions](https://www.infoq.com/articles/architecture-skeptics-guide/) introduces **architectural skepticism** as a superpower:
+
+1. **Every QAR is a hypothesis.** Quality Attribute Requirements (scalability, performance) are hypotheses about value, not facts. They must be tested empirically.
+2. **Selective implementation for assumption testing.** Teams don't need to build the entire solution — build enough to run experiments that validate or refute assumptions.
+3. **Skepticism breaks analysis paralysis.** If you accept that no decision can be proven right without experimentation, you short-circuit paralysis by identifying alternatives and testing them empirically.
+4. **"When it comes to decisions about the solution, the only useful data comes from executing code; everything else is conjecture."**
+- **Relevance to us:** Our `confirmation` field should explicitly support **experiment results** and **PoC outcomes** as artifact types, not just "code review" and "test suite."
+
+### 10.8 Architectural Retrospectives (Cervantes & Woods)
+
+[Architectural Retrospectives](https://www.infoq.com/articles/architectural-retrospectives/) are distinct from Architecture Reviews:
+
+1. **Reviews improve the architecture; retrospectives improve the decision-making process.**
+2. **Key retrospective questions:**
+   - How were QARs established? Were they guesses or validated?
+   - Was the whole team involved or did senior individuals dominate?
+   - Have we ever reversed a decision based on new information?
+   - Is technical debt growing, and is that acceptable?
+3. **Should be separate from reviews** — team members won't discuss process problems with outsiders present.
+4. **Frequency:** Every sprint/iteration. If there are no interesting answers, it's quick.
+- **Relevance to us:** Consider adding a `reviewed` event type to `audit_trail` for periodic retrospective outcomes. Our `lifecycle.review_cycle_months` is the mechanism; retrospective questions could be documented in the process.
+
+### 10.9 Microsoft Azure — Confidence Level
+
+Azure's Well-Architected Framework uniquely recommends recording the **confidence level** of each decision:
+
+> *"Sometimes an architecturally significant decision is made with relatively low confidence. Documenting that low confidence status could prove useful for future reconsideration decisions."*
+
+- **Relevance to us:** A `confidence` field (e.g., `low`, `medium`, `high`) on the `decision` object would flag decisions that deserve early re-evaluation. Low-confidence decisions could trigger shorter `lifecycle.review_cycle_months`.
+
+---
+
+## 11. Proposals: Improvements Derived from Henderson Research
+
+After going through all the links from the [Henderson ADR repository](https://github.com/joelparkerhenderson/architecture-decision-record), the following are concrete proposals for improving our `adr-governance` schema and process. Organized by priority.
+
+### 11.1 🟢 Proposal: Add `confidence` Field to `decision` Object
+
+**Source:** [Microsoft Azure Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/architect-role/architecture-decision-record)
+
+**What:** Add an optional `confidence` field (`low`, `medium`, `high`) to the `decision` object.
+
+**Why:** Azure uniquely recommends recording the confidence level of each decision. A decision made with low confidence under time pressure should be flagged for early re-evaluation. This naturally interacts with `lifecycle.review_cycle_months` — low-confidence decisions could default to shorter review cycles.
+
+**Schema change:**
+```json
+"confidence": {
+    "type": "string",
+    "enum": ["low", "medium", "high"],
+    "description": "Confidence level in this decision. Low-confidence decisions should have shorter review cycles."
+}
+```
+
+**Impact:** Low. Additive. Improves decision quality signaling.
+
+---
+
+### 11.2 🟢 Proposal: Add `reviewed` Event to `audit_trail`
+
+**Source:** [Architectural Retrospectives (Cervantes & Woods)](https://www.infoq.com/articles/architectural-retrospectives/), Henderson Section 10.3 (After-Action Reviews)
+
+**What:** Add `reviewed` to the `audit_trail` `event` enum.
+
+**Why:** Our `lifecycle.review_cycle_months` triggers periodic reviews, but there's currently no way to record that a review *happened* and what the outcome was. The `reviewed` event closes this gap. It should capture: "We reviewed ADR-0001 on 2026-06-05. Decision remains valid. Context unchanged."
+
+Henderson specifically advises: *"Review each ADR one month later to compare the documented expectations with actual practice."*
+
+**Schema change:** Add `"reviewed"` to the `audit_trail.event` enum.
+
+**Impact:** Low. Single enum value. Completes the review lifecycle.
+
+---
+
+### 11.3 🟢 Proposal: Add Decision Guardian Integration
+
+**Source:** [Decision Guardian](https://github.com/DecispherHQ/decision-guardian), Henderson Section 10.2
+
+**What:** Integrate Decision Guardian as a GitHub Action that auto-surfaces relevant ADRs when PRs modify code covered by accepted decisions.
+
+**Why:** This is the single best answer to Gareth Morgan's "governance enforcement" question: *decisions are surfaced at the moment they're most likely to be violated.* Decision Guardian works by:
+1. Creating `.decispher/decisions.md` files that map decisions to protected file paths
+2. When a PR modifies a protected file, it posts a comment with the relevant decision context
+3. Supports severity levels (Critical, Warning, Info) and can block merges
+
+**Implementation:**
+1. Create `.decispher/decisions.md` mapping accepted ADRs to their impacted code paths
+2. Add `DecispherHQ/decision-guardian@v1` to our CI workflow
+3. Configure `fail_on_critical: true` for critical-priority ADRs
+
+**Impact:** Medium. New CI integration. Bridges the gap between "decision documented" and "decision enforced."
+
+---
+
+### 11.4 🟡 Proposal: Add Architectural Significance Test
+
+**Source:** [Zimmermann — Architectural Significance Test](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html), [Definition of Done for ADs](https://ozimmer.ch/practices/2020/05/22/ADDefinitionOfDone.html)
+
+**What:** Add a lightweight significance checklist to `adr-process.md` that helps authors decide whether something warrants a full ADR.
+
+**Why:** Zimmermann warns: *"An AD log with more than 100 entries will probably put your readers to sleep."* Not every technical decision needs an ADR. The significance test prevents ADR inflation.
+
+**Suggested checklist (add to Section 3 of `adr-process.md`):**
+
+> **Before writing an ADR, verify at least ONE of these applies:**
+> 1. The decision affects multiple components, teams, or services
+> 2. The decision is difficult/expensive to reverse
+> 3. The decision has security, compliance, or regulatory implications
+> 4. The decision establishes a pattern that others will follow
+> 5. The decision involves a tradeoff between quality attributes (e.g., security vs. usability)
+> 6. Someone will ask "why did we do this?" in 6 months
+
+**Impact:** Process-only (no schema change). Prevents ADR overload.
+
+---
+
+### 11.5 🟡 Proposal: Add Architectural Retrospective Questions
+
+**Source:** [Architectural Retrospectives (Cervantes & Woods)](https://www.infoq.com/articles/architectural-retrospectives/)
+
+**What:** Add a section to `adr-process.md` defining retrospective questions to ask during periodic ADR reviews.
+
+**Why:** Cervantes & Woods distinguish between *architecture reviews* ("is the architecture correct?") and *architecture retrospectives* ("are we making decisions well?"). Our `lifecycle.review_cycle_months` triggers the review. The retrospective questions guide what to examine.
+
+**Suggested questions for periodic ADR review:**
+
+1. Did the consequences we predicted actually occur?
+2. Were there unforeseen consequences we should document?
+3. Has the context changed since this decision was made?
+4. Was the confidence level of this decision appropriate? (ties to Proposal 11.1)
+5. Have we accumulated technical debt from this decision?
+6. Is this decision still the right choice given what we now know?
+7. Should we trigger a superseding ADR?
+
+**Impact:** Process-only (no schema change). Improves review quality.
+
+---
+
+### 11.6 🟡 Proposal: Support Experiment/PoC Results as Confirmation Artifacts
+
+**Source:** [Skeptic's Guide (Cervantes & Woods)](https://www.infoq.com/articles/architecture-skeptics-guide/), [Zimmermann (Good Justifications)](https://ozimmer.ch/practices/2020/04/27/ArchitectureDecisionMaking.html)
+
+**What:** Expand guidance for the `confirmation` field to explicitly include experiment results, PoC outcomes, and performance benchmarks as verification artifacts.
+
+**Why:** Both the Skeptic's Guide and Zimmermann emphasize that the strongest decision justifications come from empirical evidence (PoCs, PoTs, benchmarks), not from authority or convention. Our `confirmation.artifact_ids` already supports arbitrary strings, but we should document recommended artifact types.
+
+**Documentation change (add to `confirmation` description in glossary or schema):**
+
+> Recommended artifact types for `confirmation.artifact_ids`:
+> - Jira/GitHub issues: `JIRA-1234`, `https://github.com/org/repo/issues/42`
+> - Pull requests: `https://github.com/org/repo/pull/142`
+> - Test suites: `TEST-SUITE-auth-dpop-e2e`
+> - ArchUnit/fitness functions: `archunit:no-direct-db-access`
+> - PoC/Experiment results: `POC-2026-03-dpop-latency-benchmark`
+> - Performance benchmarks: `BENCH-jwt-signing-ed25519-vs-rsa`
+> - Sprint review notes: `SPRINT-42-review-notes`
+
+**Impact:** Documentation-only. Encourages empirical confirmation.
+
+---
+
+### 11.7 ⚪ Proposal: Monitor DRF (Decision Reasoning Format) Maturity
+
+**Source:** [Reasoning Formats](https://github.com/reasoning-formats/reasoning-formats)
+
+**What:** Keep watching DRF as it matures past v0.1.0. DRF's CRF (Context Reasoning Format) is the closest thing to an organizational policy graph that could validate decisions against existing policies.
+
+**Why:** DRF's killer feature is `context_validation` — a decision can reference organizational policies and automatically surface conflicts (e.g., "this decision conflicts with the Kubernetes Moratorium policy"). This is advisory, not blocking. If DRF stabilizes, it could become a companion to our schema.
+
+**Impact:** No immediate action. Watch-list item.
+
+---
+
+### Summary: Proposal Tracker
+
+| # | Proposal | Source | Type | Priority | Status |
+|---|----------|--------|------|----------|--------|
+| 11.1 | Add `confidence` field | Azure WAF | Schema | 🟢 High | Proposed |
+| 11.2 | Add `reviewed` audit event | Retrospectives, Henderson | Schema | 🟢 High | Proposed |
+| 11.3 | Decision Guardian integration | DecispherHQ | CI/CD | 🟢 High | Proposed |
+| 11.4 | Architectural Significance Test | Zimmermann | Process | 🟡 Medium | Proposed |
+| 11.5 | Retrospective questions for reviews | Cervantes & Woods | Process | 🟡 Medium | Proposed |
+| 11.6 | PoC/experiment artifact guidance | Skeptic's Guide, Zimmermann | Documentation | 🟡 Medium | Proposed |
+| 11.7 | Monitor DRF maturity | Reasoning Formats | Watch | ⚪ Low | Proposed |
 
 ---
 
@@ -774,3 +971,14 @@ The Henderson repo references several pre-ADR decision documentation formalisms 
 18. Bass, L., Clements, P. & Kazman, R. (2012). "Documenting Software Architectures: Views and Beyond." Addison-Wesley.
 19. AWS Prescriptive Guidance. "ADR Process." [docs.aws.amazon.com](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html)
 20. Decipher HQ. "Decision Guardian." [github.com/DecispherHQ](https://github.com/DecispherHQ/decision-guardian)
+21. Zimmermann, O. (2020). "Architectural Decisions — The Making Of." [ozimmer.ch](https://ozimmer.ch/practices/2020/04/27/ArchitectureDecisionMaking.html)
+22. Zimmermann, O. (2020). "Definition of Done for Architectural Decisions." [ozimmer.ch](https://ozimmer.ch/practices/2020/05/22/ADDefinitionOfDone.html)
+23. Zimmermann, O. (2020). "Architectural Significance Test." [ozimmer.ch](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html)
+24. Cervantes, H. & Woods, E. "A Skeptic's Guide to Software Architecture Decisions." [infoq.com](https://www.infoq.com/articles/architecture-skeptics-guide/)
+25. Cervantes, H. & Woods, E. "Architectural Retrospectives: the Key to Getting Better at Architecting." [infoq.com](https://www.infoq.com/articles/architectural-retrospectives/)
+26. Microsoft Azure (2024). "Maintain an architecture decision record (ADR)." [learn.microsoft.com](https://learn.microsoft.com/en-us/azure/well-architected/architect-role/architecture-decision-record)
+27. GitHub ADR Organization. "Architectural Decision Records." [adr.github.io](https://adr.github.io/)
+28. Keeling, M. (2022). "Love Unrequited: The Story of Architecture, Agile, and How ADRs Brought Them Together." IEEE Software Vol. 39 Issue 4. [ieeexplore.ieee.org](https://ieeexplore.ieee.org/document/9801811)
+29. Keeling, M. & Runde, J. "Architecture Decision Records in Action." [YouTube](https://www.youtube.com/watch?v=41NVge3_cYo)
+30. Richards, M. "Software Architecture Monday — ADRs and Architecture Stories." [developertoarchitect.com](https://www.developertoarchitect.com/lessons/lesson168.html)
+31. OST Cloud Application Lab. "Architectural Knowledge Management (AKM)." [ost.ch](https://www.ost.ch/en/research-and-consulting-services/computer-science/ifs-institute-for-software-new/cloud-application-lab/architectural-knowledge-management-akm)
