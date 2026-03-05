@@ -15,6 +15,11 @@
         "consequences"
     ],
     "additionalProperties": false,
+    "patternProperties": {
+        "^x-": {
+            "description": "Extension fields. Teams may add custom metadata using the x- prefix without breaking schema validation."
+        }
+    },
     "properties": {
         "adr": {
             "type": "object",
@@ -40,6 +45,11 @@
                     "minLength": 10,
                     "maxLength": 200,
                     "description": "Human-readable decision title."
+                },
+                "summary": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Executive elevator pitch (2–4 sentences). Enables stakeholders to triage ADRs without reading the full document."
                 },
                 "status": {
                     "type": "string",
