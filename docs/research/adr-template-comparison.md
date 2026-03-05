@@ -427,28 +427,19 @@ Our custom YAML-based meta-model with JSON Schema (Draft 2020-12) validation.
 | `alternatives` | ✅ | ≥2 options, each with `name`, `summary`, `pros`, `cons`, `estimated_cost`, `risk` |
 | `decision` | ✅ | `chosen_alternative`, `rationale`, `tradeoffs`, `decision_date` |
 | `consequences` | ✅ | `positive`, `negative` |
-| → `security_implications` | Optional | `data_classification`, `encryption` (at_rest, in_transit, key_management), `access_control` (iam, least_priv), `audit` (logging, retention) |
-| → `compliance_implications` | Optional | `regulatory_impact` (map), `required_controls` (list) |
-| → `operational_implications` | Optional | `monitoring`, `runbooks`, `staffing` |
+| `confirmation` | Optional | `description` (free text), `artifacts` (list of verification artifact IDs) |
 | `risk_assessment` | Optional | Risks with `id`, `description`, `likelihood`, `impact`, `mitigation`; `residual_risk` |
-| `deployment` | Optional | `rollout_plan` (phases with criteria + duration), `testing` (unit, integration, performance, compliance), `rollback_plan` (criteria + steps) |
-| `monitoring` | Optional | `metrics` (name, warning/critical thresholds), `alerts`, `sla` (availability, RPO, RTO) |
 | `dependencies` | Optional | `internal`, `external` |
 | `related_adrs` | Optional | `id`, `title`, `relationship` (supersedes, related, depends_on, etc.) |
 | `attachments` | Optional | `diagrams`, `runbooks` |
-| `references` | Optional | `title`, `url` |
 | `lifecycle` | Optional | `review_cycle_months`, `next_review_date`, `superseded_by`, `supersedes`, `archival` |
 | `audit_trail` | Optional | Append-only event log: `event`, `by`, `at`, `details` |
 
 **Characteristics:**
-- **Most comprehensive template in this survey.** 20+ top-level sections.
+- **Most comprehensive template in this survey.** ~17 top-level sections.
 - **Machine-readable YAML** with JSON Schema validation.
 - **Unique sections not found in any other template:**
-  - `security_implications` (structured: encryption, access control, audit retention)
-  - `compliance_implications` (structured: regulatory_impact map, required_controls list)
-  - `operational_implications` (structured: monitoring, runbooks, staffing)
-  - `deployment` (phased rollout plan with criteria, testing matrix, rollback plan)
-  - `monitoring` (metrics with thresholds, alerts, SLA targets with RPO/RTO)
+  - `confirmation` (description + verification artifact IDs — inspired by MADR 4.0 / NHS Wales)
   - `audit_trail` (append-only event log with timestamps)
   - `approvals` (formal approval workflow with signature IDs)
   - `lifecycle` (review cadence, next review date, archival policy)
@@ -485,7 +476,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | Assumptions | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ | ❌ | ✅ | ✅ |
 | **Requirements** | | | | | | | | | | | | | | |
 | Functional Requirements | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ✅ |
-| Non-Functional Req. | ❌ | ❌ | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ✅ |
+| Non-Functional Requirements | ❌ | ❌ | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ✅ |
 | **Alternatives Analysis** | | | | | | | | | | | | | | |
 | Multiple Options | ❌ | ✅ | ✅ | ✅ | 🟡 | ❌ | ✅ | ❌ | 🟡 | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Pros per Option | ❌ | ✅ | ✅ | 🟡 | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ✅ | 🟡 | ❌ | ✅ |
@@ -504,10 +495,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | **Consequences** | | | | | | | | | | | | | | |
 | Positive Consequences | 🟡 | ✅ | ✅ | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
 | Negative Consequences | 🟡 | ✅ | ✅ | 🟡 | ✅ | 🟡 | ❌ | ❌ | ❌ | 🟡 | ✅ | 🟡 | ❌ | ✅ |
-| Security Impl. (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Compliance Impl. (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Operational Impl. (structured) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Confirmation / Validation | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Confirmation / Validation | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
 | **Governance & Traceability** | | | | | | | | | | | | | | |
 | Stakeholders | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | 🟡 |
 | Formal Approvals | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
@@ -521,12 +509,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | Risk Assessment (overall) | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Compliance Audit Table | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Constraint Sourcing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟡 |
-| **Operational** | | | | | | | | | | | | | | |
-| Deployment Plan (phased) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Rollback Plan | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Monitoring (metrics) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| SLA (avail, RPO, RTO) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Constraint Sourcing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Cross-References** | | | | | | | | | | | | | | |
 | Related Decisions | ❌ | 🟡 | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ | 🟡 | ✅ |
 | Related Principles | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -557,7 +540,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | **NHS Wales** | Fact/opinion separation (Options vs. Analysis). Extended confirmation with ownership+enforcement. `Under Review` and `Deprecated` statuses. Healthcare governance context. Summary/elevator pitch. | Growing — UK public sector |
 | **Gareth Morgan** | Dedicated `Governance` section (monitoring + compliance enforcement). Traffic-light visual comparison matrices. Strategic Value scoring per option. Architecture characteristics framing. | Moderate — solution architecture |
 | **DRF** | Reasoning-first philosophy. Organizational context as knowledge graph (CRF). Context validation with conflict detection. Bidirectional updates (decisions → org facts). Constraint sourcing. | Pre-release (v0.1.0) |
-| **adr-governance** | Structured security/compliance/operational implications. Phased deployment plans with rollback. Monitoring with metric thresholds and SLA. Formal approval workflow. Lifecycle management (review cadence, archival). Append-only audit trail. | New — this repo only |
+| **adr-governance** | Confirmation with verification artifact IDs. Formal approval workflow with signature IDs. Append-only audit trail. Lifecycle management (review cadence, supersession, archival). Structured risk assessment with likelihood/impact/mitigation. Machine-readable YAML with JSON Schema validation. | New — this repo only |
 
 ---
 
@@ -565,28 +548,30 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 
 ### 6.1 No Template Has Structured Implications
 
-Every template treats consequences as prose or bullet points. No template in the field provides:
+Every template treats consequences as prose or bullet points. No template in the field (including ours) provides:
 - **Structured security implications** with data classification, encryption specifics, access control details, and audit retention periods
 - **Structured compliance implications** with regulatory-to-impact mapping and required controls
 - **Structured operational implications** with monitoring requirements, runbook references, and staffing needs
 
-These exist only in our `adr-governance` schema. The closest competitor is **smadr**'s Audit section, but it's a compliance findings table, not a structured implications model.
+These were considered for our schema but ultimately removed to keep ADRs focused on decisions rather than operational runbooks. They remain a potential future enhancement for regulated-environment profiles.
 
 ### 6.2 No Template Has Deployment/Rollback Planning
 
-None of the thirteen external templates include:
+No template includes:
 - Phased rollout criteria
 - Testing matrices (unit, integration, performance, compliance)
 - Rollback criteria and procedures
 
-These are typically in separate runbooks. Our schema embeds them for self-containment.
+These are typically in separate runbooks. Some organizations may wish to embed them in ADRs for self-containment, but no template (including ours) currently does this.
 
 ### 6.3 No Template Has Monitoring or SLA
 
-Only our schema links a decision to its runtime monitoring:
+No template links a decision to its runtime monitoring:
 - Named metrics with warning/critical thresholds
 - Alert routing
 - SLA targets (availability, RPO, RTO)
+
+These were considered for our schema but removed as they belong in operational runbooks rather than decision records.
 
 ### 6.4 No Template Has Decision Governance Enforcement — Except Morgan
 
@@ -618,27 +603,25 @@ Merson's template explicitly includes reasoning for significant alternatives tha
 
 Our `adr-governance` schema is the most comprehensive ADR meta-model in the field. The following sections are **unique and valuable** — no other template provides them:
 
-1. **`security_implications`** — structured sub-fields for data classification, encryption, access control, and audit retention. Essential for regulated environments.
-2. **`compliance_implications`** — regulatory impact mapping and required controls list. Critical for PSD2/GDPR/DORA compliance.
-3. **`operational_implications`** — monitoring, runbooks, staffing. Bridges the gap between architecture decision and operational reality.
-4. **`deployment`** — phased rollout, testing matrix, rollback plan. Ensures decisions are not just recorded but actionable.
-5. **`monitoring`** — metrics with thresholds, alerts, SLA. Links decision to production observability.
-6. **`approvals`** with signature IDs — formal governance for regulated environments.
-7. **`audit_trail`** — append-only event log. Satisfies auditability requirements.
-8. **`lifecycle`** — review cadence and archival. Prevents decision rot.
-9. **`schema_version`** — pins each ADR to a specific schema version. Future-proofs the format.
+1. **`confirmation`** — description + verification artifact IDs. Inspired by MADR 4.0 / NHS Wales but with structured artifact references.
+2. **`approvals`** with signature IDs — formal governance for regulated environments.
+3. **`audit_trail`** — append-only event log. Satisfies auditability requirements.
+4. **`lifecycle`** — review cadence, supersession chain, and archival. Prevents decision rot.
+5. **`schema_version`** — pins each ADR to a specific schema version. Future-proofs the format.
+6. **`risk_assessment`** — structured risks with likelihood/impact/mitigation + residual risk. More rigorous than any other template.
+7. **`requirements`** — embedded functional and non-functional requirements with IDs.
+8. **`dependencies`** — internal and external dependency tracking.
 
-These are all enterprise-grade extensions that we invented. They should be preserved and documented as the **"Enterprise ADR extensions"** of this project.
+These are enterprise-grade extensions that should be preserved and documented as the **"Enterprise ADR extensions"** of this project.
 
 ### 7.2 What to Consider Adding
 
 | Candidate Field | Source Template | Recommendation | Rationale |
 |----------------|----------------|----------------|-----------|
-| **`confirmation`** | MADR 4.0, NHS Wales | ✅ **Add** | Answers "how do we verify this decision was implemented?" NHS Wales extends this with ownership and enforcement. Could be a field under `decision` or a new top-level section with `description` (free text) and `artifacts` (list of verification artifact IDs). |
 | **`extension_fields` (x-*)** | smadr | ✅ **Add** | Allowing custom `x-*` prefixed fields in the schema gives teams flexibility without breaking validation. Simple to implement in JSON Schema via `patternProperties`. |
 | **`summary`** | NHS Wales | ✅ **Add** | Executive elevator pitch (2–4 sentences). Enables stakeholder triage without reading full ADRs. Trivial to add as a string field in `adr` metadata. |
-| **`impact_assessment`** | EdgeX Foundry | ⚠️ **Consider** | Structured list of impacted systems, APIs, configurations. Useful for change-heavy decisions. Could be added under `consequences` or as a standalone section. |
 | **`rationale_for_rejected`** | Merson, DRF | ✅ **Add** | Per-alternative rejection reasoning. Our `alternatives[].cons` partially covers this, but explicit "why not" for each rejected option is clearer. Add as a new optional field on each alternative: `rejection_rationale`. |
+| **`impact_assessment`** | EdgeX Foundry | ⚠️ **Consider** | Structured list of impacted systems, APIs, configurations. Useful for change-heavy decisions. Could be added under `consequences` or as a standalone section. |
 | **`related_principles`** | Tyree–Akerman | ⚠️ **Consider** | Links decisions to enterprise architecture principles. Valuable for organizations with a formal principles registry (e.g., TOGAF). Add if/when we have a principles registry. |
 | **`risk_per_option` (3D)** | smadr | ❌ **Skip** | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with the overall `risk_assessment` section provides equivalent coverage. |
 | **`neutral_consequences`** | MADR 4.0 | ❌ **Skip** | Neutral consequences are rarely informative. Our positive/negative split is sufficient. |
@@ -648,9 +631,9 @@ These are all enterprise-grade extensions that we invented. They should be prese
 
 ### 7.3 What to Document
 
-Our `security_implications`, `compliance_implications`, and `operational_implications` fields are **the most novel contribution** of this schema. They should be explicitly documented as:
+Our `confirmation`, `approvals`, `audit_trail`, `lifecycle`, and `risk_assessment` fields are the **most novel contributions** of this schema compared to the broader ADR ecosystem. They should be explicitly documented as:
 
-> **Enterprise ADR Extensions** — structured consequence sub-sections designed for regulated environments where decisions must be traceable to security controls, regulatory requirements, and operational readiness. These are not part of any standard ADR template; they are a custom extension of the `adr-governance` meta-model.
+> **Enterprise ADR Extensions** — structured governance and lifecycle sections designed for regulated environments where decisions must be formally approved, auditable, and periodically reviewed. These are not part of any standard ADR template; they are custom extensions of the `adr-governance` meta-model.
 
 This prevents future confusion about whether they come from a standard.
 
@@ -697,21 +680,20 @@ Having surveyed **14 templates** (13 external + our own), we can now position `a
 
 - MADR-style alternatives analysis with pros/cons
 - Tyree–Akerman-style enterprise governance (assumptions, constraints, related artifacts)
-- Structured implications (security, compliance, operational) — **unique to us**
-- Deployment planning with rollback — **unique to us**
-- Runtime monitoring with SLA — **unique to us**
+- Confirmation with verification artifact IDs — inspired by MADR 4.0 / NHS Wales
 - Formal approval workflow — **unique to us**
+- Append-only audit trail — **unique to us**
+- Lifecycle management (review cadence, supersession, archival) — **unique to us**
 - Machine-readable YAML with JSON Schema validation
 
-The expanded survey surfaced several **newly identified gaps** worth closing:
+The expanded survey surfaced several **features worth adding**:
 
 | Priority | Field | Source | Action |
 |----------|-------|--------|--------|
-| 🟢 High | `confirmation` | MADR 4.0 + NHS Wales | Add to schema |
 | 🟢 High | `summary` | NHS Wales | Add to `adr` metadata |
 | 🟢 High | `extension_fields` (x-*) | smadr | Add via `patternProperties` |
+| 🟢 High | `rationale_for_rejected` | Merson, DRF | Add as per-alternative field |
 | 🟡 Medium | `impact_assessment` | EdgeX Foundry | Consider adding under `consequences` |
-| � High | `rationale_for_rejected` | Merson, DRF | Add as per-alternative field |
 | ⚪ Low | `context_validation` | DRF | Watch for DRF maturity |
 
 The tradeoff remains **weight**: a full `adr-governance` ADR is significantly heavier than a Nygard or MADR record. This is acceptable for our use case (enterprise IAM decisions in regulated financial services) but would be overkill for a startup documenting database choices.
