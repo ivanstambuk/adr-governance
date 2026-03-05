@@ -1,10 +1,10 @@
 # ADR Glossary — Quick Reference
 
-This file is a quick-reference copy of the full glossary at `docs/glossary.md`.
-Refer to that file for complete definitions.
+> **Subset** of the full glossary at `docs/glossary.md`.
+> This file covers enum values and ID formats only. Refer to the full glossary for definitions, guidance, and abbreviations.
 
 ## Status Values
-`proposed` | `accepted` | `superseded` | `deprecated` | `rejected` | `deferred`
+`draft` | `proposed` | `accepted` | `superseded` | `deprecated` | `rejected` | `deferred`
 
 ## Decision Types
 `technology` | `process` | `organizational` | `vendor` | `security` | `compliance`
@@ -12,21 +12,21 @@ Refer to that file for complete definitions.
 ## Priority Levels
 `low` | `medium` | `high` | `critical`
 
+## Confidence Levels
+`low` | `medium` | `high`
+
 ## Risk / Impact Scales
 - **Likelihood**: `low` | `medium` | `high`
 - **Impact**: `low` | `medium` | `high` | `critical`
 
-## Data Classification
-`public` | `internal` | `confidential` | `restricted`
-
 ## ID Formats
-- ADR: `ADR-NNNN` (e.g., `ADR-0001`)
-- Functional Requirement: `F-NNN` (e.g., `F-001`)
-- Non-Functional Requirement: `NF-NNN` (e.g., `NF-001`)
-- Risk: `R-NNN` (e.g., `R-001`)
+- ADR: `ADR-NNNN` or `ADR-NNNN-slug` (e.g., `ADR-0001`, `ADR-0001-dpop-over-mtls`)
+- Functional Requirement: `F-NNN` (e.g., `F-001`) — scoped per ADR
+- Non-Functional Requirement: `NF-NNN` (e.g., `NF-001`) — scoped per ADR
+- Risk: `R-NNN` (e.g., `R-001`) — scoped per ADR
 
 ## ADR Relationships
 `supersedes` | `superseded_by` | `related` | `depends_on` | `conflicts_with`
 
 ## Audit Trail Events
-`created` | `updated` | `approved` | `rejected` | `superseded` | `deprecated` | `archived`
+`created` | `updated` | `reviewed` | `approved` | `rejected` | `deferred` | `superseded` | `deprecated` | `archived`

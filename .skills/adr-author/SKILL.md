@@ -48,7 +48,7 @@ Ask the user for:
 5. **Constraints**: What are the non-negotiable boundaries?
 6. **Alternatives**: At least 2 options with pros, cons, estimated cost, and risk level
 7. **Recommendation**: Which alternative and why?
-8. **Summary**: 2-4 sentence elevator pitch for stakeholder triage (max 500 chars)
+8. **Summary** (`adr.summary`): 2-4 sentence elevator pitch for stakeholder triage (max 500 chars). This is distinct from `context.summary`, which is the full narrative problem statement.
 9. **Confidence**: `low` | `medium` | `high` — how confident are we in this decision?
 
 ### Step 3: Generate the ADR YAML
@@ -97,12 +97,15 @@ When reviewing, check for:
 
 ## How to supersede an ADR
 
-1. Create a new ADR with `lifecycle.supersedes: "ADR-NNNN"`
-2. Update the old ADR:
+1. Create a new ADR (ADR-MMMM) following the standard proposal workflow.
+2. In the **new** ADR:
+   - Set `lifecycle.supersedes: "ADR-NNNN"`
+   - Add a `related_adrs` entry: `{ id: "ADR-NNNN", title: "...", relationship: supersedes }`
+3. When the new ADR is accepted, **update the old ADR** in the same PR:
    - Set `adr.status: "superseded"`
    - Set `lifecycle.superseded_by: "ADR-MMMM"`
+   - Add a `related_adrs` entry: `{ id: "ADR-MMMM", title: "...", relationship: superseded_by }`
    - Add an audit trail entry: `event: "superseded"`
-3. Add a `related_adrs` entry in both ADRs with relationship `supersedes` / `superseded_by`
 
 ## Reference documentation
 

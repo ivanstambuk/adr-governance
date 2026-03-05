@@ -134,6 +134,7 @@ dependencies:
 attachments:
   diagrams: []
   runbooks: []
+  other: []
 
 # --- Optional ---
 references:
