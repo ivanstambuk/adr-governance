@@ -20,7 +20,9 @@ Good Architecture Knowledge Management (AKM) treats decisions as first-class eng
 
 - **JSON Schema** (Draft 2020-12) defining the complete ADR meta-model — every field, enum, and constraint
 - **GitOps-based governance process** — ADR status transitions happen through Git commits and pull requests, not manual coordination
-- **Validation tooling** — a Python validator + GitHub Actions CI that checks schema compliance, referential integrity, and semantic consistency on every PR
+- **Validation tooling** — a Python validator that checks schema compliance, referential integrity, and semantic consistency on every PR
+- **Pre-built CI/CD pipelines** for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — ready to copy into your repo and enforce as a merge gate
+- **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
 - **Repomix bundling** for LLM context injection
 - **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) — real-world contended decisions with sizable pros and cons on each side, not strawman examples
@@ -87,7 +89,7 @@ The validator checks:
 
 ### 3. Submit a PR
 
-The GitHub Actions workflow automatically validates your ADR against the schema and lints the YAML on every PR.
+The CI pipeline automatically validates your ADR against the schema and lints the YAML on every PR. GitHub Actions is preconfigured; for other platforms see [CI/CD Setup](#cicd-setup) below.
 
 ## Directory Structure
 
@@ -97,6 +99,7 @@ The GitHub Actions workflow automatically validates your ADR against the schema 
 │   └── adr.schema.json          # JSON Schema (Draft 2020-12) — the ADR meta-model
 ├── docs/
 │   ├── adr-process.md           # Normative governance process
+│   ├── ci-setup.md              # CI/CD setup guide (all platforms)
 │   ├── glossary.md              # Terms, enum values, abbreviations
 │   └── research/                # Template & process comparison research
 ├── architecture-decision-log/   # The ADL — your ADRs go here
@@ -110,6 +113,15 @@ The GitHub Actions workflow automatically validates your ADR against the schema 
 │   ├── ADR-0006-session-enrichment-for-step-up-authentication.yaml
 │   ├── ADR-0007-centralized-secret-store-for-api-keys.yaml
 │   └── ADR-0008-defer-openid-federation-for-trust-establishment.yaml
+├── ci/                          # Pre-built CI pipelines for other platforms
+│   ├── azure-devops/
+│   │   └── azure-pipelines.yml
+│   ├── gcp-cloud-build/
+│   │   └── cloudbuild.yaml
+│   ├── aws-codebuild/
+│   │   └── buildspec.yml
+│   └── gitlab-ci/
+│       └── .gitlab-ci.yml
 ├── .skills/
 │   └── adr-author/              # Agent Skill (agentskills.io spec)
 │       ├── SKILL.md
@@ -124,7 +136,7 @@ The GitHub Actions workflow automatically validates your ADR against the schema 
 │   └── bundle.sh                # Repomix bundling
 ├── .github/
 │   └── workflows/
-│       └── validate-adr.yml     # PR validation CI
+│       └── validate-adr.yml     # PR validation CI (GitHub Actions)
 └── repomix.config.json          # Bundles core project (excludes examples + CI)
 ```
 
@@ -151,6 +163,23 @@ Each ADR YAML file contains these sections:
 | `audit_trail` | | Immutable append-only event log |
 
 > **Markdown-native fields** support full Markdown including embedded Mermaid diagrams via code fences. Use YAML literal block scalars (`|`) for multiline content.
+
+## CI/CD Setup
+
+Automated validation is the enforcement mechanism that makes the governance process real. Without it, the schema is a suggestion; with it, the schema is a contract.
+
+**GitHub Actions** is preconfigured — the workflow at `.github/workflows/validate-adr.yml` runs on every PR. You just need to [enable branch protection](docs/ci-setup.md#github-actions) to make it a merge gate.
+
+**Other platforms** have ready-to-use pipeline files in the `ci/` directory:
+
+| Platform | Pipeline file | Copy to |
+|----------|---------------|---------|
+| Azure DevOps | [`ci/azure-devops/azure-pipelines.yml`](ci/azure-devops/azure-pipelines.yml) | `azure-pipelines.yml` (repo root) |
+| GCP Cloud Build | [`ci/gcp-cloud-build/cloudbuild.yaml`](ci/gcp-cloud-build/cloudbuild.yaml) | `cloudbuild.yaml` (repo root) |
+| AWS CodeBuild | [`ci/aws-codebuild/buildspec.yml`](ci/aws-codebuild/buildspec.yml) | `buildspec.yml` (repo root) |
+| GitLab CI | [`ci/gitlab-ci/.gitlab-ci.yml`](ci/gitlab-ci/.gitlab-ci.yml) | `.gitlab-ci.yml` (repo root) |
+
+**Step-by-step setup instructions**, platform-specific enforcement configuration, troubleshooting, and **LLM-ready prompts** (copy-paste into any AI assistant to have it set up CI for you) are in **[`docs/ci-setup.md`](docs/ci-setup.md)**.
 
 ## Agent Skill
 

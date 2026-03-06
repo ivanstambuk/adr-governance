@@ -1,0 +1,85 @@
+# GitLab CI — ADR Validation
+#
+# HOW TO USE:
+#   1. Copy this file to the root of your repository as `.gitlab-ci.yml`,
+#      or include it via GitLab's `include:` directive.
+#   2. GitLab CI picks it up automatically — no additional configuration needed.
+#   3. To enforce as a merge gate:
+#      Settings → Merge Requests → Merge checks →
+#      enable "Pipelines must succeed"
+#   4. Optional — also enable "All threads must be resolved" for review rigor.
+#
+# WHAT IT DOES:
+#   - Validates all ADR YAML files against the JSON Schema
+#   - Runs semantic checks (chosen_alternative consistency, audit_trail
+#     ordering, lifecycle symmetry, etc.)
+#   - Lints YAML for formatting issues
+#   - Fails the pipeline (and blocks the MR) if any validation errors are found
+
+image: python:3.12-slim
+
+stages:
+  - validate
+
+validate-adr:
+  stage: validate
+  rules:
+    # Run on merge requests when relevant files change
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes:
+        - architecture-decision-log/**
+        - examples/**
+        - schemas/**
+        - scripts/validate-adr.py
+    # Run on pushes to main
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - architecture-decision-log/**
+        - examples/**
+        - schemas/**
+        - scripts/validate-adr.py
+  before_script:
+    - pip install --quiet jsonschema pyyaml yamllint
+  script:
+    # Validate architecture-decision-log/
+    - |
+      echo "=== Validating architecture-decision-log/ ==="
+      if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
+        python3 scripts/validate-adr.py architecture-decision-log/
+      else
+        echo "No ADR files in architecture-decision-log/ — skipping validation"
+      fi
+
+    # Validate examples/
+    - |
+      echo "=== Validating examples/ ==="
+      if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
+        python3 scripts/validate-adr.py examples/
+      else
+        echo "No ADR files in examples/ — skipping validation"
+      fi
+
+    # YAML lint
+    - |
+      cat <<'EOF' > /tmp/yamllint-config.yml
+      extends: default
+      rules:
+        line-length:
+          max: 300
+        truthy:
+          check-keys: false
+      EOF
+
+      echo "=== Linting architecture-decision-log/ ==="
+      if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
+        yamllint -c /tmp/yamllint-config.yml architecture-decision-log/
+      else
+        echo "No YAML files — skipping"
+      fi
+
+      echo "=== Linting examples/ ==="
+      if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
+        yamllint -c /tmp/yamllint-config.yml examples/
+      else
+        echo "No YAML files — skipping"
+      fi

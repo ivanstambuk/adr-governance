@@ -1,0 +1,93 @@
+# GCP Cloud Build — ADR Validation
+#
+# HOW TO USE:
+#   1. Copy this file to the root of your repository as `cloudbuild.yaml`,
+#      or keep it here and reference it via the trigger configuration.
+#   2. In Google Cloud Console → Cloud Build → Triggers → Create Trigger:
+#      - Event: Pull Request (for GitHub/GitLab repos) or Push to branch
+#      - Source: your repository
+#      - Configuration: Cloud Build configuration file → path to this file
+#   3. For PR merge gating with GitHub:
+#      - Install the Cloud Build GitHub App on your repo
+#      - The build status is reported back as a GitHub Check
+#      - Enable "Require status checks to pass" in GitHub branch protection
+#   4. For Cloud Source Repositories:
+#      - Create a trigger with event type "Push to a branch" matching ^main$
+#      - PR-based triggers require mirroring to GitHub or using Secure Source Manager
+#
+# WHAT IT DOES:
+#   - Validates all ADR YAML files against the JSON Schema
+#   - Runs semantic checks (chosen_alternative consistency, audit_trail
+#     ordering, lifecycle symmetry, etc.)
+#   - Lints YAML for formatting issues
+#   - Fails the build (and blocks the PR) if any validation errors are found
+
+steps:
+  # Step 1: Install Python dependencies
+  - name: "python:3.12-slim"
+    id: "install-deps"
+    entrypoint: "pip"
+    args: ["install", "--user", "jsonschema", "pyyaml", "yamllint"]
+
+  # Step 2: Validate architecture-decision-log/
+  - name: "python:3.12-slim"
+    id: "validate-adl"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="$$HOME/.local/bin:$$PATH"
+        if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
+          python3 scripts/validate-adr.py architecture-decision-log/
+        else
+          echo "No ADR files in architecture-decision-log/ — skipping validation"
+        fi
+
+  # Step 3: Validate examples/
+  - name: "python:3.12-slim"
+    id: "validate-examples"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="$$HOME/.local/bin:$$PATH"
+        if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
+          python3 scripts/validate-adr.py examples/
+        else
+          echo "No ADR files in examples/ — skipping validation"
+        fi
+
+  # Step 4: YAML lint
+  - name: "python:3.12-slim"
+    id: "yaml-lint"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="$$HOME/.local/bin:$$PATH"
+
+        cat <<'EOF' > /tmp/yamllint-config.yml
+        extends: default
+        rules:
+          line-length:
+            max: 300
+          truthy:
+            check-keys: false
+        EOF
+
+        echo "=== Linting architecture-decision-log/ ==="
+        if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
+          yamllint -c /tmp/yamllint-config.yml architecture-decision-log/
+        else
+          echo "No YAML files — skipping"
+        fi
+
+        echo "=== Linting examples/ ==="
+        if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
+          yamllint -c /tmp/yamllint-config.yml examples/
+        else
+          echo "No YAML files — skipping"
+        fi
+
+options:
+  logging: CLOUD_LOGGING_ONLY

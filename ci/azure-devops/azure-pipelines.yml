@@ -1,0 +1,92 @@
+# Azure DevOps Pipeline — ADR Validation
+#
+# HOW TO USE:
+#   1. Copy this file to the root of your repository (or keep it here and
+#      point Azure Pipelines to `ci/azure-devops/azure-pipelines.yml`).
+#   2. In Azure DevOps → Pipelines → New Pipeline → select your repo →
+#      "Existing Azure Pipelines YAML file" → point to this file.
+#   3. To enforce as a merge gate:
+#      Repos → Branches → main → Branch Policies → Build Validation →
+#      add this pipeline as a required build.
+#
+# WHAT IT DOES:
+#   - Validates all ADR YAML files against the JSON Schema
+#   - Runs semantic checks (chosen_alternative consistency, audit_trail
+#     ordering, lifecycle symmetry, etc.)
+#   - Lints YAML for formatting issues
+#   - Fails the build (and blocks the PR) if any validation errors are found
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - architecture-decision-log/*
+      - examples/*
+      - schemas/*
+      - scripts/validate-adr.py
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - architecture-decision-log/*
+      - examples/*
+      - schemas/*
+      - scripts/validate-adr.py
+
+pool:
+  vmImage: "ubuntu-latest"
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: "3.12"
+    displayName: "Set up Python 3.12"
+
+  - script: pip install jsonschema pyyaml yamllint
+    displayName: "Install dependencies"
+
+  - script: |
+      if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
+        python3 scripts/validate-adr.py architecture-decision-log/
+      else
+        echo "No ADR files in architecture-decision-log/ — skipping validation"
+      fi
+    displayName: "Validate ADL (architecture-decision-log/)"
+
+  - script: |
+      if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
+        python3 scripts/validate-adr.py examples/
+      else
+        echo "No ADR files in examples/ — skipping validation"
+      fi
+    displayName: "Validate examples/"
+
+  - script: |
+      cat <<'EOF' > /tmp/yamllint-config.yml
+      extends: default
+      rules:
+        line-length:
+          max: 300
+        truthy:
+          check-keys: false
+      EOF
+
+      echo "=== Linting architecture-decision-log/ ==="
+      if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
+        yamllint -c /tmp/yamllint-config.yml architecture-decision-log/
+      else
+        echo "No YAML files — skipping"
+      fi
+
+      echo "=== Linting examples/ ==="
+      if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
+        yamllint -c /tmp/yamllint-config.yml examples/
+      else
+        echo "No YAML files — skipping"
+      fi
+    displayName: "YAML lint"

@@ -1,0 +1,83 @@
+# AWS CodeBuild — ADR Validation
+#
+# HOW TO USE:
+#   1. Copy this file to the root of your repository as `buildspec.yml`,
+#      or keep it here and reference it via the CodeBuild project configuration.
+#   2. Create a CodeBuild project:
+#      AWS Console → CodeBuild → Create build project:
+#      - Source: GitHub (connect via OAuth or Codestar Connections)
+#      - Environment: Managed image → Ubuntu → Standard → latest
+#      - Buildspec: "Use a buildspec file" → path to this file
+#   3. For PR merge gating with GitHub:
+#      - Enable "Build for pull requests" in the source settings
+#      - Check "Report build statuses to source provider when your builds
+#        start and finish"
+#      - In GitHub: Settings → Branches → Branch Protection → enable
+#        "Require status checks to pass" → select the CodeBuild check
+#   4. For AWS CodeCommit:
+#      - Create an EventBridge rule to trigger CodeBuild on
+#        `pullRequestCreated` and `pullRequestSourceBranchUpdated` events
+#      - Use CodePipeline with an approval action for merge gating
+#
+# WHAT IT DOES:
+#   - Validates all ADR YAML files against the JSON Schema
+#   - Runs semantic checks (chosen_alternative consistency, audit_trail
+#     ordering, lifecycle symmetry, etc.)
+#   - Lints YAML for formatting issues
+#   - Fails the build (and blocks the PR) if any validation errors are found
+
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - pip install jsonschema pyyaml yamllint
+
+  build:
+    commands:
+      # Validate architecture-decision-log/
+      - |
+        echo "=== Validating architecture-decision-log/ ==="
+        if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
+          python3 scripts/validate-adr.py architecture-decision-log/
+        else
+          echo "No ADR files in architecture-decision-log/ — skipping validation"
+        fi
+
+      # Validate examples/
+      - |
+        echo "=== Validating examples/ ==="
+        if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
+          python3 scripts/validate-adr.py examples/
+        else
+          echo "No ADR files in examples/ — skipping validation"
+        fi
+
+  post_build:
+    commands:
+      # YAML lint
+      - |
+        cat <<'EOF' > /tmp/yamllint-config.yml
+        extends: default
+        rules:
+          line-length:
+            max: 300
+          truthy:
+            check-keys: false
+        EOF
+
+        echo "=== Linting architecture-decision-log/ ==="
+        if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
+          yamllint -c /tmp/yamllint-config.yml architecture-decision-log/
+        else
+          echo "No YAML files — skipping"
+        fi
+
+        echo "=== Linting examples/ ==="
+        if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
+          yamllint -c /tmp/yamllint-config.yml examples/
+        else
+          echo "No YAML files — skipping"
+        fi

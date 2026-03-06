@@ -1,6 +1,6 @@
 # adr-governance
 
-> A schema-governed, AI-native Architecture Decision Record (ADR) framework. Provides a JSON Schema (Draft 2020-12) meta-model for structured YAML-based ADRs, a GitOps governance process, Python validation tooling, GitHub Actions CI, and an agentskills.io Agent Skill for AI-assisted authoring and review. The Architecture Decision Log (ADL) lives in `architecture-decision-log/`. Example ADRs cover IAM/security scenarios from a fictional enterprise.
+> A schema-governed, AI-native Architecture Decision Record (ADR) framework. Provides a JSON Schema (Draft 2020-12) meta-model for structured YAML-based ADRs, a GitOps governance process, Python validation tooling, pre-built CI/CD pipelines for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI, and an agentskills.io Agent Skill for AI-assisted authoring and review. The Architecture Decision Log (ADL) lives in `architecture-decision-log/`. Example ADRs cover IAM/security scenarios from a fictional enterprise.
 
 ## Documentation
 
@@ -28,5 +28,15 @@
 
 - [Validator Script](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/validate-adr.py): Python script — validates ADR YAML against JSON Schema, checks semantic consistency (chosen_alternative ↔ alternatives, status ↔ audit_trail, supersession symmetry, temporal ordering), and quality signals (missing summaries, premature confidence, decision date consistency)
 - [Markdown Renderer](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/render-adr.py): Renders ADR YAML to polished Markdown with Mermaid diagram passthrough
-- [GitHub Actions CI](https://github.com/ivanstambuk/adr-governance/blob/main/.github/workflows/validate-adr.yml): PR validation workflow — schema validation + YAML linting
 - [Repomix Bundle Script](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/bundle.sh): Creates single-file bundle for LLM context injection
+
+## CI/CD Pipelines
+
+Pre-built pipeline files for enforcing ADR validation as a merge gate. Copy the file for your platform to the repo root and configure branch protection.
+
+- [CI/CD Setup Guide](https://github.com/ivanstambuk/adr-governance/blob/main/docs/ci-setup.md): Step-by-step setup for all platforms, enforcement configuration, troubleshooting, and LLM-ready setup prompts
+- [GitHub Actions](https://github.com/ivanstambuk/adr-governance/blob/main/.github/workflows/validate-adr.yml): Pre-configured — runs on every PR automatically
+- [Azure DevOps](https://github.com/ivanstambuk/adr-governance/blob/main/ci/azure-devops/azure-pipelines.yml): Copy to repo root as `azure-pipelines.yml`
+- [GCP Cloud Build](https://github.com/ivanstambuk/adr-governance/blob/main/ci/gcp-cloud-build/cloudbuild.yaml): Copy to repo root as `cloudbuild.yaml`
+- [AWS CodeBuild](https://github.com/ivanstambuk/adr-governance/blob/main/ci/aws-codebuild/buildspec.yml): Copy to repo root as `buildspec.yml`
+- [GitLab CI](https://github.com/ivanstambuk/adr-governance/blob/main/ci/gitlab-ci/.gitlab-ci.yml): Copy to repo root as `.gitlab-ci.yml`
