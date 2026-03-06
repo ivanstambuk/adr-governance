@@ -9,6 +9,7 @@
         "schemas/**",
         "docs/**",
         "architecture-decision-log/**",
+        "examples-reference/**",
         ".skills/**",
         ".adr-governance/**",
         "scripts/**",
