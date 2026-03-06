@@ -1,5 +1,10 @@
 # adr-governance
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Schema Version](https://img.shields.io/badge/Schema-v1.0.0-green.svg)](schemas/adr.schema.json)
+[![JSON Schema Draft](https://img.shields.io/badge/JSON_Schema-Draft_2020--12-orange.svg)](https://json-schema.org/draft/2020-12/schema)
+[![Format: YAML](https://img.shields.io/badge/Format-YAML-yellow.svg)](schemas/adr.schema.json)
+
 ![ADR Governance — Schema-governed, AI-native Architecture Decision Records](visuals/01-hero-overview.jpg)
 
 A schema-governed, AI-native **Architecture Decision Record (ADR)** framework for teams that want their architectural decisions to be **structured**, **traceable**, and **asynchronous** — not debated in meetings, forgotten in Slack threads, or buried in wiki pages nobody reads.

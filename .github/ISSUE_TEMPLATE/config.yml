@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/ivanstambuk/adr-governance/tree/main/docs
+    about: Read the ADR process documentation and schema reference
