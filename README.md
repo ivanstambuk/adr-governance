@@ -8,6 +8,9 @@ A schema-governed, AI-native **Architecture Decision Record (ADR)** framework fo
 
 Most teams make **Architecture Decisions (ADs)** every week. Few document them well. Decisions happen in meetings, context is lost the moment people leave the room, and six months later nobody can explain *why* something was built the way it was.
 
+<details>
+<summary><strong>Why current approaches fail</strong> — broken processes, no traceability, tooling that can't scale</summary>
+
 ### 1. The decision-making process is broken
 
 - **Meetings are the wrong medium for decisions.** They reward whoever is present and articulate in the moment, not whoever has done the deepest analysis. They produce no durable artifact. They don't scale across time zones.
@@ -27,15 +30,21 @@ Most teams make **Architecture Decisions (ADs)** every week. Few document them w
 - **SDLC artifacts are ephemeral by design.** Decisions buried in Jira ticket comments, user story refinement notes, Azure DevOps work item discussions, or sprint retrospective action items *feel* tracked because they live in a managed tool. But closed tickets are rarely revisited, decisions are scattered across hundreds of issues with no index, and there's no structured way to query "what did we decide about authentication?" six months later.
 - **Proprietary formats are an integration liability.** As AI becomes central to the software delivery chain, decisions locked in formats that can't be programmatically queried, validated, or fed to agents become a bottleneck. A structured, Git-native, schema-governed ADL is AI-native by design — every improvement in AI tooling automatically makes your decision management better, because the data is already in the right shape.
 
-### This framework's approach
+</details>
 
-**Shift-left decision-making.** Instead of debating in a meeting, the proposer prepares a well-structured ADR upfront — context, alternatives, risks, tradeoffs — and submits it as a pull request. Every stakeholder can review it asynchronously, on their own time, with full context in front of them. The decision process becomes a design review, not a calendar invite. And because it's GitOps-native, every approval by every relevant stakeholder is traceable — who approved what, when, and with what context — for free.
+<details>
+<summary><strong>This framework's approach</strong> — shift-left decisions, AI-native authoring, architecture knowledge management</summary>
 
-**AI-native by design.** A well-structured schema means AI assistants can help **author** ADRs through Socratic dialogue (probing for gaps, challenging vague rationale, surfacing unstated assumptions), **review** them before any human sees them (verifying completeness, flagging ambiguities, checking cross-reference consistency), and **enforce** them against your codebase (validating code compliance with accepted decisions in CI). The proposer doesn't fill in a template manually — they have a *conversation* with an AI assistant that interrogates them until every section is clear, complete, and internally consistent. By the time the ADR reaches a human reviewer, the low-hanging issues are already resolved. And because the data is structured, every advance in AI capability automatically improves your decision-making — better models mean sharper reviews, deeper gap analysis, and the ability to revisit your entire decision log against new information at scale.
+- **Shift-left decision-making.** Instead of debating in a meeting, the proposer prepares a well-structured ADR upfront — context, alternatives, risks, tradeoffs — and submits it as a pull request. Every stakeholder can review it asynchronously, on their own time, with full context in front of them. The decision process becomes a design review, not a calendar invite. And because it's GitOps-native, every approval by every relevant stakeholder is traceable — who approved what, when, and with what context — for free.
+- **AI-native by design.** A well-structured schema means AI assistants can help **author** ADRs through Socratic dialogue (probing for gaps, challenging vague rationale, surfacing unstated assumptions), **review** them before any human sees them (verifying completeness, flagging ambiguities, checking cross-reference consistency), and **enforce** them against your codebase (validating code compliance with accepted decisions in CI). The proposer doesn't fill in a template manually — they have a *conversation* with an AI assistant that interrogates them until every section is clear, complete, and internally consistent. By the time the ADR reaches a human reviewer, the low-hanging issues are already resolved. And because the data is structured, every advance in AI capability automatically improves your decision-making — better models mean sharper reviews, deeper gap analysis, and the ability to revisit your entire decision log against new information at scale.
+- **Architecture Knowledge Management (AKM).** Decisions are first-class engineering artifacts — not afterthoughts. Each AD is captured as an ADR, and the collection of all ADRs for a project forms the ADL — the `architecture-decision-log/` directory in this repository. This framework gives you the tooling and governance process to build an ADL that is schema-validated, Git-governed, AI-assisted, and auditable.
 
-**Architecture Knowledge Management (AKM).** Decisions are first-class engineering artifacts — not afterthoughts. Each AD is captured as an ADR, and the collection of all ADRs for a project forms the ADL — the `architecture-decision-log/` directory in this repository. This framework gives you the tooling and governance process to build an ADL that is schema-validated, Git-governed, AI-assisted, and auditable.
+</details>
 
 ## What This Provides
+
+<details>
+<summary><strong>Schema, governance, validation, CI/CD, AI authoring, decision enforcement, and more</strong></summary>
 
 - **JSON Schema** (Draft 2020-12) defining the complete ADR meta-model — every field, enum, and constraint
 - **GitOps-based governance process** — ADR status transitions happen through Git commits and pull requests, not manual coordination
@@ -49,6 +58,8 @@ Most teams make **Architecture Decisions (ADs)** every week. Few document them w
 - **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
 - **Repomix bundling** — the entire ADL is concatenated into a single Markdown file that agents can search with standard tools, enabling cross-repository decision enforcement
 - **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) in [`examples-reference/`](examples-reference/) — real-world contended decisions with sizable pros and cons on each side, not strawman examples. Kept as a reference for quality and style; not real decisions
+
+</details>
 
 ## Philosophy
 
