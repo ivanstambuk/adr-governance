@@ -101,7 +101,7 @@ The [`examples-reference/`](examples-reference/) directory contains 8 fictional 
 
 ### 3. Customize ADR-0000
 
-`architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml` is the **meta-ADR** — it documents the decision to adopt this governance framework. Update it for your organization:
+[`architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is the **meta-ADR** — it documents the decision to adopt this governance framework. Update it for your organization:
 
 - Replace the `authors`, `decision_owner`, `reviewers`, and `approvals` names and identities
 - Update `adr.project` to your project or organisation name
@@ -441,7 +441,7 @@ The [`examples-reference/`](examples-reference/) directory contains interconnect
 
 See [`examples-reference/README.md`](examples-reference/README.md) for details on each example.
 
-Additionally, `architecture-decision-log/ADR-0000` is a meta-ADR documenting the AD to adopt this governance process itself.
+Additionally, [`architecture-decision-log/ADR-0000`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is a meta-ADR documenting the AD to adopt this governance process itself.
 
 > **Bootstrap exception:** ADR-0000 was self-approved by the initial author as the bootstrapping meta-decision. The "no self-approval" rule (§3.4) applies to all subsequent ADRs.
 
