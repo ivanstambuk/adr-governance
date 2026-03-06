@@ -1,0 +1,1834 @@
+# adr-governance
+
+> A schema-governed, AI-native Architecture Decision Record (ADR) framework. This is the full documentation — for a concise overview with links, see [llms.txt](https://github.com/ivanstambuk/adr-governance/blob/main/llms.txt).
+
+---
+
+## README
+
+# adr-governance
+
+A schema-governed, AI-native **Architecture Decision Record (ADR)** framework for teams that want their architectural decisions to be **structured**, **traceable**, and **asynchronous** — not debated in meetings, forgotten in Slack threads, or buried in wiki pages nobody reads.
+
+## The Problem
+
+Most teams make **Architecture Decisions (ADs)** every week. Few document them well. Decisions happen in meetings, context is lost the moment people leave the room, and six months later nobody can explain *why* something was built the way it was.
+
+### 1. The decision-making process is broken
+
+- **Meetings are the wrong medium for decisions.** They reward whoever is present and articulate in the moment, not whoever has done the deepest analysis. They produce no durable artifact. They don't scale across time zones.
+- **Decisions without structure are decisions without quality.** When there's no template forcing you to consider alternatives, tradeoffs, and risks, corners get cut. Important ADs get made on gut feeling.
+- **Stakeholder input is ad-hoc.** The right person wasn't in the room, the email got buried, the Slack thread moved on. Decisions get made without the people most affected by them ever weighing in.
+- **The process is entirely human-centric.** AI can find gaps in reasoning, check consistency across decisions, suggest alternatives the team didn't consider, and validate conclusions against broad industry knowledge. But traditional decision-making doesn't leverage any of this — it relies solely on whoever is in the room and what they happen to remember. A process that isn't AI-native today is leaving compounding value on the table, and the gap will only widen as AI capabilities improve.
+
+### 2. Decisions aren't traceable or enforceable
+
+- **Undocumented decisions create compliance gaps.** Auditors ask for evidence of decision-making and get blank stares. New team members have no way to understand *why* the architecture looks the way it does.
+- **Documented decisions that aren't enforced are just suggestions.** Even teams that write **Architecture Decision Records (ADRs)** rarely close the loop. The decision says "use DPoP," but nothing stops someone from committing mTLS code. Without a feedback mechanism from the **Architecture Decision Log (ADL)** back to the codebase, decisions and implementation drift apart silently.
+- **Decisions rot.** A decision made 18 months ago under different constraints may no longer be the right call — but nobody scheduled a review, nobody re-evaluated, and by the time someone notices, the technical debt is structural.
+
+### 3. Traditional tooling can't scale
+
+- **Knowledge platforms are opaque to machines.** Decisions captured in Confluence pages, SharePoint wikis, PowerPoint decks, Notion databases, or meeting minutes in Microsoft Teams can't be schema-validated, can't support programmable multi-party approval workflows, can't be diffed or version-controlled with meaningful merges, and — critically — can't be consumed by AI agents or CI pipelines for automated enforcement.
+- **SDLC artifacts are ephemeral by design.** Decisions buried in Jira ticket comments, user story refinement notes, Azure DevOps work item discussions, or sprint retrospective action items *feel* tracked because they live in a managed tool. But closed tickets are rarely revisited, decisions are scattered across hundreds of issues with no index, and there's no structured way to query "what did we decide about authentication?" six months later.
+- **Proprietary formats are an integration liability.** As AI becomes central to the software delivery chain, decisions locked in formats that can't be programmatically queried, validated, or fed to agents become a bottleneck. A structured, Git-native, schema-governed ADL is AI-native by design — every improvement in AI tooling automatically makes your decision management better, because the data is already in the right shape.
+
+### This framework's approach
+
+**Shift-left decision-making.** Instead of debating in a meeting, the proposer prepares a well-structured ADR upfront — context, alternatives, risks, tradeoffs — and submits it as a pull request. Every stakeholder can review it asynchronously, on their own time, with full context in front of them. The decision process becomes a design review, not a calendar invite. And because it's GitOps-native, every approval by every relevant stakeholder is traceable — who approved what, when, and with what context — for free.
+
+**AI-native by design.** A well-structured schema means AI assistants can help **author** ADRs through Socratic dialogue (probing for gaps, challenging vague rationale, surfacing unstated assumptions), **review** them before any human sees them (verifying completeness, flagging ambiguities, checking cross-reference consistency), and **enforce** them against your codebase (validating code compliance with accepted decisions in CI). The proposer doesn't fill in a template manually — they have a *conversation* with an AI assistant that interrogates them until every section is clear, complete, and internally consistent. By the time the ADR reaches a human reviewer, the low-hanging issues are already resolved. And because the data is structured, every advance in AI capability automatically improves your decision-making — better models mean sharper reviews, deeper gap analysis, and the ability to revisit your entire decision log against new information at scale.
+
+**Architecture Knowledge Management (AKM).** Decisions are first-class engineering artifacts — not afterthoughts. Each AD is captured as an ADR, and the collection of all ADRs for a project forms the ADL — the `architecture-decision-log/` directory in this repository. This framework gives you the tooling and governance process to build an ADL that is schema-validated, Git-governed, AI-assisted, and auditable.
+
+## What This Provides
+
+- **JSON Schema** (Draft 2020-12) defining the complete ADR meta-model — every field, enum, and constraint
+- **GitOps-based governance process** — ADR status transitions happen through Git commits and pull requests, not manual coordination
+- **Validation tooling** — a Python validator that checks schema compliance, referential integrity, and semantic consistency on every PR
+- **Pre-built CI/CD pipelines** for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — ready to copy into your repo and enforce as a merge gate
+- **Approval identity enforcement** — CI verifies that the people listed in `approvals[]` have actually approved the pull request, creating an auditable link between ADR approvals and Git platform approvals
+- **Governance rules** — configurable single-ADR-per-PR enforcement, substantive vs. maintenance change classification, and admin overrides — all defined in a platform-agnostic [`.adr-governance/config.yaml`](.adr-governance/config.yaml)
+- **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
+- [`llms.txt`](llms.txt) + [`llms-full.txt`](llms-full.txt) — Machine-readable project summaries for AI assistants ([llms.txt convention](https://llmstxt.org/)). `llms.txt` provides a concise overview with links; `llms-full.txt` embeds the complete documentation inline for context injection
+- **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
+- **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
+- **Repomix bundling** — the entire ADL is concatenated into a single Markdown file that agents can search with standard tools, enabling cross-repository decision enforcement
+- **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) in [`examples-reference/`](examples-reference/) — real-world contended decisions with sizable pros and cons on each side, not strawman examples. Kept as a reference for quality and style; not real decisions
+
+## Philosophy
+
+Every ADR is **self-contained**. All context, **Architecturally Significant Requirements (ASRs)**, alternatives, consequences, and audit trails are embedded directly in the YAML file. There are no foreign-key dependencies between ADRs — the only explicit link is the `lifecycle.supersedes` / `superseded_by` chain for replacements. An ADR can *mention* other ADR IDs in prose, but it must be fully understandable on its own.
+
+The ADL is an **append-only decision log**. ADRs are never deleted — they transition through a governed lifecycle. Rejected and superseded ADRs remain as historical records, preserving the decision-making trail for auditors, new team members, and your future self.
+
+## ADR Lifecycle
+
+Every ADR follows a governed state machine. All transitions happen through pull requests.
+
+```mermaid
+stateDiagram-v2
+    [*] --> draft
+
+    draft --> proposed : Open PR
+
+    proposed --> proposed : Rework (changes requested)
+    proposed --> accepted : Approved → PR merged
+    proposed --> rejected : Rejected → PR merged
+    proposed --> deferred : Postponed → PR closed
+
+    deferred --> proposed : Reopened
+
+    accepted --> superseded : Replaced by new ADR
+    accepted --> deprecated : No longer recommended
+
+    rejected --> [*]
+    deferred --> [*]
+    superseded --> [*]
+    deprecated --> [*]
+```
+
+See [`docs/adr-process.md`](docs/adr-process.md) for the full normative governance process, including review checklists, the Architectural Significance Test, branch protection rules, and CODEOWNERS configuration.
+
+## Quick Start — Adopting for Your Organization
+
+> **⚡ Fastest path.** Paste the prompt below into any AI coding assistant (Codex, Claude Code, Antigravity, Copilot) to have it set up the entire framework for your organization in one shot. For manual step-by-step instructions, continue to [step 1](#1-create-your-adr-repository).
+
+```
+I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization.
+
+Please help me:
+1. Fork or clone the repo into my organization as a new repository named "architecture-decisions".
+2. Delete the examples-reference/ directory (those are fictional reference ADRs).
+3. Update ADR-0000 (architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml):
+   - Replace authors, decision_owner, reviewers, and approvals with my name/identity
+   - Update adr.project to my organization name
+   - Update timestamps and audit trail entries
+4. Set up CI validation as a required merge gate for my platform.
+5. Enable the pre-commit hook (git config core.hooksPath .githooks).
+6. Configure CODEOWNERS with my team handle.
+7. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the check fails.
+
+My organization name is: [INSERT ORG NAME]
+My CI platform is: [GitHub Actions / Azure DevOps / GCP Cloud Build / AWS CodeBuild / GitLab CI]
+My architecture team handle is: [INSERT TEAM HANDLE, e.g., @myorg/architects]
+My name is: [INSERT YOUR NAME]
+My Git identity is: [INSERT YOUR GIT USERNAME]
+```
+
+---
+
+### 1. Create your ADR repository
+
+Create a new repository in your organization and clone this framework into it:
+
+```bash
+# Create a new repo in your org (GitHub example)
+gh repo create your-org/architecture-decisions --private --clone
+
+# Pull the framework into it
+cd architecture-decisions
+git remote add upstream https://github.com/ivanstambuk/adr-governance.git
+git pull upstream main
+git remote remove upstream
+git push origin main
+```
+
+Or fork the repository directly from GitHub and rename it.
+
+### 2. Review examples *(optional cleanup)*
+
+The [`examples-reference/`](examples-reference/) directory contains 8 fictional ADRs from "NovaTrust Financial Services" — they demonstrate the meta-model at production quality. **These are not real decisions.** You can:
+
+- **Keep them** as a reference for your team (recommended initially)
+- **Delete them** once your team is comfortable with the format:
+  ```bash
+  rm -rf examples-reference/
+  git add -A && git commit -m "chore: remove reference examples"
+  ```
+
+### 3. Customize ADR-0000
+
+[`architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is the **meta-ADR** — it documents the decision to adopt this governance framework. Update it for your organization:
+
+- Replace the `authors`, `decision_owner`, `reviewers`, and `approvals` names and identities
+- Update `adr.project` to your project or organisation name
+- Update timestamps and audit trail entries
+- Adjust the `context.summary` if your adoption rationale differs
+
+### 4. Set up CI
+
+Copy the pipeline file for your platform to the repository root:
+
+| Platform | Copy from | Copy to |
+|----------|-----------|---------|
+| **GitHub Actions** | Already at [`.github/workflows/validate-adr.yml`](.github/workflows/validate-adr.yml) | *(nothing to do)* |
+| Azure DevOps | [`ci/azure-devops/azure-pipelines.yml`](ci/azure-devops/azure-pipelines.yml) | `azure-pipelines.yml` |
+| GCP Cloud Build | [`ci/gcp-cloud-build/cloudbuild.yaml`](ci/gcp-cloud-build/cloudbuild.yaml) | `cloudbuild.yaml` |
+| AWS CodeBuild | [`ci/aws-codebuild/buildspec.yml`](ci/aws-codebuild/buildspec.yml) | `buildspec.yml` |
+| GitLab CI | [`ci/gitlab-ci/.gitlab-ci.yml`](ci/gitlab-ci/.gitlab-ci.yml) | `.gitlab-ci.yml` |
+
+Then configure branch protection to make the CI check a **required merge gate** — see **[`docs/ci-setup.md`](docs/ci-setup.md)** for platform-specific instructions and LLM-ready setup prompts.
+
+### 5. Enable the pre-commit hook
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This activates automatic Markdown rendering — every commit that touches `architecture-decision-log/*.yaml` will regenerate the human-friendly files in `rendered/` and the decision log index. Both the YAML source and its Markdown rendering are committed together, so reviewers approve both in the same PR.
+
+### 6. Configure CODEOWNERS *(optional but recommended)*
+
+```bash
+cp CODEOWNERS.example .github/CODEOWNERS
+```
+
+Edit `.github/CODEOWNERS` to replace the placeholder team handles (`@org/architecture-team`, etc.) with your real GitHub teams. This ensures ADRs and schema changes automatically request review from the right people.
+
+### 7. Copy the Agent Skill to your code repositories *(optional)*
+
+The [`.skills/adr-author/`](.skills/adr-author/) directory is a portable AI skill. Copy it to any repository where developers will be authoring ADRs — agents like Antigravity, Claude Code, and Copilot will pick it up automatically and guide ADR creation through interactive questioning.
+
+### 8. Create your first real ADR
+
+Use an AI assistant with the `adr-author` skill — it will guide you through every field via Socratic dialogue:
+
+```
+"I need to create a new ADR for [your decision]. Guide me through it."
+```
+
+Or copy the template manually:
+
+```bash
+cp .skills/adr-author/assets/adr-template.yaml \
+   architecture-decision-log/ADR-0001-your-decision-title.yaml
+```
+
+### 9. Validate and submit
+
+```bash
+# Install dependencies
+pip install jsonschema pyyaml yamllint
+
+# Validate schema + semantic consistency
+python3 scripts/validate-adr.py architecture-decision-log/ADR-0001-your-decision-title.yaml
+
+# Pre-review quality gate (pipe to your LLM for Socratic feedback)
+python3 scripts/review-adr.py architecture-decision-log/ADR-0001-your-decision-title.yaml
+
+# Open a PR — CI validates automatically
+git checkout -b adr/0001-your-decision-title
+git add architecture-decision-log/ADR-0001-your-decision-title.yaml
+git commit -m "feat(adr): ADR-0001 your decision title"
+git push origin adr/0001-your-decision-title
+```
+
+The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
+
+## ADR Meta-Model
+
+Each ADR YAML file contains these sections:
+
+| Section | Required | Description |
+|---------|:--------:|-------------|
+| `adr` | ✅ | ID, title, status, summary, timestamps, project, tags, priority, decision type, schema version |
+| `authors` | ✅ | Who drafted the ADR |
+| `decision_owner` | ✅ | Single accountable person |
+| `context` | ✅ | Problem summary (**Markdown**), business/technical drivers, constraints |
+| `alternatives` | ✅ | ≥2 alternatives with summary (**Markdown**), pros, cons, cost, risk, rejection rationale |
+| `decision` | ✅ | Chosen alternative, rationale (**Markdown**), tradeoffs (**Markdown**), date, confidence |
+| `consequences` | ✅ | Positive and negative outcomes |
+| `confirmation` | ✅ | How the decision's implementation will be verified; artifact IDs (optional, backfilled later) |
+| `reviewers` | | People who reviewed |
+| `approvals` | | Formal approvals with timestamps and platform identities for CI verification |
+| `requirements` | | Embedded functional and non-functional requirements (ASRs) |
+| `dependencies` | | Internal and external dependencies |
+| `references` | | External references, standards, evidence |
+| `lifecycle` | | Review cadence, supersession chain, archival |
+| `audit_trail` | | Immutable append-only event log |
+
+> **Markdown-native fields** support full Markdown including embedded Mermaid diagrams via code fences. Use YAML literal block scalars (`|`) for multiline content.
+
+## CI/CD Setup
+
+Automated validation is the enforcement mechanism that makes the governance process real. Without it, the schema is a suggestion; with it, the schema is a contract.
+
+**GitHub Actions** is preconfigured — the workflow at [`.github/workflows/validate-adr.yml`](.github/workflows/validate-adr.yml) runs on every PR. You just need to [enable branch protection](docs/ci-setup.md#github-actions) to make it a merge gate.
+
+**Other platforms** have ready-to-use pipeline files in the `ci/` directory:
+
+| Platform | Pipeline file | Copy to |
+|----------|---------------|---------|
+| Azure DevOps | [`ci/azure-devops/azure-pipelines.yml`](ci/azure-devops/azure-pipelines.yml) | `azure-pipelines.yml` (repo root) |
+| GCP Cloud Build | [`ci/gcp-cloud-build/cloudbuild.yaml`](ci/gcp-cloud-build/cloudbuild.yaml) | `cloudbuild.yaml` (repo root) |
+| AWS CodeBuild | [`ci/aws-codebuild/buildspec.yml`](ci/aws-codebuild/buildspec.yml) | `buildspec.yml` (repo root) |
+| GitLab CI | [`ci/gitlab-ci/.gitlab-ci.yml`](ci/gitlab-ci/.gitlab-ci.yml) | `.gitlab-ci.yml` (repo root) |
+
+**Step-by-step setup instructions**, platform-specific enforcement configuration, troubleshooting, and **LLM-ready prompts** (copy-paste into any AI assistant to have it set up CI for you) are in **[`docs/ci-setup.md`](docs/ci-setup.md)**.
+
+## AI-Assisted Authoring & Pre-Review
+
+ADRs are not meant to be filled in manually like a form. They are authored through **Socratic dialogue with an AI assistant** — the AI asks probing questions, challenges weak rationale, surfaces missing edge cases, and iteratively refines the document until it is clear, complete, and internally consistent.
+
+This is a fundamental shift from traditional architecture governance: instead of the proposer writing a draft in isolation and then scheduling a meeting to "walk through" it (where reviewers discover ambiguities in real time and the meeting devolves into clarification rather than decision-making), the AI assistant resolves those ambiguities *before the first human reviewer ever sees the document*.
+
+### Agent Skill
+
+The [`.skills/adr-author/`](.skills/adr-author/) directory follows the [agentskills.io specification](https://agentskills.io/specification) and works with:
+
+- **Google Antigravity** (VS Code)
+- **Claude Code** (terminal)
+- **VS Code Copilot** (with skills support)
+- Any agent implementing the Agent Skills standard
+
+The skill guides AI assistants to author ADRs through interactive questioning — probing for Architecturally Significant Requirements (ASRs), demanding balanced alternatives (not strawmen), checking that constraints are testable, and verifying that the rationale actually connects to the stated drivers. It understands the full meta-model and governance lifecycle.
+
+### Web Chat (No Skill Required)
+
+Don't have access to a coding agent? The Repomix bundle (`adr-governance-bundle.md`) includes **embedded AI instructions** that replicate the full skill — upload the single file to any web-based AI chat:
+
+- **ChatGPT** (with Code Interpreter for large file search)
+- **Claude.ai** (200K–1M token context)
+- **Google Gemini** (1M+ token context)
+- **Microsoft Copilot** (web)
+
+The AI will be able to author new ADRs through Socratic dialogue, query the decision log with citations, review ADRs for completeness, summarize decisions for stakeholders, and validate YAML against the schema — all from a single uploaded file.
+
+See **[`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md)** for platform-specific starter prompts and tips.
+
+
+### Pre-Review Quality Gate
+
+Before submitting an ADR for human review, run it through an AI semantic review using [`scripts/review-adr.py`](scripts/review-adr.py):
+
+```bash
+# Generate a Socratic review prompt (pipe to your LLM)
+python3 scripts/review-adr.py architecture-decision-log/ADR-0009.yaml
+
+# Include cross-reference context from existing decisions
+python3 scripts/review-adr.py architecture-decision-log/ADR-0009.yaml \
+  --context-from architecture-decision-log/
+
+# Pipe directly to an LLM
+python3 scripts/review-adr.py architecture-decision-log/ADR-0009.yaml | \
+  llm -m gpt-4o
+```
+
+The generated prompt instructs the LLM to perform a structured review covering:
+- **Semantic clarity** — are there ambiguous terms or vague claims?
+- **Completeness** — are alternatives balanced, constraints testable, consequences honest?
+- **Logical consistency** — does the rationale align with the pros/cons?
+- **Assumption risks** — what happens if the assumptions are wrong?
+- **Missing perspectives** — are there unconsidered stakeholders or alternatives?
+- **Cross-reference consistency** — does this decision conflict with existing ADRs?
+
+The AI outputs a verdict (**READY FOR REVIEW**, **NEEDS REWORK**, or **MAJOR GAPS**), a list of issues with severity, and open questions for the proposer. The proposer addresses the feedback, re-runs the check, and iterates until the ADR passes. *Then* they open the PR.
+
+> **The result:** Human reviewers receive ADRs that are already semantically coherent and complete. Review meetings become strategic discussions about the *decision* — not debugging sessions about what the proposer meant.
+
+## Stakeholder Summaries
+
+Not every stakeholder needs the full ADR. After a decision is made (or after an architecture review meeting), use [`scripts/summarize-adr.py`](scripts/summarize-adr.py) to produce concise summaries for communication:
+
+```bash
+# Email-length summary (~10–15 lines: decision, rationale, alternatives, tradeoffs, impact)
+python3 scripts/summarize-adr.py architecture-decision-log/ADR-0001.yaml
+
+# Ultra-short chat summary (3–5 lines for Slack/Teams)
+python3 scripts/summarize-adr.py --format chat architecture-decision-log/ADR-0001.yaml
+
+# Meeting recap — digest of multiple ADRs
+python3 scripts/summarize-adr.py architecture-decision-log/ADR-0001.yaml \
+    architecture-decision-log/ADR-0002.yaml
+
+# Save to file
+python3 scripts/summarize-adr.py -o meeting-recap.md architecture-decision-log/
+```
+
+Each summary links back to the full YAML source. For a richer, rendered view, point stakeholders to the auto-generated Markdown in [`rendered/`](rendered/).
+
+## ADL as Source of Truth
+
+The Architecture Decision Log isn't just documentation — it's a **machine-readable specification** that AI agents and CI pipelines can enforce against your codebase. This closes the gap between *deciding* and *doing*.
+
+### Spec-Driven Development (SDD)
+
+AI coding agents (Copilot, Claude Code, Antigravity, Cursor, etc.) can use the bundled ADL as a **single source of truth** during code generation. When the ADL says "use DPoP for sender-constrained tokens" (ADR-0001), the agent can search the bundled decision log, find the decision with its full rationale and constraints, and generate code that aligns with it — without the developer having to explain the architectural context in every prompt.
+
+The workflow:
+
+1. **Bundle the ADL** into a single file:
+   ```bash
+   ./scripts/bundle.sh
+   ```
+   This generates `adr-governance-bundle.md` — the entire governance framework, schema, and all accepted decisions in one searchable file.
+
+2. **Point your agent to it.** Paste the bundle into an LLM context window, add it to your agent's project knowledge, or reference it as a file. The agent can then use standard text search (grep, semantic search, `Ctrl+F`) to find relevant decisions.
+
+3. **Generate code that complies.** When the agent encounters an architectural question — which token format to use, which signing algorithm, which authentication pattern — it searches the ADL instead of guessing or asking you.
+
+> **Cross-repository enforcement:** The ADL repo and the code repo don't need to be the same. Point your agent at the ADL bundle from *any* repository. The decisions are self-contained — each ADR includes the full context, rationale, and constraints needed to understand and apply it.
+
+### Semantic Guardrails in CI
+
+The ADL can also serve as a **pre-merge guardrail** in your *code* repositories — not just the ADR repository itself. Before a PR is merged, a CI step can validate that the code changes are consistent with accepted architectural decisions.
+
+This works at two levels:
+
+**1. Local enforcement (during development):**
+Coding agents that have the ADL in context will naturally align with it. When you ask "implement the token endpoint," an agent with ADR-0001 in context will use DPoP, not mTLS — because the decision and its rationale are right there in the searchable bundle.
+
+**2. CI pipeline enforcement (pre-merge):**
+Use [`scripts/extract-decisions.py`](scripts/extract-decisions.py) to extract active decisions and generate an LLM compliance prompt. Add a step in your code repository's CI pipeline:
+
+```yaml
+# Example: GitHub Actions step in your CODE repo (not this repo)
+- name: Check ADR compliance
+  run: |
+    # Fetch the extraction script and ADR files from the governance repo
+    git clone --depth 1 https://github.com/your-org/adr-governance.git /tmp/adl
+    pip install pyyaml
+
+    # Generate a compliance prompt with the code diff
+    python3 /tmp/adl/scripts/extract-decisions.py \
+      --compliance-prompt \
+      --diff <(git diff origin/main...HEAD) \
+      /tmp/adl/architecture-decision-log/ \
+      > /tmp/compliance-prompt.md
+
+    # Pipe to your LLM of choice for automated review
+    # (replace with your preferred LLM CLI — openai, claude, gemini, llm, etc.)
+    cat /tmp/compliance-prompt.md | your-llm-cli "Review this for compliance"
+```
+
+The key insight: **the ADL is structured YAML that any tool can parse**. The `extract-decisions.py` script handles the parsing and prompt generation — you just plug in your LLM provider.
+
+### Decision Extraction
+
+The [`scripts/extract-decisions.py`](scripts/extract-decisions.py) script is the bridge between the ADL and downstream enforcement tooling:
+
+```bash
+# Markdown summary of all accepted decisions (for agent context)
+python3 scripts/extract-decisions.py architecture-decision-log/
+
+# JSON output for programmatic consumption
+python3 scripts/extract-decisions.py --format json architecture-decision-log/
+
+# Filter by tags (e.g., only OAuth-related decisions)
+python3 scripts/extract-decisions.py --tags oauth,security architecture-decision-log/
+
+# Generate an LLM compliance-check prompt with a code diff
+python3 scripts/extract-decisions.py --compliance-prompt \
+  --diff <(git diff main) architecture-decision-log/
+
+# Save to a file for agent context injection
+python3 scripts/extract-decisions.py -o active-decisions.md architecture-decision-log/
+```
+
+### What This Enables
+
+| Scenario | Without ADL enforcement | With ADL enforcement |
+|----------|------------------------|---------------------|
+| New developer joins | Reads (or doesn't read) wiki docs | Agent has full ADL context; generates compliant code from day one |
+| PR introduces mTLS | Merges — nobody notices the ADR says DPoP | CI flags the drift; reviewer is alerted |
+| Architect proposes supersession | Searches Slack history for context | Searches the ADL bundle; full decision chain is traceable |
+| Annual audit | Scramble to reconstruct decision history | ADL is the audit trail; every decision is timestamped, attributed, and version-controlled |
+| LLM generates code | Guesses at patterns based on training data | Searches the ADL and follows your organization's actual decisions |
+
+### Repomix Bundle
+
+To create the single-file bundle:
+
+```bash
+./scripts/bundle.sh
+```
+
+This generates `adr-governance-bundle.md` — the entire ADR governance framework in one file. The bundle includes the schema, process documentation, glossary, skill instructions, YAML template, all ADRs in `architecture-decision-log/`, example ADRs from `examples-reference/`, validation scripts, and **embedded AI instructions** that enable web-based AI chats to emulate the full authoring skill.
+
+**Usage options:**
+- **Upload** to any AI web chat (ChatGPT, Claude, Gemini, Copilot) — see [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md)
+- **Paste** into any LLM context window for instant AKM context
+- **Add** to your coding agent's project knowledge base
+- **Fetch** from CI pipelines in other repositories (as shown above)
+- **Commit** to other repositories as a versioned reference artifact
+
+## Rendered Markdown (Auto-Generated)
+
+Every ADR YAML file has a corresponding **human-friendly Markdown rendering** in [`rendered/`](rendered/). These are designed for browsing on GitHub, Azure DevOps, Azure Repos, and other platforms that render Markdown natively.
+
+- **[`rendered/architecture-decision-log.md`](rendered/architecture-decision-log.md)** — the decision log index with clickable links, status, and decision dates
+- **`rendered/ADR-NNNN-*.md`** — individual ADR renderings with a provenance disclaimer
+
+> **⚠️ Do not edit files in `rendered/` directly.** They are auto-generated from the YAML source. Each rendered file includes a `[!CAUTION]` banner and HTML comment pointing to the source YAML.
+
+### Pre-commit hook (automatic rendering)
+
+A Git pre-commit hook automatically re-renders all ADR files and regenerates the index whenever you commit changes to `architecture-decision-log/`. This means both the YAML source and its Markdown rendering are part of the same commit and PR — **reviewers approve both together**.
+
+**One-time setup** (per clone):
+
+```bash
+git config core.hooksPath .githooks
+```
+
+After this, any commit that touches `architecture-decision-log/*.yaml` will automatically:
+1. Render all ADR YAML files to `rendered/*.md` with a provenance disclaimer
+2. Regenerate [`rendered/architecture-decision-log.md`](rendered/architecture-decision-log.md) (the decision log index)
+3. Stage the rendered files alongside the YAML changes
+
+### Manual rendering
+
+```bash
+# Single file to stdout (no disclaimer — useful for previewing)
+python3 scripts/render-adr.py architecture-decision-log/ADR-0001-*.yaml
+
+# Render to rendered/ with disclaimer + index
+python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/
+```
+
+## Example ADRs
+
+The [`examples-reference/`](examples-reference/) directory contains interconnected ADRs from a **fictional** IAM department at NovaTrust Financial Services. These are **not real decisions** — they demonstrate the meta-model at production quality. Use them as a reference for style, depth, and interconnection:
+
+| ID | Title | Status |
+|----|-------|--------|
+| ADR-0001 | [Use DPoP over mTLS for Sender-Constrained Tokens](examples-reference/rendered/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.md) | accepted |
+| ADR-0002 | [Use Reference Tokens over JWTs for Gateway Introspection](examples-reference/rendered/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.md) | accepted |
+| ADR-0003 | [Use Pairwise Subject Identifiers for OIDC Relying Parties](examples-reference/rendered/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.md) | accepted |
+| ADR-0004 | [Use Ed25519 over RSA-2048 for JWT Signing Keys](examples-reference/rendered/ADR-0004-ed25519-over-rsa-for-jwt-signing.md) | accepted |
+| ADR-0005 | [Use BFF Token Mediator for SPA Token Acquisition](examples-reference/rendered/ADR-0005-bff-token-mediator-for-spa-token-acquisition.md) | accepted |
+| ADR-0006 | [Use Session Enrichment for Step-Up Authentication Proof](examples-reference/rendered/ADR-0006-session-enrichment-for-step-up-authentication.md) | accepted |
+| ADR-0007 | [Reject Centralized HashiCorp Vault for API Runtime Secrets](examples-reference/rendered/ADR-0007-centralized-secret-store-for-api-keys.md) | **rejected** |
+| ADR-0008 | [Defer OpenID Federation for Automated Trust Establishment](examples-reference/rendered/ADR-0008-defer-openid-federation-for-trust-establishment.md) | **deferred** |
+
+See the [rendered example index](examples-reference/rendered/architecture-decision-log.md) for a full overview, or [`examples-reference/README.md`](examples-reference/README.md) for details on each example.
+
+Additionally, [`architecture-decision-log/ADR-0000`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is a meta-ADR documenting the AD to adopt this governance process itself.
+
+> **Bootstrap exception:** ADR-0000 was self-approved by the initial author as the bootstrapping meta-decision. The "no self-approval" rule (§3.4) applies to all subsequent ADRs.
+
+## License
+
+MIT
+
+---
+
+## ADR Governance Process
+
+# ADR Governance Process
+
+> **Status:** Normative
+> **Last updated:** 2026-03-06
+
+This document defines the process for proposing, reviewing, approving, and maintaining Architecture Decision Records (ADRs) in this repository. The process is **GitOps-based**: all state transitions happen through Git commits and pull requests.
+
+### Quick Reference
+
+| I want to... | Do this |
+|--------------|---------|
+| Start a new decision | Branch → create YAML in `architecture-decision-log/` with `status: draft` → iterate |
+| Submit for review | Set `status: proposed` → open PR → assign reviewers |
+| Approve a decision | Approve the PR → author sets `status: accepted` → merge |
+| Reject a decision | Comment reason → author sets `status: rejected` → merge (preserve history) |
+| Defer a decision | Comment reason → author sets `status: deferred` → close PR with label |
+| Supersede a decision | Create new ADR referencing old one → accept new → update old to `superseded` |
+| Deprecate a decision | Set `status: deprecated` + audit event → merge |
+| Archive a decision | Set `lifecycle.archival` fields + `archived` audit event → merge |
+| Confirm implementation | Add `confirmation.description` + `confirmation.artifact_ids` in follow-up PR |
+| Periodic review | Check `lifecycle.next_review_date` → verify or supersede |
+
+> See the full sections below for detailed workflows.
+
+---
+
+## 1. Roles
+
+| Role | Responsibility |
+|------|---------------|
+| **Author** | Drafts the ADR. Populates all required fields. |
+| **Decision Owner** | Single accountable person for the decision (named in `decision_owner`). Drives the review. May or may not be the author. |
+| **Reviewer** | Reviews the ADR for technical correctness, completeness, and alignment with existing decisions. Named in `reviewers`. |
+| **Approver** | Provides formal approval. Named in `approvals`. Typically: Tech Lead, Architect, CISO, or DPO depending on `decision_type`. |
+
+---
+
+## 2. Status Lifecycle
+
+
+```mermaid
+stateDiagram-v2
+    [*] --> draft
+
+    draft --> proposed : Author pushes branch,<br>opens PR
+
+    proposed --> proposed : No decision reached —<br>reviewers Request Changes,<br>action items in PR comments,<br>author reworks & pushes
+    proposed --> accepted : All approvers approve PR<br>→ PR merged
+    proposed --> rejected : Rejected with documented reason<br>→ PR merged (preserves history)
+    proposed --> deferred : Postponed<br>→ PR closed with label
+
+    deferred --> proposed : Author reopens<br>or opens new PR
+
+    accepted --> superseded : New ADR accepted<br>that replaces this one<br>→ PR merged
+    accepted --> deprecated : No longer recommended<br>→ PR merged
+
+    rejected --> [*]
+    deferred --> [*]
+    superseded --> [*]
+    deprecated --> [*]
+
+    note right of draft : WIP on feature branch.<br>Not ready for review.
+    note right of proposed : PR is open.<br>Under active review.
+    note right of deferred : Parked — revisit later.<br>PR is closed.
+    note left of accepted : Decision is binding.<br>ADR is immutable.
+    note right of rejected : Decision log entry.<br>Preserved for historical record.
+    note left of superseded : Replaced by newer ADR.<br>See lifecycle.superseded_by.
+    note left of deprecated : Still in codebase but<br>no longer recommended.
+```
+
+**Valid transitions:**
+
+| ADR Status (from) | ADR Status (to) | PR State | Trigger |
+|:------------------:|:----------------:|:--------:|---------|
+| `draft` | `proposed` | **opened** | Author pushes branch and opens PR |
+| `proposed` | `proposed` | **open** (changes requested) | Reviewed but no decision — reviewers request changes, author reworks |
+| `proposed` | `accepted` | **merged** | All required approvers approve the PR |
+| `proposed` | `rejected` | **merged** | Approvers reject — ADR is merged to preserve the historical record |
+| `proposed` | `deferred` | **closed** | Decision postponed; PR closed with `deferred` label |
+| `deferred` | `proposed` | **opened** (new or reopened) | Author reopens or opens new PR |
+| `accepted` | `superseded` | **merged** (via superseding ADR's PR) | New ADR accepted that replaces this one |
+| `accepted` | `deprecated` | **merged** (standalone PR) | Decision no longer recommended |
+
+> **Why are rejected ADRs merged?** Rejected ADRs are part of the decision log — they document *why* an option was evaluated and not pursued. Closing the PR without merging would lose this history from `main`.
+
+> **Where is `archived` in this diagram?** Archival is **not a status value** — it is a metadata overlay tracked via `lifecycle.archival` fields. Archived ADRs retain their pre-archival status (`superseded`, `deprecated`, or `rejected`). See §8 for the archival workflow.
+
+---
+
+## 3. Workflow: Proposing a New ADR
+
+### 3.0 Should You Write an ADR? — Architectural Significance Test
+
+Not every technical decision needs a full ADR. Before starting, verify that **at least one** of the following applies:
+
+| # | Significance Criterion |
+|---|------------------------|
+| 1 | The decision affects **multiple components, teams, or services** |
+| 2 | The decision is **difficult or expensive to reverse** |
+| 3 | The decision has **security, compliance, or regulatory** implications |
+| 4 | The decision **establishes a pattern** that others will follow |
+| 5 | The decision involves a **tradeoff between quality attributes** (e.g., security vs. usability, latency vs. consistency) |
+| 6 | Someone will ask **"why did we do this?"** in 6 months |
+
+If **none** of these apply, the decision is likely not architecturally significant — just make it, document it inline (code comment, wiki, commit message), and move on.
+
+> **Source:** Adapted from Zimmermann's [Architectural Significance Test](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html). See also: *"An AD log with more than 100 entries will probably put your readers (and you) to sleep."*
+
+### 3.1 Draft Phase
+
+1. **Create a branch** from `main`:
+   ```bash
+   git checkout -b adr/ADR-NNNN-short-title
+   ```
+
+2. **Create the ADR file** from the template:
+   ```bash
+   cp .skills/adr-author/assets/adr-template.yaml architecture-decision-log/ADR-NNNN-short-title.yaml
+   ```
+
+3. **Set status to `draft`** while authoring:
+   ```yaml
+   adr:
+     id: "ADR-NNNN-short-title"
+     status: "draft"
+   ```
+
+4. **Iterate locally.** Validate against the schema:
+   ```bash
+   python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-title.yaml
+   ```
+
+### 3.2 Proposal Phase
+
+5. **Set status to `proposed`** when the ADR is complete and ready for review:
+   ```yaml
+   adr:
+     status: "proposed"
+   ```
+
+6. **Open a Pull Request.** The PR title should match the ADR title:
+   ```
+   ADR-NNNN: Short decision title
+   ```
+
+7. **Assign reviewers.** Add all stakeholders listed in the ADR's `reviewers` and `approvals` sections as PR reviewers.
+
+8. **CI validates** the ADR automatically (schema validation runs on PR).
+
+### 3.3 Review Phase
+
+9. **Reviewers read the ADR** in the PR. They have **5 business days** to review (configurable per team).
+
+10. **Review checklist** — reviewers should verify:
+    - [ ] Context is clear and complete
+    - [ ] At least 2 alternatives are genuinely considered (not strawmen)
+    - [ ] Pros/cons are balanced and honest
+    - [ ] Rationale explains *why* the chosen option is preferred
+    - [ ] Tradeoffs are explicitly acknowledged
+    - [ ] Risks are addressed (per-alternative `risk` level, cons, and `consequences.negative`)
+    - [ ] No conflict with existing `accepted` ADRs (search `architecture-decision-log/` for related decisions)
+    - [ ] `approvals[].identity` is populated with the platform handle for each required approver (§3.4.1)
+
+11. **Reviewers comment on the PR.** Discussions happen in PR comments.
+
+12. **Author addresses feedback** by pushing new commits to the branch.
+
+> **Note on `reviewed` audit events:** The initial proposal review happens through the PR process. Do **not** add a `reviewed` event to `audit_trail` during the initial review — the `approved` or `rejected` event records the outcome. The `reviewed` event is reserved for **periodic reviews** (§9) of already-accepted ADRs.
+
+### 3.4 Approval Phase
+
+13. **All required approvers must approve the PR** before merge. This is enforced via GitHub branch protection rules:
+    - Require approvals from designated CODEOWNERS
+    - Require passing CI (schema validation + approval identity verification)
+    - No self-approval (author cannot be sole approver)
+
+14. **Once approved:**
+    - Author (or decision owner) sets status to `accepted`
+    - Author populates `decision.decision_date`
+    - Author adds entries to `approvals` with names, roles, **platform identities**, and timestamps
+    - Author adds an `approved` event to `audit_trail`
+
+    > **Who sets the status?** The author or decision owner updates the YAML. The branch protection rules prevent self-approval — the author cannot be the *sole* approver. Setting the status to `accepted` is a clerical action that happens *after* PR approval, not a governance action.
+
+    > **Bootstrap exception:** ADR-0000 (the meta-ADR adopting this governance process) was self-approved by the initial author. The no-self-approval rule applies to all subsequent ADRs.
+
+15. **Merge the PR** to `main`. The ADR is now binding.
+
+### 3.4.1 Approval Identity Rule
+
+> **Principle:** The ADR's `approvals[]` list and the pull request's actual approvers **must match**. Every person listed in `approvals` must have actually approved the pull request, and their `identity` field must resolve to their platform account.
+
+The `identity` field on each approval entry is the **platform-resolvable handle** that CI uses to verify the approval:
+
+| Platform | Identity format | Example | API used for verification |
+|----------|----------------|---------|--------------------------|
+| GitHub | `@username` | `@janedoe` | `GET /repos/{owner}/{repo}/pulls/{number}/reviews` |
+| Azure DevOps | Email or UPN | `jane.doe@org.com` | `GET /_apis/git/pullRequests/{id}/reviewers` |
+| GitLab | `@username` | `@janedoe` | `GET /projects/:id/merge_requests/:iid/approval_state` |
+| AWS CodeBuild | *(uses GitHub/CodeCommit API)* | Depends on source | Depends on source provider |
+| GCP Cloud Build | *(uses GitHub API)* | Depends on source | Depends on source provider |
+
+**How CI enforcement works:**
+
+1. The CI pipeline detects which ADR files were changed in the PR
+2. For each changed ADR with `status: proposed` or `status: accepted`:
+   - Extracts all `approvals[].identity` values
+   - Queries the platform API for the list of users who **actually approved** the PR
+   - Compares the two sets
+3. **If any listed approver has not approved the PR**, the check fails and merge is blocked
+4. **If the ADR has no `identity` fields**, the check emits a warning but does not block (backward-compatible)
+
+> **Why this matters:** Without this rule, anyone can write arbitrary names in `approvals[]` and merge with a different set of PR approvers. The identity binding ensures that the ADR's formal approval record matches the Git platform's cryptographic approval record.
+
+> **When to populate `identity`:** Add the `identity` field when the ADR enters `proposed` status and approvers are known. The field uses whatever format your Git platform identifies reviewers by — typically a username prefixed with `@`.
+
+**Example:**
+
+```yaml
+approvals:
+  - name: "Jane Doe"
+    role: "Lead Architect"
+    identity: "@janedoe"          # ← CI verifies this account approved the PR
+    approved_at: "2026-03-15T10:00:00Z"
+    signature_id: sig-example-001
+```
+
+### 3.4.2 Single ADR per PR
+
+> **Rule:** A pull request may modify **at most one ADR file**.
+
+This ensures each merge commit maps to exactly one architectural decision, keeping the git history clean and making individual decisions easy to revert.
+
+**Exception — supersession pairs:** When a new ADR supersedes an existing one, the PR must touch exactly **two** ADR files:
+- The **new ADR** (with `lifecycle.supersedes: ADR-NNNN`)
+- The **old ADR** (with `status: superseded` and `lifecycle.superseded_by: ADR-MMMM`)
+
+The CI script validates this automatically — if a PR modifies two ADRs that form a valid supersession chain (the symmetry is verified), the check passes. Any other multi-ADR PR is rejected.
+
+This rule is configured in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml):
+
+```yaml
+governance:
+  single_adr_per_pr: true
+```
+
+### 3.4.3 Change Classification
+
+Not all changes to an ADR are equal. The governance framework distinguishes between **substantive** and **maintenance** changes:
+
+#### Tier 1 — Substantive Changes (full approval required)
+
+Changes to fields that affect the *decision itself*. These require the original ADR approvers (listed in `approvals[].identity`) to re-approve via the PR:
+
+| Field | Why it's substantive |
+|-------|---------------------|
+| `adr.status` | Changes the governance state of the decision |
+| `adr.title` | Reframes what the decision is about |
+| `decision.*` | Alters the chosen alternative, rationale, tradeoffs, or confidence |
+| `alternatives.*` | Changes the options that were evaluated |
+| `consequences.*` | Modifies the expected outcomes |
+| `approvals.*` | Adds, removes, or changes approver records |
+| `context.summary` | Reframes the problem statement |
+
+#### Tier 2 — Maintenance Changes (no ADR re-approval required)
+
+Changes to non-decision fields. These are clerical or additive updates that don't alter the architectural decision:
+
+- `adr.schema_version` — schema migration
+- `adr.last_modified`, `adr.tags`, `adr.component` — metadata updates
+- `authors[].email` — contact info correction
+- `reviewers` — adding reviewers
+- `context.business_drivers`, `context.technical_drivers`, `context.constraints`, `context.assumptions` — clarification, not reframing
+- `requirements`, `dependencies`, `references` — adding supporting information
+- `lifecycle.next_review_date`, `lifecycle.review_cycle_months` — review cadence
+- `audit_trail` — adding events (always append-only)
+- `confirmation.artifact_ids` — backfilling verification evidence
+
+Maintenance changes still require a standard PR approval via branch protection, but the `verify-approvals.py` identity check is **skipped**. An `updated` event should be added to `audit_trail`:
+
+```yaml
+audit_trail:
+  - event: updated
+    by: Ivan Stambuk
+    at: "2026-03-10T14:00:00Z"
+    details: "Administrative: corrected reviewer email address"
+```
+
+The substantive fields list is configured in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) and can be customized per organisation.
+
+### 3.4.4 ADR Administrator
+
+An **ADR Administrator** is a person authorised to make Tier 2 (maintenance) changes to any ADR without obtaining the original ADR approvers' re-approval. This is useful for:
+
+- Typo fixes and formatting corrections
+- Schema version bumps during migrations
+- Updating contact information (emails, names)
+- Adding references or clarifying context
+- Updating review cadence dates
+
+Administrators are listed in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml):
+
+```yaml
+governance:
+  admins:
+    - identity: "ivanstambuk"
+      name: "Ivan Stambuk"
+    - identity: "elenavasquez"
+      name: "Elena Vasquez"
+```
+
+**How it works in CI:**
+
+1. The CI script detects the **PR author** from platform environment variables
+2. If the PR author is listed as an admin in the governance config:
+   - **Substantive changes** → full approval identity verification (same as non-admins)
+   - **Maintenance changes** → approval identity check is skipped; only standard branch protection applies
+3. If the PR author is **not** an admin:
+   - **Substantive changes** → full approval identity verification
+   - **Maintenance changes** → approval identity check is still skipped (maintenance changes never require ADR re-approval), but standard branch protection applies
+
+> **Key point:** The admin role doesn't grant the ability to make substantive changes without approval. It only provides an explicit governance signal in CI output. Maintenance changes skip the identity check for *everyone* — the admin designation is primarily for auditability and clarity.
+
+> **Governance of the config itself:** Changes to [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) should be subject to the same review process as any governance artefact. Add it to `CODEOWNERS` so that admin roster changes require approval from the architecture team.
+
+
+### 3.5 Rejection
+
+16. If the PR is rejected:
+    - Author sets status to `rejected`
+    - Rejection reason is documented in the PR and in the ADR's `audit_trail`
+    - PR is **merged** (not closed) — rejected ADRs are preserved for historical record
+
+> **What does `chosen_alternative` mean for rejected ADRs?** When the *proposal* is rejected but the team selects a different approach (e.g., ADR-0007: Vault was proposed but native cloud stores were chosen), `chosen_alternative` records the alternative the team will actually pursue. The `status: rejected` signals that the *proposed approach* was rejected, not the ADR itself. The ADR serves as a record of both the rejection and the actual path forward.
+
+---
+
+## 4. Workflow: Re-proposing a Deferred ADR
+
+A deferred ADR can be re-proposed when the blocking condition is resolved.
+
+1. **Determine what changed.** The author or decision owner identifies why the ADR is now ready — new information, resolved dependency, changed priority, or elapsed time.
+2. **Open a new PR** (preferred) or reopen the original PR:
+   - Update `adr.status` to `proposed`
+   - Update `context.summary` if the landscape has changed
+   - Add an `updated` event to `audit_trail` explaining why the ADR is being re-proposed
+3. Follow the standard review process (§3.3–3.4).
+
+---
+
+## 5. Workflow: Superseding an Existing ADR
+
+1. **Create a new ADR** (ADR-MMMM) following the standard proposal workflow
+2. In the new ADR, set the supersession field:
+   ```yaml
+   lifecycle:
+     supersedes: "ADR-NNNN"
+   ```
+3. When the new ADR is accepted, **update the old ADR** in the same PR:
+   - Set `adr.status: "superseded"`
+   - Set `lifecycle.superseded_by: "ADR-MMMM"`
+   - Add a `superseded` event to `audit_trail`
+
+> **Symmetry rule:** Both fields must be set — the new ADR's `lifecycle.supersedes` and the old ADR's `lifecycle.superseded_by`. The validator checks this.
+
+---
+
+## 6. Workflow: Deprecating an ADR
+
+Deprecation marks a decision as no longer recommended, but not yet replaced.
+
+1. **Open a PR** that updates the existing ADR:
+   - Set `adr.status: "deprecated"`
+   - Add a `deprecated` event to `audit_trail` with reason
+2. **When to deprecate** (vs. supersede):
+   - **Deprecate** when the decision is outdated but no replacement has been decided yet
+   - **Supersede** when a new ADR has been accepted that replaces this one
+3. A deprecated ADR should eventually be either superseded by a new ADR or left as a historical record.
+
+> **Timestamp convention:** Unlike archival (which has a dedicated `lifecycle.archival.archived_at` field), deprecation has no dedicated timestamp field. The deprecation time is recorded in the `audit_trail` via the `deprecated` event's `at` field. This is intentional — deprecation is a transitional state, not a terminal one.
+
+---
+
+## 7. Workflow: Confirming Implementation
+
+After an ADR is accepted, the team must verify it was actually implemented.
+
+1. **Populate the `confirmation` field** as implementation progresses:
+   ```yaml
+   confirmation:
+     description: "Verified via integration test suite and code review of PR #142"
+     artifact_ids:
+       - "JIRA-1234"
+       - "https://github.com/org/repo/pull/142"
+       - "TEST-SUITE-auth-dpop-e2e"
+   ```
+
+2. Confirmation can be added in a follow-up PR after the ADR is accepted.
+
+3. **Recommended artifact types** for `confirmation.artifact_ids`:
+
+   | Prefix / Format | Example | Use When |
+   |-----------------|---------|----------|
+   | Jira / GitHub issue | `JIRA-1234`, `https://github.com/org/repo/issues/42` | Implementation tracked in an issue |
+   | Pull request | `https://github.com/org/repo/pull/142` | Code change that implements the decision |
+   | Test suite | `TEST-SUITE-auth-dpop-e2e` | Automated tests that verify the decision |
+   | Fitness function | `archunit:no-direct-db-access` | ArchUnit / architectural lint rule |
+   | PoC / Experiment | `POC-2026-03-dpop-latency-benchmark` | Proof-of-concept that validated the decision |
+   | Benchmark | `BENCH-jwt-signing-ed25519-vs-rsa` | Performance data supporting the choice |
+   | Sprint review | `SPRINT-42-review-notes` | Review meeting where implementation was demonstrated |
+
+   > The strongest decision confirmations are **empirical** — PoC results, benchmarks, and passing fitness functions carry more weight than tickets alone.
+
+   > **Schema note:** The `confirmation.artifact_ids` field in the schema accepts arbitrary strings. Use the prefixes above for consistency. See [`adr.schema.json`](../schemas/adr.schema.json) → `confirmation` definition.
+
+4. **During code reviews**, reviewers should check if a proposed change **violates any accepted ADR**. If it does:
+   - Link the relevant ADR in the review comment
+   - Request the author to either update the code or propose a new superseding ADR
+
+---
+
+## 8. Archival
+
+Archival is for decisions that are no longer active and should be removed from regular consideration. Archival is distinct from supersession (replaced by a newer ADR) and deprecation (no longer recommended).
+
+**When to archive:**
+- A `superseded` ADR whose successor has been accepted **and** confirmed
+- A `deprecated` ADR whose replacement is fully operational
+- A `rejected` ADR that is no longer relevant to revisit
+
+**How to archive:**
+
+1. Update the ADR YAML:
+   ```yaml
+   lifecycle:
+     archival:
+       archived_at: "2026-06-15T10:00:00Z"
+       archive_reason: "Superseded by ADR-0008; original decision fully replaced and confirmed."
+   ```
+2. Add an `archived` event to `audit_trail`:
+   ```yaml
+   audit_trail:
+     - event: archived
+       by: Elena Vasquez
+       at: "2026-06-15T10:00:00Z"
+       details: "Superseded by ADR-0008. Successor confirmed in production."
+   ```
+3. Submit as a PR and merge.
+
+> **Never delete an ADR.** Archival preserves the decision record for historical reference and audit compliance. Archived ADRs remain in the `architecture-decision-log/` directory.
+
+> **Archival is not a status.** The ADR retains its pre-archival `adr.status` (`superseded`, `deprecated`, or `rejected`). Archival is signalled by the presence of `lifecycle.archival.archived_at` and the `archived` event in `audit_trail`. This is intentional — archival is a metadata annotation, not a state transition, and archived ADRs remain queryable by their logical status.
+
+---
+
+## 9. Periodic Review
+
+ADRs with `lifecycle.review_cycle_months` set will be flagged for periodic review.
+
+1. When the `lifecycle.next_review_date` arrives, the decision owner should:
+   - Verify the decision is still valid and the context hasn't changed
+   - If still valid: update `next_review_date` and add a `reviewed` event to `audit_trail`
+   - If no longer valid: propose a superseding ADR or deprecate
+
+2. **Retrospective questions** — use these to guide the periodic review:
+
+   | # | Question |
+   |---|----------|
+   | 1 | Did the **consequences we predicted** actually occur? |
+   | 2 | Were there **unforeseen consequences** we should document? |
+   | 3 | Has the **context changed** since this decision was made? |
+   | 4 | Was the **confidence level** of this decision appropriate? |
+   | 5 | Have we accumulated **technical debt** from this decision? |
+   | 6 | Is this decision **still the right choice** given what we now know? |
+   | 7 | Should we trigger a **superseding ADR**? |
+
+   > These questions focus on improving the *decision-making process*, not just the architecture. Adapted from [Cervantes & Woods, "Architectural Retrospectives"](https://www.infoq.com/articles/architectural-retrospectives/).
+
+3. **Confidence-driven review frequency.** Use `decision.confidence` to set default review cadence:
+
+   | Confidence | Recommended `review_cycle_months` | Rationale |
+   |------------|----------------------------------|----------|
+   | `low` | 6 | Decision made under pressure or with incomplete data — re-evaluate early |
+   | `medium` | 12 | Standard review cycle |
+   | `high` | 24 | Strong empirical evidence — extended cycle acceptable |
+
+
+---
+
+
+## 10. Schema Versioning Policy
+
+Each ADR records the schema version it was authored against in `adr.schema_version`.
+
+| Rule | Detail |
+|------|--------|
+| **Schema version is pinned at creation time** | When an ADR is created, set `schema_version` to the current version of `adr.schema.json`. |
+| **Existing ADRs are NOT updated** when the schema evolves | If the schema adds new optional fields, old ADRs remain valid without modification. |
+| **Backward compatibility is required** | New schema versions MUST validate all existing ADRs without errors. Only add optional fields; never make previously-optional fields required. |
+| **Breaking changes require migration** | If a required field is added or renamed, provide a migration script and bump the major version. Update `schema_version` in affected ADRs. |
+| **Current version** | `1.0.0` (see [`schemas/adr.schema.json`](../schemas/adr.schema.json)) |
+
+### ADR document versioning (`adr.version`)
+
+Each ADR also tracks its own document version in `adr.version` (format: `MAJOR.MINOR`). This is separate from `schema_version`:
+
+| Change Type | Version Bump | Example |
+|-------------|:------------:|---------|
+| **Substantive change** (decision, rationale, alternatives, consequences) | MAJOR | `1.0` → `2.0` |
+| **Maintenance change** (typos, formatting, metadata corrections) | MINOR | `1.0` → `1.1` |
+| **Initial draft** | — | Start at `0.1` |
+| **First accepted version** | — | Set to `1.0` on acceptance |
+
+---
+
+## 11. Branch Protection Rules (Recommended)
+
+Configure in GitHub repository settings → Branches → `main`:
+
+```
+✅ Require a pull request before merging
+✅ Require approvals: 1 (minimum; increase per decision_type)
+✅ Require review from Code Owners
+✅ Require status checks to pass (CI: schema validation)
+✅ Require conversation resolution before merging
+❌ Allow force pushes (never)
+❌ Allow deletions (never)
+```
+
+### CODEOWNERS (recommended)
+
+Create a `CODEOWNERS` file to enforce that the right people review ADRs:
+
+```
+# All ADRs require architect approval
+architecture-decision-log/    @org/architecture-team
+
+# Security decisions additionally require CISO
+architecture-decision-log/ADR-*security*    @org/security-team
+
+# Compliance decisions additionally require DPO
+architecture-decision-log/ADR-*compliance*  @org/compliance-team
+```
+
+> **Note:** CODEOWNERS wildcard patterns match on *filename*, not on `decision_type` inside the YAML. To ensure correct reviewer assignment, include the decision domain in the ADR filename (e.g., `ADR-0007-security-adopt-passkeys.yaml`). For more sophisticated routing, use a CI-based reviewer assignment step that reads `decision_type` from the YAML and requests the appropriate team via the GitHub API.
+
+---
+
+## Glossary
+
+# ADR Governance — Glossary
+
+## Core Concepts
+
+| Term | Definition |
+|------|-----------|
+| **ADR** | Architecture Decision Record. A structured document capturing a significant architectural decision, its context, alternatives considered, and consequences. |
+| **ADR Administrator** | A person listed in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) who is authorised to make maintenance (Tier 2) changes to any ADR without requiring re-approval from the original ADR approvers. See [`adr-process.md` §3.4.4](adr-process.md#344-adr-administrators). |
+| **Approval Identity Rule** | Governance rule stating that every person listed in an ADR's `approvals[]` must have actually approved the associated pull request. Enforced via the `identity` field and CI validation. See [`adr-process.md` §3.4.1](adr-process.md#341-approval-identity-rule). |
+| **ASR** | Architecturally Significant Requirement. A requirement (functional or non-functional) that directly shapes or constrains the architecture. |
+| **Change Classification** | The categorisation of ADR changes as either *substantive* (Tier 1 — requires original approver re-approval) or *maintenance* (Tier 2 — no re-approval required). See [`adr-process.md` §3.4.3](adr-process.md#343-change-classification-substantive-vs-maintenance). |
+| **Decision Owner** | The single accountable individual responsible for the final decision. Not necessarily the author. |
+| **Identity** | The `approvals[].identity` field — a platform-resolvable handle (e.g., GitHub `@username`, Azure DevOps email) that CI pipelines use to verify the approver actually approved the pull request. |
+| **Maintenance Change** | A Tier 2 change to an ADR that does not alter the architectural decision itself (e.g., typo fix, email correction, schema version bump). Does not require re-approval from original ADR approvers. |
+| **Residual Risk** | The risk remaining after all identified mitigations have been applied. |
+| **Single ADR per PR** | Governance rule requiring that each pull request modifies at most one ADR file. Exception: supersession pairs (new + old ADR). See [`adr-process.md` §3.4.2](adr-process.md#342-single-adr-per-pr). |
+| **Substantive Change** | A Tier 1 change to an ADR that modifies the decision itself (e.g., status, rationale, alternatives, consequences). Requires re-approval from the original ADR approvers. |
+| **Supersession** | When a new ADR replaces a previous one. The old ADR's status changes to `superseded` and the `lifecycle.superseded_by` field points to the replacement. |
+
+## ADR Status Values
+
+| Status | Meaning |
+|--------|---------|
+| `draft` | ADR is being authored. Not ready for review. |
+| `proposed` | ADR is complete and under review. Not yet binding. |
+| `accepted` | Decision has been formally approved and is in effect. |
+| `superseded` | Replaced by a newer ADR (see `lifecycle.superseded_by`). |
+| `deprecated` | Still technically active but no longer recommended. Will be superseded or rejected. |
+| `rejected` | Explicitly rejected after evaluation. Preserved for historical record. |
+| `deferred` | Decision postponed. Context or drivers are insufficient to decide now. |
+
+> **Note:** `archived` is **not a status value** — it is a metadata overlay tracked via `lifecycle.archival` fields (`archived_at`, `archive_reason`) and the `archived` event in `audit_trail`. Archived ADRs retain their pre-archival status (`superseded`, `deprecated`, or `rejected`).
+
+## Decision Type Classification
+
+| Type | Description |
+|------|-------------|
+| `technology` | Selection of specific tools, frameworks, languages, databases, or platforms. |
+| `process` | Changes to development, deployment, or operational workflows. |
+| `organizational` | Team structure, ownership boundaries, or responsibility changes. |
+| `vendor` | Third-party vendor or managed service selection and contracts. |
+| `security` | Security controls, authentication/authorization mechanisms, key management. |
+| `compliance` | Regulatory compliance, data residency, audit, and reporting decisions. |
+
+## Priority Levels
+
+| Level | Guidance |
+|-------|----------|
+| `low` | Localized impact. Reversible with minimal effort. |
+| `medium` | Affects multiple components or teams. Moderate effort to reverse. |
+| `high` | Cross-cutting decision. Significant effort and coordination to change. |
+| `critical` | Foundational. Reversal would require major re-architecture or breach regulations. |
+
+## Risk & Impact Scales
+
+| Value | Likelihood Meaning | Impact Meaning |
+|-------|--------------------|----|
+| `low` | Unlikely to occur within the review cycle | Minor disruption; workarounds exist |
+| `medium` | May occur; has happened in similar contexts | Noticeable service degradation; requires response |
+| `high` | Likely to occur given current conditions | Significant outage, data loss, or compliance breach |
+| `critical` | *(impact only)* | Catastrophic: regulatory penalties, major data breach, or total service loss |
+
+## Decision Confidence Levels
+
+| Level | Guidance |
+|-------|---------|
+| `low` | Decision made under time pressure or with incomplete information. Flag for early re-evaluation. |
+| `medium` | Reasonable confidence based on available evidence. Standard review cycle. |
+| `high` | Strong empirical evidence (PoC, benchmarks, prior experience). Extended review cycle acceptable. |
+
+> **Confidence on rejected ADRs:** Confidence applies to the *decision outcome*, not the proposal. A `rejected` ADR with `confidence: high` means the team is highly confident in the rejection (e.g., strong evidence that the proposed approach is wrong). A rejected ADR with `confidence: low` means the rejection was made under uncertainty and may warrant re-evaluation.
+
+
+## ID Formats
+
+| Entity | Pattern | Example |
+|--------|---------|---------|
+| ADR | `ADR-NNNN-slug` (slug is mandatory) | `ADR-0001-dpop-over-mtls` |
+| Functional Requirement | `F-NNN` | `F-001` |
+| Non-Functional Requirement | `NF-NNN` | `NF-001` |
+
+## ADR Supersession (Lifecycle)
+
+Supersession is tracked via `lifecycle.supersedes` and `lifecycle.superseded_by` fields.
+
+- **`lifecycle.supersedes`** — ADR ID that this decision replaces (set on the **new** ADR).
+- **`lifecycle.superseded_by`** — ADR ID that replaces this decision (set on the **old** ADR).
+
+> Both fields must be set symmetrically when one ADR supersedes another. The validator checks this.
+
+## Deprecation vs. Archival Timestamps
+
+| Action | Timestamp location | Notes |
+|--------|--------------------|-------|
+| **Deprecation** | `audit_trail` → `deprecated` event `at` field | Deprecation has no dedicated lifecycle field — query the audit trail for timing. |
+| **Archival** | `lifecycle.archival.archived_at` | Archival has a dedicated field because it is a terminal, queryable state. |
+
+
+
+## Audit Trail Events
+
+| Event | When Recorded |
+|-------|---------------|
+| `created` | Initial draft committed. |
+| `updated` | Material change to decision, alternatives, or consequences. |
+| `approved` | Formal approval by a named authority. |
+| `rejected` | Decision explicitly rejected. |
+| `deferred` | Decision postponed — context or drivers insufficient to decide now. |
+| `reviewed` | Periodic review completed. Decision re-evaluated against current context. |
+| `superseded` | Replaced by a newer ADR. |
+| `deprecated` | Marked as no longer recommended. |
+| `archived` | Removed from active consideration. |
+
+## Abbreviations
+
+| Abbreviation | Full Form |
+|--------------|-----------|
+| AD | Architecture Decision |
+| ADL | Architecture Decision Log |
+| ADR | Architecture Decision Record |
+| AKM | Architecture Knowledge Management |
+| DPO | Data Protection Officer |
+| HA | High Availability |
+| HSM | Hardware Security Module |
+| IAM | Identity and Access Management |
+| IdP | Identity Provider |
+| KMS | Key Management Service |
+| MFA | Multi-Factor Authentication |
+| OIDC | OpenID Connect |
+| RBAC | Role-Based Access Control |
+| RPO | Recovery Point Objective |
+| RTO | Recovery Time Objective |
+| SLA | Service Level Agreement |
+| SSO | Single Sign-On |
+| TLS | Transport Layer Security |
+
+---
+
+## Schema Reference
+
+# ADR Schema Reference
+
+The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.schema.json`.
+
+## Required Top-Level Sections
+
+| Section | Description |
+|---------|-------------|
+| `adr` | Core metadata: id, title, status, timestamps, project, decision_type |
+| `authors` | At least one author with name and role |
+| `decision_owner` | Single accountable person |
+| `context` | Problem summary, drivers, constraints, assumptions |
+| `alternatives` | Minimum 2 alternatives with pros, cons, cost, risk |
+| `decision` | Chosen alternative, rationale, tradeoffs, date, confidence level |
+| `consequences` | Positive and negative outcomes |
+| `confirmation` | How the decision's implementation will be verified (`description` required, `artifact_ids` optional) |
+
+## Optional Top-Level Sections
+
+| Section | Description |
+|---------|-------------|
+| `reviewers` | People who reviewed the ADR |
+| `approvals` | Formal approvals with timestamps, platform identities, and signature IDs |
+| `requirements` | Embedded functional and non-functional requirements |
+| `dependencies` | Internal and external dependencies |
+| `references` | External links and evidence |
+| `lifecycle` | Review cadence, supersession chain, archival |
+| `audit_trail` | Immutable event log (events: created, updated, reviewed, approved, rejected, deferred, superseded, deprecated, archived) |
+
+## Key Validation Rules
+
+1. `adr.id` must match `^ADR-[0-9]{4}(-[a-z0-9]+)+$` — slug is mandatory (e.g. `ADR-0001-dpop-over-mtls`)
+2. `adr.status` must be one of the defined enum values (see below)
+3. `alternatives` must have `minItems: 2`
+4. `decision.chosen_alternative` should match a name in `alternatives`
+5. Requirement IDs: `^(F|NF)-[0-9]{3}$`
+6. `audit_trail` events use defined enum values (see below)
+7. Extension fields: any key starting with `x-` is allowed at the top level
+
+## Enum Values
+
+### `adr.status`
+`draft` | `proposed` | `accepted` | `superseded` | `deprecated` | `rejected` | `deferred`
+
+### `adr.decision_type`
+`technology` | `process` | `organizational` | `vendor` | `security` | `compliance`
+
+### `adr.priority`
+`low` | `medium` | `high` | `critical`
+
+### `decision.confidence`
+`low` | `medium` | `high`
+
+### `alternatives[].risk`
+`low` | `medium` | `high` | `critical`
+
+### `alternatives[].estimated_cost`
+`low` | `medium` | `high`
+
+### `audit_trail[].event`
+`created` | `updated` | `reviewed` | `approved` | `rejected` | `deferred` | `superseded` | `deprecated` | `archived`
+
+## Markdown-Native Fields
+
+The following fields support **full Markdown** including embedded Mermaid diagrams via fenced code blocks. Use YAML literal block scalars (`|`) for multiline content.
+
+| Field | Description |
+|-------|-------------|
+| `context.summary` | Narrative problem statement; embed architecture diagrams |
+| `alternatives[].summary` | Describe each option; embed comparison diagrams |
+| `decision.rationale` | Explain *why*; use bullet lists, headers, diagrams |
+| `decision.tradeoffs` | Acknowledged tradeoffs accepted with this decision |
+| `confirmation.description` | Verification evidence and implementation proof |
+
+## Person Schema (`$defs/person`)
+
+Used for `authors[]`, `decision_owner`, `reviewers[]`:
+
+| Field | Type | Required |
+|-------|------|----------|
+| `name` | string | ✅ |
+| `role` | string | ✅ |
+| `email` | string (email) | ❌ |
+
+## Approval Entry Schema
+
+| Field | Type | Required |
+|-------|------|----------|
+| `name` | string | ✅ |
+| `role` | string | ✅ |
+| `identity` | string | ❌ (needed for CI verification) |
+| `approved_at` | string (date-time) or null | ❌ |
+| `signature_id` | string or null | ❌ |
+
+---
+
+## CI/CD Setup Guide
+
+# CI/CD Setup Guide — ADR Validation
+
+This guide explains how to set up automated ADR validation as a **pre-merge gate** on your CI/CD platform. Once configured, every pull request (or merge request) that touches ADR files will be automatically validated against the JSON Schema, checked for semantic consistency, and linted — **before** it can be merged.
+
+## What Gets Validated
+
+The validation pipeline runs three checks:
+
+| Check | Tool | Blocks merge? |
+|-------|------|:-------------:|
+| **Schema compliance** | `validate-adr.py` + JSON Schema | ✅ Yes (errors) |
+| **Semantic consistency** | `validate-adr.py` (built-in) | ✅ Yes (errors) / ⚠️ No (warnings) |
+| **YAML formatting** | `yamllint` | ✅ Yes |
+
+**Schema compliance** verifies every ADR YAML file conforms to the ADR meta-model ([`schemas/adr.schema.json`](../schemas/adr.schema.json)) — correct structure, types, required fields, and enum values.
+
+**Semantic consistency** goes beyond the schema to check logical invariants:
+- `decision.chosen_alternative` matches an entry in `alternatives[].name`
+- `adr.status` is consistent with `audit_trail` events (no impossible state transitions)
+- `audit_trail` entries are in chronological order
+- `lifecycle.supersedes` / `lifecycle.superseded_by` symmetry across files
+- Duplicate ADR IDs across the ADL
+- Quality signals: missing summaries, premature confidence on drafts, decision dates before creation dates
+
+**YAML formatting** catches indentation errors, trailing whitespace, and overly long lines.
+
+## Prerequisites
+
+All platforms need:
+- **Python 3.11+** (the validator uses `datetime.fromisoformat` improvements and `X | Y` union syntax)
+- **pip packages:** `jsonschema`, `pyyaml` (for validation), `yamllint` (for linting)
+
+The validator itself is [`scripts/validate-adr.py`](../scripts/validate-adr.py) and the schema is [`schemas/adr.schema.json`](../schemas/adr.schema.json) — both are included in this repository.
+
+---
+
+## LLM-Ready Setup Prompts
+
+> **⚡ Fastest path.** Copy-paste the prompt for your platform into any AI assistant (ChatGPT, Claude, Gemini, Copilot, etc.) and it will set up ADR validation CI for your organization. For manual step-by-step instructions, see [Platform Setup (Manual)](#platform-setup-manual) below.
+
+---
+
+### Prompt: GitHub Actions
+
+```
+I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization's Architecture Decision Records.
+
+The repository already includes a GitHub Actions workflow at .github/workflows/validate-adr.yml that validates ADR YAML files against a JSON Schema on every PR.
+
+Please help me:
+1. Fork or clone the adr-governance repo into my GitHub organization.
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
+3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
+4. Set up branch protection on the main branch:
+   - Require the "validate" status check to pass before merging
+   - Require at least 1 reviewer
+   - Require branches to be up to date
+5. Copy CODEOWNERS.example to .github/CODEOWNERS and replace @org/architecture-team with our actual team handle: [INSERT YOUR TEAM HANDLE].
+6. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the check fails.
+
+Our organization name is: [INSERT ORG NAME]
+Our architecture team handle is: [INSERT TEAM HANDLE, e.g., @myorg/architects]
+```
+
+---
+
+### Prompt: Azure DevOps
+
+```
+I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization's Architecture Decision Records.
+
+Please help me set this up in Azure DevOps:
+
+1. Clone or import the adr-governance repo into our Azure DevOps project.
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
+3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
+4. Copy ci/azure-devops/azure-pipelines.yml to the repository root as azure-pipelines.yml.
+5. Create a new pipeline in Azure Pipelines pointing to this file.
+6. Set up a branch policy on main:
+   - Add the pipeline as a required Build Validation (automatic trigger, required policy)
+   - Set minimum reviewers to at least 1
+   - Disallow requestors from approving their own changes
+7. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the build policy blocks merge.
+
+Our Azure DevOps organization URL is: [INSERT URL, e.g., https://dev.azure.com/myorg]
+Our project name is: [INSERT PROJECT NAME]
+```
+
+---
+
+### Prompt: GCP Cloud Build
+
+```
+I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization's Architecture Decision Records.
+
+Please help me set this up with GCP Cloud Build:
+
+1. Clone or mirror the adr-governance repo into our source repository (GitHub or Cloud Source Repositories).
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
+3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
+4. Copy ci/gcp-cloud-build/cloudbuild.yaml to the repository root.
+5. Connect our repository to Cloud Build (2nd gen repository connection).
+6. Create a Cloud Build trigger:
+   - Name: validate-adr
+   - Event: Pull Request (if GitHub) or Push to main (if Cloud Source Repos)
+   - Configuration file: /cloudbuild.yaml
+7. If using GitHub: enable branch protection requiring the Cloud Build status check to pass before merging.
+8. Verify by opening a PR with an intentionally malformed ADR.
+
+Our GCP project ID is: [INSERT PROJECT ID]
+Our repository is hosted on: [GitHub / Cloud Source Repositories]
+Our repository URL is: [INSERT REPO URL]
+```
+
+---
+
+### Prompt: AWS CodeBuild
+
+```
+I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization's Architecture Decision Records.
+
+Please help me set this up with AWS CodeBuild:
+
+1. Clone the adr-governance repo into our source repository (GitHub or CodeCommit).
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
+3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
+4. Copy ci/aws-codebuild/buildspec.yml to the repository root.
+5. Create a CodeBuild project:
+   - Name: validate-adr
+   - Source: our repository (GitHub via CodeStar Connections or CodeCommit)
+   - Environment: Managed image, Ubuntu, Standard, latest
+   - Enable webhook for PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED
+   - Enable "Report build statuses to source provider"
+6. If using GitHub: enable branch protection requiring the CodeBuild status check to pass before merging.
+7. If using CodeCommit: set up EventBridge rules for PR events targeting the CodeBuild project.
+8. Verify by opening a PR with an intentionally malformed ADR.
+
+Our AWS region is: [INSERT REGION, e.g., eu-west-1]
+Our repository is hosted on: [GitHub / CodeCommit]
+Our repository URL is: [INSERT REPO URL]
+```
+
+---
+
+### Prompt: GitLab CI/CD
+
+```
+I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization's Architecture Decision Records.
+
+Please help me set this up in GitLab:
+
+1. Import or mirror the adr-governance repo into our GitLab group.
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
+3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
+4. Copy ci/gitlab-ci/.gitlab-ci.yml to the repository root as .gitlab-ci.yml.
+5. Configure merge request settings:
+   - Enable "Pipelines must succeed" under Merge checks
+   - Enable "All threads must be resolved"
+6. Protect the main branch:
+   - Allowed to merge: Developers + Maintainers
+   - Allowed to push and merge: No one (force merge requests)
+7. Verify by creating a merge request with an intentionally malformed ADR.
+
+Our GitLab instance URL is: [INSERT URL, e.g., https://gitlab.com or self-hosted]
+Our group/namespace is: [INSERT GROUP NAME]
+```
+
+---
+
+## Pipeline Comparison
+
+| Feature | GitHub Actions | Azure DevOps | GCP Cloud Build | AWS CodeBuild | GitLab CI |
+|---------|:-:|:-:|:-:|:-:|:-:|
+| Pipeline file | `.github/workflows/*.yml` | `azure-pipelines.yml` | `cloudbuild.yaml` | `buildspec.yml` | `.gitlab-ci.yml` |
+| Pre-configured in this repo | ✅ | Copy from `ci/` | Copy from `ci/` | Copy from `ci/` | Copy from `ci/` |
+| PR trigger (native) | ✅ | ✅ | ✅ (via GitHub App) | ✅ (via webhook) | ✅ |
+| Path filtering | ✅ | ✅ | ❌ (filter in trigger) | ❌ (filter in trigger) | ✅ |
+| Merge gate enforcement | Branch protection | Branch policies | GitHub branch protection | GitHub branch protection | Merge checks |
+| Status check reporting | Native | Native | GitHub Check | GitHub Check | Native |
+| Self-hosted runners | ✅ | ✅ | ✅ (private pools) | ✅ (custom images) | ✅ |
+| Free tier | 2,000 min/mo | 1 parallel job (free) | 120 min/day | 100 min/mo | 400 min/mo |
+
+---
+
+## Platform Setup (Manual)
+
+> If you used an [LLM prompt above](#llm-ready-setup-prompts), you can skip this section. These are the detailed manual steps for each platform.
+
+### GitHub Actions
+
+> **Pipeline file:** [`.github/workflows/validate-adr.yml`](../.github/workflows/validate-adr.yml) (already included in this repository)
+
+GitHub Actions is preconfigured out of the box. The only remaining step is to enable **branch protection** to enforce it as a merge gate.
+
+#### Steps
+
+1. **Verify the workflow exists.** The file [`.github/workflows/validate-adr.yml`](../.github/workflows/validate-adr.yml) is already in the repository. Push it to your GitHub remote and it will start running automatically on PRs.
+
+2. **Enable branch protection** (merge gate):
+   - Go to **Settings → Branches → Add branch ruleset** (or classic branch protection rule)
+   - Branch name pattern: `main`
+   - Enable: ✅ **Require status checks to pass before merging**
+   - Search for and select the `validate` status check
+   - Enable: ✅ **Require branches to be up to date before merging** (recommended)
+   - Save
+
+3. **(Optional) Configure CODEOWNERS:**
+   - Copy `CODEOWNERS.example` to `.github/CODEOWNERS`
+   - Replace `@org/architecture-team`, `@org/security-team`, `@org/compliance-team` with your actual GitHub team handles
+   - In branch protection, enable: ✅ **Require review from Code Owners**
+
+#### Verification
+
+Create a branch, add or modify an ADR YAML file with an intentional error (e.g., set `status: invalid`), open a PR, and verify the `validate` check fails.
+
+---
+
+### Azure DevOps
+
+> **Pipeline file:** [`ci/azure-devops/azure-pipelines.yml`](../ci/azure-devops/azure-pipelines.yml)
+
+#### Steps
+
+1. **Copy the pipeline file** to your repository root (or reference it by path):
+   ```bash
+   cp ci/azure-devops/azure-pipelines.yml azure-pipelines.yml
+   ```
+
+2. **Create the pipeline** in Azure DevOps:
+   - Go to **Pipelines → New Pipeline**
+   - Select your repository source (Azure Repos Git, GitHub, etc.)
+   - Choose **"Existing Azure Pipelines YAML file"**
+   - Select `/azure-pipelines.yml` (or the subdirectory path if you kept it in `ci/`)
+   - Click **Run** to verify it works
+
+3. **Enable branch policy** (merge gate):
+   - Go to **Repos → Branches**
+   - Click the `⋯` menu on the `main` branch → **Branch policies**
+   - Under **Build Validation**, click **+ Add build policy**
+   - Select the pipeline you just created
+   - Trigger: **Automatic**
+   - Policy requirement: **Required**
+   - Build expiration: **Immediately when `main` is updated** (recommended)
+   - Save
+
+4. **(Optional) Require reviewers:**
+   - In the same Branch policies page, set **Minimum number of reviewers** ≥ 1
+   - Enable: ✅ **Allow requestors to approve their own changes** → No (mirrors the ADR "no self-approval" rule from §3.4)
+
+#### Verification
+
+Create a branch, push a malformed ADR, create a Pull Request targeting `main`, and confirm the build policy blocks completion.
+
+---
+
+### GCP Cloud Build
+
+> **Pipeline file:** [`ci/gcp-cloud-build/cloudbuild.yaml`](../ci/gcp-cloud-build/cloudbuild.yaml)
+
+#### Steps
+
+1. **Copy the pipeline file** to your repository root:
+   ```bash
+   cp ci/gcp-cloud-build/cloudbuild.yaml cloudbuild.yaml
+   ```
+
+2. **Connect your repository** to Cloud Build:
+   - Go to **Cloud Build → Repositories** (2nd gen)
+   - Click **Create host connection** → select GitHub, GitLab, or Cloud Source Repos
+   - Link your repository
+
+3. **Create a build trigger:**
+   - Go to **Cloud Build → Triggers → Create Trigger**
+   - Name: `validate-adr`
+   - Event: **Pull request** (for GitHub/GitLab)
+     *For Cloud Source Repos: use "Push to a branch" with pattern `^main$`*
+   - Source: select your linked repository
+   - Configuration: **Cloud Build configuration file (yaml or json)**
+   - Cloud Build configuration file location: `/cloudbuild.yaml`
+   - Save
+
+4. **Enable merge gating** (GitHub repos only):
+   - The Cloud Build GitHub App automatically reports build status as a **GitHub Check**
+   - In your GitHub repo: **Settings → Branches → Branch protection rule**
+   - Enable: ✅ **Require status checks to pass before merging**
+   - Select the Cloud Build status check
+   - Save
+
+#### IAM Permissions
+
+The Cloud Build service account needs no special permissions beyond the defaults for this pipeline — it only runs Python scripts inside the checkout.
+
+#### Verification
+
+Open a PR on GitHub with a schema-violating ADR and confirm Cloud Build reports a failing check.
+
+---
+
+### AWS CodeBuild
+
+> **Pipeline file:** [`ci/aws-codebuild/buildspec.yml`](../ci/aws-codebuild/buildspec.yml)
+
+#### Steps
+
+1. **Copy the buildspec** to your repository root:
+   ```bash
+   cp ci/aws-codebuild/buildspec.yml buildspec.yml
+   ```
+
+2. **Create a CodeBuild project:**
+   - Go to **AWS Console → CodeBuild → Create build project**
+   - Project name: `validate-adr`
+   - Source: **GitHub** (connect via OAuth or AWS CodeStar Connections)
+     - Repository: select your repo
+     - Enable: ✅ **Rebuild every time a code change is pushed to this repository**
+     - Event type: ✅ **PULL_REQUEST_CREATED**, ✅ **PULL_REQUEST_UPDATED**, ✅ **PULL_REQUEST_REOPENED**
+   - Enable: ✅ **Report build statuses to source provider**
+   - Environment:
+     - Managed image → **Ubuntu** → Standard → `aws/codebuild/standard:7.0` (or latest)
+     - Runtime: Standard
+   - Buildspec: **Use a buildspec file** (defaults to `buildspec.yml` in the repo root)
+   - Click **Create build project**
+
+3. **Enable merge gating** (GitHub repos):
+   - CodeBuild automatically reports status back to GitHub when "Report build statuses" is enabled
+   - In your GitHub repo: **Settings → Branches → Branch protection rule**
+   - Enable: ✅ **Require status checks to pass before merging**
+   - Select the CodeBuild status check (appears as `CodeBuild:<region>:<account>:<project>`)
+   - Save
+
+4. **For AWS CodeCommit** (alternative):
+   - Create an **EventBridge rule** that matches `pullRequestCreated` and `pullRequestSourceBranchUpdated` events from CodeCommit
+   - Target: your CodeBuild project
+   - For merge gating: use **CodePipeline** with an approval action, or use the CodeCommit approval rule templates API
+
+#### IAM Permissions
+
+The CodeBuild service role needs:
+- `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` (default)
+- Source provider connection permissions (created automatically via OAuth/CodeStar)
+
+#### Verification
+
+Create a PR on GitHub, push a malformed ADR, and verify the CodeBuild check fails.
+
+---
+
+### GitLab CI/CD
+
+> **Pipeline file:** [`ci/gitlab-ci/.gitlab-ci.yml`](../ci/gitlab-ci/.gitlab-ci.yml)
+
+#### Steps
+
+1. **Copy the pipeline file** to your repository root:
+   ```bash
+   cp ci/gitlab-ci/.gitlab-ci.yml .gitlab-ci.yml
+   ```
+
+2. **Push to GitLab.** GitLab CI automatically detects `.gitlab-ci.yml` and starts running pipelines — no additional setup needed.
+
+3. **Enable merge gating:**
+   - Go to **Settings → Merge Requests**
+   - Under **Merge checks**, enable: ✅ **Pipelines must succeed**
+   - (Recommended) Also enable: ✅ **All threads must be resolved**
+   - Save
+
+4. **(Optional) Protected branch:**
+   - Go to **Settings → Repository → Protected branches**
+   - Protect `main` with:
+     - Allowed to merge: **Developers + Maintainers** (or restrict further)
+     - Allowed to push and merge: **No one** (force merge requests)
+
+#### Verification
+
+Create a merge request with a schema-violating ADR and confirm the pipeline fails, blocking the MR.
+
+---
+
+## Customization
+
+### Changing the ADL Directory
+
+If you rename `architecture-decision-log/` to something else (e.g., `adrs/` or `decisions/`), update the path references in:
+1. The pipeline file (trigger paths and script commands)
+2. `CODEOWNERS` (if using GitHub)
+
+### Adding Additional Validation
+
+To add custom validation rules (e.g., enforcing naming conventions, checking for required tags), modify [`scripts/validate-adr.py`](../scripts/validate-adr.py). The validator is designed to be extended — add your checks in the `validate_file()` function between the schema validation and the return statement.
+
+### Removing Example Validation
+
+If you don't want CI to validate the `examples-reference/` directory (e.g., you've deleted it), remove the corresponding step from the pipeline file.
+
+---
+## Approval Identity Verification
+
+In addition to schema validation and YAML linting, CI pipelines can verify that the people listed in an ADR's `approvals[]` section have **actually approved the pull request**. This creates an auditable link between the ADR's approval record and the Git platform's approval record.
+
+### How it works
+
+The [`scripts/verify-approvals.py`](../scripts/verify-approvals.py) script:
+
+1. **Detects the CI platform** (GitHub, Azure DevOps, GitLab) via environment variables
+2. **Identifies changed ADR files** in the PR using `git diff`
+3. **Extracts `approvals[].identity`** from each changed ADR with `status: proposed` or `accepted`
+4. **Queries the platform API** for users who actually approved the PR
+5. **Compares the two sets** and fails the build if any required approver has not approved
+
+### Prerequisites
+
+Each ADR approver needs an `identity` field matching their platform handle:
+
+```yaml
+approvals:
+  - name: "Jane Doe"
+    role: "Lead Architect"
+    identity: "@janedoe"         # GitHub @username — CI normalizes the @ prefix for matching
+    approved_at: "2026-03-15T10:00:00Z"
+    signature_id: sig-example-001
+```
+
+### Platform-specific configuration
+
+#### GitHub Actions
+
+The workflow is already configured with the verify step. Ensure the following:
+
+1. **Branch protection** must require the `Validate ADR` status check
+2. **`GITHUB_TOKEN`** is automatically available — no additional secrets needed
+3. The workflow triggers on `pull_request_review` events so re-checks happen when new reviews are submitted
+
+#### Azure DevOps
+
+1. **`System.AccessToken`** is passed as an environment variable to the verify step
+2. Configure **Build Validation** as a required policy on the `main` branch
+3. Identity format: use the reviewer's **email address** or **UPN** (e.g., `jane.doe@org.com`)
+
+#### GitLab CI
+
+1. **`CI_JOB_TOKEN`** is automatically available for API calls to the same GitLab instance
+2. For cross-instance calls, set a `GITLAB_TOKEN` CI/CD variable with `api` scope
+3. Enable **"Pipelines must succeed"** in Settings → Merge Requests → Merge checks
+4. Identity format: use the reviewer's **GitLab username** (e.g., `janedoe`)
+
+#### AWS CodeBuild / GCP Cloud Build
+
+These platforms don't natively manage PR approvals. The verify script runs in **dry-run mode** by default, listing the required identities without calling an API.
+
+To enable full verification when your source is GitHub:
+1. Store a `GITHUB_TOKEN` as an environment variable in the build project
+2. Change `--dry-run` to remove the flag in the buildspec/cloudbuild configuration
+3. The script will auto-detect the GitHub API based on the token
+
+### Configuring mandatory reviewers
+
+For the approval identity check to be meaningful, configure your platform to require approvals from specific people:
+
+| Platform | Configuration |
+|----------|--------------|
+| **GitHub** | Settings → Branches → Branch protection → "Require pull request reviews" + CODEOWNERS |
+| **Azure DevOps** | Repos → Branches → main → Branch policies → "Automatically included reviewers" |
+| **GitLab** | Settings → Merge Requests → "Approval rules" → add required approvers |
+
+### Backward compatibility
+
+- ADRs **without `identity` fields** emit a warning but **do not block** the merge
+- ADRs in `draft`, `rejected`, `deferred`, or `superseded` status are **skipped**
+- When running outside a PR context (e.g., `push` to `main`), the check is **skipped**
+- **Maintenance changes** (non-substantive field edits) skip the identity check regardless of who authors the PR
+
+### Governance config file
+
+All governance rules are centralised in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml). The CI script reads this file automatically. Key settings:
+
+```yaml
+governance:
+  # Who can make maintenance changes without ADR re-approval
+  admins:
+    - identity: "ivanstambuk"
+      name: "Ivan Stambuk"
+
+  # Enforce one ADR per pull request
+  single_adr_per_pr: true
+
+  # Fields that trigger full approval identity verification when changed
+  substantive_fields:
+    - "adr.status"
+    - "adr.title"
+    - "decision"
+    - "alternatives"
+    - "consequences"
+    - "approvals"
+    - "context.summary"
+```
+
+If the config file is missing, the script uses safe defaults: no admins, no single-ADR-per-PR enforcement, and the standard substantive fields list.
+
+> **Treat the config as a governance artefact.** Add `.adr-governance/` to your `CODEOWNERS` file so changes to the admin roster and governance rules require architecture team review.
+
+
+## Troubleshooting
+
+### Pipeline passes but PR is not gated
+
+The pipeline and the merge gate are **separate configurations**. If your pipeline runs but PRs can still be merged when it fails:
+- **GitHub:** Check Settings → Branches → Branch protection → status checks are marked as "required"
+- **Azure DevOps:** Check Repos → Branches → main → Branch policies → Build Validation is set to "Required" (not "Optional")
+- **GCP Cloud Build:** The Cloud Build GitHub App must be installed on the repo *and* the check must be required in GitHub branch protection
+- **AWS CodeBuild:** "Report build statuses" must be enabled on the project *and* the check must be required in GitHub branch protection
+- **GitLab:** Check Settings → Merge Requests → "Pipelines must succeed" is enabled
+
+### Validator reports Python version errors
+
+The validator requires **Python 3.11+** for:
+- `datetime.fromisoformat()` with timezone support (3.11+)
+- `X | Y` union type syntax in type hints (3.10+)
+
+If your CI environment defaults to an older Python, explicitly set the version in the pipeline configuration (all provided pipeline files already do this).
+
+### `yamllint` reports line-length warnings
+
+The default `yamllint` line-length limit is 80 characters. The pipeline configurations override this to **300 characters** because ADR YAML files frequently contain long prose in Markdown fields. If you want a different limit, edit the `yamllint` configuration in the pipeline file.
+
+### Validator warnings vs. errors
+
+Only **errors** block the merge. **Warnings** are advisory — they flag potential issues (e.g., missing `adr.summary` on proposed ADRs, audit trail gaps) but do not cause the pipeline to fail. To promote a warning to a hard error, modify the `validate_file()` function in [`scripts/validate-adr.py`](../scripts/validate-adr.py).
+

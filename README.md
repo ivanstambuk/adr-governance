@@ -42,7 +42,7 @@ Most teams make **Architecture Decisions (ADs)** every week. Few document them w
 - **Approval identity enforcement** — CI verifies that the people listed in `approvals[]` have actually approved the pull request, creating an auditable link between ADR approvals and Git platform approvals
 - **Governance rules** — configurable single-ADR-per-PR enforcement, substantive vs. maintenance change classification, and admin overrides — all defined in a platform-agnostic [`.adr-governance/config.yaml`](.adr-governance/config.yaml)
 - **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
-- `llms.txt` — Machine-readable project summary for AI assistants ([llms.txt convention](https://llmstxt.org/))
+- [`llms.txt`](llms.txt) + [`llms-full.txt`](llms-full.txt) — Machine-readable project summaries for AI assistants ([llms.txt convention](https://llmstxt.org/)). `llms.txt` provides a concise overview with links; `llms-full.txt` embeds the complete documentation inline for context injection
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
 - **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
 - **Repomix bundling** — the entire ADL is concatenated into a single Markdown file that agents can search with standard tools, enabling cross-repository decision enforcement
@@ -83,6 +83,32 @@ stateDiagram-v2
 See [`docs/adr-process.md`](docs/adr-process.md) for the full normative governance process, including review checklists, the Architectural Significance Test, branch protection rules, and CODEOWNERS configuration.
 
 ## Quick Start — Adopting for Your Organization
+
+> **⚡ Fastest path.** Paste the prompt below into any AI coding assistant (Codex, Claude Code, Antigravity, Copilot) to have it set up the entire framework for your organization in one shot. For manual step-by-step instructions, continue to [step 1](#1-create-your-adr-repository).
+
+```
+I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization.
+
+Please help me:
+1. Fork or clone the repo into my organization as a new repository named "architecture-decisions".
+2. Delete the examples-reference/ directory (those are fictional reference ADRs).
+3. Update ADR-0000 (architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml):
+   - Replace authors, decision_owner, reviewers, and approvals with my name/identity
+   - Update adr.project to my organization name
+   - Update timestamps and audit trail entries
+4. Set up CI validation as a required merge gate for my platform.
+5. Enable the pre-commit hook (git config core.hooksPath .githooks).
+6. Configure CODEOWNERS with my team handle.
+7. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the check fails.
+
+My organization name is: [INSERT ORG NAME]
+My CI platform is: [GitHub Actions / Azure DevOps / GCP Cloud Build / AWS CodeBuild / GitLab CI]
+My architecture team handle is: [INSERT TEAM HANDLE, e.g., @myorg/architects]
+My name is: [INSERT YOUR NAME]
+My Git identity is: [INSERT YOUR GIT USERNAME]
+```
+
+---
 
 ### 1. Create your ADR repository
 
