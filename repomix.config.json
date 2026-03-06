@@ -16,6 +16,7 @@
         "useGitignore": true,
         "customPatterns": [
             "examples-reference/**",
+            "rendered/**",
             "docs/research/**",
             ".github/**",
             "*.lock",
