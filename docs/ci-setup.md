@@ -466,6 +466,37 @@ For the approval identity check to be meaningful, configure your platform to req
 - ADRs **without `identity` fields** emit a warning but **do not block** the merge
 - ADRs in `draft`, `rejected`, `deferred`, or `superseded` status are **skipped**
 - When running outside a PR context (e.g., `push` to `main`), the check is **skipped**
+- **Maintenance changes** (non-substantive field edits) skip the identity check regardless of who authors the PR
+
+### Governance config file
+
+All governance rules are centralised in `.adr-governance/config.yaml`. The CI script reads this file automatically. Key settings:
+
+```yaml
+governance:
+  # Who can make maintenance changes without ADR re-approval
+  admins:
+    - identity: "ivanstambuk"
+      name: "Ivan Stambuk"
+
+  # Enforce one ADR per pull request
+  single_adr_per_pr: true
+
+  # Fields that trigger full approval identity verification when changed
+  substantive_fields:
+    - "adr.status"
+    - "adr.title"
+    - "decision"
+    - "alternatives"
+    - "consequences"
+    - "approvals"
+    - "context.summary"
+```
+
+If the config file is missing, the script uses safe defaults: no admins, no single-ADR-per-PR enforcement, and the standard substantive fields list.
+
+> **Treat the config as a governance artefact.** Add `.adr-governance/` to your `CODEOWNERS` file so changes to the admin roster and governance rules require architecture team review.
+
 
 ## Troubleshooting
 

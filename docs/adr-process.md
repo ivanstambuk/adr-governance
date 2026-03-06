@@ -223,6 +223,104 @@ approvals:
     signature_id: sig-example-001
 ```
 
+### 3.4.2 Single ADR per PR
+
+> **Rule:** A pull request may modify **at most one ADR file**.
+
+This ensures each merge commit maps to exactly one architectural decision, keeping the git history clean and making individual decisions easy to revert.
+
+**Exception — supersession pairs:** When a new ADR supersedes an existing one, the PR must touch exactly **two** ADR files:
+- The **new ADR** (with `lifecycle.supersedes: ADR-NNNN`)
+- The **old ADR** (with `status: superseded` and `lifecycle.superseded_by: ADR-MMMM`)
+
+The CI script validates this automatically — if a PR modifies two ADRs that form a valid supersession chain (the symmetry is verified), the check passes. Any other multi-ADR PR is rejected.
+
+This rule is configured in `.adr-governance/config.yaml`:
+
+```yaml
+governance:
+  single_adr_per_pr: true
+```
+
+### 3.4.3 Change Classification
+
+Not all changes to an ADR are equal. The governance framework distinguishes between **substantive** and **maintenance** changes:
+
+#### Tier 1 — Substantive Changes (full approval required)
+
+Changes to fields that affect the *decision itself*. These require the original ADR approvers (listed in `approvals[].identity`) to re-approve via the PR:
+
+| Field | Why it's substantive |
+|-------|---------------------|
+| `adr.status` | Changes the governance state of the decision |
+| `adr.title` | Reframes what the decision is about |
+| `decision.*` | Alters the chosen alternative, rationale, tradeoffs, or confidence |
+| `alternatives.*` | Changes the options that were evaluated |
+| `consequences.*` | Modifies the expected outcomes |
+| `approvals.*` | Adds, removes, or changes approver records |
+| `context.summary` | Reframes the problem statement |
+
+#### Tier 2 — Maintenance Changes (no ADR re-approval required)
+
+Changes to non-decision fields. These are clerical or additive updates that don't alter the architectural decision:
+
+- `adr.schema_version` — schema migration
+- `adr.last_modified`, `adr.tags`, `adr.component` — metadata updates
+- `authors[].email` — contact info correction
+- `reviewers` — adding reviewers
+- `context.business_drivers`, `context.technical_drivers`, `context.constraints`, `context.assumptions` — clarification, not reframing
+- `requirements`, `dependencies`, `references` — adding supporting information
+- `lifecycle.next_review_date`, `lifecycle.review_cycle_months` — review cadence
+- `audit_trail` — adding events (always append-only)
+- `confirmation.artifact_ids` — backfilling verification evidence
+
+Maintenance changes still require a standard PR approval via branch protection, but the `verify-approvals.py` identity check is **skipped**. An `updated` event should be added to `audit_trail`:
+
+```yaml
+audit_trail:
+  - event: updated
+    by: Ivan Stambuk
+    at: "2026-03-10T14:00:00Z"
+    details: "Administrative: corrected reviewer email address"
+```
+
+The substantive fields list is configured in `.adr-governance/config.yaml` and can be customized per organisation.
+
+### 3.4.4 ADR Administrator
+
+An **ADR Administrator** is a person authorised to make Tier 2 (maintenance) changes to any ADR without obtaining the original ADR approvers' re-approval. This is useful for:
+
+- Typo fixes and formatting corrections
+- Schema version bumps during migrations
+- Updating contact information (emails, names)
+- Adding references or clarifying context
+- Updating review cadence dates
+
+Administrators are listed in `.adr-governance/config.yaml`:
+
+```yaml
+governance:
+  admins:
+    - identity: "ivanstambuk"
+      name: "Ivan Stambuk"
+    - identity: "elenavasquez"
+      name: "Elena Vasquez"
+```
+
+**How it works in CI:**
+
+1. The CI script detects the **PR author** from platform environment variables
+2. If the PR author is listed as an admin in the governance config:
+   - **Substantive changes** → full approval identity verification (same as non-admins)
+   - **Maintenance changes** → approval identity check is skipped; only standard branch protection applies
+3. If the PR author is **not** an admin:
+   - **Substantive changes** → full approval identity verification
+   - **Maintenance changes** → approval identity check is still skipped (maintenance changes never require ADR re-approval), but standard branch protection applies
+
+> **Key point:** The admin role doesn't grant the ability to make substantive changes without approval. It only provides an explicit governance signal in CI output. Maintenance changes skip the identity check for *everyone* — the admin designation is primarily for auditability and clarity.
+
+> **Governance of the config itself:** Changes to `.adr-governance/config.yaml` should be subject to the same review process as any governance artefact. Add it to `CODEOWNERS` so that admin roster changes require approval from the architecture team.
+
 
 ### 3.5 Rejection
 

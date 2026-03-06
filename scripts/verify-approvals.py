@@ -6,6 +6,11 @@ Ensures that every person listed in an ADR's approvals[].identity has actually
 approved the pull request on the Git platform. This closes the loop between
 the ADR's declared approvers and the platform's recorded approvers.
 
+Governance rules are loaded from .adr-governance/config.yaml:
+  - Single ADR per PR (with supersession exception)
+  - Change classification (substantive vs. maintenance)
+  - Admin override (admins can make maintenance changes without re-approval)
+
 Supported platforms (auto-detected via environment variables):
   - GitHub Actions     (GITHUB_ACTIONS)
   - Azure DevOps       (SYSTEM_TEAMFOUNDATIONCOLLECTIONURI)
@@ -22,8 +27,8 @@ Usage:
   python3 scripts/verify-approvals.py --platform github --repo owner/repo --pr 42
 
 Exit codes:
-  0  All approvals verified (or no ADRs with identity fields in this PR)
-  1  One or more required approvers did not approve the PR
+  0  All checks passed (or nothing to check)
+  1  One or more governance checks failed
   2  Script error (bad arguments, API failure, etc.)
 """
 
@@ -46,6 +51,53 @@ except ImportError:
 
 
 # ---------------------------------------------------------------------------
+# Governance config
+# ---------------------------------------------------------------------------
+
+DEFAULT_SUBSTANTIVE_FIELDS = [
+    "adr.status",
+    "adr.title",
+    "decision",
+    "alternatives",
+    "consequences",
+    "approvals",
+    "context.summary",
+]
+
+
+def load_governance_config() -> dict:
+    """Load governance config from .adr-governance/config.yaml."""
+    config_paths = [
+        Path(".adr-governance/config.yaml"),
+        Path(".adr-governance/config.yml"),
+    ]
+
+    for config_path in config_paths:
+        if config_path.exists():
+            with open(config_path) as f:
+                data = yaml.safe_load(f) or {}
+            gov = data.get("governance", {})
+            return {
+                "admins": {
+                    a.get("identity", "").strip().lstrip("@").lower()
+                    for a in gov.get("admins", [])
+                    if a.get("identity")
+                },
+                "single_adr_per_pr": gov.get("single_adr_per_pr", False),
+                "substantive_fields": gov.get(
+                    "substantive_fields", DEFAULT_SUBSTANTIVE_FIELDS
+                ),
+            }
+
+    # No config file — use defaults (no admins, no single-ADR rule)
+    return {
+        "admins": set(),
+        "single_adr_per_pr": False,
+        "substantive_fields": DEFAULT_SUBSTANTIVE_FIELDS,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Platform detection
 # ---------------------------------------------------------------------------
 
@@ -60,18 +112,39 @@ def detect_platform() -> str | None:
     return None
 
 
+def get_pr_author() -> str | None:
+    """
+    Get the PR/MR author identity from CI environment variables.
+    Returns lowercase identity string or None.
+    """
+    # GitHub Actions
+    actor = os.environ.get("GITHUB_ACTOR")
+    if actor:
+        return actor.lower()
+
+    # Azure DevOps
+    requestor = os.environ.get("BUILD_REQUESTEDFOR")
+    if requestor:
+        return requestor.lower()
+
+    # GitLab CI
+    gitlab_user = os.environ.get("GITLAB_USER_LOGIN")
+    if gitlab_user:
+        return gitlab_user.lower()
+
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Git helpers
 # ---------------------------------------------------------------------------
 
 def get_changed_yaml_files() -> list[str]:
     """Return ADR YAML files changed in the current PR (via git diff)."""
-    # Try GitHub Actions merge base first
     base_ref = os.environ.get("GITHUB_BASE_REF")
     if base_ref:
         base = f"origin/{base_ref}"
     else:
-        # Fallback: diff against main/master
         base = "origin/main"
 
     try:
@@ -80,7 +153,6 @@ def get_changed_yaml_files() -> list[str]:
             capture_output=True, text=True, check=True,
         )
     except subprocess.CalledProcessError:
-        # If origin/main doesn't exist (e.g., fresh clone), diff against HEAD~1
         try:
             result = subprocess.run(
                 ["git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD~1", "HEAD"],
@@ -100,6 +172,149 @@ def get_changed_yaml_files() -> list[str]:
         ):
             changed.append(line)
     return changed
+
+
+def get_file_at_base(filepath: str) -> dict | None:
+    """
+    Get the YAML content of a file at the base branch (before PR changes).
+    Returns parsed dict or None if file didn't exist at base.
+    """
+    base_ref = os.environ.get("GITHUB_BASE_REF")
+    if base_ref:
+        base = f"origin/{base_ref}"
+    else:
+        base = "origin/main"
+
+    try:
+        result = subprocess.run(
+            ["git", "show", f"{base}:{filepath}"],
+            capture_output=True, text=True, check=True,
+        )
+        return yaml.safe_load(result.stdout)
+    except (subprocess.CalledProcessError, yaml.YAMLError):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Change classification
+# ---------------------------------------------------------------------------
+
+def flatten_dict(d: dict, parent_key: str = "", sep: str = ".") -> dict:
+    """Flatten a nested dict into dot-separated keys."""
+    items = []
+    for k, v in d.items():
+        new_key = f"{parent_key}{sep}{k}" if parent_key else k
+        if isinstance(v, dict):
+            items.extend(flatten_dict(v, new_key, sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
+
+
+def classify_changes(
+    old_data: dict | None,
+    new_data: dict,
+    substantive_fields: list[str],
+) -> tuple[bool, list[str]]:
+    """
+    Compare old and new ADR data to determine if changes are substantive.
+
+    Returns:
+        (is_substantive, changed_field_prefixes)
+        - is_substantive: True if any changed field matches a substantive prefix
+        - changed_field_prefixes: list of top-level field paths that changed
+    """
+    if old_data is None:
+        # New file — always substantive
+        return True, ["(new file)"]
+
+    old_flat = flatten_dict(old_data)
+    new_flat = flatten_dict(new_data)
+
+    all_keys = set(old_flat.keys()) | set(new_flat.keys())
+    changed_keys = []
+
+    for key in all_keys:
+        old_val = old_flat.get(key)
+        new_val = new_flat.get(key)
+        if old_val != new_val:
+            changed_keys.append(key)
+
+    if not changed_keys:
+        return False, []
+
+    # Check if any changed key matches a substantive field prefix
+    is_substantive = False
+    changed_prefixes = set()
+
+    for key in changed_keys:
+        for prefix in substantive_fields:
+            if key == prefix or key.startswith(prefix + ".") or key.startswith(prefix + "["):
+                is_substantive = True
+                changed_prefixes.add(prefix)
+                break
+        else:
+            # Find the top-level prefix for reporting
+            parts = key.split(".")
+            changed_prefixes.add(parts[0] if len(parts) == 1 else f"{parts[0]}.{parts[1]}")
+
+    return is_substantive, sorted(changed_prefixes)
+
+
+# ---------------------------------------------------------------------------
+# Single ADR per PR
+# ---------------------------------------------------------------------------
+
+def check_single_adr_per_pr(changed_files: list[str]) -> tuple[bool, str]:
+    """
+    Validate that at most one ADR is modified per PR.
+
+    Exception: supersession pairs — if exactly two ADRs are changed and they
+    form a valid supersession chain (new ADR supersedes old, old ADR is
+    superseded by new), the check passes.
+
+    Returns:
+        (passed, message)
+    """
+    if len(changed_files) <= 1:
+        return True, ""
+
+    if len(changed_files) == 2:
+        # Check for supersession pair
+        try:
+            data_a = yaml.safe_load(open(changed_files[0]))
+            data_b = yaml.safe_load(open(changed_files[1]))
+
+            id_a = data_a.get("adr", {}).get("id", "")
+            id_b = data_b.get("adr", {}).get("id", "")
+
+            lifecycle_a = data_a.get("lifecycle", {})
+            lifecycle_b = data_b.get("lifecycle", {})
+
+            # Check if A supersedes B
+            a_supersedes_b = (
+                lifecycle_a.get("supersedes") == id_b
+                and lifecycle_b.get("superseded_by") == id_a
+            )
+            # Check if B supersedes A
+            b_supersedes_a = (
+                lifecycle_b.get("supersedes") == id_a
+                and lifecycle_a.get("superseded_by") == id_b
+            )
+
+            if a_supersedes_b or b_supersedes_a:
+                return True, f"Supersession pair detected: {id_a} ↔ {id_b}"
+
+        except Exception:
+            pass
+
+    file_names = [f.split("/")[-1].replace(".yaml", "") for f in changed_files]
+    return (
+        False,
+        f"This PR modifies {len(changed_files)} ADR files: {', '.join(file_names)}. "
+        f"Governance rule 'single_adr_per_pr' requires at most one ADR per PR "
+        f"(exception: supersession pairs).",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +379,6 @@ def github_get_pr_approvers(repo: str, pr_number: int, token: str) -> set[str]:
         print(f"ERROR: GitHub API returned {e.code}: {e.reason}", file=sys.stderr)
         sys.exit(2)
 
-    # Build map of latest review per user (a user can review multiple times)
     latest_by_user: dict[str, str] = {}
     for review in reviews:
         user = review.get("user", {}).get("login", "").lower()
@@ -202,7 +416,6 @@ def azdo_get_pr_approvers(org_url: str, project: str, repo_id: str,
         print(f"ERROR: Azure DevOps API returned {e.code}: {e.reason}", file=sys.stderr)
         sys.exit(2)
 
-    # vote == 10 means approved
     approvers = set()
     for reviewer in data.get("value", []):
         if reviewer.get("vote", 0) == 10:
@@ -255,49 +468,126 @@ def gitlab_get_mr_approvers(project_id: str, mr_iid: str,
 def verify_approvals(
     platform: str | None,
     pr_approvers: set[str] | None,
+    pr_author: str | None,
     changed_files: list[str],
+    config: dict,
     dry_run: bool = False,
 ) -> int:
     """
-    Verify that all ADR approval identities match actual PR approvers.
+    Verify governance rules for ADR changes in this PR.
+
+    Checks performed:
+      1. Single ADR per PR (if enabled)
+      2. Change classification (substantive vs. maintenance)
+      3. Admin override (maintenance by admin → skip identity check)
+      4. Approval identity verification (substantive changes → full check)
 
     Returns:
-      0 if all OK (or no identity fields found)
-      1 if mismatches found
+      0 if all OK
+      1 if governance violations found
     """
+    exit_code = 0
+
     if not changed_files:
-        print("ℹ️  No ADR files changed in this PR — skipping approval verification.")
+        print("ℹ️  No ADR files changed in this PR — skipping governance checks.")
         return 0
 
-    all_required: list[tuple[str, dict]] = []  # (filepath, identity_entry) pairs
-    files_without_identity = []
+    admins = config.get("admins", set())
+    substantive_fields = config.get("substantive_fields", DEFAULT_SUBSTANTIVE_FIELDS)
+
+    # ── Check 1: Single ADR per PR ──────────────────────────────────────
+    if config.get("single_adr_per_pr"):
+        passed, message = check_single_adr_per_pr(changed_files)
+        if passed:
+            if message:
+                print(f"✅ Single ADR per PR: {message}")
+            else:
+                print("✅ Single ADR per PR: OK")
+        else:
+            print(f"\n❌ GOVERNANCE VIOLATION: {message}")
+            exit_code = 1
+
+    # ── Check 2-4: Per-file analysis ────────────────────────────────────
+    all_required: list[tuple[str, dict]] = []      # substantive changes needing approval
+    maintenance_files: list[tuple[str, list]] = []  # maintenance-only changes
+    files_without_identity: list[str] = []
+    skipped_files: list[str] = []
+
+    is_admin = pr_author is not None and pr_author in admins
 
     for filepath in changed_files:
         if not Path(filepath).exists():
             continue
 
-        identities = extract_approval_identities(filepath)
         adr_id = filepath.split("/")[-1].replace(".yaml", "")
 
-        if not identities:
-            # Check if the ADR has approvals but without identity
-            try:
-                with open(filepath) as f:
-                    data = yaml.safe_load(f)
-                status = data.get("adr", {}).get("status", "")
-                approvals = data.get("approvals", [])
-                if status in ("proposed", "accepted") and approvals:
-                    has_any_identity = any(
-                        a.get("identity") for a in approvals if isinstance(a, dict)
-                    )
-                    if not has_any_identity:
-                        files_without_identity.append(adr_id)
-            except Exception:
-                pass
+        # Load current file
+        with open(filepath) as f:
+            new_data = yaml.safe_load(f)
+        if not isinstance(new_data, dict):
             continue
+
+        status = new_data.get("adr", {}).get("status", "")
+
+        # Skip non-actionable statuses
+        if status not in ("proposed", "accepted"):
+            skipped_files.append(f"{adr_id} (status: {status})")
+            continue
+
+        # Classify changes
+        old_data = get_file_at_base(filepath)
+        is_substantive, changed_prefixes = classify_changes(
+            old_data, new_data, substantive_fields
+        )
+
+        if not is_substantive and old_data is not None:
+            # Maintenance-only change
+            maintenance_files.append((adr_id, changed_prefixes))
+
+            if is_admin:
+                print(
+                    f"🔧 {adr_id}: Maintenance change by admin @{pr_author} — "
+                    f"approval identity check skipped"
+                )
+                if changed_prefixes:
+                    print(f"   Changed: {', '.join(changed_prefixes)}")
+                continue
+            else:
+                print(
+                    f"🔧 {adr_id}: Maintenance change detected — "
+                    f"approval identity check skipped"
+                )
+                if changed_prefixes:
+                    print(f"   Changed: {', '.join(changed_prefixes)}")
+                continue
+
+        # Substantive change — need identity verification
+        identities = extract_approval_identities(filepath)
+
+        if not identities:
+            approvals = new_data.get("approvals", [])
+            if approvals:
+                has_any_identity = any(
+                    a.get("identity") for a in approvals if isinstance(a, dict)
+                )
+                if not has_any_identity:
+                    files_without_identity.append(adr_id)
+            continue
+
+        print(
+            f"📝 {adr_id}: Substantive change detected — "
+            f"approval identity verification required"
+        )
+        if changed_prefixes:
+            print(f"   Changed fields: {', '.join(changed_prefixes)}")
 
         for entry in identities:
             all_required.append((adr_id, entry))
+
+    # Report skipped files
+    if skipped_files:
+        for s in skipped_files:
+            print(f"⏭️  {s} — skipped (non-actionable status)")
 
     # Report warnings for ADRs with approvals but no identity fields
     for adr_id in files_without_identity:
@@ -309,19 +599,18 @@ def verify_approvals(
     if not all_required:
         if files_without_identity:
             print(
-                f"\nℹ️  {len(files_without_identity)} ADR(s) have approvals without identity fields. "
-                f"Add identity fields to enable CI approval verification."
+                f"\nℹ️  {len(files_without_identity)} ADR(s) have approvals without identity fields."
             )
-        else:
+        elif not maintenance_files:
             print("ℹ️  No ADR approval identities to verify in this PR.")
-        return 0
+        return exit_code
 
     if dry_run:
         print(f"\n🔍 DRY RUN — Found {len(all_required)} approval identities to verify:\n")
         for adr_id, entry in all_required:
             print(f"  {adr_id}: {entry['name']} ({entry['role']}) → identity: @{entry['identity']}")
         print("\n✅ Dry run complete. No API calls made.")
-        return 0
+        return exit_code
 
     if pr_approvers is None:
         print(
@@ -329,9 +618,9 @@ def verify_approvals(
             "Skipping approval identity verification.",
             file=sys.stderr,
         )
-        return 0
+        return exit_code
 
-    # Verify each required identity
+    # ── Verify identities ───────────────────────────────────────────────
     errors = []
     verified = []
 
@@ -342,9 +631,8 @@ def verify_approvals(
         else:
             errors.append((adr_id, entry))
 
-    # Report results
     if verified:
-        print(f"✅ Verified {len(verified)} approval identit{'y' if len(verified) == 1 else 'ies'}:\n")
+        print(f"\n✅ Verified {len(verified)} approval identit{'y' if len(verified) == 1 else 'ies'}:\n")
         for adr_id, entry in verified:
             print(f"  ✅ {adr_id}: {entry['name']} (@{entry['identity']}) — PR approval confirmed")
 
@@ -360,9 +648,9 @@ def verify_approvals(
             "\n   To fix: ensure the listed approvers review and approve the PR, "
             "or update approvals[].identity to match their platform handle."
         )
-        return 1
+        exit_code = 1
 
-    return 0
+    return exit_code
 
 
 # ---------------------------------------------------------------------------
@@ -371,14 +659,14 @@ def verify_approvals(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Verify ADR approval identities match PR approvers.",
+        description="Verify ADR governance rules: approval identities, single-ADR-per-PR, and change classification.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Parse ADRs and report required identities without calling platform APIs.",
+        help="Parse ADRs and report findings without calling platform APIs.",
     )
     parser.add_argument(
         "--platform",
@@ -396,17 +684,33 @@ def main():
     )
     args = parser.parse_args()
 
+    # Load governance config
+    config = load_governance_config()
+    if config["admins"]:
+        print(f"⚙️  Governance config loaded — {len(config['admins'])} admin(s), "
+              f"single_adr_per_pr={'yes' if config.get('single_adr_per_pr') else 'no'}")
+    else:
+        print("⚙️  No governance config found — using defaults")
+
     # Detect platform
     platform = args.platform or detect_platform()
+
+    # Get PR author
+    pr_author = get_pr_author()
+    if pr_author and pr_author in config["admins"]:
+        print(f"👤 PR author: @{pr_author} (ADR admin)")
+    elif pr_author:
+        print(f"👤 PR author: @{pr_author}")
 
     # Get changed files
     changed_files = get_changed_yaml_files()
     print(f"📋 ADR files changed in this PR: {len(changed_files)}")
     for f in changed_files:
         print(f"   • {f}")
+    print()
 
     if args.dry_run:
-        return verify_approvals(platform, None, changed_files, dry_run=True)
+        return verify_approvals(platform, None, pr_author, changed_files, config, dry_run=True)
 
     # Get PR approvers from platform API
     pr_approvers: set[str] | None = None
@@ -417,7 +721,6 @@ def main():
         pr_number = args.pr
 
         if not pr_number:
-            # Try to get from GITHUB_EVENT_PATH
             event_path = os.environ.get("GITHUB_EVENT_PATH", "")
             if event_path and Path(event_path).exists():
                 with open(event_path) as f:
@@ -426,13 +729,13 @@ def main():
 
         if not pr_number:
             print("⚠️  No PR number detected. Set --pr or ensure GITHUB_EVENT_PATH is available.")
-            return verify_approvals(platform, None, changed_files)
+            return verify_approvals(platform, None, pr_author, changed_files, config)
 
         if not token:
             print("⚠️  No GitHub token found. Set GH_TOKEN or GITHUB_TOKEN.")
-            return verify_approvals(platform, None, changed_files)
+            return verify_approvals(platform, None, pr_author, changed_files, config)
 
-        print(f"\n🔗 Querying GitHub API: {repo} PR #{pr_number}")
+        print(f"🔗 Querying GitHub API: {repo} PR #{pr_number}")
         pr_approvers = github_get_pr_approvers(repo, pr_number, token)
         print(f"   PR approvers: {', '.join(f'@{a}' for a in sorted(pr_approvers)) or '(none)'}\n")
 
@@ -446,7 +749,7 @@ def main():
         if pr_number and token:
             import base64
             b64_token = base64.b64encode(f":{token}".encode()).decode()
-            print(f"\n🔗 Querying Azure DevOps API: {project} PR #{pr_number}")
+            print(f"🔗 Querying Azure DevOps API: {project} PR #{pr_number}")
             pr_approvers = azdo_get_pr_approvers(org_url, project, repo_id, pr_number, b64_token)
             print(f"   PR approvers: {', '.join(sorted(pr_approvers)) or '(none)'}\n")
         else:
@@ -459,7 +762,7 @@ def main():
         gitlab_url = os.environ.get("CI_SERVER_URL", "https://gitlab.com")
 
         if mr_iid and token:
-            print(f"\n🔗 Querying GitLab API: project {project_id} MR !{mr_iid}")
+            print(f"🔗 Querying GitLab API: project {project_id} MR !{mr_iid}")
             pr_approvers = gitlab_get_mr_approvers(project_id, mr_iid, token, gitlab_url)
             print(f"   MR approvers: {', '.join(f'@{a}' for a in sorted(pr_approvers)) or '(none)'}\n")
         else:
@@ -468,7 +771,7 @@ def main():
     else:
         print(f"⚠️  Platform not detected or unsupported: {platform}")
 
-    return verify_approvals(platform, pr_approvers, changed_files)
+    return verify_approvals(platform, pr_approvers, pr_author, changed_files, config)
 
 
 if __name__ == "__main__":

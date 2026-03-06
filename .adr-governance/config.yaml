@@ -1,0 +1,79 @@
+# ADR Governance Configuration
+#
+# This file is the single source of truth for governance rules that the CI
+# pipeline enforces. It is platform-agnostic — the same config works on
+# GitHub, Azure DevOps, GitLab, and any other Git platform.
+#
+# Changes to this file should be reviewed by the architecture team.
+
+governance:
+  # ──────────────────────────────────────────────────────────────────────
+  # Administrators
+  # ──────────────────────────────────────────────────────────────────────
+  # ADR Administrators can make maintenance (non-substantive) changes to
+  # any ADR without requiring the original ADR approvers to re-approve.
+  # They still need a standard PR approval via branch protection, but the
+  # verify-approvals.py identity check is skipped for maintenance changes.
+  #
+  # Identity format: use the same format as approvals[].identity — the
+  # platform handle without the '@' prefix.
+  admins:
+    - identity: "ivanstambuk"
+      name: "Ivan Stambuk"
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Single ADR per PR
+  # ──────────────────────────────────────────────────────────────────────
+  # When true, a PR may only modify ONE ADR file. This ensures each merge
+  # commit maps to exactly one architectural decision, keeping the audit
+  # trail clean.
+  #
+  # Exception: supersession pairs. When a new ADR supersedes an old one,
+  # the PR must touch exactly two ADRs: the new one (with lifecycle.supersedes)
+  # and the old one (with status: superseded and lifecycle.superseded_by).
+  # The CI script validates this automatically.
+  single_adr_per_pr: true
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Change Classification — Substantive Fields
+  # ──────────────────────────────────────────────────────────────────────
+  # Changes to these YAML fields are classified as "substantive" (Tier 1)
+  # and require the original ADR approvers (via approvals[].identity) to
+  # re-approve. All other field changes are "maintenance" (Tier 2) and
+  # can be made by an ADR Administrator without re-approval.
+  #
+  # These are dotted YAML paths. A change to any key under these prefixes
+  # is considered substantive.
+  substantive_fields:
+    - "adr.status"
+    - "adr.title"
+    - "decision" # decision.chosen_alternative, decision.rationale, etc.
+    - "alternatives" # any change to alternatives array
+    - "consequences" # positive or negative consequences
+    - "approvals" # adding/removing/changing approvers
+    - "context.summary" # changing the problem statement (not drivers/constraints)
+
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Maintenance Fields (implicit)
+  # ──────────────────────────────────────────────────────────────────────
+  # Any field NOT listed in substantive_fields is automatically Tier 2
+  # (maintenance). Common maintenance changes include:
+  #
+  #   - adr.schema_version         (schema migration)
+  #   - adr.last_modified          (timestamp update)
+  #   - adr.tags                   (adding/removing tags)
+  #   - adr.component              (renaming component)
+  #   - authors[].email            (email correction)
+  #   - reviewers                  (adding reviewers)
+  #   - context.business_drivers   (clarification, not reframing)
+  #   - context.technical_drivers  (clarification)
+  #   - context.constraints        (adding discovered constraints)
+  #   - context.assumptions        (adding discovered assumptions)
+  #   - requirements               (adding/updating requirements)
+  #   - dependencies               (updating dependency list)
+  #   - references                 (adding links)
+  #   - lifecycle.next_review_date (review cadence update)
+  #   - lifecycle.review_cycle_months
+  #   - audit_trail                (adding events)
+  #   - confirmation               (backfilling artifact IDs)
