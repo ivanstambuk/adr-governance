@@ -1832,3 +1832,5 @@ The default `yamllint` line-length limit is 80 characters. The pipeline configur
 
 Only **errors** block the merge. **Warnings** are advisory — they flag potential issues (e.g., missing `adr.summary` on proposed ADRs, audit trail gaps) but do not cause the pipeline to fail. To promote a warning to a hard error, modify the `validate_file()` function in [`scripts/validate-adr.py`](../scripts/validate-adr.py).
 
+---
+

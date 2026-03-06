@@ -55,3 +55,33 @@ if [ -n "$STAGED_EXAMPLES" ]; then
 fi
 
 echo "✅ Rendered ADR Markdown staged for commit"
+
+# =============================================================================
+# Auto-regenerate llms-full.txt if any source doc changed
+# =============================================================================
+
+LLMS_FULL_SOURCES=(
+    "README.md"
+    "docs/adr-process.md"
+    "docs/glossary.md"
+    ".skills/adr-author/references/SCHEMA_REFERENCE.md"
+    "docs/ci-setup.md"
+)
+
+STAGED_DOCS=""
+for src in "${LLMS_FULL_SOURCES[@]}"; do
+    if git diff --cached --name-only -- "$src" 2>/dev/null | grep -q .; then
+        STAGED_DOCS="yes"
+        break
+    fi
+done
+
+if [ -n "$STAGED_DOCS" ]; then
+    echo "🔄 Documentation changes detected — regenerating llms-full.txt..."
+    if [ -x "scripts/generate-llms-full.sh" ]; then
+        scripts/generate-llms-full.sh
+        git add "llms-full.txt"
+    else
+        echo "⚠️  scripts/generate-llms-full.sh not found or not executable — skipping"
+    fi
+fi

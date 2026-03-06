@@ -3,7 +3,7 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install validate lint render bundle review summarize all
+.PHONY: help install validate lint render bundle llms-full review summarize all
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -25,10 +25,13 @@ render: ## Render all ADRs to Markdown
 bundle: ## Generate the repomix bundle for AI chat
 	./scripts/bundle.sh
 
+llms-full: ## Regenerate llms-full.txt from source docs
+	./scripts/generate-llms-full.sh
+
 review: ## Generate a review prompt for an ADR (usage: make review ADR=path/to/file.yaml)
 	python3 scripts/review-adr.py $(ADR)
 
 summarize: ## Summarize ADRs for stakeholders (usage: make summarize ADR=path/to/file.yaml)
 	python3 scripts/summarize-adr.py $(ADR)
 
-all: validate lint render ## Run validate + lint + render
+all: validate lint render llms-full ## Run validate + lint + render + llms-full
