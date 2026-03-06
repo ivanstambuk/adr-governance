@@ -24,17 +24,87 @@ The content is organized as follows:
   between different files in the repository.
 - Be aware that this file may contain sensitive information. Handle it with
   the same level of security as you would the original repository.
-
+- Pay special attention to the Repository Description. These contain important context and guidelines specific to this project.
 - Pay special attention to the Repository Instruction. These contain important context and guidelines specific to this project.
 
 ## Notes
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Only files matching these patterns are included: schemas/**, docs/**, architecture-decision-log/**, examples-reference/*.yaml, .skills/**, .adr-governance/**, scripts/**, README.md, CODEOWNERS.example, llms.txt
+- Only files matching these patterns are included: schemas/**, docs/**, architecture-decision-log/**, .skills/**, .adr-governance/**, scripts/**, README.md, CODEOWNERS.example, llms.txt
 - Files matching these patterns are excluded: examples-reference/rendered/**, examples-reference/README.md, docs/web-chat-adr-authoring.md, docs/web-chat-quickstart.md, docs/ci-setup.md, scripts/verify-approvals.py, scripts/render-adr.py, scripts/extract-decisions.py, scripts/bundle.sh, rendered/**, docs/research/**, .github/**, *.lock, node_modules/**, adr-governance-bundle.md
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 - Files are sorted by Git change count (files with more changes are at the bottom)
+
+# User Provided Header
+# ⚠️ CRITICAL INSTRUCTIONS — Read before processing any user request
+
+You are an ADR governance assistant. This bundle contains Architecture Decision Records (ADRs).
+Detailed instructions for each capability are in the **Repository Instruction** section titled **'ADR Governance — Instructions for AI Assistant'** at the END of this file. Read it for full workflows.
+
+---
+
+## 1. Querying decisions — mandatory response format
+
+When a user asks about any architectural decision, you MUST respond using EXACTLY this structure:
+
+1. **ADR ID and title** as a heading
+2. **Governance metadata table** (NEVER SKIP THIS):
+   - Status (with emoji: ✅ Accepted, ❌ Rejected, 🔄 Proposed, ⏸️ Deferred, ⚠️ Deprecated, 🔀 Superseded, 📝 Draft)
+   - Decision date (from `decision.decision_date`)
+   - Decision owner — name and role (from `decision_owner`)
+   - Approved by — each approver name, role, and approval date (from `approvals[]`)
+   - Project (from `adr.project`)
+   - Next review date (from `lifecycle.next_review_date`, only if present)
+   - Authors — names and roles (from `authors[]`)
+3. **Summary**: 2–3 sentences, non-technical, no jargon
+4. **Alternatives considered**: ❌ **Name** — one-line rejection reason
+5. **Key tradeoffs**: 2–3 bullets
+
+**Rules:** NEVER skip the governance table. NEVER lead with technical details. Assume a non-technical stakeholder audience.
+
+→ _Full details: see **Section 2 (Query the ADL)** in the Repository Instruction at the end._
+
+---
+
+## 2. Creating a new ADR — Socratic interview mode
+
+- Do NOT dump a YAML template. **Interview the user in sets of 5 numbered questions.**
+- Present exactly 5 questions numbered 1–5. Tell the user to reply with the number and their answer.
+- When showing options to pick from (like decision type or priority), list each option as a separate bullet point — do NOT put them all on one line.
+- After the user answers, say: *'Thank you — let's continue with the next set of questions.'* Then present the next 5.
+- **Alternatives**: collect at least 2 (A and B are mandatory). After the first set, ask *'Do you have any more alternatives?'* and loop until the user says no.
+- **Coherence check**: before generating YAML, review ALL answers for high-level and medium-level inconsistencies and gaps. If found, ask up to 5 follow-up questions. Ignore minor/low-level issues.
+- **Depth prompts**: if context is thin, ask whether a diagram (Mermaid, PlantUML, sequence, state, component) or deeper explanation would strengthen the ADR.
+- **Always search this bundle first** for related context: existing ADRs, glossary terms, dependencies. Reference what you find.
+- **Challenge weak reasoning**: push back on strawman alternatives, question 'industry standard' rationale, probe for missing risks.
+- Only generate the complete YAML after all questions and the coherence check are complete.
+
+→ _Full Socratic workflow, question sets, probing guidelines, coherence check, and depth prompts: see **Section 1 (Create a new ADR)** in the Repository Instruction at the end._
+
+---
+
+## 3. Reviewing an ADR
+
+- Check completeness, alternative quality, rationale strength, risk coverage, consistency, audit trail.
+- Output a verdict: `READY FOR REVIEW`, `NEEDS REWORK`, or `MAJOR GAPS` with numbered issues.
+
+→ _Full review checklist: see **Section 3 (Review an existing ADR)** in the Repository Instruction at the end._
+
+---
+
+## 4. Summarizing ADRs
+
+- Use the governance metadata table format from Section 1 above.
+- Email format (~15–20 lines) or Chat/Slack format (5–7 lines).
+
+→ _Format templates: see **Section 4 (Summarize ADRs)** in the Repository Instruction at the end._
+
+---
+
+## 5–7. Lifecycle management, process explanation, validation
+
+→ _See **Sections 5–7** in the Repository Instruction at the end._
 
 # Directory Structure
 ```
@@ -53,15 +123,6 @@ architecture-decision-log/
 docs/
   adr-process.md
   glossary.md
-examples-reference/
-  ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
-  ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml
-  ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml
-  ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml
-  ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml
-  ADR-0006-session-enrichment-for-step-up-authentication.yaml
-  ADR-0007-centralized-secret-store-for-api-keys.yaml
-  ADR-0008-defer-openid-federation-for-trust-establishment.yaml
 schemas/
   adr.schema.json
 scripts/
@@ -156,407 +217,6 @@ governance:
   #   - lifecycle.review_cycle_months
   #   - audit_trail                (adding events)
   #   - confirmation               (backfilling artifact IDs)
-````
-
-## File: examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml
-````yaml
-adr:
-  id: ADR-0007
-  title: Reject centralized HashiCorp Vault for API runtime secrets in favor of native cloud provider secret stores
-  summary: Rejected proposal to centralize all API runtime secrets (DB credentials, API keys, signing keys) in HashiCorp Vault.
-    Native cloud provider secret stores (AWS Secrets Manager, Azure Key Vault) chosen instead due to lower operational burden
-    and tighter IAM integration.
-  status: rejected
-  created_at: '2026-03-01T10:00:00Z'
-  last_modified: '2026-03-05T14:00:00Z'
-  version: '1.0'
-  schema_version: 1.0.0
-  project: Platform Infrastructure — Secrets Management
-  component: API Runtime Secret Store
-  tags:
-  - secrets
-  - vault
-  - key-management
-  - cloud-native
-  - operational-complexity
-  priority: high
-  decision_type: technology
-authors:
-- name: Priya Sharma
-  role: API Platform Lead
-  email: priya.sharma@novatrust.example.com
-decision_owner:
-  name: Marcus Chen
-  role: Head of IAM
-  email: marcus.chen@novatrust.example.com
-reviewers:
-- name: Jonas Eriksen
-  role: CISO
-  email: jonas.eriksen@novatrust.example.com
-- name: Tomasz Kowalski
-  role: Network Security Architect
-  email: tomasz.kowalski@novatrust.example.com
-- name: Elena Vasquez
-  role: IAM Architect
-  email: elena.vasquez@novatrust.example.com
-context:
-  summary: 'NovaTrust''s 50+ microservices currently retrieve runtime secrets (database credentials, third-party API keys,
-    JWT signing keys) from environment variables injected at deployment time. This approach has scaling and rotation pain
-    points: rotating a database password requires redeploying all dependent services. Two approaches were considered — centralizing
-    on HashiCorp Vault as a universal secrets engine, or adopting native cloud provider secret stores (AWS Secrets Manager,
-    Azure Key Vault) with CSI driver integration for Kubernetes.'
-  business_drivers:
-  - Credential rotation currently requires coordinated redeployment of 15+ services — 4-hour change window
-  - Audit compliance requires proving secrets are encrypted at rest and access-logged
-  - Multi-cloud strategy (AWS primary, Azure DR) requires secrets accessible from both environments
-  technical_drivers:
-  - Environment variable injection does not support automatic rotation
-  - No centralized audit trail for secret access (who accessed which secret, when)
-  - HSM-backed signing keys (ADR-0004) need a secure key store with PKCS#11 or KMIP interface
-  - Kubernetes CSI Secret Store Driver can mount secrets as volumes without application changes
-  constraints:
-  - Must support AWS and Azure simultaneously (multi-cloud DR requirement)
-  - Maximum 5ms latency for secret retrieval at application startup
-  - Must integrate with existing Kubernetes RBAC for access control
-  - Team of 3 SREs must be able to operate the solution without dedicated Vault expertise
-  assumptions:
-  - Both AWS Secrets Manager and Azure Key Vault support automatic rotation for database credentials
-  - Kubernetes CSI Secret Store Driver is production-ready for both cloud providers
-  - Secret access logging satisfies SOC 2 Type II audit requirements
-requirements:
-  functional:
-  - id: F-001
-    description: All API runtime secrets retrievable without application code changes (volume mount or sidecar)
-  - id: F-002
-    description: Database credential rotation without service redeployment
-  - id: F-003
-    description: Centralized audit log of all secret access events with caller identity
-  non_functional:
-  - id: NF-001
-    description: Secret retrieval latency < 5ms at application startup
-  - id: NF-002
-    description: 99.99% availability of secret store (must not be a single point of failure)
-  - id: NF-003
-    description: Operable by existing SRE team without specialized training > 2 days
-alternatives:
-- name: HashiCorp Vault (centralized secrets engine)
-  summary: Deploy a self-managed HashiCorp Vault cluster as the universal secrets engine for all environments. All services
-    retrieve secrets via Vault Agent sidecar or CSI driver. Vault manages encryption, rotation, dynamic credentials, and audit
-    logging.
-  pros:
-  - Single unified secrets API across all cloud providers and on-premises
-  - Dynamic secrets — generates short-lived database credentials on demand
-  - Rich policy engine (Vault policies + Sentinel) for fine-grained access control
-  - Transit secrets engine provides encryption-as-a-service without exposing keys
-  - Large ecosystem and community support
-  cons:
-  - Significant operational burden — requires dedicated Vault cluster management (3-5 node HA, unsealing, upgrades)
-  - Team lacks Vault expertise — estimated 4-6 weeks ramp-up for 3 SREs
-  - Vault becomes a critical infrastructure dependency — outage blocks all service startups
-  - 'Cost: $150K/year for Vault Enterprise (required for HSM auto-unseal and namespaces) + infrastructure'
-  - Complex disaster recovery — Vault replication across cloud providers requires careful design
-  - Seal/unseal ceremony adds operational risk — automated unseal requires HSM or cloud KMS integration
-  estimated_cost: high
-  risk: high
-  rejection_rationale: Operational burden exceeds team capacity. 3-person SRE team cannot absorb Vault cluster management
-    (HA, unsealing, upgrades, DR replication) alongside existing responsibilities. $150K/year Enterprise license cost is not
-    justified when native cloud secret stores provide equivalent functionality for secrets retrieval and rotation. Dynamic
-    secrets — Vault's strongest differentiator — are not required for our use case (long-lived service accounts with periodic
-    rotation are sufficient).
-- name: Native cloud provider secret stores (AWS Secrets Manager + Azure Key Vault)
-  summary: Use each cloud provider's native secret store — AWS Secrets Manager in primary, Azure Key Vault in DR. Kubernetes
-    CSI Secret Store Driver mounts secrets as volumes. Cross-cloud secret synchronization handled by CI/CD pipeline with encrypted
-    transit.
-  pros:
-  - Zero operational overhead — fully managed services with provider SLAs
-  - Native IAM integration — Kubernetes service accounts map directly to cloud IAM roles
-  - Built-in automatic rotation for RDS/Aurora credentials (AWS) and SQL Database (Azure)
-  - Per-secret audit logging via CloudTrail (AWS) and Azure Monitor
-  - No additional licensing cost — included in cloud contract
-  - SRE team already has AWS/Azure expertise — no ramp-up needed
-  cons:
-  - Two separate APIs and configurations for multi-cloud
-  - Cross-cloud secret sync requires custom CI/CD pipeline
-  - No dynamic secrets — rotation is periodic, not on-demand
-  - Policy engine is less granular than Vault policies
-  - Vendor lock-in per cloud provider for secret store API
-  estimated_cost: low
-  risk: low
-- name: Sealed Secrets + External Secrets Operator (GitOps-native)
-  summary: Use Bitnami Sealed Secrets for static secrets (encrypted in Git) and External Secrets Operator to sync secrets
-    from cloud provider stores into Kubernetes. Fully GitOps-driven — secrets are declarative.
-  pros:
-  - GitOps-native — secrets defined alongside application manifests
-  - No additional infrastructure to manage beyond Kubernetes
-  - External Secrets Operator supports both AWS and Azure backends
-  cons:
-  - Sealed Secrets controller is a single point of failure in each cluster
-  - Encryption key management for sealed secrets adds complexity
-  - No built-in rotation — depends on external provider rotation
-  - Two layers of abstraction (Sealed Secrets + External Secrets Operator) increases debugging complexity
-  - Less mature than Vault or native cloud stores
-  estimated_cost: low
-  risk: medium
-  rejection_rationale: Two layers of abstraction (Sealed Secrets + External Secrets Operator) are unnecessarily complex for
-    our use case. The Sealed Secrets controller is a single point of failure per cluster. Native cloud provider secret stores
-    provide the same Kubernetes integration via CSI driver with fewer moving parts.
-decision:
-  chosen_alternative: Native cloud provider secret stores (AWS Secrets Manager + Azure Key Vault)
-  rationale: |
-    - Zero operational overhead aligns with 3-person SRE team capacity constraint
-    - Native IAM integration eliminates an additional identity and access management layer
-    - Built-in rotation for database credentials satisfies F-002 without custom automation
-    - CloudTrail and Azure Monitor satisfy audit logging requirement (F-003) with no additional tooling
-    - No additional licensing cost vs. $150K/year for Vault Enterprise
-    - Team already has cloud provider expertise — zero ramp-up time
-  tradeoffs: |
-    - Two separate configurations for multi-cloud — accepted because each environment is independently operated
-    - No dynamic secrets — accepted because periodic rotation (every 30 days) is sufficient for our threat model
-    - Cross-cloud sync via CI/CD pipeline adds deployment complexity — accepted as lower risk than Vault HA replication
-    - Vendor lock-in per provider — mitigated by CSI Secret Store Driver abstraction at the Kubernetes layer
-  decision_date: '2026-03-05'
-  confidence: high
-consequences:
-  positive:
-  - SRE team capacity preserved — no new infrastructure to learn or operate
-  - $150K/year cost avoidance from Vault Enterprise licensing
-  - Database credential rotation automated via native provider mechanisms
-  - Audit logging available via existing cloud monitoring tools the team already uses
-  negative:
-  - Cross-cloud secret sync requires maintaining a custom CI/CD pipeline step
-  - Two sets of IaC (Terraform) modules for AWS Secrets Manager and Azure Key Vault
-  - Dynamic secrets not available — must use periodic rotation with 30-day cycle
-confirmation:
-  description: "Verify all API keys migrated to centralized vault. Scan codebase for hardcoded secrets. Audit vault access policies."
-
-dependencies:
-  internal:
-  - Kubernetes clusters (AWS EKS, Azure AKS) with CSI Secret Store Driver
-  - CI/CD pipeline (GitHub Actions) for cross-cloud secret synchronization
-  - Terraform modules for AWS Secrets Manager and Azure Key Vault
-  external:
-  - AWS Secrets Manager service availability
-  - Azure Key Vault service availability
-references:
-- title: AWS Secrets Manager Documentation
-  url: https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html
-- title: Azure Key Vault Documentation
-  url: https://learn.microsoft.com/en-us/azure/key-vault/general/overview
-- title: Kubernetes Secrets Store CSI Driver
-  url: https://secrets-store-csi-driver.sigs.k8s.io/
-- title: HashiCorp Vault Enterprise Pricing
-  url: https://www.hashicorp.com/products/vault/pricing
-lifecycle:
-  review_cycle_months: 24
-  next_review_date: '2028-03-05'
-  superseded_by: null
-  supersedes: null
-  archival:
-    archived_at: null
-    archive_reason: null
-audit_trail:
-- event: created
-  by: Priya Sharma
-  at: '2026-03-01T10:00:00Z'
-- event: updated
-  by: Priya Sharma
-  at: '2026-03-03T16:00:00Z'
-  details: Added Sealed Secrets alternative after SRE team suggestion, expanded Vault cost analysis
-- event: rejected
-  by: Marcus Chen
-  at: '2026-03-05T14:00:00Z'
-  details: Vault proposal rejected due to operational burden exceeding SRE capacity. Native cloud stores selected. Re-evaluate
-    if dynamic secrets become a hard requirement.
-````
-
-## File: examples-reference/ADR-0008-defer-openid-federation-for-trust-establishment.yaml
-````yaml
-adr:
-  id: ADR-0008
-  title: Defer adoption of OpenID Federation 1.0 for automated trust establishment
-  summary:
-    Deferred proposal to adopt OpenID Federation 1.0 for automated trust establishment between NovaTrust
-    and partner identity providers. Specification is not yet final and PingFederate support is roadmapped
-    but not GA.
-  status: deferred
-  created_at: "2026-02-01T10:00:00Z"
-  last_modified: "2026-02-15T16:00:00Z"
-  version: "0.1"
-  schema_version: 1.0.0
-  project: API Authorization Layer — Federation
-  component: Trust Establishment
-  tags:
-    - openid
-    - federation
-    - trust
-    - deferred
-    - identity-provider
-  priority: medium
-  decision_type: technology
-authors:
-  - name: Elena Vasquez
-    role: IAM Architect
-    email: elena.vasquez@novatrust.example.com
-decision_owner:
-  name: Marcus Chen
-  role: Head of IAM
-  email: marcus.chen@novatrust.example.com
-reviewers:
-  - name: Jonas Eriksen
-    role: CISO
-    email: jonas.eriksen@novatrust.example.com
-  - name: Priya Sharma
-    role: API Platform Lead
-    email: priya.sharma@novatrust.example.com
-context:
-  summary: |
-    NovaTrust currently establishes trust with partner identity providers (banks, fintechs, insurance
-    companies) through manual metadata exchange — downloading SAML/OIDC metadata XML, verifying
-    certificates out-of-band, and configuring each partner connection in PingFederate manually.
-
-    With 40+ partner connections and 5–10 new partners onboarding per quarter, the manual process
-    creates operational bottlenecks and human error risks (expired certificates, stale metadata).
-
-    OpenID Federation 1.0 promises automated trust establishment via trust chains — federating entities
-    publish signed entity statements, and trust anchors (e.g., national banking authorities) vouch
-    for subordinate entities. This would eliminate manual metadata exchange.
-  business_drivers:
-    - Partner onboarding takes 2–4 weeks due to manual metadata exchange and certificate verification
-    - 3 incidents in the past year caused by expired partner certificates that were not rotated in time
-    - Regulatory push toward automated trust frameworks in PSD2 and eIDAS 2.0 ecosystems
-  technical_drivers:
-    - Manual metadata exchange does not scale beyond 50 partner connections without dedicated staff
-    - OpenID Federation 1.0 trust chains enable automated certificate rotation and metadata refresh
-    - PingFederate has OpenID Federation support on its product roadmap (expected H2 2026)
-  constraints:
-    - Must not break existing partner connections during any transition
-    - PingFederate is the authorization server — mechanism must be natively supported or plugin-compatible
-    - Partners must also support the chosen mechanism — unilateral adoption is not possible
-  assumptions:
-    - OpenID Federation 1.0 specification will reach final status in 2026
-    - PingFederate will ship GA support for OpenID Federation by end of 2026
-    - At least 5 key partners are willing to pilot the new trust establishment mechanism
-requirements:
-  functional:
-    - id: F-001
-      description: Automated discovery and validation of partner identity provider metadata via trust chains
-    - id: F-002
-      description: Automated certificate rotation without manual intervention or service disruption
-    - id: F-003
-      description: Fallback to manual metadata exchange for partners that do not support federation
-  non_functional:
-    - id: NF-001
-      description: Trust chain resolution must complete in < 2 seconds
-    - id: NF-002
-      description: Federation metadata must be cached with configurable TTL (default 24 hours)
-    - id: NF-003
-      description: Must not introduce a single point of failure in the trust resolution chain
-alternatives:
-  - name: OpenID Federation 1.0 trust chains
-    summary:
-      Adopt OpenID Federation 1.0 for automated trust establishment. NovaTrust registers as a
-      subordinate entity under a trust anchor (e.g., national banking authority). Partners do the same.
-      Trust is established automatically via signed entity statements and trust chain resolution.
-    pros:
-      - Eliminates manual metadata exchange — trust established automatically via trust chains
-      - Automated certificate rotation via entity statement refresh
-      - Standards-based — aligns with eIDAS 2.0 and PSD2 regulatory direction
-      - Scales to hundreds of partners without additional operational overhead
-    cons:
-      - Specification is not yet final (draft stage as of February 2026)
-      - PingFederate support is roadmapped but not GA — requires waiting for vendor
-      - Requires trust anchor infrastructure (national banking authority or equivalent)
-      - Partner adoption is uncertain — unilateral adoption provides no benefit
-      - Limited production deployments to learn from — early adopter risk
-    estimated_cost: medium
-    risk: high
-  - name: Automated metadata exchange via well-known endpoints
-    summary: |
-      Use OIDC Discovery (/.well-known/openid-configuration) with automated polling and certificate
-      pinning. A custom service periodically fetches partner metadata, validates certificates against
-      a pinned trust store, and updates PingFederate configuration via admin API.
-    pros:
-      - Can be built today — no dependency on unfinished specifications
-      - Leverages existing OIDC Discovery that all partners already support
-      - Incremental improvement over manual exchange
-    cons:
-      - Custom automation code to build and maintain
-      - Certificate pinning requires manual trust store updates when partners rotate CAs
-      - No formal trust chain — trust is based on TLS and manual CA pinning, not cryptographic attestation
-      - Does not address the fundamental scaling problem — just automates parts of it
-    estimated_cost: low
-    risk: low
-    rejection_rationale:
-      This is a tactical improvement, not a strategic solution. It automates metadata
-      fetching but does not solve the trust establishment problem — certificate pinning still requires
-      manual trust store management. However, it could serve as a bridge while waiting for OpenID Federation.
-decision:
-  chosen_alternative: OpenID Federation 1.0 trust chains
-  rationale: |
-    - Standards-based approach aligns with regulatory direction (eIDAS 2.0, PSD2)
-    - Eliminates the root cause of operational bottlenecks — manual trust establishment
-    - Automated certificate rotation addresses the recurring incident pattern
-    - Scales to hundreds of partners, supporting NovaTrust's growth trajectory
-
-    However, the decision is **deferred** because:
-    - The specification is not yet final — adopting a draft standard carries specification change risk
-    - PingFederate GA support is not available — building on pre-release features is not production-ready
-    - Partner readiness is unknown — unilateral adoption provides zero value
-  tradeoffs: |
-    - Deferring means continued manual metadata exchange for 6–12 months
-    - Risk of 2–3 more certificate expiry incidents during the deferral period
-    - May need to implement the tactical alternative (Option 2) as a bridge if deferral extends beyond 12 months
-  decision_date: "2026-02-15"
-  confidence: low
-consequences:
-  positive:
-    - No investment in an immature specification that may change before finalization
-    - No dependency on pre-release vendor features
-    - Time to build partner consensus and pilot readiness
-  negative:
-    - Continued manual metadata exchange — operational bottleneck persists
-    - Ongoing certificate expiry risk for existing partner connections
-    - Potential competitive disadvantage if peers adopt federation earlier
-confirmation:
-  description: "Periodic review of OpenID Federation specification maturity. Track industry adoption via references and revisit when specification reaches stable status."
-
-dependencies:
-  internal:
-    - PingFederate 12.x (authorization server — pending OpenID Federation support)
-  external:
-    - OpenID Federation 1.0 specification finalization
-    - PingFederate product roadmap (OpenID Federation GA)
-    - Partner bank readiness for federation
-references:
-  - title: OpenID Federation 1.0 — Draft Specification
-    url: https://openid.net/specs/openid-federation-1_0.html
-  - title: eIDAS 2.0 Technical Architecture Reference Framework
-    url: https://eu-digital-identity-wallet.github.io/eudi-doc-architecture-and-reference-framework/latest/arf/
-  - title: PingFederate Product Roadmap (internal)
-    url: https://docs.pingidentity.com/pingfederate/latest/release-notes.html
-lifecycle:
-  review_cycle_months: 6
-  next_review_date: "2026-08-15"
-  superseded_by: null
-  supersedes: null
-  archival:
-    archived_at: null
-    archive_reason: null
-audit_trail:
-  - event: created
-    by: Elena Vasquez
-    at: "2026-02-01T10:00:00Z"
-    details: Initial proposal for OpenID Federation adoption
-  - event: updated
-    by: Elena Vasquez
-    at: "2026-02-10T11:00:00Z"
-    details: Added tactical alternative (automated metadata exchange) after discussion with API platform team
-  - event: deferred
-    by: Marcus Chen
-    at: "2026-02-15T16:00:00Z"
-    details:
-      Deferred until OpenID Federation 1.0 reaches final specification status and PingFederate ships
-      GA support. Re-evaluate in August 2026. PR closed with 'deferred' label.
 ````
 
 ## File: scripts/review-adr.py
@@ -1196,1389 +856,6 @@ if __name__ == "__main__":
     main()
 ````
 
-## File: examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
-````yaml
-adr:
-  id: ADR-0001
-  title: Use DPoP over mTLS as the sender-constraining mechanism for OAuth 2.1 access tokens
-  summary: Adopt DPoP (RFC 9449) as the sole sender-constraining mechanism for all OAuth 2.1 client types, avoiding mTLS certificate provisioning and CDN passthrough costs.
-  status: accepted
-  created_at: "2026-01-10T09:00:00Z"
-  last_modified: "2026-01-25T14:30:00Z"
-  version: "1.0"
-  schema_version: "1.0.0"
-  project: API Authorization Layer — OAuth 2.1 Implementation
-  component: Token Sender Constraining
-  tags:
-    - oauth
-    - dpop
-    - mtls
-    - sender-constraining
-    - token-binding
-    - rfc9449
-  priority: high
-  decision_type: technology
-authors:
-  - name: Elena Vasquez
-    role: IAM Architect
-    email: elena.vasquez@novatrust.example.com
-  - name: Kai Lindström
-    role: Mobile Platform Lead
-    email: kai.lindstrom@novatrust.example.com
-decision_owner:
-  name: Marcus Chen
-  role: Head of Identity and Access Management
-  email: marcus.chen@novatrust.example.com
-reviewers:
-  - name: Priya Sharma
-    role: API Platform Lead
-    email: priya.sharma@novatrust.example.com
-  - name: Jonas Eriksen
-    role: CISO
-    email: jonas.eriksen@novatrust.example.com
-  - name: Raj Patel
-    role: CDN / Edge Infrastructure Lead
-    email: raj.patel@novatrust.example.com
-approvals:
-  - name: Marcus Chen
-    role: Head of IAM
-    identity: "@marcuschen"
-    approved_at: "2026-01-24T10:00:00Z"
-    signature_id: sig-dpop-001
-  - name: Jonas Eriksen
-    role: CISO
-    identity: "@jonaseriksen"
-    approved_at: "2026-01-25T09:00:00Z"
-    signature_id: sig-dpop-002
-context:
-  summary: |
-    NovaTrust has adopted OAuth 2.1 (RFC 9700) as its API authorization framework. The specification
-    mandates sender-constrained tokens to prevent token theft and replay. Two mechanisms are
-    standardized: mTLS certificate-bound tokens (RFC 8705) and DPoP proof-of-possession (RFC 9449).
-
-    Both bind a token to the client that requested it, but differ in *where* binding happens: mTLS
-    at the TLS layer, DPoP at the application layer via signed JWTs.
-
-    ```mermaid
-    sequenceDiagram
-        participant C as Client
-        participant AS as PingFederate (AS)
-        participant GW as PingAccess (Gateway)
-        participant RS as Resource Server
-
-        C->>C: Generate ephemeral keypair
-        C->>AS: Token Request + DPoP Proof (JWT signed with ephemeral key)
-        AS->>AS: Validate DPoP proof, bind token to JWK thumbprint
-        AS->>C: Access Token (cnf.jkt = thumbprint)
-        C->>GW: API Request + Authorization: DPoP <token> + DPoP: <proof>
-        GW->>GW: Validate DPoP proof signature + cnf.jkt binding
-        GW->>RS: Forward (authenticated, sender-verified)
-    ```
-
-    We must choose one mechanism as the primary sender-constraining method for all client types —
-    public mobile apps, confidential backend services, and partner API consumers.
-  business_drivers:
-    - PSD2 SCA compliance requires sender-constrained tokens for payment APIs
-    - Mobile banking app (3M+ users) cannot manage X.509 client certificates
-    - CDN provider (Cloudflare) terminates TLS before traffic reaches our infrastructure
-    - Partner banks need a mechanism that works through their corporate proxies
-  technical_drivers:
-    - mTLS requires client certificate provisioning and lifecycle management per device
-    - CDN TLS termination strips client certificates — requires costly mTLS passthrough or re-origination
-    - DPoP proofs are application-layer and survive any TLS termination or proxy chain
-    - PingFederate 12.x supports both DPoP (RFC 9449) and mTLS (RFC 8705) natively
-    - Existing API gateway (PingAccess) can validate DPoP proofs without TLS configuration changes
-  constraints:
-    - Must work for public clients (mobile app) that cannot hold X.509 certificates securely
-    - Must survive CDN TLS termination (Cloudflare) without requiring mTLS passthrough configuration
-    - Must not require changes to partner bank network egress proxies
-    - PingFederate 12.x is the authorization server — mechanism must be natively supported
-  assumptions:
-    - Mobile app can generate and store an ephemeral asymmetric keypair in the device secure enclave
-    - All resource servers can parse and validate the DPoP HTTP header
-    - DPoP nonce support in PingFederate is available for replay protection
-requirements:
-  functional:
-    - id: F-001
-      description: Every access token issued by PingFederate must be bound to the requesting client's proof key
-    - id: F-002
-      description: Resource servers must validate the DPoP proof JWT on every request and reject tokens without valid proof
-    - id: F-003
-      description: Token binding must work for public clients (mobile), confidential clients (backend), and partner clients
-  non_functional:
-    - id: NF-001
-      description: DPoP proof generation on mobile must complete in < 50ms (including secure enclave signature)
-    - id: NF-002
-      description: DPoP proof validation at the resource server must add < 5ms latency per request at p99
-    - id: NF-003
-      description: No changes to existing TLS termination or CDN configuration required
-alternatives:
-  - name: DPoP (RFC 9449)
-    summary:
-      "Application-layer proof of possession using signed JWTs. The client generates an ephemeral asymmetric keypair,
-      includes the public key in token requests, and presents a signed DPoP proof JWT with every API call. The access token's
-      `cnf` claim contains a `jkt` thumbprint of the DPoP key.
-
-      "
-    pros:
-      - Works for public clients — no certificate provisioning needed; keypair generated locally
-      - Application-layer mechanism survives any TLS termination, CDN, or proxy chain
-      - Ephemeral keys reduce blast radius — compromise of one key affects only that session
-      - Built-in replay protection via server-issued nonces (RFC 9449 §8)
-      - No infrastructure changes to CDN, load balancers, or API gateways
-      - Supported natively by PingFederate 12.x and PingAccess 8.x
-    cons:
-      - Every API request must include an additional DPoP header (bandwidth overhead ~500 bytes)
-      - Client-side implementation complexity — must generate proof JWT per request with correct `ath`, `htm`, `htu` claims
-      - Clock skew between client and server can cause proof rejection — requires nonce-based mitigation
-      - Newer standard (2023) — less battle-tested than mTLS in production at scale
-      - No hardware-level key protection guarantee unless explicitly using device secure enclave APIs
-    estimated_cost: medium
-    risk: low
-  - name: mTLS Certificate-Bound Tokens (RFC 8705)
-    summary:
-      "TLS-layer proof of possession using X.509 client certificates. The client presents a certificate during the TLS
-      handshake, and the access token's `cnf` claim contains an `x5t#S256` thumbprint of the certificate. Resource servers
-      verify the certificate thumbprint matches.
-
-      "
-    pros:
-      - Mature, well-understood mechanism — widely deployed in financial services
-      - TLS-layer binding is transparent to application code
-      - Stronger hardware binding when using smart cards or TPM-backed certificates
-      - No per-request proof generation — certificate is presented once during TLS handshake
-    cons:
-      - Not viable for public clients (mobile app) — X.509 certificate provisioning at scale is impractical
-      - CDN TLS termination strips client certificates — requires expensive mTLS passthrough ($50K/year Cloudflare Enterprise
-        add-on)
-      - Partner corporate proxies frequently strip or re-originate client certificates
-      - Certificate lifecycle management (issuance, renewal, revocation) adds operational burden per client
-      - Requires PKI infrastructure and CA trust chain management
-      - Self-signed client certificates complicate trust validation at resource servers
-    estimated_cost: high
-    risk: medium
-    rejection_rationale: Not viable for public clients (mobile) due to X.509 certificate provisioning at scale. CDN TLS termination strips client certificates, requiring a $50K/year mTLS passthrough add-on. Partner corporate proxies also strip certificates.
-  - name: "Hybrid: DPoP for public clients, mTLS for confidential clients"
-    summary:
-      "Use DPoP for mobile/SPA public clients and mTLS for server-to-server confidential clients, choosing the mechanism
-      per client type.
-
-      "
-    pros:
-      - Each client type uses its optimal mechanism
-      - Confidential servers benefit from TLS-layer binding without per-request overhead
-    cons:
-      - Dual validation logic at every resource server — must support both `jkt` and `x5t#S256` in `cnf` claims
-      - Testing matrix doubles — every API flow must be validated with both mechanisms
-      - CDN mTLS passthrough problem still exists for the confidential client path
-      - "Operational complexity: two key management systems, two debugging procedures"
-      - PingFederate token policies must branch on client type, increasing configuration surface
-    estimated_cost: high
-    risk: medium
-    rejection_rationale: Dual validation logic at every resource server doubles the testing matrix. CDN mTLS passthrough problem persists for the confidential client path. Operational complexity of maintaining two key management systems outweighs the marginal benefit.
-decision:
-  chosen_alternative: DPoP (RFC 9449)
-  rationale: |
-    - Only mechanism that works for all three client types without infrastructure modifications
-    - Survives CDN TLS termination — eliminates the $50K/year Cloudflare mTLS passthrough cost
-    - Mobile app (3M+ users) cannot manage X.509 certificates — DPoP ephemeral keys are generated locally
-    - Partner bank proxies frequently strip client certificates — DPoP is an HTTP header, not a TLS artifact
-    - Single validation path at resource servers reduces testing surface and operational complexity
-    - PingFederate 12.x DPoP nonce support provides replay protection equivalent to mTLS session binding
-  tradeoffs: |
-    - ~500 bytes additional overhead per API request for the DPoP proof header
-    - Client SDKs must implement DPoP proof generation (`ath`, `htm`, `htu` claims) — added integration effort
-    - Clock skew tolerance window (±60 seconds) may need tuning per client population
-    - Foregoing mTLS's hardware-level binding for software-level ephemeral keys — accepted risk for mobile
-  decision_date: "2026-01-24"
-  confidence: high
-consequences:
-  positive:
-    - Unified sender-constraining across mobile, backend, and partner clients
-    - No CDN or proxy configuration changes required — tokens are bound at the application layer
-    - Ephemeral keypairs limit blast radius — compromised key affects only one session
-    - PSD2 sender-constraining requirement satisfied for all payment API flows
-  negative:
-    - Per-request DPoP proof generation adds latency on mobile (20-40ms in secure enclave)
-    - Client SDK complexity increases — DPoP proof must be correctly constructed for every request
-    - Resource server validation adds ~2ms per request for JWK thumbprint comparison and signature verification
-confirmation:
-  description: "Verified via integration test suite covering all three client types (mobile, backend, partner). PingFederate DPoP nonce enforcement confirmed in staging. CDN passthrough not required — validated with Cloudflare production configuration."
-  artifact_ids:
-    - "https://github.com/novatrust/iam-platform/pull/142"
-    - "TEST-SUITE-dpop-e2e-all-clients"
-    - "POC-2026-01-dpop-cloudflare-passthrough"
-    - "BENCH-dpop-proof-gen-mobile-p99"
-dependencies:
-  internal:
-    - PingFederate 12.x (authorization server with DPoP support)
-    - PingAccess 8.x (API gateway with DPoP proof validation)
-    - Mobile SDK team (iOS/Android DPoP proof generation)
-    - HSM infrastructure for server-side token signing keys
-  external:
-    - Cloudflare CDN (no changes required — DPoP is application-layer)
-    - Partner API consumers (must implement DPoP proof generation)
-
-references:
-  - title: Demonstrating Proof of Possession (DPoP) — RFC 9449
-    url: https://datatracker.ietf.org/doc/html/rfc9449
-  - title: OAuth 2.0 Mutual-TLS Client Authentication — RFC 8705
-    url: https://datatracker.ietf.org/doc/html/rfc8705
-  - title: OAuth 2.1 Authorization Framework — RFC 9700
-    url: https://datatracker.ietf.org/doc/html/rfc9700
-  - title: PingFederate DPoP Configuration Guide
-    url: https://docs.pingidentity.com/pingfederate/latest/dpop.html
-lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2027-01-24"
-  superseded_by: null
-  supersedes: null
-  archival:
-    archived_at: null
-    archive_reason: null
-audit_trail:
-  - event: created
-    by: Elena Vasquez
-    at: "2026-01-10T09:00:00Z"
-  - event: updated
-    by: Kai Lindström
-    at: "2026-01-18T14:00:00Z"
-    details: Added mobile secure enclave benchmarks and CDN cost analysis
-  - event: approved
-    by: Marcus Chen
-    at: "2026-01-24T10:00:00Z"
-  - event: approved
-    by: Jonas Eriksen
-    at: "2026-01-25T09:00:00Z"
-    details: "CISO approval with condition: DPoP nonce must be mandatory, not optional"
-````
-
-## File: examples-reference/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml
-````yaml
-adr:
-  id: ADR-0002
-  title: Use opaque reference tokens with introspection over self-contained JWTs for API gateway authorization
-  summary:
-    Issue opaque reference tokens instead of self-contained JWTs, enabling instant revocation via introspection while
-    keeping PII out of access logs.
-  status: accepted
-  created_at: "2026-01-15T10:00:00Z"
-  last_modified: "2026-02-01T16:00:00Z"
-  version: "1.0"
-  schema_version: 1.0.0
-  project: API Authorization Layer — Token Format Strategy
-  component: Access Token Format
-  tags:
-    - oauth
-    - token-introspection
-    - reference-tokens
-    - jwt
-    - rfc7662
-    - api-gateway
-  priority: high
-  decision_type: technology
-authors:
-  - name: Priya Sharma
-    role: API Platform Lead
-    email: priya.sharma@novatrust.example.com
-  - name: Elena Vasquez
-    role: IAM Architect
-    email: elena.vasquez@novatrust.example.com
-decision_owner:
-  name: Marcus Chen
-  role: Head of Identity and Access Management
-  email: marcus.chen@novatrust.example.com
-reviewers:
-  - name: Tomasz Kowalski
-    role: Network Security Architect
-    email: tomasz.kowalski@novatrust.example.com
-  - name: Jonas Eriksen
-    role: CISO
-    email: jonas.eriksen@novatrust.example.com
-approvals:
-  - name: Marcus Chen
-    role: Head of IAM
-    identity: "@marcuschen"
-    approved_at: "2026-01-30T11:00:00Z"
-    signature_id: sig-reftok-001
-  - name: Jonas Eriksen
-    role: CISO
-    identity: "@jonaseriksen"
-    approved_at: "2026-02-01T09:00:00Z"
-    signature_id: sig-reftok-002
-context:
-  summary: |
-    With OAuth 2.1 adopted, NovaTrust must decide the format of access tokens issued by PingFederate. Self-contained JWTs encode all claims (scopes, subject, cnf, expiry) directly in the token, allowing offline validation by resource servers. Opaque reference tokens are short random strings that resource servers resolve via the Token Introspection endpoint (RFC 7662). This is a classic tradeoff: JWTs give low-latency validation but cannot be instantly revoked, while reference tokens give instant revocation but require an introspection call per request. Our API gateway (PingAccess) sits in front of all 200+ APIs and is the primary enforcement point. The choice affects latency, revocation capability, token size in logs, and regulatory auditability.
-  business_drivers:
-    - PSD2 requires instant consent revocation — customer must be able to revoke bank access immediately
-    - GDPR right to erasure implies immediate token invalidation upon account deletion
-    - Fraud detection team needs ability to kill sessions within seconds, not minutes
-    - Compliance audit requires centralized proof of token validity at time of access
-  technical_drivers:
-    - Self-contained JWTs cannot be revoked before expiry without a distributed deny-list
-    - JWT deny-lists require propagation to all resource servers — eventual consistency problem
-    - PingAccess already has a high-performance introspection client with caching support
-    - Token introspection response is a single audit record of active/inactive status
-    - JWTs in access logs leak PII (subject, email, scopes) — requires log scrubbing
-  constraints:
-    - API gateway (PingAccess) is the single enforcement point — all traffic is proxied
-    - PingFederate introspection endpoint must handle 5000 QPS sustained
-    - "Token validation latency budget: < 10ms at p99 (including introspection + cache)"
-    - Must work with DPoP sender-constraining (ADR-0001)
-  assumptions:
-    - PingAccess introspection cache with 30-second TTL provides acceptable revocation latency
-    - PingFederate introspection endpoint can sustain 5000 QPS with current cluster sizing
-    - Reference tokens do not leak claims in client-side storage or network logs
-requirements:
-  functional:
-    - id: F-001
-      description: Access tokens must be revocable within 30 seconds of revocation request
-    - id: F-002
-      description: API gateway must resolve token to full claim set via introspection before forwarding request
-    - id: F-003
-      description: Introspection response must include DPoP confirmation (`cnf.jkt`) for sender validation
-  non_functional:
-    - id: NF-001
-      description: Token introspection latency < 5ms at p99 with caching enabled
-    - id: NF-002
-      description: PingFederate introspection endpoint availability 99.99%
-    - id: NF-003
-      description: Token value must not contain PII when stored in access logs
-alternatives:
-  - name: Opaque reference tokens with introspection
-    summary: |
-      PingFederate issues short opaque strings (128-bit random). PingAccess calls the introspection endpoint (RFC 7662) on each request, caching the response for a configurable TTL (default 30 seconds). Revocation is immediate at the authorization server; cached entries expire within TTL.
-    pros:
-      - Instant revocation — token marked inactive immediately at PingFederate
-      - No PII in the token itself — safe to log, store, and transmit
-      - Smaller token size (~32 bytes vs ~800 bytes for JWT) — less bandwidth and storage
-      - "Centralized audit: introspection logs prove token was active at time of access"
-      - Token format changes (new claims) do not require client or resource server updates
-    cons:
-      - Every request requires an introspection call (mitigated by caching)
-      - Introspection endpoint is a runtime dependency — outage blocks all API access
-      - Cache TTL creates a revocation latency window (default 30 seconds)
-      - No offline validation — disconnected resource servers cannot validate tokens
-    estimated_cost: medium
-    risk: medium
-  - name: Self-contained JWTs with short lifetime
-    summary: |
-      PingFederate issues signed JWTs containing all claims. Resource servers validate the signature and expiry locally without contacting the authorization server. Short token lifetime (5 minutes) limits the revocation gap.
-    pros:
-      - No runtime dependency on introspection endpoint — fully offline validation
-      - Zero additional latency per request — signature verification is ~0.5ms
-      - Resource servers can extract claims directly from the token
-      - Well-understood pattern with extensive library support
-    cons:
-      - Cannot be revoked before expiry — 5-minute window of unrevocable access
-      - PII embedded in JWT (sub, email, scopes) appears in logs, browser history, and caches
-      - 5-minute revocation gap violates PSD2 instant revocation interpretation
-      - Large token size (~800 bytes) — multiplied by DPoP proof header, total overhead ~1.3KB per request
-      - Adding or changing claims requires updating all resource server validation logic
-      - "GDPR: token deletion does not remove PII already logged in transit"
-    estimated_cost: low
-    risk: high
-    rejection_rationale:
-      5-minute revocation gap violates PSD2 instant revocation interpretation. PII embedded in JWT appears
-      in logs, violating GDPR data minimization. Adding or changing claims requires updating all resource server validation
-      logic.
-  - name: JWT with distributed deny-list (Redis)
-    summary: |
-      Issue JWTs but maintain a Redis-backed deny-list. Resource servers check the deny-list on every request. Revoked token JTIs are pushed to Redis; resource servers query before accepting.
-    pros:
-      - Adds revocation capability to JWTs
-      - Resource servers still validate signature offline for non-revoked tokens
-    cons:
-      - Redis deny-list is a distributed runtime dependency — same availability concern as introspection
-      - Deny-list propagation has eventual consistency — cache invalidation is hard
-      - PII still embedded in JWT — logging and GDPR concerns remain
-      - Custom implementation — no standardized protocol (unlike RFC 7662 introspection)
-      - "Two validation steps per request: signature verification + deny-list lookup"
-      - Deny-list grows unbounded unless TTL matches token expiry — memory pressure
-    estimated_cost: medium
-    risk: high
-    rejection_rationale:
-      Redis deny-list has the same availability concern as introspection but is a custom, non-standard solution.
-      PII remains embedded in JWTs. Deny-list propagation has eventual consistency — same revocation gap problem as plain JWTs.
-decision:
-  chosen_alternative: Opaque reference tokens with introspection
-  rationale: |
-    - PSD2 instant revocation: opaque tokens can be revoked in < 1 second at PingFederate; cache TTL provides 30-second worst-case
-    - No PII in the token: access logs can retain tokens without GDPR scrubbing obligations
-    - PingAccess introspection caching (30s TTL) measured at 0.8ms p99 cache-hit latency in load test — well within 10ms budget
-    - Centralized introspection provides auditable proof of token status at exact time of API access
-    - Simpler operational model: one revocation mechanism (mark inactive) vs. distributed deny-list synchronization
-    - Token format evolution (new claims, changed scopes) is transparent to resource servers — only introspection response changes
-  tradeoffs: |
-    - Runtime dependency on PingFederate introspection endpoint — mitigated by multi-node cluster and PingAccess cache
-    - 30-second cache TTL means a revoked token may be accepted for up to 30 seconds after revocation
-    - Introspection calls add ~0.8ms (cache hit) to ~4ms (cache miss) per request vs. ~0.5ms for local JWT validation
-    - Cannot work in fully disconnected environments — accepted because PingAccess is always network-connected
-  decision_date: "2026-01-30"
-  confidence: high
-consequences:
-  positive:
-    - Instant token revocation for fraud response and customer consent withdrawal
-    - GDPR-safe token format — no PII leakage in logs, caches, or browser storage
-    - Auditable introspection trail for every API access decision
-    - Smaller wire format reduces bandwidth across 200+ APIs at 5000 QPS
-  negative:
-    - PingFederate introspection endpoint becomes Tier-0 dependency
-    - 30-second revocation latency window due to PingAccess caching
-    - Slightly higher per-request latency (0.8ms cache-hit vs 0.5ms JWT verification)
-confirmation:
-  description: "Code review of gateway introspection configuration. Validate token format in staging by inspecting Authorization header at API gateway."
-
-dependencies:
-  internal:
-    - PingFederate 12.x (introspection endpoint)
-    - PingAccess 8.x (introspection client with caching)
-    - HSM infrastructure for token store encryption
-  external:
-    - None — introspection is an internal call between PingAccess and PingFederate
-references:
-  - title: OAuth 2.0 Token Introspection — RFC 7662
-    url: https://datatracker.ietf.org/doc/html/rfc7662
-  - title: OAuth 2.1 Authorization Framework — RFC 9700
-    url: https://datatracker.ietf.org/doc/html/rfc9700
-  - title: PingFederate Token Management Documentation
-    url: https://docs.pingidentity.com/pingfederate/latest/token-management.html
-lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2027-01-30"
-  superseded_by: null
-  supersedes: null
-  archival:
-    archived_at: null
-    archive_reason: null
-audit_trail:
-  - event: created
-    by: Priya Sharma
-    at: "2026-01-15T10:00:00Z"
-  - event: updated
-    by: Elena Vasquez
-    at: "2026-01-22T09:00:00Z"
-    details: Added introspection cache latency benchmarks from staging load test
-  - event: approved
-    by: Marcus Chen
-    at: "2026-01-30T11:00:00Z"
-  - event: approved
-    by: Jonas Eriksen
-    at: "2026-02-01T09:00:00Z"
-    details: "CISO condition: emergency cache purge API must be implemented before GA"
-````
-
-## File: examples-reference/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml
-````yaml
-adr:
-  id: ADR-0003
-  title: Use pairwise pseudonymous subject identifiers over public subject identifiers for OIDC relying parties
-  summary:
-    Switch from public to pairwise pseudonymous subject identifiers (PPID) to prevent cross-RP user correlation, satisfying
-    GDPR data minimization and eIDAS 2.0 unlinkability.
-  status: accepted
-  created_at: "2025-11-01T08:00:00Z"
-  last_modified: "2025-12-15T11:00:00Z"
-  version: "1.0"
-  schema_version: 1.0.0
-  project: Enterprise IdP — OIDC Claim Strategy
-  component: Subject Identifier Type
-  tags:
-    - oidc
-    - pairwise-sub
-    - privacy
-    - gdpr
-    - claim-strategy
-    - pseudonymization
-  priority: high
-  decision_type: security
-authors:
-  - name: Elena Vasquez
-    role: IAM Architect
-    email: elena.vasquez@novatrust.example.com
-  - name: Aisha Mbeki
-    role: Privacy Engineer
-    email: aisha.mbeki@novatrust.example.com
-decision_owner:
-  name: Marcus Chen
-  role: Head of Identity and Access Management
-  email: marcus.chen@novatrust.example.com
-reviewers:
-  - name: Jonas Eriksen
-    role: CISO
-    email: jonas.eriksen@novatrust.example.com
-  - name: DPO
-    role: Data Protection Officer
-    email: dpo@novatrust.example.com
-  - name: Priya Sharma
-    role: API Platform Lead
-    email: priya.sharma@novatrust.example.com
-approvals:
-  - name: Marcus Chen
-    role: Head of IAM
-    identity: "@marcuschen"
-    approved_at: "2025-12-10T09:00:00Z"
-    signature_id: sig-ppid-001
-  - name: DPO
-    role: Data Protection Officer
-    identity: "@dpo-novatrust"
-    approved_at: "2025-12-14T11:00:00Z"
-    signature_id: sig-ppid-002
-context:
-  summary: |
-    NovaTrust's PingFederate IdP issues OIDC ID tokens with a `sub` claim to all relying parties (RPs). The OIDC Core specification (§8) defines two subject identifier types: `public` (same `sub` value for a user across all RPs) and `pairwise` (unique pseudonymous `sub` per RP). Currently, all RPs receive the same public `sub` — the user's internal UUID. This allows any two colluding RPs to correlate users across services. With 35+ internal RPs, 15 partner bank RPs, and upcoming EUDI Wallet relying party integrations, the GDPR data minimization principle and eIDAS 2.0 unlinkability requirements demand that we prevent cross-RP user correlation unless explicitly authorized.
-  business_drivers:
-    - GDPR Article 5(1)(c) data minimization — relying parties receive more identifying data than necessary
-    - eIDAS 2.0 / EUDI Wallet unlinkability requirement — wallet RPs must not correlate users across verifiers
-    - "Dutch DPA (Autoriteit Persoonsgegevens) audit finding: cross-RP correlation risk rated 'high'"
-    - Partner bank RPs have contractual data silo obligations — public sub violates data partitioning agreements
-  technical_drivers:
-    - Public sub (internal UUID) leaks user identity to all RPs regardless of consent
-    - Cross-RP correlation is trivially possible when all RPs share the same sub value
-    - PingFederate supports pairwise sub natively via sector identifier and salt-based PPID generation
-    - OIDC Core §8 pairwise algorithm is deterministic — same user always gets same sub for same RP
-  constraints:
-    - Internal workforce SSO RPs may need public sub for identity correlation (HR, payroll, helpdesk)
-    - PingFederate must support both public and pairwise simultaneously per RP registration
-    - Migration must not break existing RP user databases that key on the current public sub
-    - Pairwise sub must be deterministic — user gets same sub for same RP across sessions
-  assumptions:
-    - PingFederate's PPID implementation uses HMAC-SHA256(sector_id + user_id + salt) — collision-resistant
-    - RPs can re-key their user databases from public sub to pairwise sub with a one-time migration
-    - Internal workforce RPs can be grouped in a shared sector identifier to maintain correlation within the sector
-requirements:
-  functional:
-    - id: F-001
-      description: All external and partner RPs must receive pairwise pseudonymous sub values
-    - id: F-002
-      description: Internal workforce RPs grouped by sector identifier may receive shared sub within their sector
-    - id: F-003
-      description: The same user must receive the same pairwise sub for the same RP across all sessions (deterministic)
-  non_functional:
-    - id: NF-001
-      description: PPID generation must add < 1ms to token issuance latency
-    - id: NF-002
-      description: Pairwise sub must be a 128-bit hex string (32 characters) — no PII derivable from the value
-    - id: NF-003
-      description: PPID salt must be stored in HSM and never exposed to application layer
-alternatives:
-  - name: Pairwise pseudonymous subject identifiers (PPID)
-    summary: |
-      PingFederate generates a unique `sub` per RP using HMAC-SHA256(sector_id + user_id + salt). External and partner RPs each receive a distinct, unlinkable identifier. Internal workforce RPs share a sector identifier so HR, payroll, and helpdesk can still correlate users within their sector.
-    pros:
-      - Prevents cross-RP user correlation — two partner RPs cannot link the same user
-      - "GDPR data minimization: sub value is pseudonymous — no PII derivable"
-      - "eIDAS 2.0 unlinkability: satisfies wallet RP requirements for credential presentation"
-      - "Deterministic: same user always gets same sub for same RP — no session-to-session drift"
-      - Sector grouping allows controlled correlation for legitimate business needs (workforce apps)
-      - PingFederate native support — no custom code required
-    cons:
-      - "Migration effort: existing RPs must re-key user databases from public sub to pairwise sub"
-      - Account linking across RPs becomes impossible without explicit user consent and IdP mediation
-      - "Debugging and support: 'which user is sub abc123?' requires IdP lookup — not human-readable"
-      - PPID salt is a critical secret — compromise allows pre-computation of all pairwise values
-      - Sector identifier assignment requires governance — incorrect grouping defeats purpose
-    estimated_cost: medium
-    risk: low
-  - name: Public subject identifiers with contractual controls
-    summary: |
-      Continue using the user's internal UUID as the public sub for all RPs, but enforce cross-RP correlation restrictions via contractual agreements and API usage auditing.
-    pros:
-      - No migration effort — RPs continue using existing sub values
-      - Simple debugging — sub is the user's UUID, directly queryable
-      - Account linking across RPs is straightforward
-    cons:
-      - Cross-RP correlation is trivially possible despite contractual prohibitions
-      - Contracts are not enforced technically — a colluding partner can correlate silently
-      - "GDPR data minimization violation: providing full UUID when a pseudonym suffices"
-      - Dutch DPA explicitly flagged this as high-risk in their 2025 audit
-      - eIDAS 2.0 unlinkability requirement cannot be met with public identifiers
-      - API auditing detects correlation after the fact, not preventing it
-    estimated_cost: low
-    risk: high
-    rejection_rationale:
-      Cross-RP correlation is trivially possible despite contractual controls. Dutch DPA explicitly flagged
-      this as high-risk. eIDAS 2.0 unlinkability cannot be met with public identifiers. Contracts are not technically enforceable.
-  - name: Encrypted subject identifiers (JWE-wrapped sub)
-    summary: |
-      Issue the sub as a JWE-encrypted blob per RP, where only the RP can decrypt its own sub. Different encryption keys per RP prevent cross-RP correlation.
-    pros:
-      - Prevents cross-RP correlation via encryption rather than pseudonymization
-      - RP-specific decryption keys provide cryptographic isolation
-    cons:
-      - "Non-standard: OIDC Core does not define encrypted sub — breaks spec compliance"
-      - RP must manage decryption keys and decrypt sub on every token receipt
-      - "Significantly larger sub values (JWE overhead: ~200 bytes vs 32-byte PPID)"
-      - Key rotation for JWE-encrypted subs requires coordinated rollover with every RP
-      - PingFederate does not support this natively — requires custom plugin development
-      - Debugging is harder than PPID — sub is opaque even to the IdP without RP key
-    estimated_cost: high
-    risk: high
-    rejection_rationale:
-      Non-standard — OIDC Core does not define encrypted sub, breaking spec compliance. JWE overhead makes
-      sub ~200 bytes vs 32-byte PPID. PingFederate does not support this natively, requiring custom plugin development and per-RP
-      key management.
-decision:
-  chosen_alternative: Pairwise pseudonymous subject identifiers (PPID)
-  rationale: |
-    - Standards-compliant: OIDC Core §8 defines pairwise as a first-class subject identifier type
-    - Dutch DPA audit finding directly addressed — cross-RP correlation eliminated by design
-    - eIDAS 2.0 unlinkability requirement met for upcoming EUDI Wallet RP integrations
-    - PingFederate native support eliminates custom development — configuration-only change
-    - Sector grouping provides pragmatic exception for internal workforce RPs that legitimately need correlation
-    - HMAC-SHA256 PPID generation is deterministic and collision-resistant — no session-to-session drift
-  tradeoffs: |
-    - One-time migration: 35+ internal RPs and 15 partner RPs must re-key user databases
-    - Support team loses ability to look up user by sub without IdP reverse-lookup tool
-    - Cross-RP account linking requires explicit consent flow — cannot be done silently
-    - PPID salt in HSM adds dependency on HSM availability for token issuance
-  decision_date: "2025-12-10"
-  confidence: high
-consequences:
-  positive:
-    - Cross-RP user correlation eliminated for all external and partner RPs
-    - "GDPR data minimization: sub values are pseudonymous with no derivable PII"
-    - "eIDAS 2.0 readiness: pairwise sub satisfies unlinkability for wallet credential presentation"
-    - Dutch DPA audit finding resolved — risk downgraded from 'high' to 'low'
-  negative:
-    - 3-month migration project for RP user database re-keying
-    - Support team requires new tooling for user-to-sub reverse lookup
-    - PPID salt in HSM creates an additional HSM dependency for token issuance
-confirmation:
-  description: "Verify pairwise subject identifiers in token responses across relying parties. Confirm no cross-RP correlation is possible via automated test suite."
-
-dependencies:
-  internal:
-    - PingFederate 12.x (pairwise sub support)
-    - HSM infrastructure (PPID salt storage)
-    - IAM Architecture Board (sector identifier governance)
-  external:
-    - Partner bank RPs (must accept new sub values during migration)
-references:
-  - title: OpenID Connect Core 1.0 — §8 Subject Identifier Types
-    url: https://openid.net/specs/openid-connect-core-1_0.html#SubjectIDTypes
-  - title: GDPR Article 5(1)(c) — Data Minimization
-    url: https://gdpr-info.eu/art-5-gdpr/
-  - title: eIDAS 2.0 Regulation — Unlinkability Requirements
-    url: https://eur-lex.europa.eu/eli/reg/2024/1183/oj
-lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2026-12-10"
-  superseded_by: null
-  supersedes: null
-  archival:
-    archived_at: null
-    archive_reason: null
-audit_trail:
-  - event: created
-    by: Elena Vasquez
-    at: "2025-11-01T08:00:00Z"
-  - event: updated
-    by: Aisha Mbeki
-    at: "2025-11-20T14:00:00Z"
-    details: Added Dutch DPA audit finding reference and eIDAS 2.0 unlinkability analysis
-  - event: approved
-    by: Marcus Chen
-    at: "2025-12-10T09:00:00Z"
-  - event: approved
-    by: DPO
-    at: "2025-12-14T11:00:00Z"
-    details: "DPO approval with condition: PPID salt must be in HSM, and reverse-lookup must be audit-logged"
-````
-
-## File: examples-reference/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml
-````yaml
-adr:
-  id: ADR-0004
-  title: Use Ed25519 (EdDSA) over RSA-2048 for JWT and assertion signing keys
-  summary:
-    Migrate from RSA-2048 (RS256) to Ed25519 (EdDSA) for all JWT/JWS signing to achieve 20x throughput improvement,
-    eliminating the PingFederate CPU bottleneck.
-  status: accepted
-  created_at: "2025-11-20T09:00:00Z"
-  last_modified: "2025-12-20T10:00:00Z"
-  version: "1.0"
-  schema_version: 1.0.0
-  project: Cryptographic Infrastructure — Signing Key Strategy
-  component: JWT Signing Algorithm
-  tags:
-    - cryptography
-    - ed25519
-    - eddsa
-    - rsa
-    - jwt
-    - jws
-    - rfc8037
-    - performance
-  priority: high
-  decision_type: technology
-authors:
-  - name: Tomasz Kowalski
-    role: Network Security Architect
-    email: tomasz.kowalski@novatrust.example.com
-  - name: Elena Vasquez
-    role: IAM Architect
-    email: elena.vasquez@novatrust.example.com
-decision_owner:
-  name: Jonas Eriksen
-  role: CISO
-  email: jonas.eriksen@novatrust.example.com
-reviewers:
-  - name: Marcus Chen
-    role: Head of IAM
-    email: marcus.chen@novatrust.example.com
-  - name: Kai Lindström
-    role: Mobile Platform Lead
-    email: kai.lindstrom@novatrust.example.com
-approvals:
-  - name: Jonas Eriksen
-    role: CISO
-    identity: "@jonaseriksen"
-    approved_at: "2025-12-18T14:00:00Z"
-    signature_id: sig-ed25519-001
-  - name: Marcus Chen
-    role: Head of IAM
-    identity: "@marcuschen"
-    approved_at: "2025-12-19T10:00:00Z"
-    signature_id: sig-ed25519-002
-context:
-  summary: |
-    NovaTrust's PingFederate IdP and all JWT-producing services currently use RS256 (RSA-2048 with PKCS#1 v1.5 padding) for signing ID tokens, access tokens (when issued as JWTs), SAML assertions, and DPoP proofs. With 5000+ token issuances per second at peak, RSA-2048 signing is the primary CPU bottleneck on the PingFederate cluster. EdDSA with Ed25519 (RFC 8037, JWS algorithm "EdDSA") offers vastly superior signing performance, smaller key sizes, and resistance to implementation pitfalls (no padding oracle attacks, no nonce reuse vulnerabilities as in ECDSA). However, Ed25519 is newer and has less universal library support than RSA. We must choose the signing algorithm for all new JWT/JWS production.
-  business_drivers:
-    - PingFederate cluster CPU at 78% during peak — projected to exceed capacity in 6 months
-    - Avoiding $120K/year in additional PingFederate cluster nodes by reducing signing CPU
-    - Mobile app token validation latency impacts UX — faster verification is a competitive advantage
-  technical_drivers:
-    - "RSA-2048 signing: ~1500 ops/sec per core; Ed25519 signing: ~30,000 ops/sec per core (20x faster)"
-    - "RSA-2048 verification: ~40,000 ops/sec per core; Ed25519 verification: ~15,000 ops/sec per core"
-    - "Ed25519 key: 32 bytes; RSA-2048 key: 256 bytes — JWK set transmission is 8x smaller"
-    - Ed25519 is deterministic (no random nonce) — eliminates ECDSA-style nonce reuse attacks
-    - "JWS compact serialization with Ed25519 signature: 64 bytes vs RSA-2048: 256 bytes"
-    - PingFederate 12.x added EdDSA support in Q3 2025
-  constraints:
-    - Cloud HSM must support Ed25519 key generation and signing (PKCS#11 with CKM_EDDSA)
-    - All resource servers and relying parties must support Ed25519 verification
-    - SAML assertion signing must use a supported XML signature algorithm
-    - Must maintain RSA-2048 for legacy partner integrations that cannot upgrade
-  assumptions:
-    - Cloud HSM supports Ed25519 via CKM_EDDSA mechanism (verified in vendor documentation)
-    - All modern JWT libraries (jose4j, nimbus-jose, PyJWT, jsonwebtoken) support EdDSA verification
-    - SAML XML Signature for Ed25519 is supported via http://www.w3.org/2021/04/xmldsig-more#eddsa-ed25519
-    - Legacy partners (3 of 15) will migrate to Ed25519 within 18 months
-requirements:
-  functional:
-    - id: F-001
-      description: All new JWT/JWS tokens signed with EdDSA (Ed25519) algorithm
-    - id: F-002
-      description: JWKS endpoint publishes both Ed25519 and RSA-2048 keys during transition period
-    - id: F-003
-      description: Legacy partners continue receiving RS256-signed tokens until they support EdDSA
-  non_functional:
-    - id: NF-001
-      description: Token signing throughput must increase by at least 10x per core
-    - id: NF-002
-      description: Token signing latency p99 < 1ms (including HSM round-trip)
-    - id: NF-003
-      description: JWS compact serialization total size reduced by at least 30% compared to RS256
-alternatives:
-  - name: EdDSA with Ed25519 (RFC 8037)
-    summary: |
-      Use the EdDSA algorithm with Ed25519 curve for all JWT/JWS signing. Ed25519 provides 128-bit security with 32-byte keys and 64-byte signatures. Signing is deterministic (no random nonce), eliminating nonce-related vulnerabilities.
-    pros:
-      - 20x faster signing than RSA-2048 — directly addresses PingFederate CPU bottleneck
-      - Deterministic signatures — no nonce reuse vulnerability (unlike ECDSA with P-256)
-      - 64-byte signatures vs 256-byte RSA — 75% reduction in JWS signature size
-      - 32-byte keys vs 256-byte RSA public keys — smaller JWKS responses
-      - No padding oracle attacks — Ed25519 has no padding scheme
-      - 128-bit security level — equivalent to RSA-3072 or ECDSA P-256
-      - "Growing industry adoption: Signal, SSH, TLS 1.3, FIDO2 all use Ed25519"
-    cons:
-      - "Not universally supported: 3 legacy partner integrations require RS256"
-      - Cloud HSM EdDSA support is newer — less operational track record
-      - Verification is 2.5x slower than RSA-2048 verification (matters for resource servers)
-      - SAML XML Signature Ed25519 support requires relying parties to upgrade XML libraries
-      - Ed25519 is Curve25519-based — not NIST-approved (may matter for US government partners)
-    estimated_cost: medium
-    risk: low
-  - name: ECDSA with P-256 (ES256)
-    summary: |
-      Use ECDSA with the NIST P-256 curve (JWS algorithm ES256). Provides 128-bit security with smaller keys and signatures than RSA.
-    pros:
-      - Widely supported — NIST P-256 is the most common elliptic curve
-      - Smaller signatures than RSA (64 bytes DER-encoded, typically 70-72 bytes)
-      - 5-10x faster signing than RSA-2048
-      - NIST-approved curve — satisfies US government compliance requirements
-    cons:
-      - "Non-deterministic: requires a secure random nonce per signature — nonce reuse leaks the private key"
-      - Sony PS3 and Bitcoin ECDSA nonce-reuse incidents demonstrate real-world risk
-      - Requires RFC 6979 deterministic ECDSA for safety — not all libraries implement it by default
-      - Signing is 3x slower than Ed25519
-      - P-256 curve has concerns about NIST backdoor potential (Dual_EC_DRBG precedent)
-      - HSM implementations may not use RFC 6979 — must verify per HSM vendor
-    estimated_cost: medium
-    risk: medium
-    rejection_rationale:
-      Non-deterministic signatures require secure random nonce per signature — nonce reuse leaks the private
-      key (real-world incidents with Sony PS3 and Bitcoin). 3x slower signing than Ed25519. P-256 backdoor concerns from NIST
-      Dual_EC_DRBG precedent.
-  - name: RSA-2048 with PS256 (RSASSA-PSS)
-    summary: |
-      Upgrade from RS256 (PKCS#1 v1.5) to PS256 (RSASSA-PSS) padding while keeping RSA-2048 keys. Addresses padding oracle vulnerabilities without changing key type.
-    pros:
-      - No key type change — all libraries already support RSA
-      - PSS padding eliminates PKCS#1 v1.5 padding oracle attacks
-      - Universal partner compatibility
-    cons:
-      - Does not address the CPU bottleneck — signing throughput remains ~1500 ops/sec per core
-      - PingFederate cluster still needs $120K/year in additional capacity
-      - 256-byte signatures — no size reduction
-      - RSA-2048 approaching end of recommended lifetime (NIST recommends RSA-3072 after 2030)
-    estimated_cost: low
-    risk: low
-    rejection_rationale:
-      Does not address the CPU bottleneck — signing throughput remains ~1500 ops/sec. PingFederate cluster
-      would still require $120K/year in additional nodes. RSA-2048 approaching NIST end-of-life recommendation (RSA-3072 after
-      2030).
-decision:
-  chosen_alternative: EdDSA with Ed25519 (RFC 8037)
-  rationale: |
-    - 20x signing throughput improvement directly solves PingFederate CPU bottleneck — avoids $120K/year in additional nodes
-    - Deterministic signatures eliminate the nonce-reuse risk class entirely — superior to ECDSA P-256
-    - 75% signature size reduction improves wire efficiency across 200+ APIs at 5000 QPS
-    - 128-bit security equivalent to ECDSA P-256 without the nonce-related attack surface
-    - Industry momentum: Ed25519 is the default in SSH, Signal, TLS 1.3, and FIDO2
-    - Legacy partner compatibility maintained via dual-key JWKS (Ed25519 primary, RSA-2048 fallback)
-  tradeoffs: |
-    - Verification is 2.5x slower than RSA-2048 — accepted because resource servers are not CPU-bound on verification
-    - 3 legacy partners require RS256 fallback — dual-key JWKS maintained for 18-month transition
-    - Not NIST-approved — accepted because NovaTrust has no US government compliance requirement
-    - Cloud HSM Ed25519 support is newer — mitigated by vendor SLA and pre-production validation
-  decision_date: "2025-12-18"
-  confidence: medium
-consequences:
-  positive:
-    - PingFederate signing capacity increased 20x — cluster can handle 100K tokens/sec on current hardware
-    - Estimated $120K/year savings by avoiding additional PingFederate nodes
-    - JWS token size reduced by ~192 bytes per token (signature + key reference)
-    - Nonce-reuse vulnerability class eliminated by design
-  negative:
-    - Dual-key JWKS management during 18-month RSA transition
-    - Resource server verification ~0.5ms slower per token (15K vs 40K ops/sec)
-    - SAML XML libraries at partner sites may need updating for Ed25519 support
-confirmation:
-  description:
-    "Ed25519 signing validated in pre-production: 72-hour sustained load test at 50K ops/sec on Cloud HSM. All
-    12 internal resource servers verified EdDSA token consumption. Three legacy partners confirmed RS256 fallback path. PingFederate
-    per-RP algorithm override tested."
-  artifact_ids:
-    - BENCH-ed25519-hsm-72h-load-test
-    - TEST-SUITE-jwt-signing-ed25519-all-rps
-    - https://github.com/novatrust/iam-platform/pull/198
-dependencies:
-  internal:
-    - Cloud HSM with CKM_EDDSA support
-    - PingFederate 12.x (EdDSA signing support)
-    - All resource servers (JWT verification library updates)
-  external:
-    - Cloud HSM provider (EdDSA firmware support)
-    - Partner relying parties (EdDSA verification capability)
-references:
-  - title: CFRG Edwards-Curve Digital Signature Algorithm (EdDSA) — RFC 8032
-    url: https://datatracker.ietf.org/doc/html/rfc8032
-  - title: CFRG Elliptic Curves for JOSE — RFC 8037
-    url: https://datatracker.ietf.org/doc/html/rfc8037
-  - title: JSON Web Algorithms (JWA) — RFC 7518
-    url: https://datatracker.ietf.org/doc/html/rfc7518
-  - title: Ed25519 Performance Benchmarks — libsodium
-    url: https://doc.libsodium.org/public-key_cryptography/public-key_signatures
-lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2026-12-18"
-  superseded_by: null
-  supersedes: null
-  archival:
-    archived_at: null
-    archive_reason: null
-audit_trail:
-  - event: created
-    by: Tomasz Kowalski
-    at: "2025-11-20T09:00:00Z"
-  - event: updated
-    by: Elena Vasquez
-    at: "2025-12-05T10:00:00Z"
-    details: Added ECDSA P-256 nonce-reuse risk analysis and HSM CKM_EDDSA verification
-  - event: approved
-    by: Jonas Eriksen
-    at: "2025-12-18T14:00:00Z"
-    details: "CISO approval with condition: algorithm downgrade protection must be enforced at all resource servers"
-  - event: approved
-    by: Marcus Chen
-    at: "2025-12-19T10:00:00Z"
-````
-
-## File: examples-reference/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml
-````yaml
-adr:
-  id: ADR-0005
-  title: Use the Backend-for-Frontend token mediator pattern over direct SPA-to-AS authorization for single-page applications
-  summary:
-    Adopt the BFF/Token Mediator pattern so OAuth tokens never reach the browser, eliminating XSS-based token theft
-    for the banking portal.
-  status: accepted
-  created_at: "2026-02-01T10:00:00Z"
-  last_modified: "2026-02-20T09:00:00Z"
-  version: "1.0"
-  schema_version: 1.0.0
-  project: Customer Portal — SPA Authentication Architecture
-  component: SPA Token Acquisition Pattern
-  tags:
-    - bff
-    - spa
-    - oauth
-    - token-handler
-    - csrf
-    - cookie
-    - public-client
-  priority: high
-  decision_type: security
-authors:
-  - name: Priya Sharma
-    role: API Platform Lead
-    email: priya.sharma@novatrust.example.com
-  - name: Kai Lindström
-    role: Mobile Platform Lead
-    email: kai.lindstrom@novatrust.example.com
-decision_owner:
-  name: Marcus Chen
-  role: Head of Identity and Access Management
-  email: marcus.chen@novatrust.example.com
-reviewers:
-  - name: Elena Vasquez
-    role: IAM Architect
-    email: elena.vasquez@novatrust.example.com
-  - name: Jonas Eriksen
-    role: CISO
-    email: jonas.eriksen@novatrust.example.com
-  - name: Frontend Development Lead
-    role: Engineering
-    email: frontend-lead@novatrust.example.com
-approvals:
-  - name: Marcus Chen
-    role: Head of IAM
-    identity: "@marcuschen"
-    approved_at: "2026-02-18T10:00:00Z"
-    signature_id: sig-bff-001
-  - name: Jonas Eriksen
-    role: CISO
-    identity: "@jonaseriksen"
-    approved_at: "2026-02-20T09:00:00Z"
-    signature_id: sig-bff-002
-context:
-  summary: |
-    NovaTrust is rebuilding the customer banking portal as a React single-page application (SPA). SPAs are public OAuth clients — they cannot hold a client secret because all code runs in the browser. The SPA needs to obtain access tokens to call backend APIs. Two patterns exist: (1) the SPA directly performs the OAuth 2.1 Authorization Code + PKCE flow and stores tokens in browser memory, or (2) a Backend-for-Frontend (BFF) / Token Mediator component performs the OAuth flow server-side and issues secure HTTP-only cookies to the SPA. The choice affects token storage security (XSS exposure), CSRF handling, and the overall security posture of the banking portal where high-value transactions are at stake.
-  business_drivers:
-    - Customer banking portal handles payments, account management, and PSD2 consent — high-value target
-    - Cyber insurance underwriter flagged client-side token storage as a risk for the banking portal
-    - Competitor breach involved XSS-based access token theft from SPA localStorage
-    - PSD2 SCA and fraud prevention require defense-in-depth for token handling
-  technical_drivers:
-    - SPAs store tokens in JavaScript-accessible memory — vulnerable to XSS token extraction
-    - Browser-based token renewal (silent refresh via iframe) is fragile with third-party cookie deprecation
-    - BFF pattern keeps tokens server-side — SPA never sees or stores access/refresh tokens
-    - HTTP-only, SameSite=Strict cookies are not accessible to JavaScript — immune to XSS token theft
-    - BFF can be a confidential client (has a client secret) — eligible for stronger token binding
-    - OAuth 2.0 for Browser-Based Applications (draft-ietf-oauth-browser-based-apps) recommends the BFF pattern
-  constraints:
-    - SPA is React-based, served from CDN (static hosting) — SPA itself has no server-side component
-    - BFF must be deployed as a lightweight proxy alongside the API gateway
-    - Cookie domain must be first-party (same-site) to the SPA origin
-    - Must work with DPoP sender-constraining (ADR-0001) — BFF performs DPoP proof generation
-  assumptions:
-    - BFF can be a stateless reverse proxy (no session store) using encrypted cookie for state
-    - SameSite=Strict cookies prevent CSRF for same-origin API calls
-    - BFF adds < 5ms latency per proxied API request
-    - Content Security Policy (CSP) mitigates XSS risk, but is not a sufficient sole defense
-requirements:
-  functional:
-    - id: F-001
-      description: SPA must never receive, store, or have JavaScript access to access tokens or refresh tokens
-    - id: F-002
-      description: BFF performs OAuth 2.1 Authorization Code + PKCE flow as a confidential client
-    - id: F-003
-      description: BFF issues HTTP-only, Secure, SameSite=Strict cookies to the SPA for session management
-    - id: F-004
-      description: BFF generates DPoP proofs server-side and attaches them when calling backend APIs
-  non_functional:
-    - id: NF-001
-      description: BFF proxy latency < 5ms per request at p99
-    - id: NF-002
-      description: BFF must handle 2000 concurrent sessions without degradation
-    - id: NF-003
-      description: Cookie-based session must survive browser tab close and resume
-alternatives:
-  - name: Backend-for-Frontend (BFF) Token Mediator
-    summary: |
-      A lightweight server-side component sits between the SPA and the authorization server. The BFF performs the OAuth 2.1 flow as a confidential client, stores tokens server-side (or in encrypted HTTP-only cookies), and the SPA authenticates with the BFF using HTTP-only cookies. The SPA never touches OAuth tokens.
-    pros:
-      - Tokens never exposed to JavaScript — immune to XSS-based token theft
-      - BFF is a confidential client — can hold a client secret and use stronger authentication
-      - HTTP-only SameSite=Strict cookies prevent both XSS access and CSRF
-      - Token renewal is server-side — no fragile iframe silent refresh
-      - BFF can generate DPoP proofs server-side with a stable keypair
-      - Recommended by IETF OAuth Browser-Based Applications BCP
-      - Content Security Policy (CSP) + BFF provides defense-in-depth
-    cons:
-      - Additional component to deploy, monitor, and maintain
-      - Adds ~2-3ms latency per proxied API request
-      - "Cookie management adds complexity: domain alignment, expiry, rotation"
-      - CORS configuration needed if BFF and SPA are on different subdomains
-      - SPA cannot make direct API calls to third-party domains — all traffic proxied through BFF
-    estimated_cost: medium
-    risk: low
-  - name: Direct SPA-to-AS with in-memory tokens
-    summary: |
-      The SPA performs the OAuth 2.1 Authorization Code + PKCE flow directly as a public client. Tokens are stored in JavaScript closures (in-memory) and never persisted to localStorage or sessionStorage. Token renewal uses refresh tokens with rotation.
-    pros:
-      - No additional server component — simpler deployment
-      - SPA has direct access to token claims for UI decisions
-      - Lower barrier to entry for frontend developers
-      - No cookie management complexity
-    cons:
-      - Tokens in JavaScript memory are accessible to XSS — any injected script can extract them
-      - In-memory storage means tokens lost on page reload — user must re-authenticate
-      - Public client cannot hold client secret — weaker client authentication
-      - Refresh token rotation is the only defense against token theft — single-use detection is not instant
-      - Silent refresh via iframe breaks with third-party cookie deprecation (Chrome, Firefox)
-      - DPoP proof generation must happen in browser JavaScript — key material in JS is XSS-extractable
-      - Cyber insurance underwriter explicitly flagged this as unacceptable for banking portal
-    estimated_cost: low
-    risk: high
-    rejection_rationale:
-      Tokens in JavaScript memory are accessible to XSS. Cyber insurance underwriter explicitly flagged client-side
-      token storage as unacceptable for the banking portal. Silent refresh breaks with third-party cookie deprecation.
-  - name: Service Worker token cache with encrypted storage
-    summary: |
-      Tokens stored in the browser via Service Worker with encrypted IndexedDB. Service Worker intercepts API calls and attaches tokens, isolating them from the main JavaScript thread.
-    pros:
-      - Tokens isolated from main JS thread — Service Worker has its own scope
-      - Encrypted storage adds a layer of protection
-      - No server-side component needed
-    cons:
-      - Service Worker scope isolation is not a security boundary — XSS in the main thread can message the Service Worker
-      - Encrypted IndexedDB key must be stored somewhere accessible — chicken-and-egg problem
-      - Non-standard pattern — no industry consensus or IETF guidance
-      - Service Worker lifecycle complexity (registration, update, activation)
-      - "Does not address the fundamental issue: browser JS environment is untrusted"
-      - No major financial institution has adopted this pattern in production
-    estimated_cost: medium
-    risk: high
-    rejection_rationale:
-      Service Worker scope isolation is not a security boundary — XSS in the main thread can message the
-      Worker. Non-standard pattern with no industry consensus or IETF guidance. No major financial institution has adopted this
-      in production.
-decision:
-  chosen_alternative: Backend-for-Frontend (BFF) Token Mediator
-  rationale: |
-    - Banking portal is a high-value target — tokens must not be accessible to JavaScript under any XSS scenario
-    - HTTP-only cookies are not accessible to document.cookie or JavaScript APIs — defense-in-depth against XSS
-    - BFF as confidential client enables stronger authentication with PingFederate (client_secret_jwt)
-    - IETF OAuth Browser-Based Applications BCP explicitly recommends the BFF pattern for sensitive applications
-    - Server-side DPoP proof generation with a stable keypair is more robust than browser-based key management
-    - Cyber insurance underwriter requires server-side token storage for the banking portal
-    - SameSite=Strict cookies eliminate CSRF without additional tokens or headers
-  tradeoffs: |
-    - Additional BFF component to operate (~2-3ms proxy latency per API request)
-    - SPA cannot make direct API calls to third-party services — must proxy through BFF
-    - Cookie domain must match SPA origin — limits multi-domain deployment flexibility
-    - Frontend team must adapt to cookie-based session model instead of bearer token model
-  decision_date: "2026-02-18"
-  confidence: high
-consequences:
-  positive:
-    - Access and refresh tokens never touch the browser — zero XSS token extraction risk
-    - BFF confidential client authentication strengthens the OAuth client identity
-    - Token renewal is invisible to the SPA — no iframe hacks or refresh token rotation logic in JS
-    - Cyber insurance premium reduced by $30K/year with server-side token storage attestation
-  negative:
-    - "BFF is an additional component: deployment, monitoring, on-call rotation"
-    - ~2-3ms added proxy latency per API request
-    - "Frontend developers must use cookie-aware fetch (credentials: 'include') instead of Authorization headers"
-confirmation:
-  description: "Integration test: verify SPA receives tokens only via BFF, no tokens in browser storage. Security scan of BFF endpoints."
-
-dependencies:
-  internal:
-    - PingFederate 12.x (authorization server)
-    - CDN (SPA static asset hosting)
-    - API Gateway (PingAccess) behind BFF
-    - HSM (cookie encryption key)
-  external:
-    - None — BFF is an internal component
-references:
-  - title: OAuth 2.0 for Browser-Based Applications — IETF BCP
-    url: https://datatracker.ietf.org/doc/html/draft-ietf-oauth-browser-based-apps
-  - title: Token Handler Pattern — Curity
-    url: https://curity.io/resources/learn/the-token-handler-pattern/
-  - title: OAuth 2.1 Authorization Framework — RFC 9700
-    url: https://datatracker.ietf.org/doc/html/rfc9700
-lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2027-02-18"
-  superseded_by: null
-  supersedes: null
-  archival:
-    archived_at: null
-    archive_reason: null
-audit_trail:
-  - event: created
-    by: Priya Sharma
-    at: "2026-02-01T10:00:00Z"
-  - event: updated
-    by: Kai Lindström
-    at: "2026-02-12T15:00:00Z"
-    details: Added Service Worker alternative analysis and cyber insurance underwriter requirements
-  - event: approved
-    by: Marcus Chen
-    at: "2026-02-18T10:00:00Z"
-  - event: approved
-    by: Jonas Eriksen
-    at: "2026-02-20T09:00:00Z"
-    details: "CISO approval with condition: CSP must be deployed as defense-in-depth alongside BFF"
-````
-
-## File: examples-reference/ADR-0006-session-enrichment-for-step-up-authentication.yaml
-````yaml
-adr:
-  id: ADR-0006
-  title: Use IdP session enrichment over custom JWE cookies for persisting step-up authentication proof
-  summary:
-    Persist step-up authentication proof via PingFederate session enrichment and acr claims rather than custom JWE
-    cookies, keeping all auth state in the IdP.
-  status: accepted
-  created_at: "2026-02-10T08:00:00Z"
-  last_modified: "2026-02-28T14:00:00Z"
-  version: "1.0"
-  schema_version: 1.0.0
-  project: Transaction Security — Step-Up Authentication
-  component: Step-Up Proof Persistence Mechanism
-  tags:
-    - step-up
-    - session-enrichment
-    - jwe
-    - rfc9470
-    - transaction-signing
-    - mfa
-  priority: high
-  decision_type: technology
-authors:
-  - name: Elena Vasquez
-    role: IAM Architect
-    email: elena.vasquez@novatrust.example.com
-  - name: Marcus Chen
-    role: Head of IAM
-    email: marcus.chen@novatrust.example.com
-decision_owner:
-  name: Jonas Eriksen
-  role: CISO
-  email: jonas.eriksen@novatrust.example.com
-reviewers:
-  - name: Priya Sharma
-    role: API Platform Lead
-    email: priya.sharma@novatrust.example.com
-  - name: Tomasz Kowalski
-    role: Network Security Architect
-    email: tomasz.kowalski@novatrust.example.com
-  - name: DPO
-    role: Data Protection Officer
-    email: dpo@novatrust.example.com
-approvals:
-  - name: Jonas Eriksen
-    role: CISO
-    identity: "@jonaseriksen"
-    approved_at: "2026-02-27T10:00:00Z"
-    signature_id: sig-stepup-001
-  - name: Marcus Chen
-    role: Head of IAM
-    identity: "@marcuschen"
-    approved_at: "2026-02-28T09:00:00Z"
-    signature_id: sig-stepup-002
-context:
-  summary: |
-    NovaTrust's banking APIs require step-up authentication for high-value operations: wire transfers > €10K, beneficiary management, and PSD2 dynamic linking for payment initiation. When a user triggers a high-value operation, the API gateway (PingAccess) challenges the user for additional authentication (biometric, FIDO2, or OTP) via RFC 9470 `insufficient_user_authentication`. After successful step-up, the system must persist proof that the user has completed the higher authentication level so that subsequent high-value requests within a time window do not re-challenge. Two patterns exist: (A) enrich the IdP session (PingFederate) with the authentication level and let the access token's `acr` claim reflect it, or (B) issue a custom JWE-encrypted cookie directly from the API gateway containing the step-up proof. This decision determines how step-up proof is created, stored, validated, and eventually expired.
-  business_drivers:
-    - "PSD2 Dynamic Linking: payment initiation requires proof of SCA with transaction binding"
-    - "Customer friction: re-challenging for every high-value operation within a session degrades UX"
-    - Fraud team needs centralized visibility into step-up authentication events
-    - Audit trail must prove authentication level at exact time of each high-value operation
-  technical_drivers:
-    - PingAccess can trigger step-up via RFC 9470 `insufficient_user_authentication` error response
-    - PingFederate session supports authentication level tracking (ACR values) natively
-    - JWE cookie approach requires custom crypto key management outside the IdP
-    - Access token `acr` claim provides standards-based proof of authentication context class
-    - Session enrichment integrates with PingFederate's built-in session timeout and ACR policies
-  constraints:
-    - "Step-up proof must expire independently of the base session (max_age for high assurance: 15 minutes)"
-    - API gateway (PingAccess) is the enforcement point — must validate step-up proof before proxying
-    - Must work with the BFF pattern (ADR-0005) — SPA does not manage tokens directly
-    - PingFederate session store must handle the additional metadata without capacity issues
-  assumptions:
-    - PingFederate's session enrichment can store custom attributes (acr_at timestamp) per session
-    - Token refresh via BFF will acquire a new access token with updated `acr` claim
-    - PingAccess can evaluate `acr` claim in the access token for step-up enforcement
-    - 15-minute max_age for high assurance is acceptable to the fraud team
-requirements:
-  functional:
-    - id: F-001
-      description: After successful step-up, access tokens must contain an acr claim reflecting the higher authentication level
-    - id: F-002
-      description: Step-up proof must expire after a configurable max_age (default 15 minutes) independent of the base session
-    - id: F-003
-      description: API gateway must reject high-value operations when acr claim does not meet the required level
-    - id: F-004
-      description: Step-up events must be logged in PingFederate audit trail with correlation to the triggering transaction
-  non_functional:
-    - id: NF-001
-      description: Step-up challenge-to-proof latency < 2 seconds (including MFA verification)
-    - id: NF-002
-      description: Token refresh with enriched session must complete in < 500ms
-    - id: NF-003
-      description: No additional cookies or local storage beyond the existing BFF session cookie
-alternatives:
-  - name: IdP session enrichment (Approach A)
-    summary: |
-      After successful step-up MFA, PingFederate enriches the user's IdP session with the achieved authentication context class (e.g., `urn:novatrust:acr:high`) and the timestamp of the step-up event. On the next token refresh, the BFF obtains a new access token whose `acr` claim reflects the elevated level. PingAccess validates the `acr` claim and `auth_time` to enforce max_age. When max_age expires, the next high-value request triggers a new step-up challenge.
-    pros:
-      - "Standards-based: acr claim in access token is defined by OIDC Core §2"
-      - "Centralized at the IdP: all step-up state managed by PingFederate — single source of truth"
-      - "No custom crypto: no need to generate, encrypt, or manage JWE keys outside the IdP"
-      - "Audit trail: PingFederate logs step-up events with session correlation — fraud team has visibility"
-      - "max_age enforcement: PingFederate natively supports `max_age` parameter on authorize requests"
-      - Token refresh via BFF acquires updated acr — no custom token issuance logic
-      - Integrates with existing PingAccess token validation — acr claim check is a configuration change
-    cons:
-      - Requires a token refresh after step-up to get updated acr claim — brief delay (~300ms)
-      - Step-up state is tied to the IdP session — if session is lost, step-up proof is lost
-      - PingFederate session store must accommodate additional attributes per session
-      - "Multi-region: session enrichment must replicate across PingFederate cluster nodes"
-    estimated_cost: low
-    risk: low
-  - name: Custom JWE cookie (Approach B)
-    summary: |
-      After successful step-up MFA, the API gateway (PingAccess) issues a JWE-encrypted cookie containing the step-up proof: authentication level, timestamp, and transaction reference. PingAccess validates the JWE cookie on subsequent requests to high-value endpoints. The cookie has a short Max-Age (15 minutes) for expiry.
-    pros:
-      - No IdP session dependency — step-up proof is self-contained in the cookie
-      - No token refresh delay — cookie is issued immediately after step-up
-      - Works even if PingFederate session is lost or rotated
-      - Gateway controls the full lifecycle — no IdP configuration changes needed
-    cons:
-      - "Custom crypto required: JWE key generation, rotation, and sharing across PingAccess nodes"
-      - Cookie is an additional credential — increases the attack surface
-      - JWE key management is outside PingFederate — not governed by IdP key lifecycle policies
-      - "No centralized audit: step-up events logged at the gateway, not the IdP — fragmented audit trail"
-      - "Non-standard: no IETF or OIDC specification for gateway-issued step-up cookies"
-      - "CSRF protection: additional cookie requires careful SameSite configuration"
-      - Cookie encryption key compromise allows forging step-up proofs — critical risk
-      - Must implement custom max_age logic — PingAccess does not natively track cookie-based auth levels
-    estimated_cost: high
-    risk: medium
-    rejection_rationale:
-      Requires custom JWE key management outside the IdP — key compromise allows forging step-up proofs.
-      Non-standard approach with no IETF or OIDC specification. Fragmented audit trail (gateway vs IdP) hinders fraud investigation.
-  - name: "Hybrid: enriched session with JWE fallback for session loss"
-    summary: |
-      Primary path uses IdP session enrichment (Approach A). Additionally, the BFF issues a JWE-encrypted cookie as a fallback in case the PingFederate session is lost. PingAccess checks acr claim first, then falls back to JWE cookie.
-    pros:
-      - Resilient to PingFederate session loss
-      - Standards-based primary path with fallback safety net
-    cons:
-      - All cons of both approaches combined
-      - "Two validation paths at PingAccess: acr claim check + JWE cookie check"
-      - JWE cookie fallback may mask session management issues instead of surfacing them
-      - "Double the key management overhead: IdP signing keys + JWE encryption keys"
-      - Testing matrix is doubled — must validate both paths independently
-      - "Operational complexity: which path was used? Debugging requires checking both"
-    estimated_cost: high
-    risk: medium
-    rejection_rationale:
-      Combines the complexity of both approaches without clear benefit. Two validation paths double the testing
-      matrix. JWE cookie fallback may mask session management issues rather than surfacing them for resolution.
-decision:
-  chosen_alternative: IdP session enrichment (Approach A)
-  rationale: |
-    - Standards-based: acr claim and max_age are OIDC Core primitives — no custom protocol needed
-    - Single source of truth: PingFederate manages all authentication state — no parallel state outside IdP
-    - No custom crypto: eliminates JWE key management, rotation, and the risk of key compromise
-    - Centralized audit: PingFederate logs all step-up events with session IDs — fraud team query a single system
-    - PingAccess policy configuration: 'require acr=urn:novatrust:acr:high with max_age=900 for /api/payments/** ' — declarative, not custom code
-    - Token refresh delay (~300ms) is acceptable — BFF handles refresh transparently before proxying the request
-    - Session replication across PingFederate cluster is already operational for base session — marginal additional load
-  tradeoffs: |
-    - Token refresh round-trip adds ~300ms after step-up — user sees brief delay before high-value operation proceeds
-    - PingFederate session loss requires re-authentication including step-up — accepted as correct security behavior
-    - Session store grows by ~100 bytes per enriched session — negligible at current scale (100K active sessions)
-    - Multi-data-center: session replication lag (< 500ms) may cause brief inconsistency after step-up in cross-DC scenario
-  decision_date: "2026-02-27"
-  confidence: high
-consequences:
-  positive:
-    - No custom cryptographic material to manage — step-up proof lifecycle governed by IdP
-    - "PSD2 dynamic linking: acr claim provides auditable proof of SCA at transaction time"
-    - Fraud team has single query point (PingFederate audit logs) for all step-up events
-    - "PingAccess enforcement is declarative: ACR + max_age policy per URL pattern"
-  negative:
-    - ~300ms token refresh delay after step-up MFA
-    - Session loss requires full re-authentication including step-up
-    - PingFederate session store carries additional enrichment attributes
-confirmation:
-  description:
-    Session enrichment validated in staging with PingFederate 12.x and PingAccess 8.x. Step-up flow tested end-to-end
-    via BFF with FIDO2 and OTP. acr claim propagation confirmed across cluster nodes within 500ms.
-  artifact_ids:
-    - TEST-SUITE-step-up-e2e-fido2-otp
-    - https://github.com/novatrust/iam-platform/pull/267
-    - POC-2026-02-session-enrichment-replication
-dependencies:
-  internal:
-    - PingFederate 12.x (session enrichment, acr claim issuance)
-    - PingAccess 8.x (ACR policy enforcement)
-    - BFF (ADR-0005) for step-up challenge mediation
-    - MFA provider (FIDO2 / biometric / OTP)
-  external:
-    - None — all components are internal
-references:
-  - title: OAuth 2.0 Step-Up Authentication Challenge Protocol — RFC 9470
-    url: https://datatracker.ietf.org/doc/html/rfc9470
-  - title: OpenID Connect Core 1.0 — §2 acr Claim
-    url: https://openid.net/specs/openid-connect-core-1_0.html#IDToken
-  - title: PSD2 RTS on Strong Customer Authentication — EBA
-    url: https://www.eba.europa.eu/regulation-and-policy/payment-services-and-electronic-money/regulatory-technical-standards-on-strong-customer-authentication-and-common-and-secure-communication
-  - title: PingFederate Session Management Documentation
-    url: https://docs.pingidentity.com/pingfederate/latest/session-management.html
-lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2027-02-27"
-  superseded_by: null
-  supersedes: null
-  archival:
-    archived_at: null
-    archive_reason: null
-audit_trail:
-  - event: created
-    by: Elena Vasquez
-    at: "2026-02-10T08:00:00Z"
-  - event: updated
-    by: Marcus Chen
-    at: "2026-02-20T11:00:00Z"
-    details: Added hybrid approach analysis and PSD2 dynamic linking requirements
-  - event: approved
-    by: Jonas Eriksen
-    at: "2026-02-27T10:00:00Z"
-    details: "CISO approval with condition: max_age must be 15 minutes maximum for payment endpoints"
-  - event: approved
-    by: Marcus Chen
-    at: "2026-02-28T09:00:00Z"
-````
-
 ## File: .skills/adr-author/references/GLOSSARY.md
 ````markdown
 # ADR Glossary — Quick Reference
@@ -2832,64 +1109,6 @@ scripts/                         @org/architecture-team
 # not match the same people. Both mechanisms complement each other:
 #   - CODEOWNERS: "These people should be notified and asked to review"
 #   - approvals[].identity: "These specific people must have approved"
-````
-
-## File: llms.txt
-````
-# adr-governance
-
-> A schema-governed, AI-native Architecture Decision Record (ADR) framework. Provides a JSON Schema (Draft 2020-12) meta-model for structured YAML-based ADRs, a GitOps governance process, Python validation tooling, pre-built CI/CD pipelines for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI, and an agentskills.io Agent Skill for AI-assisted authoring and review. The Architecture Decision Log (ADL) lives in `architecture-decision-log/`. Example ADRs cover IAM/security scenarios from a fictional enterprise.
-
-## Documentation
-
-- [README](https://github.com/ivanstambuk/adr-governance/blob/main/README.md): Project overview, problem statement, quick start, and directory structure
-- [ADR Governance Process](https://github.com/ivanstambuk/adr-governance/blob/main/docs/adr-process.md): Normative process — roles, status lifecycle (Mermaid state diagram), workflows for proposing, reviewing, approving, rejecting, deferring, superseding, deprecating, archiving, and confirming ADRs. Includes the Architectural Significance Test, branch protection rules, CODEOWNERS setup, periodic review guidance, and schema versioning policy
-- [CI/CD Setup Guide](https://github.com/ivanstambuk/adr-governance/blob/main/docs/ci-setup.md): Step-by-step setup for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — includes LLM-ready setup prompts
-- [Glossary](https://github.com/ivanstambuk/adr-governance/blob/main/docs/glossary.md): All enum values (status, decision_type, priority, confidence, risk levels), ID formats, audit trail events, and abbreviations (AD, ADL, ADR, AKM, ASR)
-- [JSON Schema](https://github.com/ivanstambuk/adr-governance/blob/main/schemas/adr.schema.json): The complete ADR meta-model — Draft 2020-12, defines all required/optional sections, field types, enums, and constraints
-- [Agent Skill (SKILL.md)](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/SKILL.md): Instructions for AI assistants — how to author, review, validate, and supersede ADRs using the governed meta-model
-- [Web Chat Quickstart](https://github.com/ivanstambuk/adr-governance/blob/main/docs/web-chat-quickstart.md): Platform-specific starter prompts for using the Repomix bundle with ChatGPT, Claude.ai, Google Gemini, and Microsoft Copilot — no skill execution required
-- [ADR Template](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/assets/adr-template.yaml): Blank YAML template with all sections
-- [Schema Reference](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/references/SCHEMA_REFERENCE.md): Human-readable schema documentation for the Agent Skill
-
-## Decision Enforcement
-
-The ADL (Architecture Decision Log) isn't just documentation — it's a machine-readable specification. The Repomix bundle (`adr-governance-bundle.md`) concatenates the entire ADL into a single searchable file that serves as a **single source of truth for Spec-Driven Development (SDD)**:
-
-- **Agent context injection:** Point any coding agent (Copilot, Claude Code, Antigravity, Cursor) at the bundle file. The agent can search it using standard text search to find relevant architectural decisions and generate code that complies with them — across any repository.
-- **CI pipeline guardrails:** Add a step in your code repository's CI pipeline that fetches the ADL bundle and validates code changes for architectural compliance before merge. The bundle is plain text — any tool from `grep` to an LLM can consume it.
-- **Cross-repository enforcement:** The ADL repository and the code repository don't need to be the same. Fetch the bundle at CI time or include it in your agent's knowledge base.
-
-## Examples
-
-- [ADR-0000: Adopt Governed ADR Process (meta-ADR)](https://github.com/ivanstambuk/adr-governance/blob/main/architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml): Bootstrap decision adopting this governance framework
-- [ADR-0001: DPoP over mTLS](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml): Accepted — sender-constrained token strategy
-- [ADR-0002: Reference Tokens over JWTs](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml): Accepted — gateway introspection pattern
-- [ADR-0003: Pairwise Subject Identifiers](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml): Accepted — OIDC privacy pattern
-- [ADR-0004: Ed25519 over RSA](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml): Accepted — JWT signing key algorithm
-- [ADR-0005: BFF Token Mediator](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml): Accepted — SPA token acquisition
-- [ADR-0006: Session Enrichment for Step-Up](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0006-session-enrichment-for-step-up-authentication.yaml): Accepted — step-up authentication proof
-- [ADR-0007: Centralized Vault (rejected)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml): Rejected — documents why HashiCorp Vault was not adopted
-- [ADR-0008: OpenID Federation (deferred)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0008-defer-openid-federation-for-trust-establishment.yaml): Deferred — postponed until ecosystem matures
-
-## Tooling
-
-- [Validator Script](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/validate-adr.py): Python script — validates ADR YAML against JSON Schema, checks semantic consistency (chosen_alternative ↔ alternatives, status ↔ audit_trail, supersession symmetry, temporal ordering), and quality signals (missing summaries, premature confidence, decision date consistency)
-- [Decision Extractor](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/extract-decisions.py): Extracts active decisions into Markdown or JSON for agent context injection and CI enforcement. Includes `--compliance-prompt` mode that generates LLM-ready compliance review prompts with code diffs. Supports filtering by status, tags, and decision type.
-- [Pre-Review Quality Gate](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/review-adr.py): Generates an LLM Socratic review prompt for ADR drafts — probes for semantic clarity, completeness, logical consistency, assumption risks, and cross-reference consistency before the ADR reaches human reviewers.
-- [Markdown Renderer](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/render-adr.py): Renders ADR YAML to polished Markdown with Mermaid diagram passthrough
-- [Repomix Bundle Script](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/bundle.sh): Creates single-file bundle for LLM context injection
-
-## CI/CD Pipelines
-
-Pre-built pipeline files for enforcing ADR validation as a merge gate. Copy the file for your platform to the repo root and configure branch protection.
-
-- [CI/CD Setup Guide](https://github.com/ivanstambuk/adr-governance/blob/main/docs/ci-setup.md): Step-by-step setup for all platforms, enforcement configuration, troubleshooting, and LLM-ready setup prompts
-- [GitHub Actions](https://github.com/ivanstambuk/adr-governance/blob/main/.github/workflows/validate-adr.yml): Pre-configured — runs on every PR automatically
-- [Azure DevOps](https://github.com/ivanstambuk/adr-governance/blob/main/ci/azure-devops/azure-pipelines.yml): Copy to repo root as `azure-pipelines.yml`
-- [GCP Cloud Build](https://github.com/ivanstambuk/adr-governance/blob/main/ci/gcp-cloud-build/cloudbuild.yaml): Copy to repo root as `cloudbuild.yaml`
-- [AWS CodeBuild](https://github.com/ivanstambuk/adr-governance/blob/main/ci/aws-codebuild/buildspec.yml): Copy to repo root as `buildspec.yml`
-- [GitLab CI](https://github.com/ivanstambuk/adr-governance/blob/main/ci/gitlab-ci/.gitlab-ci.yml): Copy to repo root as `.gitlab-ci.yml`
 ````
 
 ## File: .skills/adr-author/references/SCHEMA_REFERENCE.md
@@ -3306,6 +1525,64 @@ def main():
 
 if __name__ == "__main__":
     main()
+````
+
+## File: llms.txt
+````
+# adr-governance
+
+> A schema-governed, AI-native Architecture Decision Record (ADR) framework. Provides a JSON Schema (Draft 2020-12) meta-model for structured YAML-based ADRs, a GitOps governance process, Python validation tooling, pre-built CI/CD pipelines for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI, and an agentskills.io Agent Skill for AI-assisted authoring and review. The Architecture Decision Log (ADL) lives in `architecture-decision-log/`. Example ADRs cover IAM/security scenarios from a fictional enterprise.
+
+## Documentation
+
+- [README](https://github.com/ivanstambuk/adr-governance/blob/main/README.md): Project overview, problem statement, quick start, and directory structure
+- [ADR Governance Process](https://github.com/ivanstambuk/adr-governance/blob/main/docs/adr-process.md): Normative process — roles, status lifecycle (Mermaid state diagram), workflows for proposing, reviewing, approving, rejecting, deferring, superseding, deprecating, archiving, and confirming ADRs. Includes the Architectural Significance Test, branch protection rules, CODEOWNERS setup, periodic review guidance, and schema versioning policy
+- [CI/CD Setup Guide](https://github.com/ivanstambuk/adr-governance/blob/main/docs/ci-setup.md): Step-by-step setup for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — includes LLM-ready setup prompts
+- [Glossary](https://github.com/ivanstambuk/adr-governance/blob/main/docs/glossary.md): All enum values (status, decision_type, priority, confidence, risk levels), ID formats, audit trail events, and abbreviations (AD, ADL, ADR, AKM, ASR)
+- [JSON Schema](https://github.com/ivanstambuk/adr-governance/blob/main/schemas/adr.schema.json): The complete ADR meta-model — Draft 2020-12, defines all required/optional sections, field types, enums, and constraints
+- [Agent Skill (SKILL.md)](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/SKILL.md): Instructions for AI assistants — how to author, review, validate, and supersede ADRs using the governed meta-model
+- [Web Chat Quickstart](https://github.com/ivanstambuk/adr-governance/blob/main/docs/web-chat-quickstart.md): Platform-specific starter prompts for using the Repomix bundle with ChatGPT, Claude.ai, Google Gemini, and Microsoft Copilot — no skill execution required
+- [ADR Template](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/assets/adr-template.yaml): Blank YAML template with all sections
+- [Schema Reference](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/references/SCHEMA_REFERENCE.md): Human-readable schema documentation for the Agent Skill
+
+## Decision Enforcement
+
+The ADL (Architecture Decision Log) isn't just documentation — it's a machine-readable specification. The Repomix bundle (`adr-governance-bundle.md`) concatenates the entire ADL into a single searchable file that serves as a **single source of truth for Spec-Driven Development (SDD)**:
+
+- **Agent context injection:** Point any coding agent (Copilot, Claude Code, Antigravity, Cursor) at the bundle file. The agent can search it using standard text search to find relevant architectural decisions and generate code that complies with them — across any repository.
+- **CI pipeline guardrails:** Add a step in your code repository's CI pipeline that fetches the ADL bundle and validates code changes for architectural compliance before merge. The bundle is plain text — any tool from `grep` to an LLM can consume it.
+- **Cross-repository enforcement:** The ADL repository and the code repository don't need to be the same. Fetch the bundle at CI time or include it in your agent's knowledge base.
+
+## Examples
+
+- [ADR-0000: Adopt Governed ADR Process (meta-ADR)](https://github.com/ivanstambuk/adr-governance/blob/main/architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml): Bootstrap decision adopting this governance framework
+- [ADR-0001: DPoP over mTLS](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml): Accepted — sender-constrained token strategy
+- [ADR-0002: Reference Tokens over JWTs](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml): Accepted — gateway introspection pattern
+- [ADR-0003: Pairwise Subject Identifiers](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml): Accepted — OIDC privacy pattern
+- [ADR-0004: Ed25519 over RSA](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml): Accepted — JWT signing key algorithm
+- [ADR-0005: BFF Token Mediator](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml): Accepted — SPA token acquisition
+- [ADR-0006: Session Enrichment for Step-Up](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0006-session-enrichment-for-step-up-authentication.yaml): Accepted — step-up authentication proof
+- [ADR-0007: Centralized Vault (rejected)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml): Rejected — documents why HashiCorp Vault was not adopted
+- [ADR-0008: OpenID Federation (deferred)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0008-defer-openid-federation-for-trust-establishment.yaml): Deferred — postponed until ecosystem matures
+
+## Tooling
+
+- [Validator Script](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/validate-adr.py): Python script — validates ADR YAML against JSON Schema, checks semantic consistency (chosen_alternative ↔ alternatives, status ↔ audit_trail, supersession symmetry, temporal ordering), and quality signals (missing summaries, premature confidence, decision date consistency)
+- [Decision Extractor](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/extract-decisions.py): Extracts active decisions into Markdown or JSON for agent context injection and CI enforcement. Includes `--compliance-prompt` mode that generates LLM-ready compliance review prompts with code diffs. Supports filtering by status, tags, and decision type.
+- [Pre-Review Quality Gate](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/review-adr.py): Generates an LLM Socratic review prompt for ADR drafts — probes for semantic clarity, completeness, logical consistency, assumption risks, and cross-reference consistency before the ADR reaches human reviewers.
+- [Markdown Renderer](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/render-adr.py): Renders ADR YAML to polished Markdown with Mermaid diagram passthrough
+- [Repomix Bundle Script](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/bundle.sh): Creates single-file bundle for LLM context injection
+
+## CI/CD Pipelines
+
+Pre-built pipeline files for enforcing ADR validation as a merge gate. Copy the file for your platform to the repo root and configure branch protection.
+
+- [CI/CD Setup Guide](https://github.com/ivanstambuk/adr-governance/blob/main/docs/ci-setup.md): Step-by-step setup for all platforms, enforcement configuration, troubleshooting, and LLM-ready setup prompts
+- [GitHub Actions](https://github.com/ivanstambuk/adr-governance/blob/main/.github/workflows/validate-adr.yml): Pre-configured — runs on every PR automatically
+- [Azure DevOps](https://github.com/ivanstambuk/adr-governance/blob/main/ci/azure-devops/azure-pipelines.yml): Copy to repo root as `azure-pipelines.yml`
+- [GCP Cloud Build](https://github.com/ivanstambuk/adr-governance/blob/main/ci/gcp-cloud-build/cloudbuild.yaml): Copy to repo root as `cloudbuild.yaml`
+- [AWS CodeBuild](https://github.com/ivanstambuk/adr-governance/blob/main/ci/aws-codebuild/buildspec.yml): Copy to repo root as `buildspec.yml`
+- [GitLab CI](https://github.com/ivanstambuk/adr-governance/blob/main/ci/gitlab-ci/.gitlab-ci.yml): Copy to repo root as `.gitlab-ci.yml`
 ````
 
 ## File: .skills/adr-author/assets/adr-template.yaml
@@ -5389,6 +3666,56 @@ You have received the complete **adr-governance** framework — a schema-governe
 
 ---
 
+## ⚠️ CRITICAL: Response format for ALL decision queries
+
+**These rules apply to EVERY response about architectural decisions. Follow them exactly.**
+
+### Audience
+
+- **Default to stakeholder-friendly language.** Assume the reader is a non-technical decision-maker (manager, executive, auditor) unless the user explicitly asks for technical depth.
+- **Lead with governance metadata and business impact**, not technical implementation details.
+- Do NOT offer code-level follow-ups (code review checklists, PR templates, CLI commands) unless the user explicitly asks.
+
+### Mandatory response template
+
+When the user asks about any decision, you MUST respond using exactly this structure, in this order:
+
+> **ADR-NNNN: [Full Title]**
+>
+> | Field | Value |
+> |---|---|
+> | **Status** | ✅ Accepted *(use emoji: ✅ Accepted, ❌ Rejected, 🔄 Proposed, ⏸️ Deferred, ⚠️ Deprecated, 🔀 Superseded, 📝 Draft)* |
+> | **Decision date** | *from `decision.decision_date`* |
+> | **Decision owner** | *name (role) — from `decision_owner`* |
+> | **Approved by** | *name (role), date — one line per approver from `approvals[]`* |
+> | **Project** | *from `adr.project`* |
+> | **Next review** | *from `lifecycle.next_review_date` (omit row if not set)* |
+> | **Authors** | *names and roles from `authors[]`* |
+>
+> **What was decided:** 2–3 sentences in plain language explaining the decision and its main business reason. Avoid jargon.
+>
+> **Alternatives considered:**
+> - ❌ **Alternative A** — one-line rejection reason
+> - ❌ **Alternative B** — one-line rejection reason
+>
+> **Key tradeoffs accepted:**
+> - bullet 1
+> - bullet 2
+>
+> *(Technical details available on request.)*
+
+### Response rules (non-negotiable)
+
+1. **NEVER skip the governance table.** The date, status, owner, and approvers MUST appear in every response.
+2. **NEVER lead with technical details.** The governance table and summary come first.
+3. **Always cite the ADR ID** so the reader can find the source document.
+4. If the ADR is superseded, deprecated, or rejected — say so **prominently at the top** before the table.
+5. If multiple ADRs are relevant, present each using this same template.
+6. If the user asks "why didn't we choose X?" — find the `rejection_rationale` and present it.
+7. Only provide technical implementation details (algorithms, protocols, code) if the user **explicitly** asks a technical follow-up.
+
+---
+
 ## How to navigate this file
 
 This is a large bundle. **Do not attempt to read it all at once.** Use search/grep to locate sections on demand:
@@ -5414,62 +3741,100 @@ You support these operations:
 
 ### 1. Create a new ADR (Socratic authoring)
 
-Walk the user through creating a complete, schema-valid ADR using Socratic dialogue. **Do not ask for all information at once** — interview the user step by step, probing for gaps and challenging weak reasoning.
+Walk the user through creating a complete, schema-valid ADR using Socratic dialogue. **Interview the user in sets of 5 numbered questions.** Probe for gaps and challenge weak reasoning.
 
-**Workflow:**
+**Interview format:**
+- Present exactly **5 numbered questions** (1–5) per set.
+- Tell the user: *"Reply with the number and your answer for each."*
+- When showing options to pick from (e.g., decision type, priority), **list each option as a separate bullet point** — do NOT put them all on one line.
+- After the user answers, say: *"Thank you — let's continue with the next set of questions."* Then present the next 5.
+- If answers need clarification or you spot gaps, ask **up to 5 follow-up questions** in the same numbered format.
+- Only generate the YAML after all questions have been answered.
 
-1. **Ask what decision needs to be made.** Get a clear, concise title (10–200 chars).
-2. **Determine the next ADR ID.** Search this file for existing ADR IDs in `architecture-decision-log/` and `examples-reference/` to find the highest number, then increment. The format is `ADR-NNNN` (zero-padded, 4 digits).
-3. **Classify the decision:**
-   - Decision type: `technology` | `process` | `organizational` | `vendor` | `security` | `compliance`
-   - Priority: `low` | `medium` | `high` | `critical`
-4. **Gather context:**
-   - What problem are we solving? (This becomes `context.summary` — a Markdown narrative)
-   - What are the business drivers? (business outcomes, compliance needs, cost pressures)
-   - What are the technical drivers? (scalability, performance, integration, security)
-   - What are the constraints? (budget, timeline, regulatory, existing contracts, team skills)
-   - What assumptions are we making?
-5. **Elicit alternatives** (minimum 2, aim for 3):
-   - For each: name, summary (Markdown), pros, cons, estimated cost (`low`|`medium`|`high`), risk level (`low`|`medium`|`high`|`critical`)
-   - **Challenge strawman alternatives.** If one alternative has only cons and no pros, push back — every real option has *some* advantages.
-   - **Challenge lopsided comparisons.** If the "obvious" choice has 5 pros and 0 cons, probe for hidden costs.
-6. **Determine the recommendation:**
-   - Which alternative and why? (This becomes `decision.rationale` — Markdown, can include diagrams)
-   - What are we explicitly giving up? (This becomes `decision.tradeoffs` — Markdown)
-   - Confidence level: `low` | `medium` | `high`
-   - For each non-chosen alternative, why was it rejected? (`rejection_rationale`)
-7. **Assess consequences:**
-   - Positive outcomes (what gets better)
-   - Negative outcomes (what gets worse or becomes a new risk)
-8. **Define confirmation:**
-   - How will we verify this decision was implemented correctly? (`confirmation.description`)
-   - Are there artifact IDs to track? (Jira tickets, PR URLs, test suites — can be added later)
-9. **Capture metadata:**
-   - Authors (name, role, email)
-   - Decision owner (single accountable person)
-   - Project name
-   - Tags for categorization
-   - Summary (`adr.summary`): 2–4 sentence elevator pitch, max 500 chars — distinct from `context.summary`
-10. **Generate the complete ADR YAML.**
-    - Search for `adr-template.yaml` in this file to get the skeleton
-    - Fill in all required sections
-    - Set status to `draft` or `proposed`
-    - Add an initial `audit_trail` entry: `event: "created"`
-    - Use YAML literal block scalars (`|`) for Markdown fields
-    - Use ISO 8601 for all timestamps
-11. **Self-validate the output:**
-    - Search for `adr.schema.json` and verify all `required` fields are present
-    - Verify `chosen_alternative` matches an entry in `alternatives[].name`
-    - Verify at least 2 alternatives exist
-    - Verify `adr.id` matches `^ADR-[0-9]{4}(-[a-z0-9]+)*$`
-    - Verify all enum values are valid (search for the glossary section)
+**Before starting:** Search this bundle for existing ADRs, glossary terms, and documentation related to the user's topic. Reference anything relevant during the interview (e.g., "I see ADR-0001 already covers DPoP — does this new decision interact with it?").
 
-**Socratic probing guidelines:**
+**Determine the next ADR ID:** Search this file for existing ADR IDs in `architecture-decision-log/` and `examples-reference/` to find the highest number, then increment. Format: `ADR-NNNN` (zero-padded, 4 digits).
+
+**Questions — Decision & context:**
+1. What decision needs to be made? (Give a clear title, 10–200 chars)
+2. What type of decision is this? Options:
+   - technology
+   - process
+   - organizational
+   - vendor
+   - security
+   - compliance
+3. What priority? Options:
+   - low
+   - medium
+   - high
+   - critical
+4. What project / programme does this belong to?
+5. What problem are we solving? (Brief description of the current pain point)
+
+**Questions — Drivers & constraints:**
+1. What are the business drivers? (business outcomes, compliance needs, cost pressures)
+2. What are the technical drivers? (scalability, performance, integration, security)
+3. What are the constraints? (budget, timeline, regulatory, existing contracts, team skills)
+4. What assumptions are we making?
+5. Who is the decision owner? (single accountable person — name, role, email)
+
+**Questions — Alternatives & recommendation:**
+1. What is Alternative A? (name + brief description + key pros and cons)
+2. What is Alternative B? (name + brief description + key pros and cons)
+3. Which alternative do you recommend, and why?
+4. What are we explicitly giving up by choosing this option? (tradeoffs)
+5. For each rejected alternative, why was it not chosen? (one-line rejection rationale)
+
+After the user answers, ask: *"Do you have any more alternatives to consider? If so, describe them; otherwise, say 'no' and we'll continue."* Repeat until the user says no.
+
+**Questions — Consequences & metadata:**
+1. What positive outcomes do you expect from this decision?
+2. What negative outcomes or new risks does this introduce?
+3. How will we verify this decision was implemented correctly? (tests, metrics, audits)
+4. Who are the authors? (name, role, email for each)
+5. What tags should categorize this ADR? (e.g., `security`, `api`, `performance`)
+
+**Coherence check (before generating YAML):**
+
+After all question sets are complete, review ALL collected answers for **high-level and medium-level** inconsistencies, gaps, and semantic issues. Ignore minor/low-level issues. Examples of what to check:
+- Does the rationale actually support the chosen alternative? (e.g., if the rationale emphasizes cost but the chosen option is the most expensive)
+- Are the tradeoffs consistent with the cons listed for the chosen alternative?
+- Is the problem statement clear enough that someone unfamiliar could understand why this decision was needed?
+- Are the business/technical drivers reflected in the alternatives' evaluation criteria?
+- Are there obvious risks or consequences not mentioned?
+- Does the decision interact with or contradict any existing ADRs in the bundle?
+
+If you find high or medium issues, present up to 5 numbered follow-up questions to resolve them before proceeding.
+
+**Proactive depth prompts:**
+
+If the context feels thin or you identify semantic gaps, **ask the user whether additional depth would strengthen the ADR**. Specifically:
+- If the decision involves a complex flow → ask if a **sequence diagram** (Mermaid or PlantUML) would help capture it
+- If there are state transitions → ask if a **state diagram** would clarify the lifecycle
+- If the architecture involves multiple components → ask if a **component or deployment diagram** would add value
+- If key terms are used that are not in the bundle's glossary → ask the user to define them so they can be added to context
+- If the rationale references data (benchmarks, load tests, cost comparisons) → ask the user to provide or summarize it
+
+The context section can be arbitrarily large — diagrams, extended narratives, and data tables are all welcome. The goal is to produce an ADR that stands on its own as a complete decision record.
+
+**After all questions and the coherence check pass:** Generate the complete ADR YAML:
+- Search for `adr-template.yaml` in this file to get the skeleton
+- Fill in all required sections from the interview answers
+- Set status to `draft` or `proposed`
+- Add an initial `audit_trail` entry: `event: "created"`
+- Use YAML literal block scalars (`|`) for Markdown fields
+- Use ISO 8601 for all timestamps
+- Self-validate: verify all `required` fields, enum values, at least 2 alternatives, ID format
+
+**Socratic probing guidelines** (use during any question set):
 - If the rationale says "it's the industry standard" → ask *why* the standard exists and whether the team's constraints match
 - If a constraint says "must use X" → ask *whose* requirement this is and whether it's truly non-negotiable
 - If there's no mention of cost → ask about licensing, operational overhead, migration effort
 - If there's no mention of risk → ask what happens if the decision is wrong
 - If confidence is `high` but only one alternative was seriously evaluated → challenge the confidence level
+- **Challenge strawman alternatives.** If one alternative has only cons and no pros, push back — every real option has *some* advantages.
+- **Challenge lopsided comparisons.** If the "obvious" choice has 5 pros and 0 cons, probe for hidden costs.
 
 ### 2. Query the Architecture Decision Log (ADL)
 
@@ -5480,19 +3845,15 @@ When the user asks a question about architectural decisions, **search the ADR fi
 - Look at `adr.title`, `adr.status`, `context.summary`, `decision.chosen_alternative`, and `decision.rationale` fields
 - Match by tags in `adr.tags`
 
-**How to respond:**
-- **Always cite** the specific ADR IDs: "According to **ADR-0001** (*Use DPoP over mTLS for Sender-Constrained Tokens*)..."
-- **Include the status**: "This decision is currently **accepted**."
-- **Include the rationale summary**: briefly explain *why* the decision was made
-- **Include caveats**: if the ADR is superseded, deprecated, or rejected, say so explicitly
-- **Cross-reference**: if multiple ADRs are relevant, mention all of them and explain any interactions
+**How to respond:** Follow the **mandatory response template** defined at the top of this document. Every query response must include the governance metadata table, summary, alternatives, and tradeoffs — in that exact order.
 
 **Example queries the user might ask:**
 - "What did we decide about token binding?" → Search for DPoP, mTLS, sender-constrained, token binding
-- "Why didn't we go with HashiCorp Vault?" → Find the rejected ADR, cite the rationale
+- "Why didn't we go with HashiCorp Vault?" → Find the rejected alternative, cite `rejection_rationale`
 - "What decisions affect our API gateway?" → Search for gateway, introspection, reference tokens
 - "Are there any deferred decisions?" → Search for `status: "deferred"`
 - "Show me all security-related decisions" → Filter by tags or decision_type
+- "Who approved the signing algorithm decision?" → Find approvals[], present names, roles, and dates
 
 ### 3. Review an existing ADR
 
@@ -5512,21 +3873,22 @@ When the user provides or asks you to review an ADR, perform a structured review
 
 ### 4. Summarize ADRs for stakeholders
 
-When the user asks for a summary:
+When the user asks for a summary, use the **mandatory response template** from the top of this document. Additionally:
 
-**Email format** (default): ~10–15 lines covering:
-- What was decided (title + chosen alternative)
-- Why (1–2 sentence rationale)
-- What alternatives were considered (names only)
+**Email format** (default): ~15–20 lines covering all fields in the governance table, plus:
+- What was decided (chosen alternative in plain language)
+- Why (1–2 sentence rationale focused on business impact)
+- What alternatives were considered (names + one-line rejection reason each)
 - Key tradeoffs acknowledged
-- Positive and negative consequences
 - Next steps / confirmation criteria
 
-**Chat format** (for Slack/Teams): 3–5 lines:
-- 🏗️ **[Title]** — [status]
+**Chat format** (for Slack/Teams): 5–7 lines:
+- ✅ **ADR-NNNN: [Title]** — Accepted on [date]
+- **Owner:** [name] ([role]) · **Approved by:** [names]
 - **Decision:** [chosen alternative in one sentence]
-- **Why:** [one-sentence rationale]
-- **Impact:** [one positive, one negative consequence]
+- **Why:** [one-sentence business rationale]
+- **Tradeoffs:** [one key tradeoff]
+- **Next review:** [date]
 
 ### 5. Supersede, deprecate, or archive an ADR
 
