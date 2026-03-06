@@ -86,7 +86,7 @@ The most formally documented ADR process from a major cloud vendor. Defines thre
             │
             ▼
    ┌────────────────┐
-   │    Proposed     │◄──────────────────────────────────────┐
+   │    Proposed    │◄───────────────────────────────────────┐
    └───────┬────────┘                                        │
            │                                                 │
            ▼                                                 │
@@ -156,21 +156,21 @@ A **decentralized** governance model where anyone can make an architectural deci
 **State Machine:**
 
 ```
-   ┌───────────────┐
+   ┌──────────────────┐
    │  Need identified │
-   └───────┬───────┘
+   └───────┬──────────┘
            │
            ▼
    ┌───────────────────────────┐
    │  Seek advice from:        │
-   │  • Those affected          │
-   │  • Those with expertise    │
+   │  • Those affected         │
+   │  • Those with expertise   │
    └───────┬───────────────────┘
            │
            ▼
    ┌───────────────────┐
-   │  Architecture      │  (recurring, advisory)
-   │  Advisory Forum    │
+   │  Architecture     │  (recurring, advisory)
+   │  Advisory Forum   │
    └───────┬───────────┘
            │ discussed
            ▼

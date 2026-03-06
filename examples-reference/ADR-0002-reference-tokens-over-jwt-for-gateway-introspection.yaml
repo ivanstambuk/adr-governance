@@ -1,5 +1,5 @@
 adr:
-  id: ADR-0002
+  id: ADR-0002-reference-tokens-over-jwt-for-gateway-introspection
   title: Use opaque reference tokens with introspection over self-contained JWTs for API gateway authorization
   summary:
     Issue opaque reference tokens instead of self-contained JWTs, enabling instant revocation via introspection while
@@ -8,7 +8,7 @@ adr:
   created_at: "2026-01-15T10:00:00Z"
   last_modified: "2026-02-01T16:00:00Z"
   version: "1.0"
-  schema_version: 1.0.0
+  schema_version: "1.0.0"
   project: API Authorization Layer — Token Format Strategy
   component: Access Token Format
   tags:

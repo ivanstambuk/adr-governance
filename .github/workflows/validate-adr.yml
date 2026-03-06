@@ -44,7 +44,7 @@ jobs:
             echo "No ADR files in architecture-decision-log/ — skipping validation"
           fi
 
-      - name: Validate examples-reference-reference/
+      - name: Validate examples-reference/
         run: |
           if [ -d "examples-reference" ] && [ "$(ls -A examples-reference/*.yaml 2>/dev/null)" ]; then
             python3 scripts/validate-adr.py examples-reference/

@@ -1,5 +1,5 @@
 adr:
-  id: ADR-0000
+  id: ADR-0000-adopt-governed-adr-process
   title: Adopt schema-governed ADR process for architectural decision management
   summary:
     Establish a formal, schema-validated ADR governance process using YAML files, JSON Schema validation, and GitOps
@@ -8,7 +8,7 @@ adr:
   created_at: "2026-03-05T09:00:00Z"
   last_modified: "2026-03-05T18:00:00Z"
   version: "1.0"
-  schema_version: 1.0.0
+  schema_version: "1.0.0"
   project: ADR Governance
   component: Decision Management Process
   tags:

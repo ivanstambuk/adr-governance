@@ -1,0 +1,12 @@
+# yamllint configuration — shared across all CI pipelines and local usage
+#
+# Run manually:
+#   yamllint -c .yamllint.yml architecture-decision-log/ examples-reference/
+
+extends: default
+
+rules:
+  line-length:
+    max: 300
+  truthy:
+    check-keys: false

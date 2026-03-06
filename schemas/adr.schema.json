@@ -38,8 +38,8 @@
             "properties": {
                 "id": {
                     "type": "string",
-                    "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)*$",
-                    "description": "Unique identifier in ADR-NNNN or ADR-NNNN-slug format."
+                    "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)+$",
+                    "description": "Unique identifier in ADR-NNNN-slug format (slug is mandatory). Example: ADR-0001-dpop-over-mtls."
                 },
                 "title": {
                     "type": "string",
@@ -457,7 +457,7 @@
                         "string",
                         "null"
                     ],
-                    "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)*$",
+                    "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)+$",
                     "description": "ADR ID that supersedes this one, if any."
                 },
                 "supersedes": {
@@ -465,7 +465,7 @@
                         "string",
                         "null"
                     ],
-                    "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)*$",
+                    "pattern": "^ADR-[0-9]{4}(-[a-z0-9]+)+$",
                     "description": "ADR ID that this one supersedes, if any."
                 },
                 "archival": {

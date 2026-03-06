@@ -414,7 +414,7 @@ Each ADR approver needs an `identity` field matching their platform handle:
 approvals:
   - name: "Jane Doe"
     role: "Lead Architect"
-    identity: "@janedoe"         # GitHub username (without @)
+    identity: "@janedoe"         # GitHub @username — CI normalizes the @ prefix for matching
     approved_at: "2026-03-15T10:00:00Z"
     signature_id: sig-example-001
 ```

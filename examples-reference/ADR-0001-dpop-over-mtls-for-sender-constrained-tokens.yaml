@@ -1,5 +1,5 @@
 adr:
-  id: ADR-0001
+  id: ADR-0001-dpop-over-mtls-for-sender-constrained-tokens
   title: Use DPoP over mTLS as the sender-constraining mechanism for OAuth 2.1 access tokens
   summary: Adopt DPoP (RFC 9449) as the sole sender-constraining mechanism for all OAuth 2.1 client types, avoiding mTLS certificate provisioning and CDN passthrough costs.
   status: accepted

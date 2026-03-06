@@ -1,5 +1,5 @@
 adr:
-  id: ADR-0008
+  id: ADR-0008-defer-openid-federation-for-trust-establishment
   title: Defer adoption of OpenID Federation 1.0 for automated trust establishment
   summary:
     Deferred proposal to adopt OpenID Federation 1.0 for automated trust establishment between NovaTrust
@@ -9,7 +9,7 @@ adr:
   created_at: "2026-02-01T10:00:00Z"
   last_modified: "2026-02-15T16:00:00Z"
   version: "0.1"
-  schema_version: 1.0.0
+  schema_version: "1.0.0"
   project: API Authorization Layer — Federation
   component: Trust Establishment
   tags:

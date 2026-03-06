@@ -4,7 +4,7 @@
 
 # --- REQUIRED ---
 adr:
-  id: "ADR-NNNN" # Replace with next sequential ID
+  id: "ADR-NNNN-short-kebab-case-title" # Replace with next sequential ID + slug
   title: "" # 10-200 characters
   summary: "" # Optional: 2-4 sentence elevator pitch (max 500 chars)
   status: "draft" # draft | proposed | accepted | superseded | deprecated | rejected | deferred

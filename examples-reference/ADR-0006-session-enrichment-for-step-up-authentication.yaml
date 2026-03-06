@@ -1,5 +1,5 @@
 adr:
-  id: ADR-0006
+  id: ADR-0006-session-enrichment-for-step-up-authentication
   title: Use IdP session enrichment over custom JWE cookies for persisting step-up authentication proof
   summary:
     Persist step-up authentication proof via PingFederate session enrichment and acr claims rather than custom JWE
@@ -8,7 +8,7 @@ adr:
   created_at: "2026-02-10T08:00:00Z"
   last_modified: "2026-02-28T14:00:00Z"
   version: "1.0"
-  schema_version: 1.0.0
+  schema_version: "1.0.0"
   project: Transaction Security — Step-Up Authentication
   component: Step-Up Proof Persistence Mechanism
   tags:
