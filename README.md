@@ -27,7 +27,7 @@ Good Architecture Knowledge Management (AKM) treats decisions as first-class eng
 
 ## Philosophy
 
-Every ADR is **self-contained**. All context, Architecturally Significant Requirements (ASRs), alternatives, risk assessments, consequences, and audit trails are embedded directly in the YAML file. Related ADRs are cross-referenced by ID but never structurally depended upon.
+Every ADR is **self-contained**. All context, Architecturally Significant Requirements (ASRs), alternatives, consequences, and audit trails are embedded directly in the YAML file. Related ADRs are cross-referenced by ID but never structurally depended upon.
 
 The ADL is an **append-only decision log**. ADRs are never deleted — they transition through a governed lifecycle. Rejected and superseded ADRs remain as historical records, preserving the decision-making trail for auditors, new team members, and your future self.
 
@@ -141,11 +141,10 @@ Each ADR YAML file contains these sections:
 | `alternatives` | ✅ | ≥2 alternatives with summary (**Markdown**), pros, cons, cost, risk, rejection rationale |
 | `decision` | ✅ | Chosen alternative, rationale (**Markdown**), tradeoffs (**Markdown**), date, confidence |
 | `consequences` | ✅ | Positive and negative outcomes |
-| `confirmation` | | How the decision's implementation is verified; delivery artifact IDs |
+| `confirmation` | ✅ | How the decision's implementation will be verified; artifact IDs (optional, backfilled later) |
 | `reviewers` | | People who reviewed |
 | `approvals` | | Formal approvals with timestamps |
 | `requirements` | | Embedded functional and non-functional requirements (ASRs) |
-| `risk_assessment` | | Risks with likelihood, impact, mitigations |
 | `dependencies` | | Internal and external dependencies |
 | `references` | | External references, standards, evidence |
 | `lifecycle` | | Review cadence, supersession chain, archival |
@@ -162,7 +161,7 @@ The `.skills/adr-author/` directory follows the [agentskills.io specification](h
 - **VS Code Copilot** (with skills support)
 - Any agent implementing the Agent Skills standard
 
-The skill enables AI assistants to author new ADRs through guided questioning, review existing ADRs for completeness, validate YAML against the schema, and navigate the governance lifecycle (supersession, deprecation, archival). It understands the full meta-model and will probe for Architecturally Significant Requirements (ASRs), risk assessments, and balanced alternatives.
+The skill enables AI assistants to author new ADRs through guided questioning, review existing ADRs for completeness, validate YAML against the schema, and navigate the governance lifecycle (supersession, deprecation, archival). It understands the full meta-model and will probe for Architecturally Significant Requirements (ASRs), balanced alternatives, and consequences.
 
 ## Repomix Bundle
 

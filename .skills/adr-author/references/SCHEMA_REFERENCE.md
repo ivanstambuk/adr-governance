@@ -13,6 +13,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 | `alternatives` | Minimum 2 alternatives with pros, cons, cost, risk |
 | `decision` | Chosen alternative, rationale, tradeoffs, date, confidence level |
 | `consequences` | Positive and negative outcomes |
+| `confirmation` | How the decision's implementation will be verified (`description` required, `artifact_ids` optional) |
 
 ## Optional Top-Level Sections
 
@@ -20,9 +21,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 |---------|-------------|
 | `reviewers` | People who reviewed the ADR |
 | `approvals` | Formal approvals with timestamps and signature IDs |
-| `confirmation` | How the decision's implementation is verified; delivery artifact IDs |
 | `requirements` | Embedded functional and non-functional requirements |
-| `risk_assessment` | Identified risks with mitigation strategies |
 | `dependencies` | Internal and external dependencies |
 
 | `references` | External links and evidence |
@@ -36,5 +35,4 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 3. `alternatives` must have `minItems: 2`
 4. `decision.chosen_alternative` should match a name in `alternatives`
 5. Requirement IDs: `^(F|NF)-[0-9]{3}$`
-6. Risk IDs: `^R-[0-9]{3}$`
-7. `audit_trail` events use defined enum values
+6. `audit_trail` events use defined enum values

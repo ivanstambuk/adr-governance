@@ -178,33 +178,9 @@ consequences:
   - 'BFF is an additional component: deployment, monitoring, on-call rotation'
   - ~2-3ms added proxy latency per API request
   - 'Frontend developers must use cookie-aware fetch (credentials: ''include'') instead of Authorization headers'
-risk_assessment:
-  risks:
-  - id: R-001
-    description: BFF outage blocks all SPA API access
-    likelihood: low
-    impact: critical
-    mitigation:
-    - Multi-instance BFF deployment behind load balancer with health checks
-    - Stateless BFF (encrypted cookie-based) — any instance can handle any request
-    - 'Emergency fallback: SPA switches to direct bearer token mode with reduced-scope tokens'
-  - id: R-002
-    description: Cookie-based session expiry causes unexpected logouts
-    likelihood: medium
-    impact: low
-    mitigation:
-    - Cookie expiry aligned with PingFederate refresh token TTL (24 hours)
-    - SPA receives 401 → redirects to login page with return URL preserved
-    - Sliding session extension on API activity
-  - id: R-003
-    description: CSRF attack bypasses SameSite cookie protection on older browsers
-    likelihood: low
-    impact: medium
-    mitigation:
-    - SameSite=Strict primary defense (supported by 97%+ of browsers)
-    - Origin header validation as secondary defense
-    - Minimum browser version policy enforced for banking portal
-  residual_risk: low
+confirmation:
+  description: "Integration test: verify SPA receives tokens only via BFF, no tokens in browser storage. Security scan of BFF endpoints."
+
 dependencies:
   internal:
   - PingFederate 12.x (authorization server)

@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/ivanstambuk/adr-governance/blob/main/schemas/adr.schema.json",
     "title": "Architecture Decision Record",
-    "description": "Self-contained ADR meta-model for governed architectural decisions. Each ADR embeds all context, requirements, alternatives, risk assessment, deployment plans, and audit trails. All string fields support Markdown including embedded Mermaid diagrams via code fences.",
+    "description": "Self-contained ADR meta-model for governed architectural decisions. Each ADR embeds all context, requirements, alternatives, consequences, and audit trails. All string fields support Markdown including embedded Mermaid diagrams via code fences.",
     "version": "1.0.0",
     "type": "object",
     "required": [
@@ -12,7 +12,8 @@
         "context",
         "alternatives",
         "decision",
-        "consequences"
+        "consequences",
+        "confirmation"
     ],
     "additionalProperties": false,
     "patternProperties": {
@@ -372,6 +373,9 @@
         },
         "confirmation": {
             "type": "object",
+            "required": [
+                "description"
+            ],
             "additionalProperties": false,
             "properties": {
                 "description": {
@@ -387,70 +391,6 @@
                 }
             },
             "description": "How compliance with this ADR is confirmed. Links the decision to its verification evidence."
-        },
-        "risk_assessment": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "risks": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "required": [
-                            "id",
-                            "description",
-                            "likelihood",
-                            "impact"
-                        ],
-                        "additionalProperties": false,
-                        "properties": {
-                            "id": {
-                                "type": "string",
-                                "pattern": "^R-[0-9]{3}$",
-                                "description": "Risk identifier. Scoped per ADR — each ADR starts from R-001."
-                            },
-                            "description": {
-                                "type": "string"
-                            },
-                            "likelihood": {
-                                "type": "string",
-                                "enum": [
-                                    "low",
-                                    "medium",
-                                    "high"
-                                ]
-                            },
-                            "impact": {
-                                "type": "string",
-                                "enum": [
-                                    "low",
-                                    "medium",
-                                    "high",
-                                    "critical"
-                                ]
-                            },
-                            "mitigation": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                },
-                                "description": "Mitigation strategies."
-                            }
-                        }
-                    }
-                },
-                "residual_risk": {
-                    "type": "string",
-                    "enum": [
-                        "low",
-                        "medium",
-                        "high",
-                        "critical"
-                    ],
-                    "description": "Overall residual risk after mitigations."
-                }
-            },
-            "description": "Identified risks, mitigations, and residual risk."
         },
         "dependencies": {
             "type": "object",

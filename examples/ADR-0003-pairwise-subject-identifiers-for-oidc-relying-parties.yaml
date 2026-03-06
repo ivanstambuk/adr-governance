@@ -167,33 +167,9 @@ consequences:
   - 3-month migration project for RP user database re-keying
   - Support team requires new tooling for user-to-sub reverse lookup
   - PPID salt in HSM creates an additional HSM dependency for token issuance
-risk_assessment:
-  risks:
-  - id: R-001
-    description: PPID salt compromised — attacker can pre-compute all pairwise sub values
-    likelihood: low
-    impact: high
-    mitigation:
-    - Salt stored exclusively in HSM — never in configuration files or environment variables
-    - HSM access restricted to PingFederate service account via PKCS#11
-    - Salt rotation procedure documented with controlled re-generation of all PPID values
-  - id: R-002
-    description: RP migration breaks user account continuity during re-keying
-    likelihood: medium
-    impact: medium
-    mitigation:
-    - Migration toolkit provides dual-lookup (old public sub + new pairwise sub) for 90-day transition
-    - Per-RP migration with dedicated support and rollback to public sub if critical issues
-    - Staging validation with synthetic users before production cutover
-  - id: R-003
-    description: Incorrect sector identifier grouping allows unintended cross-RP correlation
-    likelihood: low
-    impact: medium
-    mitigation:
-    - Sector identifier assignment requires IAM Architecture Board approval
-    - Annual audit of sector groupings against business justification
-    - 'Default: every new RP gets its own unique sector identifier'
-  residual_risk: low
+confirmation:
+  description: "Verify pairwise subject identifiers in token responses across relying parties. Confirm no cross-RP correlation is possible via automated test suite."
+
 dependencies:
   internal:
   - PingFederate 12.x (pairwise sub support)

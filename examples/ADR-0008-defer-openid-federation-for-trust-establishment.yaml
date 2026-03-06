@@ -144,24 +144,9 @@ consequences:
     - Continued manual metadata exchange — operational bottleneck persists
     - Ongoing certificate expiry risk for existing partner connections
     - Potential competitive disadvantage if peers adopt federation earlier
-risk_assessment:
-  risks:
-    - id: R-001
-      description: Deferral extends beyond 12 months due to specification delays or vendor deprioritization
-      likelihood: medium
-      impact: medium
-      mitigation:
-        - Set calendar reminder to re-evaluate at 6-month mark (August 2026)
-        - Track PingFederate roadmap updates quarterly
-        - Implement tactical metadata automation (Option 2) if deferral exceeds 12 months
-    - id: R-002
-      description: Certificate expiry incident occurs during deferral period
-      likelihood: medium
-      impact: medium
-      mitigation:
-        - Implement certificate expiry monitoring with 30-day advance alerting
-        - Document partner certificate rotation contacts for emergency response
-  residual_risk: medium
+confirmation:
+  description: "Periodic review of OpenID Federation specification maturity. Track industry adoption via references and revisit when specification reaches stable status."
+
 dependencies:
   internal:
     - PingFederate 12.x (authorization server — pending OpenID Federation support)

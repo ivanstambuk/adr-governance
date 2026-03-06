@@ -196,29 +196,6 @@ def render_adr(data: dict) -> str:
                     lines.append(f"- `{aid}`")
             lines.append("")
 
-    # --- Risk Assessment ---
-    risk_assessment = data.get("risk_assessment", {})
-    risks = risk_assessment.get("risks", [])
-    if risks:
-        lines.append("## Risk Assessment")
-        lines.append("")
-        lines.append("| ID | Description | Likelihood | Impact |")
-        lines.append("|----|-------------|------------|--------|")
-        for r in risks:
-            lines.append(f"| `{r.get('id', '')}` | {r.get('description', '')} | {r.get('likelihood', '')} | {r.get('impact', '')} |")
-        lines.append("")
-        for r in risks:
-            mitigations = r.get("mitigation", [])
-            if mitigations:
-                lines.append(f"**{r.get('id', '')} mitigations:**")
-                for m in mitigations:
-                    lines.append(f"- {m}")
-                lines.append("")
-        residual = risk_assessment.get("residual_risk", "")
-        if residual:
-            lines.append(f"**Residual risk:** `{residual}`")
-            lines.append("")
-
     # --- Dependencies ---
     deps = data.get("dependencies", {})
     internal = deps.get("internal", [])

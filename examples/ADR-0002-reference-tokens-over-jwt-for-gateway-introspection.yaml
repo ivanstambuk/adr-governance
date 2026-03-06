@@ -164,33 +164,9 @@ consequences:
   - PingFederate introspection endpoint becomes Tier-0 dependency
   - 30-second revocation latency window due to PingAccess caching
   - Slightly higher per-request latency (0.8ms cache-hit vs 0.5ms JWT verification)
-risk_assessment:
-  risks:
-  - id: R-001
-    description: PingFederate introspection endpoint outage blocks all API traffic
-    likelihood: low
-    impact: critical
-    mitigation:
-    - Multi-node PingFederate cluster with active-active introspection
-    - PingAccess serves cached introspection responses during brief outages (stale-while-revalidate)
-    - 'Emergency fallback: PingAccess switches to JWT validation mode with pre-distributed signing keys'
-  - id: R-002
-    description: Introspection cache TTL creates a 30-second revocation gap exploited by attacker
-    likelihood: low
-    impact: medium
-    mitigation:
-    - Emergency cache purge API reduces gap to < 2 seconds
-    - DPoP sender-constraining prevents stolen token use even within the gap
-    - Fraud detection triggers cache purge automatically on flagged accounts
-  - id: R-003
-    description: Introspection endpoint becomes a bottleneck at high QPS
-    likelihood: medium
-    impact: medium
-    mitigation:
-    - Load-tested at 10,000 QPS sustained with current 4-node PingFederate cluster
-    - 'Horizontal scaling plan: add 2 nodes per 5000 QPS increment'
-    - Cache hit ratio > 95% means actual introspection calls are ~250 QPS
-  residual_risk: low
+confirmation:
+  description: "Code review of gateway introspection configuration. Validate token format in staging by inspecting Authorization header at API gateway."
+
 dependencies:
   internal:
   - PingFederate 12.x (introspection endpoint)

@@ -135,25 +135,6 @@ confirmation:
   - examples/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
   - examples/ADR-0007-centralized-secret-store-for-api-keys.yaml
   - TEST-SUITE-validate-adr-all-examples
-risk_assessment:
-  risks:
-  - id: R-001
-    description: Teams find the schema too heavy and revert to informal decision-making
-    likelihood: medium
-    impact: high
-    mitigation:
-    - Provide a comprehensive template with comments
-    - Agent Skill generates ADR scaffolding automatically
-    - Start with high-priority decisions only — don't ADR everything
-  - id: R-002
-    description: Schema evolution breaks existing ADRs
-    likelihood: low
-    impact: medium
-    mitigation:
-    - Schema versioning policy requires backward compatibility
-    - Only add optional fields in minor versions
-    - Migration scripts for breaking changes
-  residual_risk: low
 dependencies:
   internal:
   - GitHub Actions CI pipeline for schema validation

@@ -63,7 +63,8 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 - `alternatives` — at least 2, each with name, summary, pros, cons, estimated_cost, risk, rejection_rationale (for non-chosen alternatives)
 - `decision` — chosen_alternative, rationale, tradeoffs, decision_date, confidence
 - `consequences` — positive, negative
-- `risk_assessment` — identified risks with likelihood, impact, mitigation
+- `confirmation` — description of how implementation will be verified (artifact_ids added later)
+- `dependencies` — internal and external dependency tracking
 - `audit_trail` — initial `created` event
 
 ### Step 4: Validate

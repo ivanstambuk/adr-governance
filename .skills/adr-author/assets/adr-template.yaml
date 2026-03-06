@@ -103,22 +103,11 @@ consequences:
   negative:
     - ""
 
-# --- Optional ---
+# --- REQUIRED (artifact_ids can be added later) ---
 confirmation:
   description: "" # How the implementation of this decision will be verified
   artifact_ids:
     - "" # Jira tickets, PR URLs, test suite IDs, PoC results, benchmarks
-
-# --- Optional ---
-risk_assessment:
-  risks:
-    - id: "R-001"
-      description: ""
-      likelihood: "medium" # low | medium | high
-      impact: "medium" # low | medium | high | critical
-      mitigation:
-        - ""
-  residual_risk: "medium" # low | medium | high | critical
 
 # --- Optional ---
 dependencies:
