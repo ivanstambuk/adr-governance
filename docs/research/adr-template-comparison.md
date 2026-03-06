@@ -578,6 +578,8 @@ These were considered for our schema but removed as they belong in operational r
 
 Gareth Morgan is the only template that asks: *"How will compliance with this decision be ensured?"* This is distinct from MADR's `Confirmation` (which asks "how do we verify implementation?") — Morgan asks about **ongoing enforcement**, not just initial validation. Our schema has `audit_trail` and `lifecycle.review_cycle_months` which partially address this, but we lack an explicit governance enforcement field.
 
+> **Resolution (2026-03-06):** After analysis, we decided **not** to add a `governance_enforcement` field to the schema. ADRs capture decisions — enforcement is the responsibility of downstream tooling and processes. Architecture should not point to code; code should point to architecture. Teams that depend on a decision enforce it through their own mechanisms: CODEOWNERS, PR templates with ADR compliance checklists, ArchUnit fitness functions, CI policies, etc. Those are implementation details that vary by organization and codebase. Our `confirmation` section already captures *how implementation is verified*; ongoing enforcement is an operational concern, not a decision record concern.
+
 ### 6.5 No Template Has Structured Impact Assessment — Except EdgeX
 
 EdgeX Foundry uniquely asks authors to enumerate: services/modules impacted, model/DTO changes, API impact, configuration changes, and devops impact. This is a lightweight **change impact analysis** that no other template captures.
@@ -590,11 +592,9 @@ Merson's template explicitly includes reasoning for significant alternatives tha
 
 ### 6.7 Features Still Missing
 
-| Feature | Source | Value | Status |
-|---------|--------|-------|--------|
-| **`governance_enforcement`** | Gareth Morgan | "How will compliance be monitored? Who is accountable?" — bridges decision to operational enforcement. | ⚠️ **Consider** |
+All identified feature gaps have been resolved. See §7.2 for the full adoption tracker.
 
-> **Resolved items:** `confirmation` (✅ added), `summary` (✅ added as `adr.summary`), `rationale_for_rejected` (✅ added as `alternatives[].rejection_rationale`), `impact_assessment` (❌ skipped — see §6.5). See §7.2 for the full adoption/skip tracker.
+> **Resolved items:** `confirmation` (✅ added), `summary` (✅ added as `adr.summary`), `rationale_for_rejected` (✅ added as `alternatives[].rejection_rationale`), `impact_assessment` (❌ skipped — see §6.5), `governance_enforcement` (❌ skipped — see §6.4; enforcement is downstream, not a decision record concern).
 
 ---
 
@@ -634,6 +634,7 @@ These are enterprise-grade extensions that should be preserved and documented as
 
 | Field | Source | Rationale |
 |-------|--------|-----------|
+| `governance_enforcement` | Gareth Morgan | ADRs capture decisions; enforcement is downstream. Architecture should not point to code — code should point to architecture. Teams enforce decisions through their own mechanisms (CODEOWNERS, PR templates, fitness functions, CI policies). `confirmation` already captures implementation verification; ongoing enforcement is an operational concern. |
 | `impact_assessment` | EdgeX Foundry | Impact is already captured across `dependencies.internal` (systems involved), `consequences.negative` (operational costs), and `decision.tradeoffs` (adaptation required). EdgeX's template targets change proposals for a specific codebase with enumerable services/DTOs — our ADRs describe architectural patterns where impacted systems vary by adopter. Teams needing this can use `x-impact-assessment`. |
 | `risk_per_option` (3D) | smadr | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with pros/cons provides equivalent coverage. |
 | `neutral_consequences` | MADR 4.0 | Neutral consequences are rarely informative. Our positive/negative split is sufficient. |
@@ -854,23 +855,21 @@ Henderson specifically advises: *"Review each ADR one month later to compare the
 
 ---
 
-### 11.3 🟢 Proposal: Add Decision Guardian Integration
+### 11.3 ❌ Proposal: Decision Guardian Integration — Rejected
 
 **Source:** [Decision Guardian](https://github.com/DecispherHQ/decision-guardian), Henderson Section 10.2
 
 **What:** Integrate Decision Guardian as a GitHub Action that auto-surfaces relevant ADRs when PRs modify code covered by accepted decisions.
 
-**Why:** This is the single best answer to Gareth Morgan's "governance enforcement" question: *decisions are surfaced at the moment they're most likely to be violated.* Decision Guardian works by:
-1. Creating `.decispher/decisions.md` files that map decisions to protected file paths
-2. When a PR modifies a protected file, it posts a comment with the relevant decision context
-3. Supports severity levels (Critical, Warning, Info) and can block merges
+**Rejected (2026-03-06).** Three reasons:
 
-**Implementation:**
-1. Create `.decispher/decisions.md` mapping accepted ADRs to their impacted code paths
-2. Add `DecispherHQ/decision-guardian@v1` to our CI workflow
-3. Configure `fail_on_critical: true` for critical-priority ADRs
+1. **Wrong direction of coupling.** Decision Guardian maps *from* decisions *to* code paths. This inverts the correct dependency: architecture should not point to code — code should point to architecture. The ADR is a portable, organization-agnostic decision record. File paths are codebase-specific implementation details. Binding them together creates a dual registry (ADR YAML + `.decispher/decisions.md`) and couples the decision layer to the implementation layer.
 
-**Impact:** Medium. New CI integration. Bridges the gap between "decision documented" and "decision enforced."
+2. **Enforcement is downstream, not upstream.** ADRs capture decisions. Teams that depend on those decisions are responsible for enforcing them through their own tooling: CODEOWNERS, PR templates, ArchUnit fitness functions, CI policies, code review checklists. Those mechanisms vary by organization and codebase — they don't belong in the governance framework.
+
+3. **Maturity risk.** Decision Guardian has 26 stars, a single maintainer, and 2 releases. Recommending it as part of an enterprise governance framework contradicts the framework's own posture on supply chain risk.
+
+**What we do instead:** Document enforcement as a downstream responsibility in `adr-process.md`. Recommend PR templates with ADR compliance checklists as a lightweight, platform-native approach.
 
 ---
 
@@ -959,7 +958,7 @@ Henderson specifically advises: *"Review each ADR one month later to compare the
 |---|----------|--------|------|----------|--------|
 | 11.1 | Add `confidence` field | Azure WAF | Schema | 🟢 High | ✅ Done |
 | 11.2 | Add `reviewed` audit event | Retrospectives, Henderson | Schema | 🟢 High | ✅ Done |
-| 11.3 | Decision Guardian integration | DecispherHQ | CI/CD | 🟢 High | Proposed |
+| 11.3 | Decision Guardian integration | DecispherHQ | CI/CD | 🟢 High | ❌ Rejected — enforcement is downstream |
 | 11.4 | Architectural Significance Test | Zimmermann | Process | 🟡 Medium | ✅ Done |
 | 11.5 | Retrospective questions for reviews | Cervantes & Woods | Process | 🟡 Medium | ✅ Done |
 | 11.6 | PoC/experiment artifact guidance | Skeptic's Guide, Zimmermann | Documentation | 🟡 Medium | ✅ Done |

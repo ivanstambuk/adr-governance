@@ -597,11 +597,11 @@ Based on the comparison, the ideal ADR governance process for our regulated ente
 | Periodic review | ✅ | `lifecycle.review_cycle_months` + `next_review_date` |
 | Archival | ✅ | `lifecycle.archival` |
 | Schema validation | ✅ | `schemas/adr.schema.json` + `scripts/validate-adr.py` + CI |
-| Code review validation | ❌ | Not defined as a process |
+| Code review validation | ✅ | `adr-process.md` §7.4 — enforcement tooling (CODEOWNERS, PR templates, fitness functions) is downstream, varies by organization |
 | Review meeting protocol | ❌ | Not defined as a process |
 | RFC-before-ADR phase | ❌ | Not defined as a process |
 
-**Conclusion:** Our schema already supports the most comprehensive process metadata of any ADR system surveyed. What we lack are **process definitions** (review meeting protocol, code review validation) — these are organizational practices, not schema features.
+**Conclusion:** Our schema already supports the most comprehensive process metadata of any ADR system surveyed. What we lack are **process definitions** (review meeting protocol) — these are organizational practices, not schema features. Enforcement tooling (Decision Guardian, ArchUnit, etc.) is explicitly a downstream concern: ADRs capture decisions; teams that depend on those decisions enforce them.
 
 ---
 
@@ -630,9 +630,9 @@ Our `adr-governance` schema sits at the **high-formality, high-granularity** end
 
 ### Actionable Next Steps
 
-1. ✅ **Add `draft` status** to the schema — low effort, high value for complex ADRs
-2. 📖 **Document a review meeting protocol** in a workflow file — inspired by AWS's 10–15 min reading slot process
-3. 📖 **Document code review validation** — reviewers should check changes against accepted ADRs (AWS + Spotify pattern)
+1. ✅ **Add `draft` status** to the schema — Done
+2. ✅ **Document code review validation** — Done (`adr-process.md` §7.4). Enforcement tooling is downstream.
+3. 📖 **Document a review meeting protocol** in a workflow file — inspired by AWS's 10–15 min reading slot process
 4. ⚠️ **Consider RFC-before-ADR** — useful at scale, but adds process weight; defer until we have >20 ADRs
 
 ---
