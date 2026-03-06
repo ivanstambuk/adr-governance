@@ -31,7 +31,7 @@ Use this skill when the user:
 
 ## Core principles
 
-1. **Self-contained**: Every ADR must embed all context (requirements, alternatives, risk, compliance) so it can be understood without external documents.
+1. **Self-contained**: Every ADR must embed all context (architecturally significant requirements, alternatives, risk, compliance) so it can be understood without external documents.
 2. **Schema-governed**: All ADRs must validate against `schemas/adr.schema.json` (JSON Schema Draft 2020-12).
 3. **At least two alternatives**: Every decision requires evaluation of ≥2 alternatives with pros, cons, cost, and risk.
 4. **Immutable audit trail**: The `audit_trail` section is append-only. Never delete or modify existing entries.
@@ -58,7 +58,7 @@ Ask the user for:
 3. **Priority**: `low` | `medium` | `high` | `critical`
 4. **Context**: What problem are we solving? What are the business and technical drivers?
 5. **Constraints**: What are the non-negotiable boundaries?
-6. **Alternatives**: At least 2 options with pros, cons, estimated cost, and risk level
+6. **Alternatives**: At least 2 options — for each, a **thorough architectural description** (multi-paragraph, with Mermaid diagrams showing data flows/integration points), pros, cons, estimated cost, and risk level
 7. **Recommendation**: Which alternative and why?
 8. **Summary** (`adr.summary`): 2-4 sentence elevator pitch for stakeholder triage (max 500 chars). This is distinct from `context.summary`, which is the full narrative problem statement.
 9. **Confidence**: `low` | `medium` | `high` — how confident are we in this decision?
@@ -71,8 +71,8 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 - `authors` — who is writing this
 - `decision_owner` — who is accountable
 - `context` — summary, business_drivers, technical_drivers, constraints, assumptions
-- `requirements` — embedded functional and non-functional requirements
-- `alternatives` — at least 2, each with name, summary, pros, cons, estimated_cost, risk, rejection_rationale (for non-chosen alternatives)
+- `architecturally_significant_requirements` — embedded functional and non-functional ASRs
+- `alternatives` — at least 2, each with name, **thorough description** (multi-paragraph architecture explanation with Mermaid diagrams), pros, cons, estimated_cost, risk, rejection_rationale (for non-chosen alternatives)
 - `decision` — chosen_alternative, rationale, tradeoffs, decision_date, confidence
 - `consequences` — positive, negative
 - `confirmation` — description of how implementation will be verified (artifact_ids added later)
@@ -151,7 +151,7 @@ When reviewing, check for:
 
 1. **Completeness**: All required sections present (see schema `required` fields)
 2. **Alternative quality**: At least 2 alternatives with substantive pros/cons (not just "good" / "bad")
-3. **Rationale strength**: Does the rationale clearly connect to the drivers and requirements?
+3. **Rationale strength**: Does the rationale clearly connect to the drivers and architecturally significant requirements?
 4. **Risk coverage**: Are the major risks identified with realistic mitigations?
 5. **Compliance**: Are regulatory implications addressed if the decision touches data, access, or infrastructure?
 6. **Consistency**: Does the `chosen_alternative` name match an entry in `alternatives`? Are `lifecycle.supersedes`/`superseded_by` consistent?
@@ -174,7 +174,7 @@ When reviewing, check for:
 The following fields support **full Markdown** including embedded Mermaid diagrams via code fences:
 
 - `context.summary` — narrative problem statement; embed architecture diagrams here
-- `alternatives[].summary` — describe each option; embed comparison diagrams
+- `alternatives[].description` — **thorough** architectural description of each option; write multiple paragraphs explaining how the design works, data flows, and integration points. **Embedding Mermaid diagrams (sequence, flowchart, C4) is strongly encouraged.**
 - `decision.rationale` — explain *why*; use bullet lists, headers, or diagrams
 - `decision.tradeoffs` — what was given up
 - `confirmation.description` — verification evidence

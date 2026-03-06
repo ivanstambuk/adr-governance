@@ -112,12 +112,12 @@ def render_adr(data: dict) -> str:
                 lines.append(f"- {item}")
             lines.append("")
 
-    # --- Requirements ---
-    reqs = data.get("requirements", {})
+    # --- Architecturally Significant Requirements ---
+    reqs = data.get("architecturally_significant_requirements", {})
     functional = reqs.get("functional", [])
     non_functional = reqs.get("non_functional", [])
     if functional or non_functional:
-        lines.append("## Requirements")
+        lines.append("## Architecturally Significant Requirements")
         lines.append("")
         if functional:
             lines.append("### Functional")
@@ -150,8 +150,8 @@ def render_adr(data: dict) -> str:
             marker = " ✅" if is_chosen else ""
             lines.append(f"### {i}. {name}{marker}")
             lines.append("")
-            if alt.get("summary"):
-                lines.append(alt["summary"].strip())
+            if alt.get("description"):
+                lines.append(alt["description"].strip())
                 lines.append("")
             if alt.get("pros"):
                 lines.append("**Pros:**")

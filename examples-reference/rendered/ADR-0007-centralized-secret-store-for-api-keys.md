@@ -27,6 +27,38 @@
 
 NovaTrust's 50+ microservices currently retrieve runtime secrets (database credentials, third-party API keys, JWT signing keys) from environment variables injected at deployment time. This approach has scaling and rotation pain points: rotating a database password requires redeploying all dependent services. Two approaches were considered — centralizing on HashiCorp Vault as a universal secrets engine, or adopting native cloud provider secret stores (AWS Secrets Manager, Azure Key Vault) with CSI driver integration for Kubernetes.
 
+```mermaid
+graph TB
+    subgraph Current["❌ Current: Env Var Injection"]
+        CI[CI/CD Pipeline] -->|inject at deploy| Pod1[Pod A]
+        CI -->|inject at deploy| Pod2[Pod B]
+        CI -->|inject at deploy| Pod3[Pod C]
+        Note1["Rotation = redeploy all 15+ services<br/>4-hour change window"]
+    end
+
+    subgraph Vault["Option A: HashiCorp Vault"]
+        VCluster["Vault Cluster<br/>(3-5 nodes, HA, unsealing)"]
+        VA[Vault Agent Sidecar] -->|dynamic secrets| VPod1[Pod A]
+        VA -->|dynamic secrets| VPod2[Pod B]
+        VCluster --> VA
+        VCost["$150K/yr Enterprise license<br/>+ 4-6 week SRE ramp-up"]
+    end
+
+    subgraph Native["Option B: Native Cloud Stores"]
+        subgraph AWS["AWS (Primary)"]
+            ASM[AWS Secrets Manager] -->|CSI Driver| AK8s[EKS Pods]
+        end
+        subgraph Azure["Azure (DR)"]
+            AKV[Azure Key Vault] -->|CSI Driver| AzK8s[AKS Pods]
+        end
+        CICD[CI/CD] -->|sync| ASM
+        CICD -->|sync| AKV
+        NCost["$0 additional licensing<br/>Zero SRE ramp-up"]
+    end
+```
+
+The decision comes down to whether the operational overhead of a self-managed Vault cluster is justified when native cloud services provide the core capabilities we need.
+
 ### Business Drivers
 
 - Credential rotation currently requires coordinated redeployment of 15+ services — 4-hour change window
@@ -53,7 +85,7 @@ NovaTrust's 50+ microservices currently retrieve runtime secrets (database crede
 - Kubernetes CSI Secret Store Driver is production-ready for both cloud providers
 - Secret access logging satisfies SOC 2 Type II audit requirements
 
-## Requirements
+## Architecturally Significant Requirements
 
 ### Functional
 
@@ -75,7 +107,26 @@ NovaTrust's 50+ microservices currently retrieve runtime secrets (database crede
 
 ### 1. HashiCorp Vault (centralized secrets engine)
 
-Deploy a self-managed HashiCorp Vault cluster as the universal secrets engine for all environments. All services retrieve secrets via Vault Agent sidecar or CSI driver. Vault manages encryption, rotation, dynamic credentials, and audit logging.
+Deploy a self-managed HashiCorp Vault cluster (3-5 nodes, HA mode) as the universal secrets engine for all environments. All services retrieve secrets via Vault Agent sidecar (injected into each pod) or the CSI Secret Store Driver (mounting secrets as volume files). Vault manages the full secret lifecycle: encryption at rest, automatic rotation, dynamic credential generation, and centralized audit logging.
+
+```mermaid
+flowchart TD
+    subgraph Kubernetes Cluster
+        APP[Application Pod] --> VA[Vault Agent Sidecar]
+        VA --> |TLS + AppRole auth| VAULT
+    end
+    subgraph Vault Cluster - HA
+        VAULT[Vault Leader] --- V2[Vault Standby 1]
+        VAULT --- V3[Vault Standby 2]
+        VAULT --> STORAGE[(Consul / Raft Storage)]
+        VAULT --> HSM[HSM Auto-Unseal]
+        VAULT --> AUDIT[Audit Log]
+    end
+    style VAULT fill:#e8f5e9
+    style HSM fill:#fff3e0
+```
+
+Vault's strongest differentiator is **dynamic secrets**: rather than storing long-lived database passwords, Vault generates short-lived credentials on demand (e.g., a PostgreSQL user with a 1-hour TTL). However, our use case involves long-lived API keys with periodic rotation, which does not require dynamic credential generation — Vault's primary value proposition is not a fit. The $150K/year Enterprise license (required for HSM auto-unseal and multi-tenant namespaces) and the 4-6 week SRE ramp-up represent significant cost without proportional benefit.
 
 **Pros:**
 - Single unified secrets API across all cloud providers and on-premises
@@ -98,7 +149,26 @@ Deploy a self-managed HashiCorp Vault cluster as the universal secrets engine fo
 
 ### 2. Native cloud provider secret stores (AWS Secrets Manager + Azure Key Vault) ✅
 
-Use each cloud provider's native secret store — AWS Secrets Manager in primary, Azure Key Vault in DR. Kubernetes CSI Secret Store Driver mounts secrets as volumes. Cross-cloud secret synchronization handled by CI/CD pipeline with encrypted transit.
+Use each cloud provider's native managed secret store — **AWS Secrets Manager** in the primary region and **Azure Key Vault** in the disaster recovery region. Kubernetes workloads access secrets via the **CSI Secret Store Driver**, which mounts secrets as filesystem volumes in the pod without modifying application code.
+
+```mermaid
+flowchart LR
+    subgraph AWS Primary
+        K8S_AWS[K8s Pod] --> CSI_AWS[CSI Secret Store Driver]
+        CSI_AWS --> |IAM Role via IRSA| ASM[AWS Secrets Manager]
+    end
+    subgraph Azure DR
+        K8S_AZ[K8s Pod] --> CSI_AZ[CSI Secret Store Driver]
+        CSI_AZ --> |Workload Identity| AKV[Azure Key Vault]
+    end
+    ASM -.->|CI/CD sync pipeline| AKV
+    style ASM fill:#e8f5e9
+    style AKV fill:#e8f5e9
+```
+
+Native IAM integration is a key advantage: Kubernetes service accounts are mapped directly to cloud IAM roles (AWS IRSA or Azure Workload Identity), eliminating the need for a separate identity layer. Both providers offer built-in automatic rotation for database credentials (AWS RDS/Aurora, Azure SQL Database). Cross-cloud secret synchronization is handled by an encrypted CI/CD pipeline that mirrors secrets between AWS Secrets Manager and Azure Key Vault on each deployment.
+
+Per-secret access audit logging is provided by AWS CloudTrail and Azure Monitor at no additional cost, satisfying the SOX compliance requirement for access attribution.
 
 **Pros:**
 - Zero operational overhead — fully managed services with provider SLAs
@@ -119,7 +189,26 @@ Use each cloud provider's native secret store — AWS Secrets Manager in primary
 
 ### 3. Sealed Secrets + External Secrets Operator (GitOps-native)
 
-Use Bitnami Sealed Secrets for static secrets (encrypted in Git) and External Secrets Operator to sync secrets from cloud provider stores into Kubernetes. Fully GitOps-driven — secrets are declarative.
+A GitOps-native approach using two complementary tools: **Bitnami Sealed Secrets** for encrypting secrets in Git (so they can be committed alongside application manifests), and **External Secrets Operator (ESO)** for syncing secrets from cloud provider stores into Kubernetes `Secret` objects at runtime.
+
+```mermaid
+flowchart LR
+    subgraph GitOps Pipeline
+        GIT[Git Repository] -->|sealed secret manifests| FLUX[Flux / ArgoCD]
+        FLUX --> SS[Sealed Secrets Controller]
+        SS --> K8S_SEC[K8s Secret]
+    end
+    subgraph Cloud Sync
+        ESO[External Secrets Operator] -->|poll| ASM[AWS Secrets Manager]
+        ESO --> K8S_SEC2[K8s Secret]
+    end
+    K8S_SEC --> APP[Application Pod]
+    K8S_SEC2 --> APP
+    style SS fill:#fff3e0
+    style ESO fill:#fff3e0
+```
+
+The two layers of abstraction create debugging complexity: when a secret fails to appear in a pod, the operator must determine whether the issue is in the Sealed Secrets decryption, the External Secrets Operator sync, or the CSI driver mount. The Sealed Secrets controller is also a **single point of failure** per cluster — if it goes down, new sealed secrets cannot be decrypted. Native cloud provider secret stores provide the same Kubernetes integration via CSI driver with fewer moving parts.
 
 **Pros:**
 - GitOps-native — secrets defined alongside application manifests

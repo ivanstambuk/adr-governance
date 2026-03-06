@@ -28,6 +28,40 @@
 
 NovaTrust's PingFederate IdP issues OIDC ID tokens with a `sub` claim to all relying parties (RPs). The OIDC Core specification (§8) defines two subject identifier types: `public` (same `sub` value for a user across all RPs) and `pairwise` (unique pseudonymous `sub` per RP). Currently, all RPs receive the same public `sub` — the user's internal UUID. This allows any two colluding RPs to correlate users across services. With 35+ internal RPs, 15 partner bank RPs, and upcoming EUDI Wallet relying party integrations, the GDPR data minimization principle and eIDAS 2.0 unlinkability requirements demand that we prevent cross-RP user correlation unless explicitly authorized.
 
+```mermaid
+graph LR
+    subgraph IdP["PingFederate IdP"]
+        U["User: Alice<br/>Internal ID: uuid-42"]
+        PPID["PPID Engine<br/>HMAC-SHA256(sector + user + salt)"]
+    end
+
+    subgraph Public["❌ Public Sub (Current)"]
+        RP_A1["Partner Bank A<br/>sub = uuid-42"]
+        RP_B1["Fintech B<br/>sub = uuid-42"]
+        RP_C1["Insurance C<br/>sub = uuid-42"]
+    end
+
+    subgraph Pairwise["✅ Pairwise Sub (Proposed)"]
+        RP_A2["Partner Bank A<br/>sub = a3f8...c1"]
+        RP_B2["Fintech B<br/>sub = 7b2e...d9"]
+        RP_C2["Insurance C<br/>sub = e1d4...a6"]
+    end
+
+    subgraph Sector["✅ Internal Sector Group"]
+        RP_HR["HR Portal<br/>sub = 9c1f...b3"]
+        RP_PAY["Payroll<br/>sub = 9c1f...b3"]
+    end
+
+    U --> PPID
+    PPID -->|"per-RP salt"| RP_A2
+    PPID -->|"per-RP salt"| RP_B2
+    PPID -->|"per-RP salt"| RP_C2
+    PPID -->|"shared sector"| RP_HR
+    PPID -->|"shared sector"| RP_PAY
+```
+
+We must choose the subject identifier strategy that balances privacy, regulatory compliance, and operational feasibility.
+
 ### Business Drivers
 
 - GDPR Article 5(1)(c) data minimization — relying parties receive more identifying data than necessary
@@ -55,7 +89,7 @@ NovaTrust's PingFederate IdP issues OIDC ID tokens with a `sub` claim to all rel
 - RPs can re-key their user databases from public sub to pairwise sub with a one-time migration
 - Internal workforce RPs can be grouped in a shared sector identifier to maintain correlation within the sector
 
-## Requirements
+## Architecturally Significant Requirements
 
 ### Functional
 
@@ -77,7 +111,24 @@ NovaTrust's PingFederate IdP issues OIDC ID tokens with a `sub` claim to all rel
 
 ### 1. Pairwise pseudonymous subject identifiers (PPID) ✅
 
-PingFederate generates a unique `sub` per RP using HMAC-SHA256(sector_id + user_id + salt). External and partner RPs each receive a distinct, unlinkable identifier. Internal workforce RPs share a sector identifier so HR, payroll, and helpdesk can still correlate users within their sector.
+PingFederate generates a unique `sub` claim per relying party (RP) using a keyed hash: `HMAC-SHA256(sector_id + user_id, salt)`. The salt is a 256-bit secret stored in the HSM, never exposed to the application layer. Each external or partner RP receives a distinct, unlinkable pseudonymous identifier — knowing one user's `sub` at RP-A reveals nothing about their `sub` at RP-B.
+
+Internal workforce RPs (HR, payroll, helpdesk) share a common **sector identifier**, which means they derive the same `sub` for a given user. This controlled correlation enables legitimate cross-application user lookup within the workforce sector, while preventing external partners from correlating users.
+
+```mermaid
+flowchart LR
+    U[User: alice@novatrust.nl] --> PF[PingFederate PPID Engine]
+    PF --> |sector=partner-A| PA[sub: a3f8c1...29 for Partner A]
+    PF --> |sector=partner-B| PB[sub: 7b2e0d...f4 for Partner B]
+    PF --> |sector=workforce| WF1[sub: e91d4a...b7 for HR]
+    PF --> |sector=workforce| WF2[sub: e91d4a...b7 for Payroll]
+    style PA fill:#e8f5e9
+    style PB fill:#e8f5e9
+    style WF1 fill:#fff3e0
+    style WF2 fill:#fff3e0
+```
+
+The PPID is **deterministic** — the same user always receives the same `sub` for the same RP, ensuring session-to-session stability. The function is one-way: given a PPID, the user cannot be reverse-engineered without the HSM-stored salt. This satisfies both GDPR data minimization (pseudonymous, non-PII identifier) and eIDAS 2.0 unlinkability requirements for EUDI Wallet credential presentations.
 
 **Pros:**
 - Prevents cross-RP user correlation — two partner RPs cannot link the same user
@@ -98,7 +149,19 @@ PingFederate generates a unique `sub` per RP using HMAC-SHA256(sector_id + user_
 
 ### 2. Public subject identifiers with contractual controls
 
-Continue using the user's internal UUID as the public sub for all RPs, but enforce cross-RP correlation restrictions via contractual agreements and API usage auditing.
+Continue using the user's internal UUID (e.g., `550e8400-e29b-41d4-a716-446655440000`) as the `sub` claim in all ID tokens and UserInfo responses, regardless of the relying party. Cross-RP correlation restrictions are enforced through **contractual agreements** (partner data processing agreements) and **API usage auditing** (post-hoc detection of correlation behavior).
+
+```mermaid
+flowchart LR
+    U[User: alice@novatrust.nl] --> PF[PingFederate]
+    PF --> PA[sub: 550e8400... for Partner A]
+    PF --> PB[sub: 550e8400... for Partner B]
+    PA -.->|same UUID!| PB
+    style PA fill:#ffcdd2
+    style PB fill:#ffcdd2
+```
+
+The fundamental weakness is that **contracts are not technically enforced**. Partner A and Partner B both receive the same UUID, making cross-RP user correlation trivially possible by comparing `sub` values. Even if contracts prohibit correlation, detection is after-the-fact via API audit logs — a colluding partner can correlate silently without generating detectable API patterns. The Dutch DPA explicitly flagged this architecture as high-risk in their 2025 audit, and eIDAS 2.0 unlinkability requirements cannot be met with public identifiers.
 
 **Pros:**
 - No migration effort — RPs continue using existing sub values
@@ -119,7 +182,22 @@ Continue using the user's internal UUID as the public sub for all RPs, but enfor
 
 ### 3. Encrypted subject identifiers (JWE-wrapped sub)
 
-Issue the sub as a JWE-encrypted blob per RP, where only the RP can decrypt its own sub. Different encryption keys per RP prevent cross-RP correlation.
+Issue the `sub` claim as a JWE-encrypted blob, where each RP receives a `sub` encrypted with an RP-specific encryption key. Only the target RP can decrypt its own `sub` value. Different encryption keys per RP prevent cross-RP correlation because each RP sees only ciphertext for other RPs' `sub` values.
+
+```mermaid
+sequenceDiagram
+    participant PF as PingFederate
+    participant RP_A as Partner A
+    participant RP_B as Partner B
+
+    PF->>RP_A: ID Token (sub: JWE encrypted with Key_A)
+    RP_A->>RP_A: Decrypt with Key_A → user UUID
+    PF->>RP_B: ID Token (sub: JWE encrypted with Key_B)
+    RP_B->>RP_B: Decrypt with Key_B → user UUID
+    Note over RP_A,RP_B: Ciphertext differs → cannot correlate<br/>But underlying UUID is the same
+```
+
+This approach is **non-standard** — OIDC Core does not define an encrypted `sub` format, which breaks specification compliance. The JWE overhead inflates the `sub` value from 32 bytes (PPID) to approximately 200 bytes. Each RP must manage a decryption key, and key rotation requires coordinated rollover across all RPs simultaneously. PingFederate does not support this natively, requiring custom plugin development.
 
 **Pros:**
 - Prevents cross-RP correlation via encryption rather than pseudonymization

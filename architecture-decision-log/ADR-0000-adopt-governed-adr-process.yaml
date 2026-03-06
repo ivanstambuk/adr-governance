@@ -57,7 +57,7 @@ context:
     - ADR volume will remain under 100 active decisions per year
 alternatives:
   - name: Schema-governed YAML ADRs with JSON Schema validation
-    summary:
+    description:
       Custom YAML-based ADR meta-model with JSON Schema (Draft 2020-12) validation. Each ADR is a self-contained YAML
       file validated against a comprehensive schema. GitOps workflow drives all state transitions.
     pros:
@@ -75,7 +75,7 @@ alternatives:
     estimated_cost: low
     risk: low
   - name: Markdown ADRs with MADR 4.0 template
-    summary: Use the widely adopted MADR 4.0 markdown template. ADRs are markdown files with optional YAML frontmatter.
+    description: Use the widely adopted MADR 4.0 markdown template. ADRs are markdown files with optional YAML frontmatter.
     pros:
       - Most widely adopted ADR format — largest community
       - Simple to author — just markdown
@@ -92,7 +92,7 @@ alternatives:
       Lacks formal approval workflow, audit trail, and schema validation required for regulated financial
       services. Free-text markdown makes automated quality checks unreliable.
   - name: Confluence-based decision pages
-    summary: Record decisions in Confluence pages with a standardized template. Approvals managed via Confluence page approvals.
+    description: Record decisions in Confluence pages with a standardized template. Approvals managed via Confluence page approvals.
     pros:
       - Familiar tool — already used by most teams
       - Rich formatting and embedded diagrams

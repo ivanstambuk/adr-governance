@@ -70,7 +70,7 @@ governance:
   #   - context.technical_drivers  (clarification)
   #   - context.constraints        (adding discovered constraints)
   #   - context.assumptions        (adding discovered assumptions)
-  #   - requirements               (adding/updating requirements)
+  #   - architecturally_significant_requirements  (adding/updating ASRs)
   #   - dependencies               (updating dependency list)
   #   - references                 (adding links)
   #   - lifecycle.next_review_date (review cadence update)

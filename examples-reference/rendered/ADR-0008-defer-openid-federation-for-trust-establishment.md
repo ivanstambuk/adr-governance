@@ -32,6 +32,29 @@ certificates out-of-band, and configuring each partner connection in PingFederat
 With 40+ partner connections and 5–10 new partners onboarding per quarter, the manual process
 creates operational bottlenecks and human error risks (expired certificates, stale metadata).
 
+```mermaid
+graph TB
+    subgraph Manual["❌ Current: Manual Trust Establishment"]
+        direction TB
+        P1[Partner Bank] -->|"1. Email metadata XML"| IAM[IAM Team]
+        IAM -->|"2. Verify certs out-of-band"| IAM
+        IAM -->|"3. Configure in PingFederate"| PF1[PingFederate]
+        IAM -->|"4. Test connection"| PF1
+        Time1["⏱️ 2-4 weeks per partner<br/>❌ 3 cert-expiry incidents/year"]
+    end
+
+    subgraph Federation["✅ Proposed: OpenID Federation 1.0"]
+        direction TB
+        TA[Trust Anchor<br/>National Banking Authority] -->|signed entity statement| NT[NovaTrust<br/>Subordinate Entity]
+        TA -->|signed entity statement| PB[Partner Bank<br/>Subordinate Entity]
+        NT -->|"auto-resolve trust chain"| PF2[PingFederate]
+        PB -->|"auto-publish metadata"| PF2
+        Time2["⏱️ Automated onboarding<br/>✅ Auto cert rotation"]
+    end
+
+    Manual -.->|"deferred until spec is final<br/>+ PingFederate GA support"| Federation
+```
+
 OpenID Federation 1.0 promises automated trust establishment via trust chains — federating entities
 publish signed entity statements, and trust anchors (e.g., national banking authorities) vouch
 for subordinate entities. This would eliminate manual metadata exchange.
@@ -60,7 +83,7 @@ for subordinate entities. This would eliminate manual metadata exchange.
 - PingFederate will ship GA support for OpenID Federation by end of 2026
 - At least 5 key partners are willing to pilot the new trust establishment mechanism
 
-## Requirements
+## Architecturally Significant Requirements
 
 ### Functional
 
@@ -82,7 +105,22 @@ for subordinate entities. This would eliminate manual metadata exchange.
 
 ### 1. OpenID Federation 1.0 trust chains ✅
 
-Adopt OpenID Federation 1.0 for automated trust establishment. NovaTrust registers as a subordinate entity under a trust anchor (e.g., national banking authority). Partners do the same. Trust is established automatically via signed entity statements and trust chain resolution.
+Adopt OpenID Federation 1.0 for fully automated, cryptographically verified trust establishment between NovaTrust and its partner banks. NovaTrust registers as a **subordinate entity** under a trust anchor (e.g., the national banking authority or a PSD2 competent authority). Partner banks do the same under their respective trust anchors. Trust is established automatically via **signed entity statements** and **trust chain resolution** — no manual metadata exchange or bilateral key agreement required.
+
+```mermaid
+flowchart TD
+    TA[Trust Anchor: National Banking Authority] -->|signs entity statement| NV[NovaTrust]
+    TA -->|signs entity statement| PB[Partner Bank A]
+    TA -->|signs entity statement| PC[Partner Bank B]
+    NV -->|resolves trust chain| TA
+    NV -.->|trusts via chain| PB
+    NV -.->|trusts via chain| PC
+    style TA fill:#e8f5e9
+```
+
+When NovaTrust needs to establish trust with a new partner, it resolves the partner's trust chain by fetching signed entity statements from the partner up through the trust anchor hierarchy. Each entity statement is cryptographically signed by its superior, creating a verifiable chain of trust. Certificate rotation is automated — when a partner updates its keys, it publishes a new entity statement signed by its superior, and NovaTrust picks up the change on the next metadata refresh.
+
+The **strategic risk** is adoption timing: the specification is still in draft stage (February 2026), PingFederate support is roadmapped but not GA, trust anchor infrastructure does not yet exist for the Dutch banking sector, and partner adoption is uncertain. Unilateral adoption provides no benefit — both sides must participate.
 
 **Pros:**
 - Eliminates manual metadata exchange — trust established automatically via trust chains
@@ -101,9 +139,31 @@ Adopt OpenID Federation 1.0 for automated trust establishment. NovaTrust registe
 
 ### 2. Automated metadata exchange via well-known endpoints
 
-Use OIDC Discovery (/.well-known/openid-configuration) with automated polling and certificate
-pinning. A custom service periodically fetches partner metadata, validates certificates against
-a pinned trust store, and updates PingFederate configuration via admin API.
+Build a custom metadata synchronization service that periodically polls partners' OIDC Discovery endpoints (`/.well-known/openid-configuration`) and JWKS endpoints, validates certificates against a **pinned trust store**, and updates PingFederate's connection configuration via its Admin REST API. This automates the metadata retrieval and key rotation detection steps of the current manual process.
+
+```mermaid
+sequenceDiagram
+    participant SYNC as Metadata Sync Service
+    participant PARTNER as Partner Bank
+    participant TRUST as Pinned Trust Store
+    participant PF as PingFederate Admin API
+
+    loop Every 24 hours
+        SYNC->>PARTNER: GET /.well-known/openid-configuration
+        PARTNER-->>SYNC: OIDC Discovery document
+        SYNC->>PARTNER: GET /jwks.json
+        PARTNER-->>SYNC: JWKS (signing keys)
+        SYNC->>TRUST: Validate TLS cert against pinned CAs
+        alt Certificate valid
+            SYNC->>PF: PUT /connections/{partner} (update metadata + keys)
+            PF-->>SYNC: 200 OK
+        else Certificate mismatch
+            SYNC->>SYNC: Alert: manual review required
+        end
+    end
+```
+
+This approach can be built today using existing OIDC Discovery infrastructure that all partners already support. However, it is a **tactical improvement, not a strategic solution**: certificate pinning still requires manual trust store updates when partners rotate their CA certificates. The trust model is based on TLS validation and manual CA pinning, not cryptographic attestation chains — it does not fundamentally solve the trust establishment problem at scale.
 
 **Pros:**
 - Can be built today — no dependency on unfinished specifications

@@ -80,7 +80,7 @@ public mobile apps, confidential backend services, and partner API consumers.
 - All resource servers can parse and validate the DPoP HTTP header
 - DPoP nonce support in PingFederate is available for replay protection
 
-## Requirements
+## Architecturally Significant Requirements
 
 ### Functional
 
@@ -102,7 +102,26 @@ public mobile apps, confidential backend services, and partner API consumers.
 
 ### 1. DPoP (RFC 9449) ✅
 
-Application-layer proof of possession using signed JWTs. The client generates an ephemeral asymmetric keypair, includes the public key in token requests, and presents a signed DPoP proof JWT with every API call. The access token's `cnf` claim contains a `jkt` thumbprint of the DPoP key.
+Application-layer proof of possession using signed JWTs. The client generates an ephemeral asymmetric keypair (typically EC P-256), includes the public key in token requests via a `DPoP` header, and presents a freshly signed DPoP proof JWT with every API call. The authorization server binds the access token to the client's DPoP key by embedding a `jkt` (JWK Thumbprint) in the token's `cnf` claim.
+
+At the resource server, every incoming request is validated by: (1) extracting the `jkt` from the access token's `cnf` claim, (2) extracting the public key from the `DPoP` proof header, (3) verifying the proof JWT signature, and (4) confirming the thumbprint matches. This ensures only the original client can use the token.
+
+```mermaid
+sequenceDiagram
+    participant Client as Client (Mobile/Backend)
+    participant AS as Authorization Server
+    participant RS as Resource Server
+
+    Note over Client: Generate ephemeral EC P-256 keypair
+    Client->>AS: Token Request + DPoP proof (signed JWT with public key)
+    AS-->>Client: Access Token (cnf.jkt = thumbprint of DPoP key)
+
+    Client->>RS: API Request + Authorization: DPoP <token> + DPoP: <proof JWT>
+    Note over RS: Verify: proof signature valid,<br/>jkt matches cnf claim,<br/>htm/htu match request
+    RS-->>Client: 200 OK
+```
+
+DPoP operates entirely at the application layer (HTTP headers), which means it survives TLS termination at CDNs, load balancers, and reverse proxies — a critical advantage over mTLS where client certificates are stripped at TLS termination points.
 
 **Pros:**
 - Works for public clients — no certificate provisioning needed; keypair generated locally
@@ -123,7 +142,28 @@ Application-layer proof of possession using signed JWTs. The client generates an
 
 ### 2. mTLS Certificate-Bound Tokens (RFC 8705)
 
-TLS-layer proof of possession using X.509 client certificates. The client presents a certificate during the TLS handshake, and the access token's `cnf` claim contains an `x5t#S256` thumbprint of the certificate. Resource servers verify the certificate thumbprint matches.
+TLS-layer proof of possession using X.509 client certificates. During the TLS handshake, the client presents a certificate to the authorization server and to resource servers. The authorization server binds the access token by embedding the certificate's SHA-256 thumbprint in the `cnf.x5t#S256` claim. Resource servers extract the client certificate from the TLS connection, compute its thumbprint, and verify it matches the token's `cnf` claim.
+
+```mermaid
+sequenceDiagram
+    participant Client as Client (with X.509 cert)
+    participant TLS as TLS Termination
+    participant AS as Authorization Server
+    participant RS as Resource Server
+
+    Client->>TLS: TLS handshake (present client certificate)
+    TLS->>AS: Forward client cert (if mTLS passthrough)
+    Client->>AS: Token Request (over mTLS)
+    AS-->>Client: Access Token (cnf.x5t#S256 = cert thumbprint)
+
+    Client->>TLS: TLS handshake (present client certificate)
+    TLS->>RS: Forward client cert (if mTLS passthrough)
+    Client->>RS: API Request + Authorization: Bearer <token>
+    Note over RS: Verify: cert thumbprint<br/>matches cnf.x5t#S256
+    RS-->>Client: 200 OK
+```
+
+The critical dependency is **mTLS passthrough**: every network hop between the client and the resource server must forward the client certificate. CDNs, API gateways, and corporate proxies that terminate TLS will strip the client certificate unless explicitly configured for mTLS passthrough — a costly enterprise feature. This makes mTLS impractical for mobile clients and partner integrations where the network path cannot be controlled.
 
 **Pros:**
 - Mature, well-understood mechanism — widely deployed in financial services
@@ -145,7 +185,23 @@ TLS-layer proof of possession using X.509 client certificates. The client presen
 
 ### 3. Hybrid: DPoP for public clients, mTLS for confidential clients
 
-Use DPoP for mobile/SPA public clients and mTLS for server-to-server confidential clients, choosing the mechanism per client type.
+A dual-mechanism approach that selects the sender-constraining method based on client type. Public clients (mobile apps, SPAs) use DPoP, while confidential clients (server-to-server) use mTLS. The authorization server issues tokens with the appropriate `cnf` claim type (`jkt` for DPoP, `x5t#S256` for mTLS) based on how the client authenticated.
+
+```mermaid
+flowchart TD
+    A[Client requests token] --> B{Client type?}
+    B -->|Public client| C[DPoP flow]
+    B -->|Confidential client| D[mTLS flow]
+    C --> E[Token with cnf.jkt]
+    D --> F[Token with cnf.x5t#S256]
+    E --> G[Resource Server]
+    F --> G
+    G --> H{Check cnf claim type}
+    H -->|jkt| I[Validate DPoP proof]
+    H -->|x5t#S256| J[Validate client cert]
+```
+
+Every resource server must implement **dual validation logic** — checking whether the token contains a `jkt` or `x5t#S256` claim and applying the corresponding verification. This doubles the testing matrix and debugging surface, since every API flow must be validated with both mechanisms. PingFederate token policies must branch on client type, increasing the configuration surface and the risk of misconfiguration.
 
 **Pros:**
 - Each client type uses its optimal mechanism

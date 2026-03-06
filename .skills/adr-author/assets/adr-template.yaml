@@ -58,7 +58,7 @@ context:
     - ""
 
 # --- Optional ---
-requirements:
+architecturally_significant_requirements:
   functional:
     - id: "F-001"
       description: ""
@@ -67,9 +67,13 @@ requirements:
       description: ""
 
 # --- REQUIRED: minimum 2 alternatives ---
+# Each alternative needs a thorough description — NOT a brief summary.
+# Write multiple paragraphs explaining the architectural design, data flows,
+# and integration points. Embedding Mermaid diagrams is strongly encouraged.
 alternatives:
   - name: ""
-    summary: ""
+    description:
+      | # Markdown — thorough architectural description. Embed Mermaid diagrams.
     pros:
       - ""
     cons:
@@ -78,7 +82,8 @@ alternatives:
     risk: "medium" # low | medium | high | critical
 
   - name: ""
-    summary: ""
+    description:
+      | # Markdown — thorough architectural description. Embed Mermaid diagrams.
     pros:
       - ""
     cons:

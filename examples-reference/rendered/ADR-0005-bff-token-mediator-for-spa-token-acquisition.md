@@ -28,6 +28,32 @@
 
 NovaTrust is rebuilding the customer banking portal as a React single-page application (SPA). SPAs are public OAuth clients — they cannot hold a client secret because all code runs in the browser. The SPA needs to obtain access tokens to call backend APIs. Two patterns exist: (1) the SPA directly performs the OAuth 2.1 Authorization Code + PKCE flow and stores tokens in browser memory, or (2) a Backend-for-Frontend (BFF) / Token Mediator component performs the OAuth flow server-side and issues secure HTTP-only cookies to the SPA. The choice affects token storage security (XSS exposure), CSRF handling, and the overall security posture of the banking portal where high-value transactions are at stake.
 
+```mermaid
+sequenceDiagram
+    participant User as User (Browser)
+    participant SPA as React SPA (CDN)
+    participant BFF as BFF / Token Mediator
+    participant PF as PingFederate (AS)
+    participant API as Backend APIs
+
+    User->>SPA: Click "Login"
+    SPA->>BFF: GET /bff/login (redirect)
+    BFF->>PF: Authorization Code + PKCE (confidential client)
+    PF->>User: Login page (MFA / FIDO2)
+    User->>PF: Authenticate
+    PF->>BFF: Authorization code callback
+    BFF->>PF: Exchange code → access_token + refresh_token
+    Note over BFF: Tokens stored server-side<br/>Never sent to browser
+    BFF->>SPA: Set-Cookie: session=encrypted (HttpOnly, Secure, SameSite=Strict)
+    SPA->>BFF: API call + Cookie (credentials: 'include')
+    BFF->>BFF: Generate DPoP proof (server-side keypair)
+    BFF->>API: Forward + Authorization: DPoP <access_token> + DPoP: <proof>
+    API->>BFF: Response
+    BFF->>SPA: Response (no tokens exposed)
+```
+
+The choice determines whether OAuth tokens are exposed to the browser's JavaScript execution environment.
+
 ### Business Drivers
 
 - Customer banking portal handles payments, account management, and PSD2 consent — high-value target
@@ -58,7 +84,7 @@ NovaTrust is rebuilding the customer banking portal as a React single-page appli
 - BFF adds < 5ms latency per proxied API request
 - Content Security Policy (CSP) mitigates XSS risk, but is not a sufficient sole defense
 
-## Requirements
+## Architecturally Significant Requirements
 
 ### Functional
 
@@ -81,7 +107,36 @@ NovaTrust is rebuilding the customer banking portal as a React single-page appli
 
 ### 1. Backend-for-Frontend (BFF) Token Mediator ✅
 
-A lightweight server-side component sits between the SPA and the authorization server. The BFF performs the OAuth 2.1 flow as a confidential client, stores tokens server-side (or in encrypted HTTP-only cookies), and the SPA authenticates with the BFF using HTTP-only cookies. The SPA never touches OAuth tokens.
+A lightweight server-side component sits between the SPA and the authorization server. The BFF performs the OAuth 2.1 Authorization Code flow as a **confidential client**, stores tokens server-side (or in encrypted HTTP-only cookies), and the SPA authenticates with the BFF using HTTP-only, SameSite=Strict cookies. The SPA never sees or handles OAuth tokens.
+
+The BFF acts as a reverse proxy for API calls. When the SPA needs to call a protected API, it sends the request to the BFF (with the session cookie attached automatically by the browser). The BFF retrieves the stored access token, attaches it as a Bearer token to the upstream API request, and forwards the response back to the SPA.
+
+```mermaid
+sequenceDiagram
+    participant SPA as SPA (Browser)
+    participant BFF as BFF Server
+    participant AS as Authorization Server
+    participant API as Resource API
+
+    SPA->>BFF: GET /login (redirect)
+    BFF->>AS: Authorization Code Request (confidential client)
+    AS-->>SPA: Login page (redirect)
+    SPA->>AS: User authenticates
+    AS-->>BFF: Authorization Code (redirect)
+    BFF->>AS: Token Request (code + client_secret)
+    AS-->>BFF: Access Token + Refresh Token
+    BFF-->>SPA: Set-Cookie: session=encrypted (HttpOnly, SameSite=Strict)
+    Note over BFF: Tokens stored server-side, never sent to browser
+
+    SPA->>BFF: GET /api/accounts (Cookie: session=encrypted)
+    BFF->>API: GET /accounts (Authorization: Bearer access_token)
+    API-->>BFF: 200 OK (account data)
+    BFF-->>SPA: 200 OK (account data)
+```
+
+Token renewal is entirely server-side. When the access token expires, the BFF uses the stored refresh token to obtain a new access token from the authorization server — the SPA is unaware of this process. This eliminates the fragile iframe-based silent refresh pattern that breaks with third-party cookie deprecation.
+
+For DPoP sender-constraining (per ADR-0001), the BFF generates DPoP proofs server-side using a stable keypair stored in the BFF's memory or HSM. This avoids the security weakness of browser-side DPoP where the private key material is accessible to JavaScript.
 
 **Pros:**
 - Tokens never exposed to JavaScript — immune to XSS-based token theft
@@ -103,7 +158,33 @@ A lightweight server-side component sits between the SPA and the authorization s
 
 ### 2. Direct SPA-to-AS with in-memory tokens
 
-The SPA performs the OAuth 2.1 Authorization Code + PKCE flow directly as a public client. Tokens are stored in JavaScript closures (in-memory) and never persisted to localStorage or sessionStorage. Token renewal uses refresh tokens with rotation.
+The SPA performs the OAuth 2.1 Authorization Code + PKCE flow directly as a **public client**. The authorization server issues tokens directly to the browser. Tokens are stored in JavaScript closures (in-memory variables) and never persisted to localStorage or sessionStorage. Token renewal uses refresh tokens with rotation and sender-constraining via DPoP.
+
+```mermaid
+sequenceDiagram
+    participant SPA as SPA (Browser JS)
+    participant AS as Authorization Server
+    participant API as Resource API
+
+    SPA->>AS: Authorization Code + PKCE Request (public client)
+    AS-->>SPA: Login page (redirect)
+    SPA->>AS: User authenticates
+    AS-->>SPA: Authorization Code (redirect)
+    SPA->>AS: Token Request (code + code_verifier)
+    AS-->>SPA: Access Token + Refresh Token (in JS memory)
+    Note over SPA: Tokens stored in JS closure — accessible to any XSS payload
+
+    SPA->>API: GET /accounts (Authorization: Bearer access_token)
+    API-->>SPA: 200 OK (account data)
+
+    Note over SPA: On token expiry:
+    SPA->>AS: Refresh Token Request (rotation)
+    AS-->>SPA: New Access Token + New Refresh Token
+```
+
+Because the SPA is a public client, it cannot hold a client secret. The only client authentication mechanism is PKCE (Proof Key for Code Exchange), which protects the authorization code exchange but does not protect stored tokens. Any JavaScript code running in the same origin — including XSS payloads — has full access to the in-memory token variables.
+
+Token persistence across page reloads is impossible without storage APIs (localStorage, sessionStorage, IndexedDB), all of which are accessible to XSS. In-memory-only storage means the user must re-authenticate on every page reload or tab close.
 
 **Pros:**
 - No additional server component — simpler deployment
@@ -126,7 +207,32 @@ The SPA performs the OAuth 2.1 Authorization Code + PKCE flow directly as a publ
 
 ### 3. Service Worker token cache with encrypted storage
 
-Tokens stored in the browser via Service Worker with encrypted IndexedDB. Service Worker intercepts API calls and attaches tokens, isolating them from the main JavaScript thread.
+Tokens are stored in the browser via a **Service Worker** with encrypted IndexedDB as the persistence layer. The Service Worker registers itself as a network interceptor — it intercepts all outgoing API requests from the SPA, retrieves the access token from its encrypted cache, attaches it to the request, and forwards it to the API. The main JavaScript thread never directly handles tokens.
+
+```mermaid
+sequenceDiagram
+    participant SPA as SPA (Main Thread)
+    participant SW as Service Worker
+    participant IDB as Encrypted IndexedDB
+    participant AS as Authorization Server
+    participant API as Resource API
+
+    SPA->>AS: Authorization Code + PKCE (public client)
+    AS-->>SPA: Access Token + Refresh Token
+    SPA->>SW: postMessage(tokens)
+    SW->>IDB: Encrypt & store tokens (AES-GCM)
+
+    SPA->>API: fetch('/api/accounts')
+    Note over SW: Service Worker intercepts fetch
+    SW->>IDB: Retrieve & decrypt access token
+    SW->>API: GET /accounts (Authorization: Bearer token)
+    API-->>SW: 200 OK
+    SW-->>SPA: 200 OK (account data)
+```
+
+The encryption key for IndexedDB is derived using the Web Crypto API (e.g., PBKDF2 from a user-supplied PIN or a server-provided key). However, this creates a **chicken-and-egg problem**: the encryption key itself must be stored somewhere accessible to JavaScript, which means it is also accessible to XSS payloads.
+
+The Service Worker scope isolation is a **process boundary, not a security boundary**. While the Service Worker runs in a separate thread, the main thread can communicate with it freely via `postMessage()`. An XSS payload in the main thread can instruct the Service Worker to return tokens or make authenticated requests on its behalf.
 
 **Pros:**
 - Tokens isolated from main JS thread — Service Worker has its own scope

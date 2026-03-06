@@ -28,6 +28,34 @@
 
 NovaTrust's banking APIs require step-up authentication for high-value operations: wire transfers > €10K, beneficiary management, and PSD2 dynamic linking for payment initiation. When a user triggers a high-value operation, the API gateway (PingAccess) challenges the user for additional authentication (biometric, FIDO2, or OTP) via RFC 9470 `insufficient_user_authentication`. After successful step-up, the system must persist proof that the user has completed the higher authentication level so that subsequent high-value requests within a time window do not re-challenge. Two patterns exist: (A) enrich the IdP session (PingFederate) with the authentication level and let the access token's `acr` claim reflect it, or (B) issue a custom JWE-encrypted cookie directly from the API gateway containing the step-up proof. This decision determines how step-up proof is created, stored, validated, and eventually expired.
 
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant SPA as SPA (via BFF)
+    participant GW as PingAccess (Gateway)
+    participant PF as PingFederate (IdP)
+    participant MFA as MFA Provider (FIDO2/OTP)
+
+    User->>SPA: Initiate wire transfer > €10K
+    SPA->>GW: POST /api/payments/transfer
+    GW->>GW: Check acr claim in access token
+    GW->>SPA: 401 insufficient_user_authentication (RFC 9470)
+    SPA->>PF: Step-up authorize (acr_values=urn:novatrust:acr:high)
+    PF->>MFA: Challenge user (FIDO2 biometric)
+    MFA->>User: Biometric prompt
+    User->>MFA: Authenticate
+    MFA->>PF: Verification success
+    PF->>PF: Enrich session: acr=high, acr_at=now
+    PF->>SPA: New access token (acr=urn:novatrust:acr:high)
+    SPA->>GW: Retry POST /api/payments/transfer (new token)
+    GW->>GW: Validate acr=high + max_age ≤ 900s ✅
+    GW->>GW: Forward to payment service
+
+    Note over GW: Subsequent high-value requests<br/>within 15 min skip re-challenge
+```
+
+This decision determines how step-up proof is created, stored, validated, and eventually expired.
+
 ### Business Drivers
 
 - PSD2 Dynamic Linking: payment initiation requires proof of SCA with transaction binding
@@ -57,7 +85,7 @@ NovaTrust's banking APIs require step-up authentication for high-value operation
 - PingAccess can evaluate `acr` claim in the access token for step-up enforcement
 - 15-minute max_age for high assurance is acceptable to the fraud team
 
-## Requirements
+## Architecturally Significant Requirements
 
 ### Functional
 
@@ -80,7 +108,31 @@ NovaTrust's banking APIs require step-up authentication for high-value operation
 
 ### 1. IdP session enrichment (Approach A) ✅
 
-After successful step-up MFA, PingFederate enriches the user's IdP session with the achieved authentication context class (e.g., `urn:novatrust:acr:high`) and the timestamp of the step-up event. On the next token refresh, the BFF obtains a new access token whose `acr` claim reflects the elevated level. PingAccess validates the `acr` claim and `auth_time` to enforce max_age. When max_age expires, the next high-value request triggers a new step-up challenge.
+After successful step-up MFA, PingFederate enriches the user's IdP session with the achieved authentication context class (e.g., `urn:novatrust:acr:high`) and the timestamp of the step-up event. On the next token refresh, the BFF obtains a new access token whose `acr` claim reflects the elevated level. PingAccess validates the `acr` claim and `auth_time` to enforce `max_age`.
+
+```mermaid
+sequenceDiagram
+    participant SPA as SPA (Browser)
+    participant BFF as BFF Server
+    participant PA as PingAccess
+    participant PF as PingFederate
+
+    SPA->>BFF: POST /api/payments (high-value)
+    BFF->>PA: Forward request
+    PA->>PA: Check acr claim → insufficient
+    PA-->>BFF: 403 (step-up required)
+    BFF->>PF: /authorize?acr_values=urn:novatrust:acr:high
+    PF-->>SPA: MFA challenge (FIDO2)
+    SPA->>PF: Complete MFA
+    PF->>PF: Enrich session: acr=high, auth_time=now
+    PF-->>BFF: New access token (acr=high)
+    BFF->>PA: Retry POST /api/payments + new token
+    PA->>PA: Check acr=high, auth_time within max_age
+    PA->>API: Forward to backend
+    API-->>SPA: 200 OK (payment processed)
+```
+
+When `max_age` expires (e.g., after 15 minutes), the next high-value request triggers a new step-up challenge. All step-up state is managed centrally at PingFederate — there is a single source of truth for the user's current authentication level, and all step-up events are logged with session correlation for fraud investigation.
 
 **Pros:**
 - Standards-based: acr claim in access token is defined by OIDC Core §2
@@ -101,7 +153,30 @@ After successful step-up MFA, PingFederate enriches the user's IdP session with 
 
 ### 2. Custom JWE cookie (Approach B)
 
-After successful step-up MFA, the API gateway (PingAccess) issues a JWE-encrypted cookie containing the step-up proof: authentication level, timestamp, and transaction reference. PingAccess validates the JWE cookie on subsequent requests to high-value endpoints. The cookie has a short Max-Age (15 minutes) for expiry.
+After successful step-up MFA, the API gateway (PingAccess) issues a JWE-encrypted cookie containing the step-up proof: authentication level, timestamp, and transaction reference. PingAccess validates the JWE cookie on subsequent requests to high-value endpoints. The cookie has a short `Max-Age` (15 minutes) for automatic expiry.
+
+```mermaid
+sequenceDiagram
+    participant SPA as SPA (Browser)
+    participant PA as PingAccess
+    participant PF as PingFederate
+    participant API as Backend API
+
+    SPA->>PA: POST /api/payments (high-value)
+    PA->>PA: No step-up cookie present
+    PA-->>SPA: 403 (step-up required)
+    SPA->>PF: MFA challenge flow
+    PF-->>SPA: MFA success
+    SPA->>PA: Step-up complete notification
+    PA->>PA: Generate JWE cookie (acr=high, timestamp, txn_ref)
+    PA-->>SPA: Set-Cookie: stepup=JWE (Max-Age=900, HttpOnly)
+    SPA->>PA: Retry POST /api/payments + stepup cookie
+    PA->>PA: Decrypt JWE, verify timestamp within max_age
+    PA->>API: Forward to backend
+    API-->>SPA: 200 OK
+```
+
+The JWE cookie is self-contained — the step-up proof does not depend on the PingFederate session, so it survives session loss or rotation. However, this introduces **custom cryptographic infrastructure**: JWE encryption keys must be generated, rotated, and shared across all PingAccess nodes. If the encryption key is compromised, an attacker can forge step-up proofs for any user — a critical risk that bypasses MFA entirely.
 
 **Pros:**
 - No IdP session dependency — step-up proof is self-contained in the cookie
@@ -125,7 +200,22 @@ After successful step-up MFA, the API gateway (PingAccess) issues a JWE-encrypte
 
 ### 3. Hybrid: enriched session with JWE fallback for session loss
 
-Primary path uses IdP session enrichment (Approach A). Additionally, the BFF issues a JWE-encrypted cookie as a fallback in case the PingFederate session is lost. PingAccess checks acr claim first, then falls back to JWE cookie.
+A dual-path approach that uses IdP session enrichment (Approach A) as the primary mechanism, with a JWE-encrypted cookie as a fallback in case the PingFederate session is lost (e.g., due to node failover). PingAccess first checks the `acr` claim in the access token; if insufficient, it checks for a valid JWE cookie before triggering a new step-up challenge.
+
+```mermaid
+flowchart TD
+    A[High-value request arrives] --> B{acr claim sufficient?}
+    B -->|Yes| C[Allow request]
+    B -->|No| D{JWE cookie present?}
+    D -->|Yes| E{JWE valid & not expired?}
+    E -->|Yes| F[Allow request via fallback]
+    E -->|No| G[Trigger step-up MFA]
+    D -->|No| G
+    style F fill:#fff3e0
+    style G fill:#ffcdd2
+```
+
+This approach combines the complexity of both individual approaches: two validation paths at PingAccess, two key management systems (IdP signing keys + JWE encryption keys), and a doubled testing matrix. The JWE cookie fallback may also **mask session management issues** — instead of surfacing PingFederate session loss as a problem to investigate, it silently falls back, potentially hiding cluster replication failures.
 
 **Pros:**
 - Resilient to PingFederate session loss

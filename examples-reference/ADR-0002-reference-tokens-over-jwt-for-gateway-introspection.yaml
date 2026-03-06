@@ -52,6 +52,31 @@ approvals:
 context:
   summary: |
     With OAuth 2.1 adopted, NovaTrust must decide the format of access tokens issued by PingFederate. Self-contained JWTs encode all claims (scopes, subject, cnf, expiry) directly in the token, allowing offline validation by resource servers. Opaque reference tokens are short random strings that resource servers resolve via the Token Introspection endpoint (RFC 7662). This is a classic tradeoff: JWTs give low-latency validation but cannot be instantly revoked, while reference tokens give instant revocation but require an introspection call per request. Our API gateway (PingAccess) sits in front of all 200+ APIs and is the primary enforcement point. The choice affects latency, revocation capability, token size in logs, and regulatory auditability.
+
+    ```mermaid
+    sequenceDiagram
+        participant C as Client (BFF)
+        participant GW as PingAccess (Gateway)
+        participant PF as PingFederate (AS)
+        participant RS as Resource Server
+
+        C->>PF: Token Request (client credentials + DPoP proof)
+        PF->>PF: Issue opaque reference token (128-bit random)
+        PF->>C: Access Token: "aB3x...random...9zQ" (32 bytes)
+        C->>GW: API Request + Authorization: DPoP <opaque_token>
+        alt Cache HIT (within 30s TTL)
+            GW->>GW: Lookup cached introspection response (~0.8ms)
+        else Cache MISS
+            GW->>PF: POST /introspect {token: "aB3x...9zQ"} (~4ms)
+            PF->>PF: Lookup token → resolve claims, check active/revoked
+            PF->>GW: {active: true, sub, scope, cnf.jkt, exp}
+            GW->>GW: Cache introspection response (TTL=30s)
+        end
+        GW->>GW: Validate DPoP proof against cnf.jkt
+        GW->>RS: Forward (authenticated, claims in headers)
+    ```
+
+    We must choose the token format that best balances revocation speed, latency, auditability, and PII safety.
   business_drivers:
     - PSD2 requires instant consent revocation — customer must be able to revoke bank access immediately
     - GDPR right to erasure implies immediate token invalidation upon account deletion
@@ -72,7 +97,7 @@ context:
     - PingAccess introspection cache with 30-second TTL provides acceptable revocation latency
     - PingFederate introspection endpoint can sustain 5000 QPS with current cluster sizing
     - Reference tokens do not leak claims in client-side storage or network logs
-requirements:
+architecturally_significant_requirements:
   functional:
     - id: F-001
       description: Access tokens must be revocable within 30 seconds of revocation request
@@ -89,8 +114,31 @@ requirements:
       description: Token value must not contain PII when stored in access logs
 alternatives:
   - name: Opaque reference tokens with introspection
-    summary: |
-      PingFederate issues short opaque strings (128-bit random). PingAccess calls the introspection endpoint (RFC 7662) on each request, caching the response for a configurable TTL (default 30 seconds). Revocation is immediate at the authorization server; cached entries expire within TTL.
+    description: |
+      PingFederate issues short opaque strings (128-bit random) as access tokens. These tokens carry no claims and contain no PII — they are simply lookup keys into PingFederate's token store. When a client presents an opaque token to a resource server (via PingAccess), PingAccess calls PingFederate's introspection endpoint (RFC 7662) to resolve the token into its associated claims (subject, scopes, expiry, client_id).
+
+      PingAccess caches introspection responses for a configurable TTL (default 30 seconds) to minimize latency. When a token is revoked at PingFederate, it is immediately marked as `active: false` — any subsequent introspection call returns inactive, and cached entries expire within the TTL window.
+
+      ```mermaid
+      sequenceDiagram
+          participant Client
+          participant PA as PingAccess (Gateway)
+          participant PF as PingFederate (AS)
+          participant API as Backend API
+
+          Client->>PA: GET /api/accounts (Authorization: Bearer opaque_token)
+          PA->>PA: Check introspection cache
+          alt Cache miss
+              PA->>PF: POST /introspect (token=opaque_token)
+              PF-->>PA: {active: true, sub: "user123", scope: "accounts"}
+              PA->>PA: Cache response (TTL=30s)
+          end
+          PA->>API: Forward request + resolved claims
+          API-->>PA: 200 OK
+          PA-->>Client: 200 OK
+      ```
+
+      The opaque token is a reference (pointer) into the authorization server's state — hence "reference token." The authorization server is the single source of truth for token validity, enabling instant revocation with at most a 30-second cache lag.
     pros:
       - Instant revocation — token marked inactive immediately at PingFederate
       - No PII in the token itself — safe to log, store, and transmit
@@ -105,8 +153,31 @@ alternatives:
     estimated_cost: medium
     risk: medium
   - name: Self-contained JWTs with short lifetime
-    summary: |
-      PingFederate issues signed JWTs containing all claims. Resource servers validate the signature and expiry locally without contacting the authorization server. Short token lifetime (5 minutes) limits the revocation gap.
+    description: |
+      PingFederate issues signed JSON Web Tokens (JWTs) containing all claims inline — subject, scopes, expiry, client_id, and any custom claims. Resource servers validate the JWT locally by verifying the cryptographic signature against PingFederate's published JWKS (JSON Web Key Set) and checking the `exp` claim. No runtime call to the authorization server is needed.
+
+      ```mermaid
+      sequenceDiagram
+          participant Client
+          participant PA as PingAccess (Gateway)
+          participant JWKS as PingFederate JWKS endpoint
+          participant API as Backend API
+
+          Note over PA: On startup: fetch & cache JWKS
+          PA->>JWKS: GET /.well-known/jwks.json
+          JWKS-->>PA: {keys: [...]}
+
+          Client->>PA: GET /api/accounts (Authorization: Bearer eyJhbG...)
+          PA->>PA: Verify JWT signature (cached JWKS)
+          PA->>PA: Check exp, iat, aud claims
+          PA->>API: Forward request + JWT claims
+          API-->>PA: 200 OK
+          PA-->>Client: 200 OK
+
+          Note over PA: No introspection call needed — fully offline
+      ```
+
+      The fundamental tradeoff is **revocation**: once a JWT is issued, it cannot be revoked before its expiry. Short token lifetimes (5 minutes) limit the revocation gap, but a 5-minute window of unrevocable access is unacceptable for PSD2 instant revocation requirements. Additionally, PII (subject identifier, email, scopes) is embedded in the JWT body, which appears in access logs, browser history, and any system that captures the `Authorization` header.
     pros:
       - No runtime dependency on introspection endpoint — fully offline validation
       - Zero additional latency per request — signature verification is ~0.5ms
@@ -126,8 +197,31 @@ alternatives:
       in logs, violating GDPR data minimization. Adding or changing claims requires updating all resource server validation
       logic.
   - name: JWT with distributed deny-list (Redis)
-    summary: |
-      Issue JWTs but maintain a Redis-backed deny-list. Resource servers check the deny-list on every request. Revoked token JTIs are pushed to Redis; resource servers query before accepting.
+    description: |
+      A hybrid approach: PingFederate issues standard signed JWTs, but a centralized Redis cluster maintains a deny-list of revoked token JTIs (JWT IDs). When a token is revoked, its JTI is pushed to Redis with a TTL matching the token's remaining lifetime. Resource servers perform two validation steps: (1) verify the JWT signature and claims locally, then (2) check the Redis deny-list to confirm the JTI has not been revoked.
+
+      ```mermaid
+      sequenceDiagram
+          participant Client
+          participant PA as PingAccess (Gateway)
+          participant Redis as Redis Deny-List
+          participant API as Backend API
+
+          Client->>PA: GET /api/accounts (Authorization: Bearer eyJhbG...)
+          PA->>PA: Verify JWT signature + claims (offline)
+          PA->>Redis: SISMEMBER revoked_tokens <jti>
+          alt JTI not in deny-list
+              Redis-->>PA: 0 (not revoked)
+              PA->>API: Forward request
+              API-->>PA: 200 OK
+              PA-->>Client: 200 OK
+          else JTI in deny-list
+              Redis-->>PA: 1 (revoked)
+              PA-->>Client: 401 Unauthorized
+          end
+      ```
+
+      This approach adds revocation capability to JWTs, but introduces a distributed runtime dependency (Redis) — the same availability concern as introspection, but using a custom, non-standardized protocol instead of RFC 7662. The deny-list has eventual consistency in clustered deployments, and PII remains embedded in the JWT body.
     pros:
       - Adds revocation capability to JWTs
       - Resource servers still validate signature offline for non-revoked tokens

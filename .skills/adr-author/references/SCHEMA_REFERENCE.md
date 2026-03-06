@@ -21,7 +21,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 |---------|-------------|
 | `reviewers` | People who reviewed the ADR |
 | `approvals` | Formal approvals with timestamps, platform identities, and signature IDs |
-| `requirements` | Embedded functional and non-functional requirements |
+| `architecturally_significant_requirements` | Architecturally Significant Requirements (ASRs) — functional and non-functional |
 | `dependencies` | Internal and external dependencies |
 | `references` | External links and evidence |
 | `lifecycle` | Review cadence, supersession chain, archival |
@@ -67,7 +67,7 @@ The following fields support **full Markdown** including embedded Mermaid diagra
 | Field | Description |
 |-------|-------------|
 | `context.summary` | Narrative problem statement; embed architecture diagrams |
-| `alternatives[].summary` | Describe each option; embed comparison diagrams |
+| `alternatives[].description` | **Thorough** architectural description of each option. Not a summary — write multiple paragraphs covering how the design works, data flows, integration points. **Embedding Mermaid diagrams is strongly encouraged** (sequence, flowchart, C4). |
 | `decision.rationale` | Explain *why*; use bullet lists, headers, diagrams |
 | `decision.tradeoffs` | Acknowledged tradeoffs accepted with this decision |
 | `confirmation.description` | Verification evidence and implementation proof |

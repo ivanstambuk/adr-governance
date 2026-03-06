@@ -2,7 +2,7 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://github.com/ivanstambuk/adr-governance/blob/main/schemas/adr.schema.json",
     "title": "Architecture Decision Record",
-    "description": "Self-contained ADR meta-model for governed architectural decisions. Each ADR embeds all context, requirements, alternatives, consequences, and audit trails. All string fields support Markdown including embedded Mermaid diagrams via code fences.",
+    "description": "Self-contained ADR meta-model for governed architectural decisions. Each ADR embeds all context, architecturally significant requirements (ASRs), alternatives, consequences, and audit trails. All string fields support Markdown including embedded Mermaid diagrams via code fences.",
     "version": "1.0.0",
     "type": "object",
     "required": [
@@ -227,7 +227,7 @@
             },
             "description": "Context, drivers, constraints, and assumptions."
         },
-        "requirements": {
+        "architecturally_significant_requirements": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -236,17 +236,17 @@
                     "items": {
                         "$ref": "#/$defs/requirement"
                     },
-                    "description": "Functional requirements addressed by this decision."
+                    "description": "Functional ASRs addressed by this decision."
                 },
                 "non_functional": {
                     "type": "array",
                     "items": {
                         "$ref": "#/$defs/requirement"
                     },
-                    "description": "Non-functional / quality attribute requirements."
+                    "description": "Non-functional / quality attribute ASRs."
                 }
             },
-            "description": "Architecturally significant requirements (ASRs) embedded in this ADR."
+            "description": "Architecturally Significant Requirements (ASRs) — the subset of requirements that directly shape this architectural decision. Only include requirements that influence the architecture; do not replicate the full requirements backlog."
         },
         "alternatives": {
             "type": "array",
@@ -255,7 +255,7 @@
                 "type": "object",
                 "required": [
                     "name",
-                    "summary",
+                    "description",
                     "pros",
                     "cons"
                 ],
@@ -265,9 +265,10 @@
                         "type": "string",
                         "description": "Short name for this alternative."
                     },
-                    "summary": {
+                    "description": {
                         "type": "string",
-                        "description": "Description of the alternative. Supports Markdown with embedded Mermaid diagrams, code blocks, and rich formatting."
+                        "minLength": 20,
+                        "description": "Thorough description of the alternative's architectural design. This is NOT a summary — write multiple paragraphs explaining how this option works, its architecture, data flows, and integration points. Embedding Mermaid diagrams (sequence, flowchart, C4) is strongly encouraged to visualize the design. Supports full Markdown with code blocks and rich formatting."
                     },
                     "pros": {
                         "type": "array",

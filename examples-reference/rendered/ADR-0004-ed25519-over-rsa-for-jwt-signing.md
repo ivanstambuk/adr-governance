@@ -28,6 +28,33 @@
 
 NovaTrust's PingFederate IdP and all JWT-producing services currently use RS256 (RSA-2048 with PKCS#1 v1.5 padding) for signing ID tokens, access tokens (when issued as JWTs), SAML assertions, and DPoP proofs. With 5000+ token issuances per second at peak, RSA-2048 signing is the primary CPU bottleneck on the PingFederate cluster. EdDSA with Ed25519 (RFC 8037, JWS algorithm "EdDSA") offers vastly superior signing performance, smaller key sizes, and resistance to implementation pitfalls (no padding oracle attacks, no nonce reuse vulnerabilities as in ECDSA). However, Ed25519 is newer and has less universal library support than RSA. We must choose the signing algorithm for all new JWT/JWS production.
 
+```mermaid
+graph TD
+    subgraph Performance["Signing Performance (ops/sec per core)"]
+        RSA["RSA-2048 (RS256)<br/>🔴 1,500 ops/sec"]
+        ECDSA["ECDSA P-256 (ES256)<br/>🟡 5,000–15,000 ops/sec"]
+        ED["Ed25519 (EdDSA)<br/>🟢 30,000 ops/sec"]
+    end
+
+    subgraph Sizes["Signature & Key Sizes"]
+        RSA_S["RSA-2048<br/>Key: 256 bytes | Sig: 256 bytes"]
+        ECDSA_S["ECDSA P-256<br/>Key: 64 bytes | Sig: 64 bytes"]
+        ED_S["Ed25519<br/>Key: 32 bytes | Sig: 64 bytes"]
+    end
+
+    subgraph Risk["Nonce Safety"]
+        RSA_R["RSA — ✅ No nonce<br/>(padding oracle risk)"]
+        ECDSA_R["ECDSA — ❌ Random nonce<br/>(reuse leaks private key)"]
+        ED_R["Ed25519 — ✅ Deterministic<br/>(no nonce attack surface)"]
+    end
+
+    RSA --> RSA_S --> RSA_R
+    ECDSA --> ECDSA_S --> ECDSA_R
+    ED --> ED_S --> ED_R
+```
+
+At 78% CPU during peak, PingFederate will exceed capacity within 6 months unless we address the signing bottleneck.
+
 ### Business Drivers
 
 - PingFederate cluster CPU at 78% during peak — projected to exceed capacity in 6 months
@@ -57,7 +84,7 @@ NovaTrust's PingFederate IdP and all JWT-producing services currently use RS256 
 - SAML XML Signature for Ed25519 is supported via http://www.w3.org/2021/04/xmldsig-more#eddsa-ed25519
 - Legacy partners (3 of 15) will migrate to Ed25519 within 18 months
 
-## Requirements
+## Architecturally Significant Requirements
 
 ### Functional
 
@@ -79,7 +106,27 @@ NovaTrust's PingFederate IdP and all JWT-producing services currently use RS256 
 
 ### 1. EdDSA with Ed25519 (RFC 8037) ✅
 
-Use the EdDSA algorithm with Ed25519 curve for all JWT/JWS signing. Ed25519 provides 128-bit security with 32-byte keys and 64-byte signatures. Signing is deterministic (no random nonce), eliminating nonce-related vulnerabilities.
+Use the EdDSA (Edwards-curve Digital Signature Algorithm) with the Ed25519 curve (RFC 8037, JWS algorithm `EdDSA`) for all JWT and JWS signing operations. Ed25519 provides 128-bit security with 32-byte private keys, 32-byte public keys, and 64-byte signatures — dramatically smaller than RSA at equivalent security levels.
+
+Signing is **deterministic**: the signature is a pure function of the message and the private key, with no random nonce involved. This eliminates an entire class of vulnerabilities where nonce reuse leaks the private key (as happened with Sony PS3's ECDSA implementation and early Bitcoin wallets).
+
+```mermaid
+flowchart LR
+    subgraph Ed25519 Signing
+        M1[JWT payload] --> S1[Ed25519 Sign]
+        K1[32-byte private key] --> S1
+        S1 --> SIG1[64-byte signature]
+    end
+    subgraph RSA-2048 Signing
+        M2[JWT payload] --> S2[RSA Sign]
+        K2[256-byte private key] --> S2
+        S2 --> SIG2[256-byte signature]
+    end
+    style SIG1 fill:#e8f5e9
+    style SIG2 fill:#ffcdd2
+```
+
+At the infrastructure level, Ed25519 signing runs at approximately **30,000 operations/second per core** compared to RSA-2048's ~1,500 operations/second — a 20x throughput improvement. For PingFederate issuing 5,000 tokens/second across 200+ APIs, this eliminates the CPU bottleneck without adding additional cluster nodes ($120K/year savings).
 
 **Pros:**
 - 20x faster signing than RSA-2048 — directly addresses PingFederate CPU bottleneck
@@ -101,7 +148,24 @@ Use the EdDSA algorithm with Ed25519 curve for all JWT/JWS signing. Ed25519 prov
 
 ### 2. ECDSA with P-256 (ES256)
 
-Use ECDSA with the NIST P-256 curve (JWS algorithm ES256). Provides 128-bit security with smaller keys and signatures than RSA.
+Use ECDSA (Elliptic Curve Digital Signature Algorithm) with the NIST P-256 curve (JWS algorithm `ES256`). ECDSA P-256 provides the same 128-bit security level as Ed25519 but uses the NIST-standardized curve, which has broader library and HSM support.
+
+The critical difference from Ed25519 is that ECDSA is **non-deterministic by default**: each signature requires a fresh random nonce `k`. If `k` is ever reused or predictable, the private key can be algebraically derived from two signatures — a catastrophic key compromise.
+
+```mermaid
+flowchart LR
+    subgraph ECDSA Signing
+        M[JWT payload] --> S[ECDSA Sign]
+        K[Private key] --> S
+        R[Random nonce k] --> S
+        S --> SIG[~70-byte signature]
+    end
+    R -.->|If k reused| LEAK[Private key leaked!]
+    style LEAK fill:#ffcdd2
+    style R fill:#fff3e0
+```
+
+RFC 6979 defines a deterministic ECDSA variant that derives `k` from the message and private key, eliminating the nonce reuse risk. However, not all HSM implementations use RFC 6979 by default — each HSM vendor must be individually verified. ECDSA P-256 signing is 5-10x faster than RSA-2048 but still approximately 3x slower than Ed25519.
 
 **Pros:**
 - Widely supported — NIST P-256 is the most common elliptic curve
@@ -123,7 +187,20 @@ Use ECDSA with the NIST P-256 curve (JWS algorithm ES256). Provides 128-bit secu
 
 ### 3. RSA-2048 with PS256 (RSASSA-PSS)
 
-Upgrade from RS256 (PKCS#1 v1.5) to PS256 (RSASSA-PSS) padding while keeping RSA-2048 keys. Addresses padding oracle vulnerabilities without changing key type.
+Upgrade the RSA padding scheme from PKCS#1 v1.5 (`RS256`) to RSASSA-PSS (`PS256`) while keeping the existing RSA-2048 key infrastructure. This addresses the known padding oracle vulnerabilities in PKCS#1 v1.5 without changing key types, key sizes, or cryptographic libraries.
+
+```mermaid
+flowchart TD
+    A[Current: RS256 with PKCS#1 v1.5] -->|Upgrade padding| B[PS256 with RSASSA-PSS]
+    B --> C{CPU bottleneck resolved?}
+    C -->|No| D[Still ~1500 ops/sec per core]
+    D --> E[Still need extra PF nodes: $120K/year]
+    style C fill:#ffcdd2
+    style D fill:#ffcdd2
+    style E fill:#ffcdd2
+```
+
+While RSASSA-PSS eliminates the padding oracle attack class, it does **not address the CPU bottleneck** — RSA-2048 signing throughput remains at approximately 1,500 operations/second per core regardless of padding scheme. The 256-byte signature size also remains unchanged, providing no wire efficiency improvement. Additionally, NIST recommends migrating away from RSA-2048 to RSA-3072 after 2030, meaning this upgrade would be a temporary measure requiring another migration within 4 years.
 
 **Pros:**
 - No key type change — all libraries already support RSA
