@@ -107,7 +107,10 @@ Supersession is tracked via `lifecycle.supersedes` and `lifecycle.superseded_by`
 
 | Abbreviation | Full Form |
 |--------------|-----------|
-| CISO | Chief Information Security Officer |
+| AD | Architecture Decision |
+| ADL | Architecture Decision Log |
+| ADR | Architecture Decision Record |
+| AKM | Architecture Knowledge Management |
 | DPO | Data Protection Officer |
 | HA | High Availability |
 | HSM | Hardware Security Module |

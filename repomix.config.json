@@ -6,7 +6,7 @@
     "include": [
         "schemas/**",
         "docs/**",
-        "decisions/**",
+        "architecture-decision-log/**",
         ".skills/**",
         "scripts/**",
         "README.md",

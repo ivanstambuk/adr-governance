@@ -9,7 +9,7 @@ This document defines the process for proposing, reviewing, approving, and maint
 
 | I want to... | Do this |
 |--------------|---------|
-| Start a new decision | Branch → create YAML in `decisions/` with `status: draft` → iterate |
+| Start a new decision | Branch → create YAML in `architecture-decision-log/` with `status: draft` → iterate |
 | Submit for review | Set `status: proposed` → open PR → assign reviewers |
 | Approve a decision | Approve the PR → author sets `status: accepted` → merge |
 | Reject a decision | Comment reason → author sets `status: rejected` → merge (preserve history) |
@@ -111,9 +111,9 @@ If **none** of these apply, the decision is likely not architecturally significa
    git checkout -b adr/ADR-NNNN-short-title
    ```
 
-2. **Create the ADR file** in `decisions/` using the schema:
+2. **Create the ADR file** in `architecture-decision-log/` using the schema:
    ```bash
-   cp examples/ADR-0001-*.yaml decisions/ADR-NNNN-short-title.yaml
+   cp examples/ADR-0001-*.yaml architecture-decision-log/ADR-NNNN-short-title.yaml
    ```
 
 3. **Set status to `draft`** while authoring:
@@ -125,7 +125,7 @@ If **none** of these apply, the decision is likely not architecturally significa
 
 4. **Iterate locally.** Validate against the schema:
    ```bash
-   python3 scripts/validate-adr.py decisions/ADR-NNNN-short-title.yaml
+   python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-title.yaml
    ```
 
 ### 3.2 Proposal Phase
@@ -156,7 +156,7 @@ If **none** of these apply, the decision is likely not architecturally significa
     - [ ] Rationale explains *why* the chosen option is preferred
     - [ ] Tradeoffs are explicitly acknowledged
     - [ ] Risk assessment covers realistic failure modes
-    - [ ] No conflict with existing `accepted` ADRs (search `decisions/` for related decisions)
+    - [ ] No conflict with existing `accepted` ADRs (search `architecture-decision-log/` for related decisions)
 
 11. **Reviewers comment on the PR.** Discussions happen in PR comments.
 
@@ -306,7 +306,7 @@ Archival is for decisions that are no longer active and should be removed from r
    ```
 3. Submit as a PR and merge.
 
-> **Never delete an ADR.** Archival preserves the decision record for historical reference and audit compliance. Archived ADRs remain in the `decisions/` directory.
+> **Never delete an ADR.** Archival preserves the decision record for historical reference and audit compliance. Archived ADRs remain in the `architecture-decision-log/` directory.
 
 ---
 
@@ -379,13 +379,13 @@ Create a `CODEOWNERS` file to enforce that the right people review ADRs:
 
 ```
 # All ADRs require architect approval
-decisions/    @org/architecture-team
+architecture-decision-log/    @org/architecture-team
 
 # Security decisions additionally require CISO
-decisions/ADR-*security*    @org/security-team
+architecture-decision-log/ADR-*security*    @org/security-team
 
 # Compliance decisions additionally require DPO
-decisions/ADR-*compliance*  @org/compliance-team
+architecture-decision-log/ADR-*compliance*  @org/compliance-team
 ```
 
 > **Note:** CODEOWNERS wildcard patterns match on *filename*, not on `decision_type` inside the YAML. To ensure correct reviewer assignment, include the decision domain in the ADR filename (e.g., `ADR-0007-security-adopt-passkeys.yaml`). For more sophisticated routing, use a CI-based reviewer assignment step that reads `decision_type` from the YAML and requests the appropriate team via the GitHub API.

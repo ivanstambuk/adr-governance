@@ -6,13 +6,13 @@
 # See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
 # All ADRs require architect approval
-decisions/                       @org/architecture-team
+architecture-decision-log/                             @org/architecture-team
 
 # Security decisions additionally require CISO
-decisions/ADR-*security*         @org/security-team
+architecture-decision-log/ADR-*security*               @org/security-team
 
 # Compliance decisions additionally require DPO
-decisions/ADR-*compliance*       @org/compliance-team
+architecture-decision-log/ADR-*compliance*             @org/compliance-team
 
 # Schema changes require architect approval
 schemas/                         @org/architecture-team

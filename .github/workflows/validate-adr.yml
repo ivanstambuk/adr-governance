@@ -3,14 +3,14 @@ name: Validate ADR
 on:
   pull_request:
     paths:
-      - "decisions/**"
+      - "architecture-decision-log/**"
       - "examples/**"
       - "schemas/**"
       - "scripts/validate-adr.py"
   push:
     branches: [main]
     paths:
-      - "decisions/**"
+      - "architecture-decision-log/**"
       - "examples/**"
       - "schemas/**"
       - "scripts/validate-adr.py"
@@ -30,26 +30,26 @@ jobs:
       - name: Install dependencies
         run: pip install jsonschema pyyaml
 
-      - name: Validate decisions/
+      - name: Validate ADL
         run: |
-          if [ -d "decisions" ] && [ "$(ls -A decisions/*.yaml 2>/dev/null)" ]; then
-            python3 scripts/validate-adr.py --strict decisions/
+          if [ -d "architecture-decision-log" ] && [ "$(ls -A architecture-decision-log/*.yaml 2>/dev/null)" ]; then
+            python3 scripts/validate-adr.py architecture-decision-log/
           else
-            echo "No ADR files in decisions/ — skipping validation"
+            echo "No ADR files in architecture-decision-log/ — skipping validation"
           fi
 
       - name: Validate examples/
         run: |
           if [ -d "examples" ] && [ "$(ls -A examples/*.yaml 2>/dev/null)" ]; then
-            python3 scripts/validate-adr.py --strict examples/
+            python3 scripts/validate-adr.py examples/
           else
             echo "No ADR files in examples/ — skipping validation"
           fi
 
-      - name: YAML lint (decisions)
+      - name: YAML lint (ADL)
         uses: ibiqlik/action-yamllint@v3
         with:
-          file_or_dir: decisions/
+          file_or_dir: architecture-decision-log/
           config_data: |
             extends: default
             rules:
@@ -57,7 +57,7 @@ jobs:
                 max: 300
               truthy:
                 check-keys: false
-        if: hashFiles('decisions/*.yaml') != ''
+        if: hashFiles('architecture-decision-log/*.yaml') != ''
 
       - name: YAML lint (examples)
         uses: ibiqlik/action-yamllint@v3

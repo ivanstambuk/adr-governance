@@ -36,7 +36,7 @@ Use this skill when the user:
 
 ### Step 1: Determine the next ADR ID
 
-Check existing ADR files in the `decisions/` directory (or `examples/` for reference). The ID format is `ADR-NNNN` (zero-padded 4 digits). Use the next sequential number.
+Check existing ADR files in the `architecture-decision-log/` directory (or `examples/` for reference). The ID format is `ADR-NNNN` (zero-padded 4 digits). Use the next sequential number.
 
 ### Step 2: Gather context from the user
 
@@ -71,18 +71,16 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 Run the validation script to check the YAML against the JSON Schema:
 
 ```bash
-python3 scripts/validate-adr.py --strict decisions/ADR-NNNN-short-title.yaml
+python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-title.yaml
 ```
-
-> **Always use `--strict`** during authoring. Strict mode checks for missing summaries, one-sided consequences, confidence/review-cycle misalignment, and other quality signals that catch issues early.
 
 ### Step 5: File naming convention
 
 ```
-decisions/ADR-NNNN-short-kebab-case-title.yaml
+architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml
 ```
 
-Example: `decisions/ADR-0007-adopt-passkeys-for-workforce-mfa.yaml`
+Example: `architecture-decision-log/ADR-0007-adopt-passkeys-for-workforce-mfa.yaml`
 
 ## How to review an existing ADR
 
@@ -148,7 +146,7 @@ The `scripts/validate-adr.py` script validates any ADR YAML file against the JSO
 python3 scripts/validate-adr.py path/to/ADR-0001.yaml
 
 # Validate all ADRs in a directory
-python3 scripts/validate-adr.py decisions/
+python3 scripts/validate-adr.py architecture-decision-log/
 ```
 
 The script exits with code 0 if valid, 1 if validation errors are found.

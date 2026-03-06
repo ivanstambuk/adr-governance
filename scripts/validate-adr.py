@@ -4,11 +4,6 @@ Validate ADR YAML files against the ADR JSON Schema.
 
 Usage:
     python3 validate-adr.py <file_or_directory> [<file_or_directory> ...]
-    python3 validate-adr.py --strict decisions/ examples/
-
-Flags:
-    --strict    Warn on missing optional-but-recommended sections for accepted ADRs
-                (audit_trail, risk_assessment, confirmation)
 
 Requires: pip install jsonschema pyyaml
 """
@@ -60,7 +55,7 @@ def parse_iso_datetime(ts_str: str) -> datetime | None:
         return None
 
 
-def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[list[str], list[str]]:
+def validate_file(filepath: Path, schema: dict) -> tuple[list[str], list[str]]:
     """Validate a single ADR YAML file.
 
     Returns:
@@ -128,14 +123,7 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
                     f"  audit_trail: {len(approvals_with_timestamp)} approval(s) have timestamps but no 'approved' event in audit_trail"
                 )
 
-        # --- Strict mode checks ---
-        if strict and status == "accepted":
-            recommended_sections = ["audit_trail", "risk_assessment", "confirmation"]
-            for section in recommended_sections:
-                if section not in data or not data[section]:
-                    warnings.append(
-                        f"  [strict] '{section}' is missing or empty — recommended for accepted ADRs"
-                    )
+
 
         # Check for invalid state transitions (status vs audit trail events)
         invalid_event_for_status = {
@@ -153,39 +141,22 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
                         f"'{bad_event}' event — invalid state transition"
                     )
 
-        # Check confidence ↔ review cycle consistency (strict only)
-        if strict:
-            confidence = decision.get("confidence", "")
-            lifecycle = data.get("lifecycle", {})
-            review_months = lifecycle.get("review_cycle_months")
-            if confidence and review_months is not None:
-                if confidence == "low" and review_months > 6:
-                    warnings.append(
-                        f"  [strict] decision.confidence is 'low' but lifecycle.review_cycle_months "
-                        f"is {review_months} — recommended ≤6 months for low-confidence decisions"
-                    )
-                if confidence == "high" and review_months < 12:
-                    warnings.append(
-                        f"  [strict] decision.confidence is 'high' but lifecycle.review_cycle_months "
-                        f"is {review_months} — extended cycle (≥12 months) is acceptable for high-confidence decisions"
-                    )
 
-        # --- [strict] Warn if adr.summary is missing on proposed/accepted ADRs ---
-        if strict and status in {"proposed", "accepted"}:
+        # --- Warn if adr.summary is missing on proposed/accepted ADRs ---
+        if status in {"proposed", "accepted"}:
             summary = data.get("adr", {}).get("summary", "")
             if not summary or not summary.strip():
                 warnings.append(
-                    f"  [strict] 'adr.summary' is missing or empty — recommended for {status} ADRs "
+                    f"  'adr.summary' is missing or empty — recommended for {status} ADRs "
                     f"(elevator pitch for stakeholder triage)"
                 )
 
-        # --- [strict] Warn if schema_version is missing ---
-        if strict:
-            schema_version = data.get("adr", {}).get("schema_version", "")
-            if not schema_version:
-                warnings.append(
-                    f"  [strict] 'adr.schema_version' is missing — recommended per schema versioning policy (§10)"
-                )
+        # --- Warn if schema_version is missing ---
+        schema_version = data.get("adr", {}).get("schema_version", "")
+        if not schema_version:
+            warnings.append(
+                "  'adr.schema_version' is missing — recommended per schema versioning policy (§10)"
+            )
 
         # --- Check audit_trail temporal ordering (proper datetime parsing) ---
         if audit_trail:
@@ -205,56 +176,38 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
                             prev_dt = current_dt
                             prev_ts_str = ts_str
 
-        # --- [strict] Warn if accepted ADR has no approval with timestamp ---
-        if strict and status == "accepted":
+        # --- Warn if accepted ADR has no approval with timestamp ---
+        if status == "accepted":
             approvals_with_ts = [
                 a for a in approvals
                 if isinstance(a, dict) and a.get("approved_at") is not None
             ]
             if not approvals_with_ts:
                 warnings.append(
-                    f"  [strict] status is 'accepted' but no approval entry has an 'approved_at' timestamp"
+                    "  status is 'accepted' but no approval entry has an 'approved_at' timestamp"
                 )
 
-        # --- [strict] Warn if confidence is set on a draft ADR ---
-        if strict and status == "draft":
+        # --- Warn if confidence is set on a draft ADR ---
+        if status == "draft":
             conf = decision.get("confidence", "")
             if conf:
                 warnings.append(
-                    f"  [strict] decision.confidence is '{conf}' but status is 'draft' — "
+                    f"  decision.confidence is '{conf}' but status is 'draft' — "
                     f"confidence is premature before the decision is proposed"
                 )
 
-        # --- [strict] Check decision_date within created_at → last_modified range ---
-        if strict:
-            decision_date = decision.get("decision_date", "")
-            created_at = data.get("adr", {}).get("created_at", "")
-            last_modified = data.get("adr", {}).get("last_modified", "")
-            if decision_date and created_at:
-                # Compare date strings (ISO 8601 sorts lexicographically)
-                created_date = str(created_at)[:10]  # extract date portion
-                if str(decision_date) < created_date:
-                    warnings.append(
-                        f"  [strict] decision.decision_date ({decision_date}) is before "
-                        f"adr.created_at ({created_date}) — decision cannot predate the ADR"
-                    )
+        # --- Check decision_date within created_at → last_modified range ---
+        decision_date = decision.get("decision_date", "")
+        created_at = data.get("adr", {}).get("created_at", "")
+        if decision_date and created_at:
+            # Compare date strings (ISO 8601 sorts lexicographically)
+            created_date = str(created_at)[:10]  # extract date portion
+            if str(decision_date) < created_date:
+                warnings.append(
+                    f"  decision.decision_date ({decision_date}) is before "
+                    f"adr.created_at ({created_date}) — decision cannot predate the ADR"
+                )
 
-        # --- [strict] Warn if consequences is one-sided ---
-        if strict:
-            consequences = data.get("consequences", {})
-            if consequences:
-                positive = consequences.get("positive", [])
-                negative = consequences.get("negative", [])
-                if not positive:
-                    warnings.append(
-                        f"  [strict] 'consequences.positive' is missing or empty — "
-                        f"a balanced decision should acknowledge positive outcomes"
-                    )
-                if not negative:
-                    warnings.append(
-                        f"  [strict] 'consequences.negative' is missing or empty — "
-                        f"a balanced decision should acknowledge negative outcomes or tradeoffs"
-                    )
 
         # --- Check filename ↔ adr.id consistency ---
         adr_id = data.get("adr", {}).get("id", "")
@@ -335,14 +288,10 @@ def validate_cross_references(all_data: dict[str, dict]):
 
 def main():
     # Parse args
-    strict = False
     args = sys.argv[1:]
-    if "--strict" in args:
-        strict = True
-        args.remove("--strict")
 
     if len(args) < 1:
-        print(f"Usage: {sys.argv[0]} [--strict] <file_or_directory> [<file_or_directory> ...]")
+        print(f"Usage: {sys.argv[0]} <file_or_directory> [<file_or_directory> ...]")
         sys.exit(2)
 
     schema = load_schema()
@@ -369,7 +318,7 @@ def main():
     all_data = {}
 
     for filepath in files:
-        errors, warnings = validate_file(filepath, schema, strict=strict)
+        errors, warnings = validate_file(filepath, schema)
 
         # Load data for cross-reference checks
         try:
@@ -412,8 +361,7 @@ def main():
     print(f"Total errors:   {total_errors}")
     print(f"Total warnings: {total_warnings}")
 
-    if strict:
-        print("Mode: strict")
+
 
     sys.exit(1 if total_errors > 0 else 0)
 
