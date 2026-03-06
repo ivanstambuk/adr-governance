@@ -44,7 +44,7 @@ GitHub Actions is preconfigured out of the box. The only remaining step is to en
 
 #### Steps
 
-1. **Verify the workflow exists.** The file `.github/workflows/validate-adr.yml` is already in the repository. Push it to your GitHub remote and it will start running automatically on PRs.
+1. **Verify the workflow exists.** The file [`.github/workflows/validate-adr.yml`](../.github/workflows/validate-adr.yml) is already in the repository. Push it to your GitHub remote and it will start running automatically on PRs.
 
 2. **Enable branch protection** (merge gate):
    - Go to **Settings → Branches → Add branch ruleset** (or classic branch protection rule)
@@ -251,7 +251,7 @@ If you rename `architecture-decision-log/` to something else (e.g., `adrs/` or `
 
 ### Adding Additional Validation
 
-To add custom validation rules (e.g., enforcing naming conventions, checking for required tags), modify `scripts/validate-adr.py`. The validator is designed to be extended — add your checks in the `validate_file()` function between the schema validation and the return statement.
+To add custom validation rules (e.g., enforcing naming conventions, checking for required tags), modify [`scripts/validate-adr.py`](../scripts/validate-adr.py). The validator is designed to be extended — add your checks in the `validate_file()` function between the schema validation and the return statement.
 
 ### Removing Example Validation
 
@@ -398,7 +398,7 @@ In addition to schema validation and YAML linting, CI pipelines can verify that 
 
 ### How it works
 
-The `scripts/verify-approvals.py` script:
+The [`scripts/verify-approvals.py`](../scripts/verify-approvals.py) script:
 
 1. **Detects the CI platform** (GitHub, Azure DevOps, GitLab) via environment variables
 2. **Identifies changed ADR files** in the PR using `git diff`
@@ -470,7 +470,7 @@ For the approval identity check to be meaningful, configure your platform to req
 
 ### Governance config file
 
-All governance rules are centralised in `.adr-governance/config.yaml`. The CI script reads this file automatically. Key settings:
+All governance rules are centralised in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml). The CI script reads this file automatically. Key settings:
 
 ```yaml
 governance:
@@ -523,4 +523,4 @@ The default `yamllint` line-length limit is 80 characters. The pipeline configur
 
 ### Validator warnings vs. errors
 
-Only **errors** block the merge. **Warnings** are advisory — they flag potential issues (e.g., missing `adr.summary` on proposed ADRs, audit trail gaps) but do not cause the pipeline to fail. To promote a warning to a hard error, modify the `validate_file()` function in `scripts/validate-adr.py`.
+Only **errors** block the merge. **Warnings** are advisory — they flag potential issues (e.g., missing `adr.summary` on proposed ADRs, audit trail gaps) but do not cause the pipeline to fail. To promote a warning to a hard error, modify the `validate_file()` function in [`scripts/validate-adr.py`](../scripts/validate-adr.py).
