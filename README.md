@@ -66,33 +66,105 @@ stateDiagram-v2
 
 See [`docs/adr-process.md`](docs/adr-process.md) for the full normative governance process, including review checklists, the Architectural Significance Test, branch protection rules, and CODEOWNERS configuration.
 
-## Quick Start
+## Quick Start — Adopting for Your Organization
 
-### 1. Create a new ADR
+### 1. Create your ADR repository
 
-Copy the template and fill in all required sections:
-
-```bash
-cp .skills/adr-author/assets/adr-template.yaml architecture-decision-log/ADR-NNNN-your-title.yaml
-```
-
-Or use an AI assistant with the `adr-author` skill installed — it will guide you through every field interactively.
-
-### 2. Validate
+Create a new repository in your organization and clone this framework into it:
 
 ```bash
-pip install jsonschema pyyaml
-python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-your-title.yaml
+# Create a new repo in your org (GitHub example)
+gh repo create your-org/architecture-decisions --private --clone
+
+# Pull the framework into it
+cd architecture-decisions
+git remote add upstream https://github.com/ivanstambuk/adr-governance.git
+git pull upstream main
+git remote remove upstream
+git push origin main
 ```
 
-The validator checks:
-- JSON Schema compliance (structure, types, enums)
-- Semantic consistency (chosen alternative matches alternatives list, status ↔ audit trail events, supersession symmetry)
-- Quality signals (missing summaries, premature confidence on drafts, temporal inconsistencies)
+Or fork the repository directly from GitHub and rename it.
 
-### 3. Submit a PR
+### 2. Clean up example content
 
-The CI pipeline automatically validates your ADR against the schema and lints the YAML on every PR. GitHub Actions is preconfigured; for other platforms see [CI/CD Setup](#cicd-setup) below.
+Delete the example ADRs — they are fictional NovaTrust Financial Services decisions included for reference:
+
+```bash
+rm -rf examples/
+git add -A && git commit -m "chore: remove example ADRs"
+```
+
+### 3. Customize ADR-0000
+
+`architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml` is the **meta-ADR** — it documents the decision to adopt this governance framework. Update it for your organization:
+
+- Replace the `authors`, `decision_owner`, `reviewers`, and `approvals` names
+- Update `adr.project` to your project or organisation name
+- Update timestamps and audit trail entries
+- Adjust the `context.summary` if your adoption rationale differs
+
+### 4. Set up CI
+
+Copy the pipeline file for your platform to the repository root:
+
+| Platform | Copy from | Copy to |
+|----------|-----------|---------|
+| **GitHub Actions** | Already at `.github/workflows/validate-adr.yml` | *(nothing to do)* |
+| Azure DevOps | `ci/azure-devops/azure-pipelines.yml` | `azure-pipelines.yml` |
+| GCP Cloud Build | `ci/gcp-cloud-build/cloudbuild.yaml` | `cloudbuild.yaml` |
+| AWS CodeBuild | `ci/aws-codebuild/buildspec.yml` | `buildspec.yml` |
+| GitLab CI | `ci/gitlab-ci/.gitlab-ci.yml` | `.gitlab-ci.yml` |
+
+Then configure branch protection to make the CI check a **required merge gate** — see **[`docs/ci-setup.md`](docs/ci-setup.md)** for platform-specific instructions and LLM-ready setup prompts.
+
+### 5. Configure CODEOWNERS *(optional but recommended)*
+
+```bash
+cp CODEOWNERS.example .github/CODEOWNERS
+```
+
+Edit `.github/CODEOWNERS` to replace the placeholder team handles (`@org/architecture-team`, etc.) with your real GitHub teams. This ensures ADRs and schema changes automatically request review from the right people.
+
+### 6. Copy the Agent Skill to your code repositories *(optional)*
+
+The `.skills/adr-author/` directory is a portable AI skill. Copy it to any repository where developers will be authoring ADRs — agents like Antigravity, Claude Code, and Copilot will pick it up automatically and guide ADR creation through interactive questioning.
+
+### 7. Create your first real ADR
+
+Use an AI assistant with the `adr-author` skill — it will guide you through every field via Socratic dialogue:
+
+```
+"I need to create a new ADR for [your decision]. Guide me through it."
+```
+
+Or copy the template manually:
+
+```bash
+cp .skills/adr-author/assets/adr-template.yaml \
+   architecture-decision-log/ADR-0001-your-decision-title.yaml
+```
+
+### 8. Validate and submit
+
+```bash
+# Install dependencies
+pip install jsonschema pyyaml yamllint
+
+# Validate schema + semantic consistency
+python3 scripts/validate-adr.py architecture-decision-log/ADR-0001-your-decision-title.yaml
+
+# Pre-review quality gate (pipe to your LLM for Socratic feedback)
+python3 scripts/review-adr.py architecture-decision-log/ADR-0001-your-decision-title.yaml
+
+# Open a PR — CI validates automatically
+git checkout -b adr/0001-your-decision-title
+git add architecture-decision-log/ADR-0001-your-decision-title.yaml
+git commit -m "feat(adr): ADR-0001 your decision title"
+git push origin adr/0001-your-decision-title
+```
+
+The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
 
 ## Directory Structure
 
