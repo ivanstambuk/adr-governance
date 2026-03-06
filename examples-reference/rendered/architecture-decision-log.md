@@ -1,0 +1,15 @@
+<!-- ⚠️ AUTO-GENERATED — DO NOT EDIT -->
+<!-- Regenerate: python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/ -->
+
+# Architecture Decision Log
+
+| ADR | Status | Decision Date | Source |
+|-----|--------|---------------|--------|
+| [ADR-0001: Use DPoP over mTLS as the sender-constraining mechanism for OAuth 2.1 access tokens](./ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.md) | `accepted` | 2026-01-24 | [ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml](../ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml) |
+| [ADR-0002: Use opaque reference tokens with introspection over self-contained JWTs for API gateway authorization](./ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.md) | `accepted` | 2026-01-30 | [ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml](../ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml) |
+| [ADR-0003: Use pairwise pseudonymous subject identifiers over public subject identifiers for OIDC relying parties](./ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.md) | `accepted` | 2025-12-10 | [ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml](../ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml) |
+| [ADR-0004: Use Ed25519 (EdDSA) over RSA-2048 for JWT and assertion signing keys](./ADR-0004-ed25519-over-rsa-for-jwt-signing.md) | `accepted` | 2025-12-18 | [ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml](../ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml) |
+| [ADR-0005: Use the Backend-for-Frontend token mediator pattern over direct SPA-to-AS authorization for single-page applications](./ADR-0005-bff-token-mediator-for-spa-token-acquisition.md) | `accepted` | 2026-02-18 | [ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml](../ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml) |
+| [ADR-0006: Use IdP session enrichment over custom JWE cookies for persisting step-up authentication proof](./ADR-0006-session-enrichment-for-step-up-authentication.md) | `accepted` | 2026-02-27 | [ADR-0006-session-enrichment-for-step-up-authentication.yaml](../ADR-0006-session-enrichment-for-step-up-authentication.yaml) |
+| [ADR-0007: Reject centralized HashiCorp Vault for API runtime secrets in favor of native cloud provider secret stores](./ADR-0007-centralized-secret-store-for-api-keys.md) | `rejected` | 2026-03-05 | [ADR-0007-centralized-secret-store-for-api-keys.yaml](../ADR-0007-centralized-secret-store-for-api-keys.yaml) |
+| [ADR-0008: Defer adoption of OpenID Federation 1.0 for automated trust establishment](./ADR-0008-defer-openid-federation-for-trust-establishment.md) | `deferred` | 2026-02-15 | [ADR-0008-defer-openid-federation-for-trust-establishment.yaml](../ADR-0008-defer-openid-federation-for-trust-establishment.yaml) |

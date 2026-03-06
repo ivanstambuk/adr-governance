@@ -430,16 +430,16 @@ The [`examples-reference/`](examples-reference/) directory contains interconnect
 
 | ID | Title | Status |
 |----|-------|--------|
-| ADR-0001 | [Use DPoP over mTLS for Sender-Constrained Tokens](examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml) | accepted |
-| ADR-0002 | [Use Reference Tokens over JWTs for Gateway Introspection](examples-reference/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml) | accepted |
-| ADR-0003 | [Use Pairwise Subject Identifiers for OIDC Relying Parties](examples-reference/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml) | accepted |
-| ADR-0004 | [Use Ed25519 over RSA-2048 for JWT Signing Keys](examples-reference/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml) | accepted |
-| ADR-0005 | [Use BFF Token Mediator for SPA Token Acquisition](examples-reference/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml) | accepted |
-| ADR-0006 | [Use Session Enrichment for Step-Up Authentication Proof](examples-reference/ADR-0006-session-enrichment-for-step-up-authentication.yaml) | accepted |
-| ADR-0007 | [Reject Centralized HashiCorp Vault for API Runtime Secrets](examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml) | **rejected** |
-| ADR-0008 | [Defer OpenID Federation for Automated Trust Establishment](examples-reference/ADR-0008-defer-openid-federation-for-trust-establishment.yaml) | **deferred** |
+| ADR-0001 | [Use DPoP over mTLS for Sender-Constrained Tokens](examples-reference/rendered/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.md) | accepted |
+| ADR-0002 | [Use Reference Tokens over JWTs for Gateway Introspection](examples-reference/rendered/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.md) | accepted |
+| ADR-0003 | [Use Pairwise Subject Identifiers for OIDC Relying Parties](examples-reference/rendered/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.md) | accepted |
+| ADR-0004 | [Use Ed25519 over RSA-2048 for JWT Signing Keys](examples-reference/rendered/ADR-0004-ed25519-over-rsa-for-jwt-signing.md) | accepted |
+| ADR-0005 | [Use BFF Token Mediator for SPA Token Acquisition](examples-reference/rendered/ADR-0005-bff-token-mediator-for-spa-token-acquisition.md) | accepted |
+| ADR-0006 | [Use Session Enrichment for Step-Up Authentication Proof](examples-reference/rendered/ADR-0006-session-enrichment-for-step-up-authentication.md) | accepted |
+| ADR-0007 | [Reject Centralized HashiCorp Vault for API Runtime Secrets](examples-reference/rendered/ADR-0007-centralized-secret-store-for-api-keys.md) | **rejected** |
+| ADR-0008 | [Defer OpenID Federation for Automated Trust Establishment](examples-reference/rendered/ADR-0008-defer-openid-federation-for-trust-establishment.md) | **deferred** |
 
-See [`examples-reference/README.md`](examples-reference/README.md) for details on each example.
+See the [rendered example index](examples-reference/rendered/architecture-decision-log.md) for a full overview, or [`examples-reference/README.md`](examples-reference/README.md) for details on each example.
 
 Additionally, [`architecture-decision-log/ADR-0000`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is a meta-ADR documenting the AD to adopt this governance process itself.
 
