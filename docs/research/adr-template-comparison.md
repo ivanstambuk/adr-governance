@@ -624,16 +624,11 @@ These are enterprise-grade extensions that should be preserved and documented as
 | `summary` | NHS Wales | Added as optional string field (max 500 chars) in `adr` metadata. |
 | `rejection_rationale` | Merson, DRF | Added as optional `rejection_rationale` field on each alternative. |
 
-#### ⚠️ Still Open
-
-| Field | Source | Status | Notes |
-|-------|--------|--------|-------|
-| `related_principles` | Tyree–Akerman | Deferred | Links decisions to enterprise architecture principles. Add if/when we have a principles registry (e.g., TOGAF). |
-
 #### ❌ Not Adopted
 
 | Field | Source | Rationale |
 |-------|--------|-----------|
+| `related_principles` | Tyree–Akerman | Principles are already captured informally in `context.business_drivers`, `context.technical_drivers`, and `context.constraints`. Only Tyree–Akerman (the template most criticized for bureaucratic weight) has this. A dedicated field assumes a formal principles registry exists — external infrastructure we don't provide. Teams with registries can use `references` (URL to principles doc) or `x-related-principles` via extension fields. |
 | `governance_enforcement` | Gareth Morgan | ADRs capture decisions; enforcement is downstream. Architecture should not point to code — code should point to architecture. Teams enforce decisions through their own mechanisms (CODEOWNERS, PR templates, fitness functions, CI policies). `confirmation` already captures implementation verification; ongoing enforcement is an operational concern. |
 | `impact_assessment` | EdgeX Foundry | Impact is already captured across `dependencies.internal` (systems involved), `consequences.negative` (operational costs), and `decision.tradeoffs` (adaptation required). EdgeX's template targets change proposals for a specific codebase with enumerable services/DTOs — our ADRs describe architectural patterns where impacted systems vary by adopter. Teams needing this can use `x-impact-assessment`. |
 | `risk_per_option` (3D) | smadr | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with pros/cons provides equivalent coverage. |
@@ -713,7 +708,7 @@ Having surveyed **14 templates** (13 external + our own), we can now position `a
 - Lifecycle management (review cadence, supersession, archival) — **unique to us**
 - Machine-readable YAML with JSON Schema validation
 
-The expanded survey surfaced several features from other templates. Three were adopted (`summary`, `extension_fields`, `rejection_rationale`), six were explicitly not adopted after analysis, and one (`related_principles`) remains deferred. See §7.2 for the full adoption tracker with rationale.
+The expanded survey surfaced several features from other templates. Three were adopted (`summary`, `extension_fields`, `rejection_rationale`) and eight were explicitly not adopted after analysis. See §7.2 for the full adoption tracker with rationale.
 
 The tradeoff remains **weight**: a full `adr-governance` ADR is significantly heavier than a Nygard or MADR record. This is acceptable for our use case (enterprise IAM decisions in regulated financial services) but would be overkill for a startup documenting database choices.
 
