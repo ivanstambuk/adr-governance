@@ -118,9 +118,8 @@ My Git identity is: [INSERT YOUR GIT USERNAME]
 
 ---
 
-### Manual Setup
-
-> If you used the AI prompt above, skip this section. These are the step-by-step manual instructions.
+<details>
+<summary><h3>Manual Setup</h3> <em>If you used the AI prompt above, skip this section.</em></summary>
 
 #### 1. Create your ADR repository
 
@@ -229,6 +228,9 @@ git push origin adr/0001-your-decision-title
 ```
 
 The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
+
+</details>
+
 
 ## ADR Meta-Model
 
