@@ -178,66 +178,6 @@ git push origin adr/0001-your-decision-title
 
 The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
 
-## Directory Structure
-
-```
-.
-├── .adr-governance/
-│   └── config.yaml              # Governance rules: admins, single-ADR-per-PR, change classification
-├── .githooks/
-│   └── pre-commit               # Auto-renders ADR Markdown on commit
-├── schemas/
-│   └── adr.schema.json          # JSON Schema (Draft 2020-12) — the ADR meta-model
-├── docs/
-│   ├── adr-process.md           # Normative governance process
-│   ├── ci-setup.md              # CI/CD setup guide (all platforms)
-│   ├── glossary.md              # Terms, enum values, abbreviations
-│   └── research/                # Template & process comparison research
-├── architecture-decision-log/   # The ADL — your ADRs go here (YAML source of truth)
-│   └── ADR-0000-adopt-governed-adr-process.yaml  # Meta-ADR (bootstrap)
-├── rendered/                    # ⚠️ AUTO-GENERATED — human-friendly Markdown views
-│   ├── architecture-decision-log.md  # Decision log index (clickable links, status, dates)
-│   └── ADR-0000-adopt-governed-adr-process.md
-├── examples-reference/           # 8 fictional example ADRs (NovaTrust Financial Services) — reference only
-│   ├── ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
-│   ├── ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml
-│   ├── ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml
-│   ├── ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml
-│   ├── ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml
-│   ├── ADR-0006-session-enrichment-for-step-up-authentication.yaml
-│   ├── ADR-0007-centralized-secret-store-for-api-keys.yaml
-│   └── ADR-0008-defer-openid-federation-for-trust-establishment.yaml
-├── ci/                          # Pre-built CI pipelines for other platforms
-│   ├── azure-devops/
-│   │   └── azure-pipelines.yml
-│   ├── gcp-cloud-build/
-│   │   └── cloudbuild.yaml
-│   ├── aws-codebuild/
-│   │   └── buildspec.yml
-│   └── gitlab-ci/
-│       └── .gitlab-ci.yml
-├── .skills/
-│   └── adr-author/              # Agent Skill (agentskills.io spec)
-│       ├── SKILL.md
-│       ├── assets/
-│       │   └── adr-template.yaml
-│       └── references/
-│           ├── GLOSSARY.md
-│           └── SCHEMA_REFERENCE.md
-├── scripts/
-│   ├── validate-adr.py          # Schema + semantic validation
-│   ├── verify-approvals.py      # CI approval identity enforcement
-│   ├── extract-decisions.py     # ADL → Markdown/JSON for agent context & CI enforcement
-│   ├── review-adr.py            # Pre-review Socratic quality gate (LLM prompt generator)
-│   ├── summarize-adr.py         # Stakeholder summaries (email/chat/digest)
-│   ├── render-adr.py            # YAML → Markdown renderer + index generator
-│   └── bundle.sh                # Repomix bundling
-├── .github/
-│   └── workflows/
-│       └── validate-adr.yml     # PR validation CI (GitHub Actions)
-└── repomix.config.json          # Bundles core project (excludes examples-reference + CI)
-```
-
 ## ADR Meta-Model
 
 Each ADR YAML file contains these sections:
@@ -490,14 +430,14 @@ The [`examples-reference/`](examples-reference/) directory contains interconnect
 
 | ID | Title | Status |
 |----|-------|--------|
-| ADR-0001 | Use DPoP over mTLS for Sender-Constrained Tokens | accepted |
-| ADR-0002 | Use Reference Tokens over JWTs for Gateway Introspection | accepted |
-| ADR-0003 | Use Pairwise Subject Identifiers for OIDC Relying Parties | accepted |
-| ADR-0004 | Use Ed25519 over RSA-2048 for JWT Signing Keys | accepted |
-| ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | accepted |
-| ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted |
-| ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** |
-| ADR-0008 | Defer OpenID Federation for Automated Trust Establishment | **deferred** |
+| ADR-0001 | [Use DPoP over mTLS for Sender-Constrained Tokens](examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml) | accepted |
+| ADR-0002 | [Use Reference Tokens over JWTs for Gateway Introspection](examples-reference/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml) | accepted |
+| ADR-0003 | [Use Pairwise Subject Identifiers for OIDC Relying Parties](examples-reference/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml) | accepted |
+| ADR-0004 | [Use Ed25519 over RSA-2048 for JWT Signing Keys](examples-reference/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml) | accepted |
+| ADR-0005 | [Use BFF Token Mediator for SPA Token Acquisition](examples-reference/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml) | accepted |
+| ADR-0006 | [Use Session Enrichment for Step-Up Authentication Proof](examples-reference/ADR-0006-session-enrichment-for-step-up-authentication.yaml) | accepted |
+| ADR-0007 | [Reject Centralized HashiCorp Vault for API Runtime Secrets](examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml) | **rejected** |
+| ADR-0008 | [Defer OpenID Federation for Automated Trust Establishment](examples-reference/ADR-0008-defer-openid-federation-for-trust-establishment.yaml) | **deferred** |
 
 See [`examples-reference/README.md`](examples-reference/README.md) for details on each example.
 
