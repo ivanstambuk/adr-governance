@@ -7,18 +7,19 @@
 
 # ADR-0001: Use DPoP over mTLS as the sender-constraining mechanism for OAuth 2.1 access tokens
 
-> **Status:** `accepted` · **Priority:** `high` · **Type:** `technology` · **Confidence:** `high`
->
-> **Decision Owner:** Marcus Chen (Head of Identity and Access Management) · **Decision Date:** 2026-01-24
+> **Status:** `accepted`  
+> **Priority:** `high`  
+> **Type:** `technology`  
+> **Confidence:** `high`  
+> **Decision Owner:** Marcus Chen (Head of Identity and Access Management)  
+> **Decision Date:** 2026-01-24
 
 *Adopt DPoP (RFC 9449) as the sole sender-constraining mechanism for all OAuth 2.1 client types, avoiding mTLS certificate provisioning and CDN passthrough costs.*
 
 ---
 
-**Authors:** Elena Vasquez (IAM Architect), Kai Lindström (Mobile Platform Lead)
-
-**Reviewers:** Priya Sharma (API Platform Lead), Jonas Eriksen (CISO), Raj Patel (CDN / Edge Infrastructure Lead)
-
+**Authors:** Elena Vasquez (IAM Architect), Kai Lindström (Mobile Platform Lead)  
+**Reviewers:** Priya Sharma (API Platform Lead), Jonas Eriksen (CISO), Raj Patel (CDN / Edge Infrastructure Lead)  
 **Approvals:** Marcus Chen (2026-01-24T10:00:00Z), Jonas Eriksen (2026-01-25T09:00:00Z)
 
 ---

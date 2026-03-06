@@ -7,18 +7,19 @@
 
 # ADR-0006: Use IdP session enrichment over custom JWE cookies for persisting step-up authentication proof
 
-> **Status:** `accepted` · **Priority:** `high` · **Type:** `technology` · **Confidence:** `high`
->
-> **Decision Owner:** Jonas Eriksen (CISO) · **Decision Date:** 2026-02-27
+> **Status:** `accepted`  
+> **Priority:** `high`  
+> **Type:** `technology`  
+> **Confidence:** `high`  
+> **Decision Owner:** Jonas Eriksen (CISO)  
+> **Decision Date:** 2026-02-27
 
 *Persist step-up authentication proof via PingFederate session enrichment and acr claims rather than custom JWE cookies, keeping all auth state in the IdP.*
 
 ---
 
-**Authors:** Elena Vasquez (IAM Architect), Marcus Chen (Head of IAM)
-
-**Reviewers:** Priya Sharma (API Platform Lead), Tomasz Kowalski (Network Security Architect), DPO (Data Protection Officer)
-
+**Authors:** Elena Vasquez (IAM Architect), Marcus Chen (Head of IAM)  
+**Reviewers:** Priya Sharma (API Platform Lead), Tomasz Kowalski (Network Security Architect), DPO (Data Protection Officer)  
 **Approvals:** Jonas Eriksen (2026-02-27T10:00:00Z), Marcus Chen (2026-02-28T09:00:00Z)
 
 ---

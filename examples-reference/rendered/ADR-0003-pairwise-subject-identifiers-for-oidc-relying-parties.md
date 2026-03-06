@@ -7,18 +7,19 @@
 
 # ADR-0003: Use pairwise pseudonymous subject identifiers over public subject identifiers for OIDC relying parties
 
-> **Status:** `accepted` · **Priority:** `high` · **Type:** `security` · **Confidence:** `high`
->
-> **Decision Owner:** Marcus Chen (Head of Identity and Access Management) · **Decision Date:** 2025-12-10
+> **Status:** `accepted`  
+> **Priority:** `high`  
+> **Type:** `security`  
+> **Confidence:** `high`  
+> **Decision Owner:** Marcus Chen (Head of Identity and Access Management)  
+> **Decision Date:** 2025-12-10
 
 *Switch from public to pairwise pseudonymous subject identifiers (PPID) to prevent cross-RP user correlation, satisfying GDPR data minimization and eIDAS 2.0 unlinkability.*
 
 ---
 
-**Authors:** Elena Vasquez (IAM Architect), Aisha Mbeki (Privacy Engineer)
-
-**Reviewers:** Jonas Eriksen (CISO), DPO (Data Protection Officer), Priya Sharma (API Platform Lead)
-
+**Authors:** Elena Vasquez (IAM Architect), Aisha Mbeki (Privacy Engineer)  
+**Reviewers:** Jonas Eriksen (CISO), DPO (Data Protection Officer), Priya Sharma (API Platform Lead)  
 **Approvals:** Marcus Chen (2025-12-10T09:00:00Z), DPO (2025-12-14T11:00:00Z)
 
 ---

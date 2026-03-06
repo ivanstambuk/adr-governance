@@ -7,18 +7,19 @@
 
 # ADR-0004: Use Ed25519 (EdDSA) over RSA-2048 for JWT and assertion signing keys
 
-> **Status:** `accepted` · **Priority:** `high` · **Type:** `technology` · **Confidence:** `medium`
->
-> **Decision Owner:** Jonas Eriksen (CISO) · **Decision Date:** 2025-12-18
+> **Status:** `accepted`  
+> **Priority:** `high`  
+> **Type:** `technology`  
+> **Confidence:** `medium`  
+> **Decision Owner:** Jonas Eriksen (CISO)  
+> **Decision Date:** 2025-12-18
 
 *Migrate from RSA-2048 (RS256) to Ed25519 (EdDSA) for all JWT/JWS signing to achieve 20x throughput improvement, eliminating the PingFederate CPU bottleneck.*
 
 ---
 
-**Authors:** Tomasz Kowalski (Network Security Architect), Elena Vasquez (IAM Architect)
-
-**Reviewers:** Marcus Chen (Head of IAM), Kai Lindström (Mobile Platform Lead)
-
+**Authors:** Tomasz Kowalski (Network Security Architect), Elena Vasquez (IAM Architect)  
+**Reviewers:** Marcus Chen (Head of IAM), Kai Lindström (Mobile Platform Lead)  
 **Approvals:** Jonas Eriksen (2025-12-18T14:00:00Z), Marcus Chen (2025-12-19T10:00:00Z)
 
 ---

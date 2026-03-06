@@ -54,9 +54,13 @@ def render_adr(data: dict) -> str:
     owner = data.get("decision_owner", {})
     owner_str = f"{owner.get('name', '—')} ({owner.get('role', '')})" if owner else "—"
 
-    lines.append(f"> **Status:** `{status}` · **Priority:** `{priority}` · **Type:** `{decision_type}` · **Confidence:** `{confidence}`")
-    lines.append(">")
-    lines.append(f"> **Decision Owner:** {owner_str} · **Decision Date:** {decision_date}")
+    # Trailing two spaces produce soft line breaks (new line, no paragraph gap)
+    lines.append(f"> **Status:** `{status}`  ")
+    lines.append(f"> **Priority:** `{priority}`  ")
+    lines.append(f"> **Type:** `{decision_type}`  ")
+    lines.append(f"> **Confidence:** `{confidence}`  ")
+    lines.append(f"> **Decision Owner:** {owner_str}  ")
+    lines.append(f"> **Decision Date:** {decision_date}")
     lines.append("")
 
     # Summary (elevator pitch)
@@ -71,17 +75,22 @@ def render_adr(data: dict) -> str:
     if authors or reviewers:
         lines.append("---")
         lines.append("")
+        # Trailing two spaces for soft line breaks (compact, no paragraph gaps)
+        parts = []
         if authors:
-            lines.append(f"**Authors:** {', '.join(a.get('name', '') + ' (' + a.get('role', '') + ')' for a in authors)}")
-            lines.append("")
+            parts.append(f"**Authors:** {', '.join(a.get('name', '') + ' (' + a.get('role', '') + ')' for a in authors)}")
         if reviewers:
-            lines.append(f"**Reviewers:** {', '.join(r.get('name', '') + ' (' + r.get('role', '') + ')' for r in reviewers)}")
-            lines.append("")
+            parts.append(f"**Reviewers:** {', '.join(r.get('name', '') + ' (' + r.get('role', '') + ')' for r in reviewers)}")
         if approvals:
             approved = [a for a in approvals if a.get("approved_at")]
             if approved:
-                lines.append(f"**Approvals:** {', '.join(a.get('name', '') + ' (' + str(a.get('approved_at', '')) + ')' for a in approved)}")
-                lines.append("")
+                parts.append(f"**Approvals:** {', '.join(a.get('name', '') + ' (' + str(a.get('approved_at', '')) + ')' for a in approved)}")
+        for i, part in enumerate(parts):
+            if i < len(parts) - 1:
+                lines.append(part + "  ")  # soft break
+            else:
+                lines.append(part)
+        lines.append("")
 
     # --- Context ---
     context = data.get("context", {})
