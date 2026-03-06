@@ -1,6 +1,6 @@
 # ADR Governance — Python dependencies
 # Install: pip install -r requirements.txt
 
-jsonschema>=4.20
+jsonschema[format]>=4.20
 pyyaml>=6.0
 yamllint>=1.33

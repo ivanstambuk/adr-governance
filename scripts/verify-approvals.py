@@ -9,6 +9,7 @@ the ADR's declared approvers and the platform's recorded approvers.
 Governance rules are loaded from .adr-governance/config.yaml:
   - Single ADR per PR (with supersession exception)
   - Change classification (substantive vs. maintenance)
+  - Immutable decision core after acceptance
   - Admin override (admins can make maintenance changes without re-approval)
 
 Supported platforms (auto-detected via environment variables):
@@ -64,6 +65,27 @@ DEFAULT_SUBSTANTIVE_FIELDS = [
     "context.summary",
 ]
 
+DEFAULT_IMMUTABLE_AFTER_ACCEPTANCE_FIELDS = [
+    "adr.id",
+    "adr.title",
+    "adr.summary",
+    "adr.project",
+    "adr.component",
+    "adr.priority",
+    "adr.decision_type",
+    "adr.created_at",
+    "authors",
+    "decision_owner",
+    "reviewers",
+    "approvals",
+    "context",
+    "architecturally_significant_requirements",
+    "alternatives",
+    "decision",
+    "consequences",
+    "dependencies",
+]
+
 
 def load_governance_config() -> dict:
     """Load governance config from .adr-governance/config.yaml."""
@@ -87,6 +109,10 @@ def load_governance_config() -> dict:
                 "substantive_fields": gov.get(
                     "substantive_fields", DEFAULT_SUBSTANTIVE_FIELDS
                 ),
+                "immutable_after_acceptance_fields": gov.get(
+                    "immutable_after_acceptance_fields",
+                    DEFAULT_IMMUTABLE_AFTER_ACCEPTANCE_FIELDS,
+                ),
             }
 
     # No config file — use defaults (no admins, no single-ADR rule)
@@ -94,6 +120,7 @@ def load_governance_config() -> dict:
         "admins": set(),
         "single_adr_per_pr": False,
         "substantive_fields": DEFAULT_SUBSTANTIVE_FIELDS,
+        "immutable_after_acceptance_fields": DEFAULT_IMMUTABLE_AFTER_ACCEPTANCE_FIELDS,
     }
 
 
@@ -211,6 +238,23 @@ def flatten_dict(d: dict, parent_key: str = "", sep: str = ".") -> dict:
     return dict(items)
 
 
+def get_changed_keys(old_data: dict | None, new_data: dict) -> list[str]:
+    """Return flattened keys whose values differ between old and new data."""
+    old_flat = flatten_dict(old_data or {})
+    new_flat = flatten_dict(new_data)
+
+    all_keys = set(old_flat.keys()) | set(new_flat.keys())
+    return sorted(
+        key for key in all_keys
+        if old_flat.get(key) != new_flat.get(key)
+    )
+
+
+def key_matches_prefix(key: str, prefix: str) -> bool:
+    """Check whether a flattened key matches a configured prefix."""
+    return key == prefix or key.startswith(prefix + ".") or key.startswith(prefix + "[")
+
+
 def classify_changes(
     old_data: dict | None,
     new_data: dict,
@@ -228,17 +272,7 @@ def classify_changes(
         # New file — always substantive
         return True, ["(new file)"]
 
-    old_flat = flatten_dict(old_data)
-    new_flat = flatten_dict(new_data)
-
-    all_keys = set(old_flat.keys()) | set(new_flat.keys())
-    changed_keys = []
-
-    for key in all_keys:
-        old_val = old_flat.get(key)
-        new_val = new_flat.get(key)
-        if old_val != new_val:
-            changed_keys.append(key)
+    changed_keys = get_changed_keys(old_data, new_data)
 
     if not changed_keys:
         return False, []
@@ -249,7 +283,7 @@ def classify_changes(
 
     for key in changed_keys:
         for prefix in substantive_fields:
-            if key == prefix or key.startswith(prefix + ".") or key.startswith(prefix + "["):
+            if key_matches_prefix(key, prefix):
                 is_substantive = True
                 changed_prefixes.add(prefix)
                 break
@@ -259,6 +293,98 @@ def classify_changes(
             changed_prefixes.add(parts[0] if len(parts) == 1 else f"{parts[0]}.{parts[1]}")
 
     return is_substantive, sorted(changed_prefixes)
+
+
+def check_immutable_after_acceptance(
+    old_data: dict | None,
+    new_data: dict,
+    immutable_fields: list[str],
+) -> tuple[bool, str]:
+    """
+    Prevent in-place edits to the decision core of already accepted ADRs.
+
+    Accepted ADRs may remain accepted, or transition to superseded/deprecated,
+    but their decision core must not be edited in place.
+    """
+    if old_data is None:
+        return True, ""
+
+    old_status = old_data.get("adr", {}).get("status", "")
+    if old_status != "accepted":
+        return True, ""
+
+    new_status = new_data.get("adr", {}).get("status", "")
+    allowed_statuses = {"accepted", "superseded", "deprecated"}
+    if new_status not in allowed_statuses:
+        return (
+            False,
+            "accepted ADRs may only remain 'accepted' or transition to "
+            f"'superseded'/'deprecated', not '{new_status or '(missing)'}'",
+        )
+
+    changed_keys = get_changed_keys(old_data, new_data)
+    violations = sorted({
+        key
+        for key in changed_keys
+        if key != "adr.status"
+        and any(key_matches_prefix(key, prefix) for prefix in immutable_fields)
+    })
+
+    if not violations:
+        return True, ""
+
+    shown = ", ".join(violations[:6])
+    suffix = " ..." if len(violations) > 6 else ""
+    return (
+        False,
+        "accepted ADR decision core is immutable; create a superseding ADR "
+        f"instead of changing: {shown}{suffix}",
+    )
+
+
+def check_append_only_audit_trail(
+    old_data: dict | None,
+    new_data: dict,
+) -> tuple[bool, str]:
+    """
+    Enforce append-only audit trail semantics for existing ADRs.
+
+    Allowed:
+      - no audit trail change
+      - new_data.audit_trail extends old_data.audit_trail by appending entries
+
+    Forbidden:
+      - editing any existing audit trail entry
+      - deleting entries
+      - reordering entries
+    """
+    if old_data is None:
+        return True, ""
+
+    old_audit = old_data.get("audit_trail", [])
+    new_audit = new_data.get("audit_trail", [])
+
+    if old_audit is None:
+        old_audit = []
+    if new_audit is None:
+        new_audit = []
+
+    if not isinstance(old_audit, list) or not isinstance(new_audit, list):
+        return False, "audit_trail must be a list in both the base and updated ADR"
+
+    if len(new_audit) < len(old_audit):
+        return (
+            False,
+            "audit_trail is append-only: existing entries may not be deleted",
+        )
+
+    if new_audit[:len(old_audit)] != old_audit:
+        return (
+            False,
+            "audit_trail is append-only: existing entries may not be edited or reordered",
+        )
+
+    return True, ""
 
 
 # ---------------------------------------------------------------------------
@@ -478,9 +604,11 @@ def verify_approvals(
 
     Checks performed:
       1. Single ADR per PR (if enabled)
-      2. Change classification (substantive vs. maintenance)
-      3. Admin override (maintenance by admin → skip identity check)
-      4. Approval identity verification (substantive changes → full check)
+      2. Append-only audit trail enforcement
+      3. Immutable decision core enforcement for accepted ADRs
+      4. Change classification (substantive vs. maintenance)
+      5. Admin override (maintenance by admin → skip identity check)
+      6. Approval identity verification (substantive changes → full check)
 
     Returns:
       0 if all OK
@@ -494,6 +622,10 @@ def verify_approvals(
 
     admins = config.get("admins", set())
     substantive_fields = config.get("substantive_fields", DEFAULT_SUBSTANTIVE_FIELDS)
+    immutable_after_acceptance_fields = config.get(
+        "immutable_after_acceptance_fields",
+        DEFAULT_IMMUTABLE_AFTER_ACCEPTANCE_FIELDS,
+    )
 
     # ── Check 1: Single ADR per PR ──────────────────────────────────────
     if config.get("single_adr_per_pr"):
@@ -507,10 +639,12 @@ def verify_approvals(
             print(f"\n❌ GOVERNANCE VIOLATION: {message}")
             exit_code = 1
 
-    # ── Check 2-4: Per-file analysis ────────────────────────────────────
+    # ── Check 2-6: Per-file analysis ────────────────────────────────────
     all_required: list[tuple[str, dict]] = []      # substantive changes needing approval
     maintenance_files: list[tuple[str, list]] = []  # maintenance-only changes
-    files_without_identity: list[str] = []
+    audit_trail_violations: list[str] = []
+    immutable_after_acceptance_violations: list[str] = []
+    invalid_approval_metadata: list[str] = []
     skipped_files: list[str] = []
 
     is_admin = pr_author is not None and pr_author in admins
@@ -527,6 +661,22 @@ def verify_approvals(
         if not isinstance(new_data, dict):
             continue
 
+        old_data = get_file_at_base(filepath)
+        audit_ok, audit_message = check_append_only_audit_trail(old_data, new_data)
+        if not audit_ok:
+            audit_trail_violations.append(f"{adr_id}: {audit_message}")
+            exit_code = 1
+
+        immutable_ok, immutable_message = check_immutable_after_acceptance(
+            old_data, new_data, immutable_after_acceptance_fields
+        )
+        if not immutable_ok:
+            immutable_after_acceptance_violations.append(f"{adr_id}: {immutable_message}")
+            exit_code = 1
+
+        if not audit_ok or not immutable_ok:
+            continue
+
         status = new_data.get("adr", {}).get("status", "")
 
         # Skip non-actionable statuses
@@ -534,8 +684,28 @@ def verify_approvals(
             skipped_files.append(f"{adr_id} (status: {status})")
             continue
 
+        approvals = new_data.get("approvals", [])
+        if not approvals:
+            invalid_approval_metadata.append(
+                f"{adr_id}: status '{status}' requires approvals[] with at least one entry"
+            )
+            exit_code = 1
+            continue
+
+        missing_identity = [
+            str(i + 1)
+            for i, entry in enumerate(approvals)
+            if not isinstance(entry, dict) or not str(entry.get("identity", "")).strip()
+        ]
+        if missing_identity:
+            invalid_approval_metadata.append(
+                f"{adr_id}: approval entry/entries {', '.join(missing_identity)} "
+                f"missing required identity for status '{status}'"
+            )
+            exit_code = 1
+            continue
+
         # Classify changes
-        old_data = get_file_at_base(filepath)
         is_substantive, changed_prefixes = classify_changes(
             old_data, new_data, substantive_fields
         )
@@ -565,13 +735,6 @@ def verify_approvals(
         identities = extract_approval_identities(filepath)
 
         if not identities:
-            approvals = new_data.get("approvals", [])
-            if approvals:
-                has_any_identity = any(
-                    a.get("identity") for a in approvals if isinstance(a, dict)
-                )
-                if not has_any_identity:
-                    files_without_identity.append(adr_id)
             continue
 
         print(
@@ -589,19 +752,22 @@ def verify_approvals(
         for s in skipped_files:
             print(f"⏭️  {s} — skipped (non-actionable status)")
 
-    # Report warnings for ADRs with approvals but no identity fields
-    for adr_id in files_without_identity:
-        print(
-            f"⚠️  WARNING: {adr_id} has approvals but no identity fields — "
-            f"CI cannot verify approvers. Add approvals[].identity for enforcement."
-        )
+    for message in audit_trail_violations:
+        print(f"❌ GOVERNANCE VIOLATION: {message}")
+
+    for message in immutable_after_acceptance_violations:
+        print(f"❌ GOVERNANCE VIOLATION: {message}")
+
+    for message in invalid_approval_metadata:
+        print(f"❌ GOVERNANCE VIOLATION: {message}")
 
     if not all_required:
-        if files_without_identity:
-            print(
-                f"\nℹ️  {len(files_without_identity)} ADR(s) have approvals without identity fields."
-            )
-        elif not maintenance_files:
+        if (
+            not maintenance_files
+            and not invalid_approval_metadata
+            and not audit_trail_violations
+            and not immutable_after_acceptance_violations
+        ):
             print("ℹ️  No ADR approval identities to verify in this PR.")
         return exit_code
 

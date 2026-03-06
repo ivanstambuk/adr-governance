@@ -1,7 +1,7 @@
 # ADR Governance Process
 
 > **Status:** Normative
-> **Last updated:** 2026-03-06
+> **Last updated:** 2026-03-07
 
 This document defines the process for proposing, reviewing, approving, and maintaining Architecture Decision Records (ADRs) in this repository. The process is **GitOps-based**: all state transitions happen through Git commits and pull requests.
 
@@ -62,7 +62,7 @@ stateDiagram-v2
     note right of draft : WIP on feature branch.<br>Not ready for review.
     note right of proposed : PR is open.<br>Under active review.
     note right of deferred : Parked — revisit later.<br>PR is closed.
-    note left of accepted : Decision is binding.<br>ADR is immutable.
+    note left of accepted : Decision is binding.<br>Decision core is immutable.
     note right of rejected : Decision log entry.<br>Preserved for historical record.
     note left of superseded : Replaced by newer ADR.<br>See lifecycle.superseded_by.
     note left of deprecated : Still in codebase but<br>no longer recommended.
@@ -205,7 +205,7 @@ Async PR review is the default. However, some decisions benefit from real-time d
 
     > **Bootstrap exception:** ADR-0000 (the meta-ADR adopting this governance process) was self-approved by the initial author. The no-self-approval rule applies to all subsequent ADRs.
 
-15. **Merge the PR** to `main`. The ADR is now binding.
+15. **Merge the PR** to `main`. The ADR is now binding and its decision core is frozen in place.
 
 ### 3.4.1 Approval Identity Rule
 
@@ -229,7 +229,8 @@ The `identity` field on each approval entry is the **platform-resolvable handle*
    - Queries the platform API for the list of users who **actually approved** the PR
    - Compares the two sets
 3. **If any listed approver has not approved the PR**, the check fails and merge is blocked
-4. **If the ADR has no `identity` fields**, the check emits a warning but does not block (backward-compatible)
+4. **`status: proposed` and `status: accepted` ADRs must include `approvals[]` with `identity` on every entry**. This is enforced by schema validation before the approval-identity check runs.
+5. **`status: accepted` ADRs must also include at least one non-null `approved_at` timestamp and an `approved` event in `audit_trail`**. This is enforced by semantic validation.
 
 > **Why this matters:** Without this rule, anyone can write arbitrary names in `approvals[]` and merge with a different set of PR approvers. The identity binding ensures that the ADR's formal approval record matches the Git platform's cryptographic approval record.
 
@@ -267,11 +268,17 @@ governance:
 
 ### 3.4.3 Change Classification
 
-Not all changes to an ADR are equal. The governance framework distinguishes between **substantive** and **maintenance** changes:
+Not all changes to an ADR are equal. The governance framework distinguishes between **substantive** and **maintenance** changes.
+
+This change classification governs:
+- `draft` and `proposed` ADRs
+- maintenance updates to non-frozen metadata on already `accepted` ADRs
+
+Once an ADR is already `accepted`, an additional rule applies: the **decision core is immutable in place**. If you need to change the actual decision, rationale, alternatives, consequences, or governing context of an accepted ADR, create a **new superseding ADR** instead of editing the old one.
 
 #### Tier 1 — Substantive Changes (full approval required)
 
-Changes to fields that affect the *decision itself*. These require the original ADR approvers (listed in `approvals[].identity`) to re-approve via the PR:
+Changes to fields that affect the *decision itself*. For ADRs that are still mutable, these require the original ADR approvers (listed in `approvals[].identity`) to re-approve via the PR:
 
 | Field | Why it's substantive |
 |-------|---------------------|
@@ -294,10 +301,10 @@ Changes to non-decision fields. These are clerical or additive updates that don'
 - `context.business_drivers`, `context.technical_drivers`, `context.constraints`, `context.assumptions` — clarification, not reframing
 - `architecturally_significant_requirements`, `dependencies`, `references` — adding supporting information
 - `lifecycle.next_review_date`, `lifecycle.review_cycle_months` — review cadence
-- `audit_trail` — adding events (always append-only)
+- `audit_trail` — appending new events only. Existing entries may not be edited, deleted, or reordered; CI enforces append-only semantics on PRs.
 - `confirmation.artifact_ids` — backfilling verification evidence
 
-Maintenance changes still require a standard PR approval via branch protection, but the `verify-approvals.py` identity check is **skipped**. An `updated` event should be added to `audit_trail`:
+Maintenance changes still require a standard PR approval via branch protection, but the `verify-approvals.py` identity check is **skipped**. The `audit_trail` remains append-only: if you need to correct or clarify history, append a new event rather than editing an existing one. An `updated` event should be added to `audit_trail`:
 
 ```yaml
 audit_trail:
@@ -308,6 +315,34 @@ audit_trail:
 ```
 
 The substantive fields list is configured in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) and can be customized per organisation.
+
+#### Accepted ADRs — immutable decision core
+
+If the ADR on the base branch is already `accepted`, CI enforces a stronger rule than ordinary Tier 1/Tier 2 classification:
+
+- The ADR may stay `accepted`
+- The ADR may transition to `superseded`
+- The ADR may transition to `deprecated`
+- The decision core may **not** be edited in place
+
+The frozen decision core includes:
+- `adr.title`, `adr.summary`, `adr.project`, `adr.component`, `adr.priority`, `adr.decision_type`
+- `authors`, `decision_owner`, `reviewers`, `approvals`
+- `context`
+- `architecturally_significant_requirements`
+- `alternatives`
+- `decision`
+- `consequences`
+- `dependencies`
+
+Allowed post-acceptance updates include:
+- `confirmation`
+- `lifecycle` metadata such as periodic review cadence and supersession/deprecation overlays
+- `references`
+- `adr.last_modified`, `adr.version`, `adr.tags`, `adr.schema_version`
+- `audit_trail` (append-only only)
+
+If you discover that the accepted decision itself is wrong or incomplete, do **not** rewrite the accepted ADR. Create a new ADR, document the revised decision there, and supersede the old one.
 
 ### 3.4.4 ADR Administrator
 
@@ -341,6 +376,8 @@ governance:
    - **Maintenance changes** → approval identity check is still skipped (maintenance changes never require ADR re-approval), but standard branch protection applies
 
 > **Key point:** The admin role doesn't grant the ability to make substantive changes without approval. It only provides an explicit governance signal in CI output. Maintenance changes skip the identity check for *everyone* — the admin designation is primarily for auditability and clarity.
+
+> **Accepted ADR exception:** Admins are still bound by the immutable decision core rule. They can maintain accepted ADR metadata, but they cannot rewrite the approved decision in place.
 
 > **Governance of the config itself:** Changes to [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) should be subject to the same review process as any governance artefact. Add it to `CODEOWNERS` so that admin roster changes require approval from the architecture team.
 
@@ -416,7 +453,7 @@ After an ADR is accepted, the team must verify it was actually implemented.
        - "TEST-SUITE-auth-dpop-e2e"
    ```
 
-2. Confirmation can be added in a follow-up PR after the ADR is accepted.
+2. Confirmation can be added in a follow-up PR after the ADR is accepted. This is an explicitly allowed post-acceptance update because it records implementation evidence rather than changing the decision itself.
 
 3. **Recommended artifact types** for `confirmation.artifact_ids`:
 
@@ -527,10 +564,12 @@ Each ADR also tracks its own document version in `adr.version` (format: `MAJOR.M
 
 | Change Type | Version Bump | Example |
 |-------------|:------------:|---------|
-| **Substantive change** (decision, rationale, alternatives, consequences) | MAJOR | `1.0` → `2.0` |
-| **Maintenance change** (typos, formatting, metadata corrections) | MINOR | `1.0` → `1.1` |
+| **Draft / proposal iteration** | MINOR | `0.1` → `0.2` |
+| **Maintenance-only post-acceptance update** (confirmation, references, lifecycle metadata, clerical corrections) | MINOR | `1.0` → `1.1` |
 | **Initial draft** | — | Start at `0.1` |
 | **First accepted version** | — | Set to `1.0` on acceptance |
+
+Once an ADR is accepted, do **not** bump it to `2.0` for a rewritten decision. A material change to an accepted decision requires a new ADR and supersession; the original accepted ADR remains at its historical version lineage.
 
 ---
 

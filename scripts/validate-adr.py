@@ -24,6 +24,7 @@ except ImportError:
     sys.exit(2)
 
 SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "adr.schema.json"
+REQUIRED_SCHEMA_FORMATS = {"date-time", "date", "email", "uri"}
 
 # Regex to extract ADR-NNNN prefix from filenames
 FILENAME_ID_RE = re.compile(r"^(ADR-\d{4})")
@@ -36,6 +37,21 @@ def load_schema():
         sys.exit(2)
     with open(SCHEMA_PATH, "r") as f:
         return json.load(f)
+
+
+def build_validator(schema: dict) -> Draft202012Validator:
+    """Build a JSON Schema validator with format enforcement enabled."""
+    format_checker = Draft202012Validator.FORMAT_CHECKER
+    missing_formats = sorted(REQUIRED_SCHEMA_FORMATS - set(format_checker.checkers))
+    if missing_formats:
+        print(
+            "ERROR: The installed jsonschema package does not provide all required "
+            f"format checkers: {', '.join(missing_formats)}"
+        )
+        print("Install dependencies with: pip install -r requirements.txt")
+        sys.exit(2)
+
+    return Draft202012Validator(schema, format_checker=format_checker)
 
 
 def parse_iso_datetime(ts_str: str) -> datetime | None:
@@ -55,7 +71,10 @@ def parse_iso_datetime(ts_str: str) -> datetime | None:
         return None
 
 
-def validate_file(filepath: Path, schema: dict) -> tuple[list[str], list[str]]:
+def validate_file(
+    filepath: Path,
+    validator: Draft202012Validator,
+) -> tuple[list[str], list[str]]:
     """Validate a single ADR YAML file.
 
     Returns:
@@ -73,7 +92,6 @@ def validate_file(filepath: Path, schema: dict) -> tuple[list[str], list[str]]:
         return ["File is empty"], []
 
     # --- JSON Schema validation ---
-    validator = Draft202012Validator(schema)
     for error in sorted(validator.iter_errors(data), key=lambda e: list(e.path)):
         path = ".".join(str(p) for p in error.path) or "(root)"
         errors.append(f"  {path}: {error.message}")
@@ -95,32 +113,43 @@ def validate_file(filepath: Path, schema: dict) -> tuple[list[str], list[str]]:
         audit_trail = data.get("audit_trail", [])
         audit_events = [e.get("event", "") for e in audit_trail if isinstance(e, dict)]
 
+        # Check approvals ↔ audit_trail consistency
+        approvals = data.get("approvals", [])
+        approvals_with_timestamp = [
+            a for a in approvals
+            if isinstance(a, dict) and a.get("approved_at") is not None
+        ]
+        approved_events = [
+            e for e in audit_trail
+            if isinstance(e, dict) and e.get("event") == "approved"
+        ]
+
         status_to_expected_event = {
-            "accepted": "approved",
             "rejected": "rejected",
             "superseded": "superseded",
             "deprecated": "deprecated",
             "deferred": "deferred",
         }
 
+        if status == "accepted":
+            if not approvals_with_timestamp:
+                errors.append(
+                    "  status is 'accepted' but no approval entry has a non-null 'approved_at' timestamp"
+                )
+            if not approved_events:
+                errors.append(
+                    "  audit_trail: status is 'accepted' but no 'approved' event found in audit_trail"
+                )
+        elif approvals_with_timestamp and not approved_events:
+            warnings.append(
+                f"  audit_trail: {len(approvals_with_timestamp)} approval(s) have timestamps but no 'approved' event in audit_trail"
+            )
+
         if status in status_to_expected_event and audit_trail:
             expected = status_to_expected_event[status]
             if expected not in audit_events:
                 warnings.append(
                     f"  audit_trail: status is '{status}' but no '{expected}' event found in audit_trail"
-                )
-
-        # Check approvals ↔ audit_trail consistency
-        approvals = data.get("approvals", [])
-        if approvals and audit_trail:
-            approvals_with_timestamp = [
-                a for a in approvals
-                if isinstance(a, dict) and a.get("approved_at") is not None
-            ]
-            approved_events = [e for e in audit_trail if isinstance(e, dict) and e.get("event") == "approved"]
-            if approvals_with_timestamp and not approved_events:
-                warnings.append(
-                    f"  audit_trail: {len(approvals_with_timestamp)} approval(s) have timestamps but no 'approved' event in audit_trail"
                 )
 
 
@@ -175,17 +204,6 @@ def validate_file(filepath: Path, schema: dict) -> tuple[list[str], list[str]]:
                         if current_dt:
                             prev_dt = current_dt
                             prev_ts_str = ts_str
-
-        # --- Warn if accepted ADR has no approval with timestamp ---
-        if status == "accepted":
-            approvals_with_ts = [
-                a for a in approvals
-                if isinstance(a, dict) and a.get("approved_at") is not None
-            ]
-            if not approvals_with_ts:
-                warnings.append(
-                    "  status is 'accepted' but no approval entry has an 'approved_at' timestamp"
-                )
 
         # --- Warn if confidence is set on a draft ADR ---
         if status == "draft":
@@ -306,6 +324,7 @@ def main():
         sys.exit(2)
 
     schema = load_schema()
+    validator = build_validator(schema)
 
     # Collect files from all positional arguments
     files = []
@@ -329,7 +348,7 @@ def main():
     all_data = {}
 
     for filepath in files:
-        errors, warnings = validate_file(filepath, schema)
+        errors, warnings = validate_file(filepath, validator)
 
         # Load data for cross-reference checks
         try:

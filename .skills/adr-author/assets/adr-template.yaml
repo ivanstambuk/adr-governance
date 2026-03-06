@@ -36,11 +36,11 @@ reviewers:
     role: ""
     email: ""
 
-# --- Optional ---
+# --- Optional while status is draft; required when status becomes proposed or accepted ---
 approvals:
   - name: ""
     role: ""
-    identity: "" # Platform handle for CI verification (e.g., GitHub @username, Azure DevOps email)
+    identity: "" # Required for proposed/accepted ADRs; platform handle for CI verification
     approved_at: null # ISO 8601 datetime when approved, null if pending
     signature_id: null
 

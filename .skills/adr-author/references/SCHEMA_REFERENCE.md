@@ -20,7 +20,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 | Section | Description |
 |---------|-------------|
 | `reviewers` | People who reviewed the ADR |
-| `approvals` | Formal approvals with timestamps, platform identities, and signature IDs |
+| `approvals` | Formal approvals with timestamps, platform identities, and signature IDs. Required when `adr.status` is `proposed` or `accepted` |
 | `architecturally_significant_requirements` | Architecturally Significant Requirements (ASRs) — functional and non-functional |
 | `dependencies` | Internal and external dependencies |
 | `references` | External links and evidence |
@@ -34,8 +34,9 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 3. `alternatives` must have `minItems: 2`
 4. `decision.chosen_alternative` should match a name in `alternatives`
 5. Requirement IDs: `^(F|NF)-[0-9]{3}$`
-6. `audit_trail` events use defined enum values (see below)
-7. Extension fields: any key starting with `x-` is allowed at the top level
+6. `proposed` and `accepted` ADRs must include `approvals` with at least one entry, and every approval entry must include `identity`
+7. Existing `audit_trail` history is append-only across PRs: prior entries may not be edited, deleted, or reordered; new entries may only be appended
+8. Extension fields: any key starting with `x-` is allowed at the top level
 
 ## Enum Values
 
@@ -88,6 +89,6 @@ Used for `authors[]`, `decision_owner`, `reviewers[]`:
 |-------|------|----------|
 | `name` | string | ✅ |
 | `role` | string | ✅ |
-| `identity` | string | ❌ (needed for CI verification) |
+| `identity` | string | ❌ globally; ✅ when `adr.status` is `proposed` or `accepted` |
 | `approved_at` | string (date-time) or null | ❌ |
 | `signature_id` | string or null | ❌ |

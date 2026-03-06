@@ -18,6 +18,7 @@ The validation pipeline runs three checks:
 - `decision.chosen_alternative` matches an entry in `alternatives[].name`
 - `adr.status` is consistent with `audit_trail` events (no impossible state transitions)
 - `audit_trail` entries are in chronological order
+- Existing `audit_trail` entries are append-only across PRs (no edit, delete, or reorder of historical events)
 - `lifecycle.supersedes` / `lifecycle.superseded_by` symmetry across files
 - Duplicate ADR IDs across the ADL
 - Quality signals: missing summaries, premature confidence on drafts, decision dates before creation dates
@@ -462,10 +463,13 @@ For the approval identity check to be meaningful, configure your platform to req
 | **Azure DevOps** | Repos → Branches → main → Branch policies → "Automatically included reviewers" |
 | **GitLab** | Settings → Merge Requests → "Approval rules" → add required approvers |
 
-### Backward compatibility
+### Validation behavior
 
-- ADRs **without `identity` fields** emit a warning but **do not block** the merge
-- ADRs in `draft`, `rejected`, `deferred`, or `superseded` status are **skipped**
+- ADRs in `proposed` or `accepted` status must include `approvals[]` with `identity` on every approval entry; otherwise schema validation fails
+- ADRs in `accepted` status must also include at least one non-null `approved_at` timestamp and an `approved` audit-trail event; otherwise semantic validation fails
+- Existing `audit_trail` history is append-only. CI blocks PRs that edit, delete, or reorder historical audit-trail entries
+- If an ADR was already `accepted` on the base branch, its decision core is immutable in place. CI only allows it to remain `accepted` or transition to `superseded` / `deprecated`, and blocks edits to frozen fields such as `context`, `decision`, `alternatives`, `consequences`, and `approvals`
+- ADRs in `draft`, `rejected`, `deferred`, `superseded`, or `deprecated` status are **skipped for approval identity verification** after the base-vs-head governance checks run
 - When running outside a PR context (e.g., `push` to `main`), the check is **skipped**
 - **Maintenance changes** (non-substantive field edits) skip the identity check regardless of who authors the PR
 
@@ -492,9 +496,30 @@ governance:
     - "consequences"
     - "approvals"
     - "context.summary"
+
+  # Fields that become immutable once an ADR is already accepted
+  immutable_after_acceptance_fields:
+    - "adr.id"
+    - "adr.title"
+    - "adr.summary"
+    - "adr.project"
+    - "adr.component"
+    - "adr.priority"
+    - "adr.decision_type"
+    - "adr.created_at"
+    - "authors"
+    - "decision_owner"
+    - "reviewers"
+    - "context"
+    - "architecturally_significant_requirements"
+    - "alternatives"
+    - "decision"
+    - "consequences"
+    - "approvals"
+    - "dependencies"
 ```
 
-If the config file is missing, the script uses safe defaults: no admins, no single-ADR-per-PR enforcement, and the standard substantive fields list.
+If the config file is missing, the script uses safe defaults: no admins, no single-ADR-per-PR enforcement, the standard substantive fields list, and the standard immutable-after-acceptance field list.
 
 > **Treat the config as a governance artefact.** Add `.adr-governance/` to your `CODEOWNERS` file so changes to the admin roster and governance rules require architecture team review.
 

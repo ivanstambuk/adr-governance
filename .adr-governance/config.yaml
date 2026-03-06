@@ -40,7 +40,13 @@ governance:
   # Changes to these YAML fields are classified as "substantive" (Tier 1)
   # and require the original ADR approvers (via approvals[].identity) to
   # re-approve. All other field changes are "maintenance" (Tier 2) and
-  # can be made by an ADR Administrator without re-approval.
+  # can be made by an ADR Administrator without ADR re-approval.
+  #
+  # IMPORTANT: For ADRs that were already accepted on the base branch,
+  # this list is no longer the final rule. Accepted ADRs have an immutable
+  # decision core (see immutable_after_acceptance_fields below). Attempts
+  # to edit that core in place are blocked outright and must be handled by
+  # creating a new superseding ADR.
   #
   # These are dotted YAML paths. A change to any key under these prefixes
   # is considered substantive.
@@ -53,12 +59,53 @@ governance:
     - "approvals" # adding/removing/changing approvers
     - "context.summary" # changing the problem statement (not drivers/constraints)
 
+  # ──────────────────────────────────────────────────────────────────────
+  # Accepted ADRs — Immutable Decision Core
+  # ──────────────────────────────────────────────────────────────────────
+  # Once an ADR is accepted, the fields below may not be edited in place.
+  # The accepted ADR may:
+  #   - remain accepted
+  #   - transition to superseded
+  #   - transition to deprecated
+  #
+  # Allowed post-acceptance updates live outside this list, for example:
+  #   - confirmation
+  #   - lifecycle review/supersession metadata
+  #   - references
+  #   - adr.last_modified / adr.version / adr.tags / adr.schema_version
+  #   - audit_trail (append-only)
+  #
+  # To change the actual decision, rationale, alternatives, consequences,
+  # or governing context of an accepted ADR, create a new ADR and supersede
+  # the old one instead of editing it in place.
+  immutable_after_acceptance_fields:
+    - "adr.id"
+    - "adr.title"
+    - "adr.summary"
+    - "adr.project"
+    - "adr.component"
+    - "adr.priority"
+    - "adr.decision_type"
+    - "adr.created_at"
+    - "authors"
+    - "decision_owner"
+    - "reviewers"
+    - "approvals"
+    - "context"
+    - "architecturally_significant_requirements"
+    - "alternatives"
+    - "decision"
+    - "consequences"
+    - "dependencies"
 
   # ──────────────────────────────────────────────────────────────────────
   # Maintenance Fields (implicit)
   # ──────────────────────────────────────────────────────────────────────
   # Any field NOT listed in substantive_fields is automatically Tier 2
-  # (maintenance). Common maintenance changes include:
+  # (maintenance) for non-accepted ADRs. For already accepted ADRs, these
+  # changes are allowed only if they do not touch immutable_after_acceptance_fields.
+  # Common maintenance fields include (some of these are only editable before
+  # acceptance; accepted ADRs must still respect immutable_after_acceptance_fields):
   #
   #   - adr.schema_version         (schema migration)
   #   - adr.last_modified          (timestamp update)
@@ -75,5 +122,5 @@ governance:
   #   - references                 (adding links)
   #   - lifecycle.next_review_date (review cadence update)
   #   - lifecycle.review_cycle_months
-  #   - audit_trail                (adding events)
+  #   - audit_trail                (appending events only; edit/delete/reorder is blocked by CI)
   #   - confirmation               (backfilling artifact IDs)

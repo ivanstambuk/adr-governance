@@ -163,7 +163,7 @@
                     },
                     "identity": {
                         "type": "string",
-                        "description": "Platform-resolvable handle for CI approval verification. Use the format your Git platform identifies approvers by: GitHub username (e.g., '@janedoe'), Azure DevOps email or UPN, GitLab username. CI pipelines use this field to verify that every listed approver actually approved the pull request before merge."
+                        "description": "Platform-resolvable handle for CI approval verification. Use the format your Git platform identifies approvers by: GitHub username (e.g., '@janedoe'), Azure DevOps email or UPN, GitLab username. CI pipelines use this field to verify that every listed approver actually approved the pull request before merge. Required when adr.status is 'proposed' or 'accepted'."
                     },
                     "approved_at": {
                         "type": [
@@ -182,7 +182,7 @@
                     }
                 }
             },
-            "description": "Formal approvals with optional timestamps, platform identity for CI verification, and signature references. The identity field enables CI pipelines to verify that every listed approver actually approved the pull request."
+            "description": "Formal approvals with optional timestamps, platform identity for CI verification, and signature references. Required when adr.status is 'proposed' or 'accepted'. The identity field enables CI pipelines to verify that every listed approver actually approved the pull request."
         },
         "context": {
             "type": "object",
@@ -536,6 +536,50 @@
             "description": "Immutable audit trail of all lifecycle events."
         }
     },
+    "allOf": [
+        {
+            "if": {
+                "required": [
+                    "adr"
+                ],
+                "properties": {
+                    "adr": {
+                        "type": "object",
+                        "required": [
+                            "status"
+                        ],
+                        "properties": {
+                            "status": {
+                                "enum": [
+                                    "proposed",
+                                    "accepted"
+                                ]
+                            }
+                        }
+                    }
+                }
+            },
+            "then": {
+                "required": [
+                    "approvals"
+                ],
+                "properties": {
+                    "approvals": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": "object",
+                            "required": [
+                                "name",
+                                "role",
+                                "identity"
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ],
     "$defs": {
         "person": {
             "type": "object",
