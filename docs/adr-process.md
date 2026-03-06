@@ -165,6 +165,21 @@ If **none** of these apply, the decision is likely not architecturally significa
 
 12. **Author addresses feedback** by pushing new commits to the branch.
 
+#### When to Escalate to a Synchronous Meeting
+
+Async PR review is the default. However, some decisions benefit from real-time discussion where participants can debate trade-offs, read body language, and reach consensus faster. The decision owner should escalate to a synchronous session (in-person or virtual) when **any** of the following apply:
+
+| Trigger | Why synchronous helps |
+|---------|----------------------|
+| **Async comments aren't converging** — >2 rounds of back-and-forth on the same point | Real-time discussion resolves misunderstandings that compound in text |
+| **Multiple quality attributes in tension** — e.g., security vs. usability, latency vs. consistency | Trade-off debates need rapid back-and-forth to surface the real priorities |
+| **Cross-team impact** — the decision affects multiple teams who need to align | Getting all stakeholders in one room prevents sequential negotiation |
+| **High irreversibility** — expensive or impossible to reverse (API contracts, data model, infrastructure) | The cost of getting it wrong justifies the cost of a meeting |
+| **Establishing a new pattern** — the decision sets a precedent for future ADRs | Patterns deserve extra scrutiny because they'll be replicated |
+| **Low confidence** — `decision.confidence: low` | The decision maker is uncertain and needs broader input to increase confidence |
+
+> **Format tip:** A 30-minute session works well: 5 min context recap → 15 min trade-off discussion → 10 min decision + action items. For lengthy ADRs, start with a silent reading slot (10–15 min) so everyone engages with the full document before discussion. Record the outcome in PR comments for traceability.
+
 > **Note on `reviewed` audit events:** The initial proposal review happens through the PR process. Do **not** add a `reviewed` event to `audit_trail` during the initial review — the `approved` or `rejected` event records the outcome. The `reviewed` event is reserved for **periodic reviews** (§9) of already-accepted ADRs.
 
 ### 3.4 Approval Phase
@@ -271,7 +286,7 @@ Changes to non-decision fields. These are clerical or additive updates that don'
 - `authors[].email` — contact info correction
 - `reviewers` — adding reviewers
 - `context.business_drivers`, `context.technical_drivers`, `context.constraints`, `context.assumptions` — clarification, not reframing
-- `requirements`, `dependencies`, `references` — adding supporting information
+- `architecturally_significant_requirements`, `dependencies`, `references` — adding supporting information
 - `lifecycle.next_review_date`, `lifecycle.review_cycle_months` — review cadence
 - `audit_trail` — adding events (always append-only)
 - `confirmation.artifact_ids` — backfilling verification evidence
