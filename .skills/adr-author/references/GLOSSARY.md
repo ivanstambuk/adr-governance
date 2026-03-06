@@ -15,15 +15,14 @@
 ## Confidence Levels
 `low` | `medium` | `high`
 
-## Risk / Impact Scales
-- **Likelihood**: `low` | `medium` | `high`
-- **Impact**: `low` | `medium` | `high` | `critical`
+## Risk / Estimated Cost
+- **Risk**: `low` | `medium` | `high` | `critical`
+- **Estimated cost**: `low` | `medium` | `high`
 
 ## ID Formats
-- ADR: `ADR-NNNN` or `ADR-NNNN-slug` (e.g., `ADR-0001`, `ADR-0001-dpop-over-mtls`)
+- ADR: `ADR-NNNN-slug` — slug is mandatory (e.g., `ADR-0001-dpop-over-mtls`)
 - Functional Requirement: `F-NNN` (e.g., `F-001`) — scoped per ADR
 - Non-Functional Requirement: `NF-NNN` (e.g., `NF-001`) — scoped per ADR
-- Risk: `R-NNN` (e.g., `R-001`) — scoped per ADR
 
 ## Lifecycle Supersession
 Tracked via `lifecycle.supersedes` and `lifecycle.superseded_by` (ADR ID strings).

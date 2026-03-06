@@ -111,15 +111,15 @@ If **none** of these apply, the decision is likely not architecturally significa
    git checkout -b adr/ADR-NNNN-short-title
    ```
 
-2. **Create the ADR file** in `architecture-decision-log/` using the schema:
+2. **Create the ADR file** from the template:
    ```bash
-   cp examples-reference/ADR-0001-*.yaml architecture-decision-log/ADR-NNNN-short-title.yaml
+   cp .skills/adr-author/assets/adr-template.yaml architecture-decision-log/ADR-NNNN-short-title.yaml
    ```
 
 3. **Set status to `draft`** while authoring:
    ```yaml
    adr:
-     id: "ADR-NNNN"
+     id: "ADR-NNNN-short-title"
      status: "draft"
    ```
 
@@ -155,7 +155,7 @@ If **none** of these apply, the decision is likely not architecturally significa
     - [ ] Pros/cons are balanced and honest
     - [ ] Rationale explains *why* the chosen option is preferred
     - [ ] Tradeoffs are explicitly acknowledged
-    - [ ] Risk assessment covers realistic failure modes
+    - [ ] Risks are addressed (per-alternative `risk` level, cons, and `consequences.negative`)
     - [ ] No conflict with existing `accepted` ADRs (search `architecture-decision-log/` for related decisions)
     - [ ] `approvals[].identity` is populated with the platform handle for each required approver (§3.4.1)
 
