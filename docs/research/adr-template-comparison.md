@@ -588,15 +588,13 @@ EdgeX Foundry uniquely asks authors to enumerate: services/modules impacted, mod
 
 Merson's template explicitly includes reasoning for significant alternatives that were *not* chosen in its `Rationale` section. DRF similarly stores alternatives with their rejection reasoning in `synthesis`. Our `alternatives` section captures pros/cons for each option, but we don't have a dedicated field explaining *why* rejected alternatives were rejected. The rationale is implied by the chosen option's `rationale` field, but it's not explicit.
 
-### 6.7 Features We're Missing
+### 6.7 Features Still Missing
 
-| Feature | Source | Value | Priority |
-|---------|--------|-------|----------|
-| **`confirmation`** | MADR 4.0, NHS Wales | "How will we verify this decision was implemented correctly?" — links decision to validation. NHS Wales extends this with ownership and enforcement questions. | ✅ **Add** |
+| Feature | Source | Value | Status |
+|---------|--------|-------|--------|
 | **`governance_enforcement`** | Gareth Morgan | "How will compliance be monitored? Who is accountable?" — bridges decision to operational enforcement. | ⚠️ **Consider** |
-| ~~**`impact_assessment`**~~ | ~~EdgeX Foundry~~ | ~~Structured list of systems/APIs/configurations impacted.~~ | ❌ **Skip** — impact is already captured across `dependencies`, `consequences.negative`, and `decision.tradeoffs`. EdgeX's codebase-specific context doesn't apply to our architectural pattern decisions. Use `x-impact-assessment` if needed. |
-| **`rationale_for_rejected`** | Merson, DRF | Explicit reasoning for why significant alternatives were *not* chosen. | ✅ **Add** |
-| ~~**`summary`**~~ | ~~NHS Wales~~ | ~~Executive elevator pitch (2–4 sentences).~~ | ✅ **Done** — added as `adr.summary` |
+
+> **Resolved items:** `confirmation` (✅ added), `summary` (✅ added as `adr.summary`), `rationale_for_rejected` (✅ added as `alternatives[].rejection_rationale`), `impact_assessment` (❌ skipped — see §6.5). See §7.2 for the full adoption/skip tracker.
 
 ---
 
@@ -616,20 +614,32 @@ Our `adr-governance` schema is the most comprehensive ADR meta-model in the fiel
 
 These are enterprise-grade extensions that should be preserved and documented as the **"Enterprise ADR extensions"** of this project.
 
-### 7.2 What to Consider Adding
+### 7.2 Feature Adoption Tracker
 
-| Candidate Field | Source Template | Recommendation | Rationale |
-|----------------|----------------|----------------|-----------|
-| ~~**`extension_fields` (x-*)**~~ | smadr | ✅ **Done** | Added via `patternProperties` at top level. Any `x-` prefixed field is accepted. |
-| ~~**`summary`**~~ | NHS Wales | ✅ **Done** | Added as optional string field (max 500 chars) in `adr` metadata. |
-| ~~**`rationale_for_rejected`**~~ | Merson, DRF | ✅ **Done** | Added as optional `rejection_rationale` field on each alternative. |
-| ~~**`impact_assessment`**~~ | ~~EdgeX Foundry~~ | ❌ **Skip** | Impact is already captured across `dependencies.internal` (systems involved), `consequences.negative` (operational costs), and `decision.tradeoffs` (adaptation required). EdgeX's template targets change proposals for a specific codebase with enumerable services/DTOs — our ADRs describe architectural patterns where impacted systems vary by adopter. Adding a dedicated section would create overlap. Teams needing this can use `x-impact-assessment`. |
-| **`related_principles`** | Tyree–Akerman | ⚠️ **Consider** | Links decisions to enterprise architecture principles. Valuable for organizations with a formal principles registry (e.g., TOGAF). Add if/when we have a principles registry. |
-| **`risk_per_option` (3D)** | smadr | ❌ **Skip** | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with the overall `risk_assessment` section provides equivalent coverage. |
-| **`neutral_consequences`** | MADR 4.0 | ❌ **Skip** | Neutral consequences are rarely informative. Our positive/negative split is sufficient. |
-| **`decision_drivers`** (unified list) | MADR / smadr | ❌ **Skip** | Our `business_drivers` + `technical_drivers` split is more informative than a flat list. |
-| **`swot_per_option`** | Business Case | ❌ **Skip** | Overlaps with our pros/cons/cost/risk per alternative. SWOT is a management lens, not an engineering lens. |
-| **`context_validation`** | DRF | ❌ **Skip (for now)** | DRF's organizational context graph (CRF) is architecturally novel but requires building a separate knowledge graph infrastructure. Worth revisiting when DRF matures past v0.1.0. |
+#### ✅ Adopted
+
+| Field | Source | Implementation |
+|-------|--------|----------------|
+| `extension_fields` (x-*) | smadr | Added via `patternProperties` at top level. Any `x-` prefixed field is accepted. |
+| `summary` | NHS Wales | Added as optional string field (max 500 chars) in `adr` metadata. |
+| `rejection_rationale` | Merson, DRF | Added as optional `rejection_rationale` field on each alternative. |
+
+#### ⚠️ Still Open
+
+| Field | Source | Status | Notes |
+|-------|--------|--------|-------|
+| `related_principles` | Tyree–Akerman | Deferred | Links decisions to enterprise architecture principles. Add if/when we have a principles registry (e.g., TOGAF). |
+
+#### ❌ Not Adopted
+
+| Field | Source | Rationale |
+|-------|--------|-----------|
+| `impact_assessment` | EdgeX Foundry | Impact is already captured across `dependencies.internal` (systems involved), `consequences.negative` (operational costs), and `decision.tradeoffs` (adaptation required). EdgeX's template targets change proposals for a specific codebase with enumerable services/DTOs — our ADRs describe architectural patterns where impacted systems vary by adopter. Teams needing this can use `x-impact-assessment`. |
+| `risk_per_option` (3D) | smadr | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with pros/cons provides equivalent coverage. |
+| `neutral_consequences` | MADR 4.0 | Neutral consequences are rarely informative. Our positive/negative split is sufficient. |
+| `decision_drivers` (unified list) | MADR / smadr | Our `business_drivers` + `technical_drivers` split is more informative than a flat list. |
+| `swot_per_option` | Business Case | Overlaps with our pros/cons/cost/risk per alternative. SWOT is a management lens, not an engineering lens. |
+| `context_validation` | DRF | DRF's organizational context graph (CRF) is architecturally novel but requires building a separate knowledge graph infrastructure. Worth revisiting when DRF matures past v0.1.0. |
 
 ### 7.3 What to Document
 
@@ -702,15 +712,7 @@ Having surveyed **14 templates** (13 external + our own), we can now position `a
 - Lifecycle management (review cadence, supersession, archival) — **unique to us**
 - Machine-readable YAML with JSON Schema validation
 
-The expanded survey surfaced several **features worth adding**:
-
-| Priority | Field | Source | Action |
-|----------|-------|--------|--------|
-| ~~🟢 High~~ | ~~`summary`~~ | ~~NHS Wales~~ | ✅ Done — added to `adr` metadata |
-| ~~🟢 High~~ | ~~`extension_fields` (x-*)~~ | ~~smadr~~ | ✅ Done — added via `patternProperties` |
-| ~~🟢 High~~ | ~~`rationale_for_rejected`~~ | ~~Merson, DRF~~ | ✅ Done — added as per-alternative field |
-| ~~🟡 Medium~~ | ~~`impact_assessment`~~ | ~~EdgeX Foundry~~ | ❌ Skip — impact captured across `dependencies`, `consequences.negative`, `decision.tradeoffs`. Use `x-impact-assessment` if needed. |
-| ⚪ Low | `context_validation` | DRF | Watch for DRF maturity |
+The expanded survey surfaced several features from other templates. Three were adopted (`summary`, `extension_fields`, `rejection_rationale`), six were explicitly not adopted after analysis, and one (`related_principles`) remains deferred. See §7.2 for the full adoption tracker with rationale.
 
 The tradeoff remains **weight**: a full `adr-governance` ADR is significantly heavier than a Nygard or MADR record. This is acceptable for our use case (enterprise IAM decisions in regulated financial services) but would be overkill for a startup documenting database choices.
 
