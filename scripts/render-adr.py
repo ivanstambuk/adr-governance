@@ -55,6 +55,7 @@ def render_adr(data: dict) -> str:
     owner_str = f"{owner.get('name', '—')} ({owner.get('role', '')})" if owner else "—"
 
     lines.append(f"> **Status:** `{status}` · **Priority:** `{priority}` · **Type:** `{decision_type}` · **Confidence:** `{confidence}`")
+    lines.append(">")
     lines.append(f"> **Decision Owner:** {owner_str} · **Decision Date:** {decision_date}")
     lines.append("")
 
@@ -72,13 +73,15 @@ def render_adr(data: dict) -> str:
         lines.append("")
         if authors:
             lines.append(f"**Authors:** {', '.join(a.get('name', '') + ' (' + a.get('role', '') + ')' for a in authors)}")
+            lines.append("")
         if reviewers:
             lines.append(f"**Reviewers:** {', '.join(r.get('name', '') + ' (' + r.get('role', '') + ')' for r in reviewers)}")
+            lines.append("")
         if approvals:
             approved = [a for a in approvals if a.get("approved_at")]
             if approved:
                 lines.append(f"**Approvals:** {', '.join(a.get('name', '') + ' (' + str(a.get('approved_at', '')) + ')' for a in approved)}")
-        lines.append("")
+                lines.append("")
 
     # --- Context ---
     context = data.get("context", {})

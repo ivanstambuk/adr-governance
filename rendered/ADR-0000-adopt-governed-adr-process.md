@@ -8,6 +8,7 @@
 # ADR-0000: Adopt schema-governed ADR process for architectural decision management
 
 > **Status:** `accepted` · **Priority:** `critical` · **Type:** `process` · **Confidence:** `high`
+>
 > **Decision Owner:** Ivan Stambuk (Principal Architect) · **Decision Date:** 2026-03-05
 
 *Establish a formal, schema-validated ADR governance process using YAML files, JSON Schema validation, and GitOps workflows for managing architectural decisions.*
@@ -15,6 +16,7 @@
 ---
 
 **Authors:** Ivan Stambuk (Principal Architect)
+
 **Approvals:** Ivan Stambuk (2026-03-05T18:00:00Z)
 
 ---

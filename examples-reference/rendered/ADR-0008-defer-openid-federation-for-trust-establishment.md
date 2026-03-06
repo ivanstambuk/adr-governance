@@ -8,6 +8,7 @@
 # ADR-0008: Defer adoption of OpenID Federation 1.0 for automated trust establishment
 
 > **Status:** `deferred` · **Priority:** `medium` · **Type:** `technology` · **Confidence:** `low`
+>
 > **Decision Owner:** Marcus Chen (Head of IAM) · **Decision Date:** 2026-02-15
 
 *Deferred proposal to adopt OpenID Federation 1.0 for automated trust establishment between NovaTrust and partner identity providers. Specification is not yet final and PingFederate support is roadmapped but not GA.*
@@ -15,6 +16,7 @@
 ---
 
 **Authors:** Elena Vasquez (IAM Architect)
+
 **Reviewers:** Jonas Eriksen (CISO), Priya Sharma (API Platform Lead)
 
 ---

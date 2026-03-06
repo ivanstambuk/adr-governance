@@ -8,6 +8,7 @@
 # ADR-0007: Reject centralized HashiCorp Vault for API runtime secrets in favor of native cloud provider secret stores
 
 > **Status:** `rejected` · **Priority:** `high` · **Type:** `technology` · **Confidence:** `high`
+>
 > **Decision Owner:** Marcus Chen (Head of IAM) · **Decision Date:** 2026-03-05
 
 *Rejected proposal to centralize all API runtime secrets (DB credentials, API keys, signing keys) in HashiCorp Vault. Native cloud provider secret stores (AWS Secrets Manager, Azure Key Vault) chosen instead due to lower operational burden and tighter IAM integration.*
@@ -15,6 +16,7 @@
 ---
 
 **Authors:** Priya Sharma (API Platform Lead)
+
 **Reviewers:** Jonas Eriksen (CISO), Tomasz Kowalski (Network Security Architect), Elena Vasquez (IAM Architect)
 
 ---

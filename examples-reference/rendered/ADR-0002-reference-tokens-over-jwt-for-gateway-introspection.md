@@ -8,6 +8,7 @@
 # ADR-0002: Use opaque reference tokens with introspection over self-contained JWTs for API gateway authorization
 
 > **Status:** `accepted` · **Priority:** `high` · **Type:** `technology` · **Confidence:** `high`
+>
 > **Decision Owner:** Marcus Chen (Head of Identity and Access Management) · **Decision Date:** 2026-01-30
 
 *Issue opaque reference tokens instead of self-contained JWTs, enabling instant revocation via introspection while keeping PII out of access logs.*
@@ -15,7 +16,9 @@
 ---
 
 **Authors:** Priya Sharma (API Platform Lead), Elena Vasquez (IAM Architect)
+
 **Reviewers:** Tomasz Kowalski (Network Security Architect), Jonas Eriksen (CISO)
+
 **Approvals:** Marcus Chen (2026-01-30T11:00:00Z), Jonas Eriksen (2026-02-01T09:00:00Z)
 
 ---

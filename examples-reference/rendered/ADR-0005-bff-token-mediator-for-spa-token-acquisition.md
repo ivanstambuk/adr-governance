@@ -8,6 +8,7 @@
 # ADR-0005: Use the Backend-for-Frontend token mediator pattern over direct SPA-to-AS authorization for single-page applications
 
 > **Status:** `accepted` · **Priority:** `high` · **Type:** `security` · **Confidence:** `high`
+>
 > **Decision Owner:** Marcus Chen (Head of Identity and Access Management) · **Decision Date:** 2026-02-18
 
 *Adopt the BFF/Token Mediator pattern so OAuth tokens never reach the browser, eliminating XSS-based token theft for the banking portal.*
@@ -15,7 +16,9 @@
 ---
 
 **Authors:** Priya Sharma (API Platform Lead), Kai Lindström (Mobile Platform Lead)
+
 **Reviewers:** Elena Vasquez (IAM Architect), Jonas Eriksen (CISO), Frontend Development Lead (Engineering)
+
 **Approvals:** Marcus Chen (2026-02-18T10:00:00Z), Jonas Eriksen (2026-02-20T09:00:00Z)
 
 ---
