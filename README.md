@@ -9,6 +9,8 @@ Most teams make Architecture Decisions (ADs) every week. Few document them well.
 - **Meetings are the wrong medium for decisions.** They reward whoever is present and articulate in the moment, not whoever has done the deepest analysis. They produce no durable artifact. They don't scale across time zones.
 - **Decisions without structure are decisions without quality.** When there's no template forcing you to consider alternatives, tradeoffs, and risks, corners get cut. Important ADs get made on gut feeling.
 - **Undocumented decisions create compliance gaps.** Auditors ask for evidence of decision-making and get blank stares. New team members have no way to understand *why* the architecture looks the way it does.
+- **Documented decisions that aren't enforced are just suggestions.** Even teams that write ADRs rarely close the loop. The decision says "use DPoP," but nothing stops someone from committing mTLS code. Without a feedback mechanism from the ADL back to the codebase, decisions and implementation drift apart silently.
+- **Traditional tooling is a dead end for scalable decision management.** Decisions captured in Confluence pages, SharePoint wikis, PowerPoint decks, Notion databases, or meeting minutes in Microsoft Teams are *opaque to machines*. They can't be schema-validated, they don't support programmable multi-party approval workflows, they can't be diffed or version-controlled with meaningful merges, and — critically — they can't be consumed by AI agents or CI pipelines for automated enforcement. As AI becomes central to the software delivery chain, decisions locked in proprietary formats become an integration liability. A structured, Git-native, schema-governed ADL is AI-native by design — every improvement in AI tooling automatically makes your decision management better, because the data is already in the right shape.
 
 The alternative is **shift-left decision-making**: instead of debating in a meeting, the proposer prepares a well-structured ADR upfront — context, alternatives, risks, tradeoffs — and submits it as a pull request. Every stakeholder can review it asynchronously, on their own time, with full context in front of them. The decision process becomes a code review, not a calendar invite. And because it's GitOps-native, every approval by every relevant stakeholder is traceable — who approved what, when, and with what context — for free.
 
@@ -24,7 +26,8 @@ Good Architecture Knowledge Management (AKM) treats decisions as first-class eng
 - **Pre-built CI/CD pipelines** for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — ready to copy into your repo and enforce as a merge gate
 - **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
-- **Repomix bundling** for LLM context injection
+- **Decision enforcement** — the ADL can serve as a single source of truth for spec-driven development: AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
+- **Repomix bundling** — the entire ADL is concatenated into a single Markdown file that agents can search with standard tools, enabling cross-repository decision enforcement
 - **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) — real-world contended decisions with sizable pros and cons on each side, not strawman examples
 
 ## Philosophy
@@ -192,15 +195,82 @@ The `.skills/adr-author/` directory follows the [agentskills.io specification](h
 
 The skill enables AI assistants to author new ADRs through guided questioning, review existing ADRs for completeness, validate YAML against the schema, and navigate the governance lifecycle (supersession, deprecation, archival). It understands the full meta-model and will probe for Architecturally Significant Requirements (ASRs), balanced alternatives, and consequences.
 
-## Repomix Bundle
+## ADL as Source of Truth
 
-To create a single-file bundle of the core project (excluding examples and CI):
+The Architecture Decision Log isn't just documentation — it's a **machine-readable specification** that AI agents and CI pipelines can enforce against your codebase. This closes the gap between *deciding* and *doing*.
+
+### Spec-Driven Development
+
+AI coding agents (Copilot, Claude Code, Antigravity, Cursor, etc.) can use the bundled ADL as a **single source of truth** during code generation. When the ADL says "use DPoP for sender-constrained tokens" (ADR-0001), the agent can search the bundled decision log, find the decision with its full rationale and constraints, and generate code that aligns with it — without the developer having to explain the architectural context in every prompt.
+
+The workflow:
+
+1. **Bundle the ADL** into a single file:
+   ```bash
+   ./scripts/bundle.sh
+   ```
+   This generates `adr-governance-bundle.md` — the entire governance framework, schema, and all accepted decisions in one searchable file.
+
+2. **Point your agent to it.** Paste the bundle into an LLM context window, add it to your agent's project knowledge, or reference it as a file. The agent can then use standard text search (grep, semantic search, `Ctrl+F`) to find relevant decisions.
+
+3. **Generate code that complies.** When the agent encounters an architectural question — which token format to use, which signing algorithm, which authentication pattern — it searches the ADL instead of guessing or asking you.
+
+> **Cross-repository enforcement:** The ADL repo and the code repo don't need to be the same. Point your agent at the ADL bundle from *any* repository. The decisions are self-contained — each ADR includes the full context, rationale, and constraints needed to understand and apply it.
+
+### Semantic Guardrails in CI
+
+The ADL can also serve as a **pre-merge guardrail** in your *code* repositories — not just the ADR repository itself. Before a PR is merged, a CI step can validate that the code changes are consistent with accepted architectural decisions.
+
+This works at two levels:
+
+**1. Local enforcement (during development):**
+Coding agents that have the ADL in context will naturally align with it. When you ask "implement the token endpoint," an agent with ADR-0001 in context will use DPoP, not mTLS — because the decision and its rationale are right there in the searchable bundle.
+
+**2. CI pipeline enforcement (pre-merge):**
+Add a step in your code repository's CI pipeline that checks for architectural compliance. This can be as simple as a linter rule or as sophisticated as an LLM-based review:
+
+```yaml
+# Example: GitHub Actions step in your CODE repo (not this repo)
+- name: Check ADR compliance
+  run: |
+    # Fetch the latest ADL bundle from the governance repo
+    curl -sL https://raw.githubusercontent.com/your-org/adr-governance/main/adr-governance-bundle.md \
+      -o /tmp/adl-bundle.md
+    # Run your compliance checks against the changed files
+    # (implementation depends on your tooling — could be a custom script,
+    # an LLM-based reviewer, or a pattern-matching linter)
+    python3 scripts/check-adr-compliance.py \
+      --adl /tmp/adl-bundle.md \
+      --changed-files $(git diff --name-only origin/main...HEAD)
+```
+
+The key insight: **the ADL bundle is a plain-text, searchable, self-contained artifact**. Any tool — from `grep` to a full LLM — can consume it. You don't need a special SDK or API. The structured YAML embedded in the bundle is parseable by any programming language, and the Markdown wrapper makes it readable by any LLM.
+
+### What This Enables
+
+| Scenario | Without ADL enforcement | With ADL enforcement |
+|----------|------------------------|---------------------|
+| New developer joins | Reads (or doesn't read) wiki docs | Agent has full ADL context; generates compliant code from day one |
+| PR introduces mTLS | Merges — nobody notices the ADR says DPoP | CI flags the drift; reviewer is alerted |
+| Architect proposes supersession | Searches Slack history for context | Searches the ADL bundle; full decision chain is traceable |
+| Annual audit | Scramble to reconstruct decision history | ADL is the audit trail; every decision is timestamped, attributed, and version-controlled |
+| LLM generates code | Guesses at patterns based on training data | Searches the ADL and follows your organization's actual decisions |
+
+### Repomix Bundle
+
+To create the single-file bundle:
 
 ```bash
 ./scripts/bundle.sh
 ```
 
-This generates `adr-governance-bundle.md` — paste it into any LLM context window for instant AKM context.
+This generates `adr-governance-bundle.md` — the entire ADR governance framework and decision log in one file. The bundle includes the schema, process documentation, glossary, and all ADRs in `architecture-decision-log/` (it excludes `examples/` and CI files).
+
+**Usage options:**
+- **Paste** into any LLM context window for instant AKM context
+- **Add** to your coding agent's project knowledge base
+- **Fetch** from CI pipelines in other repositories (as shown above)
+- **Commit** to other repositories as a versioned reference artifact
 
 ## Rendering ADRs to Markdown
 
