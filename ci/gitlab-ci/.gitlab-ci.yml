@@ -28,14 +28,14 @@ validate-adr:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
         - architecture-decision-log/**
-        - examples/**
+        - examples-reference/**
         - schemas/**
         - scripts/validate-adr.py
     # Run on pushes to main
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
         - architecture-decision-log/**
-        - examples/**
+        - examples-reference/**
         - schemas/**
         - scripts/validate-adr.py
   before_script:
@@ -50,13 +50,13 @@ validate-adr:
         echo "No ADR files in architecture-decision-log/ — skipping validation"
       fi
 
-    # Validate examples/
+    # Validate examples-reference/
     - |
-      echo "=== Validating examples/ ==="
-      if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
-        python3 scripts/validate-adr.py examples/
+      echo "=== Validating examples-reference/ ==="
+      if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
+        python3 scripts/validate-adr.py examples-reference/
       else
-        echo "No ADR files in examples/ — skipping validation"
+        echo "No ADR files in examples-reference/ — skipping validation"
       fi
 
     # YAML lint
@@ -77,9 +77,9 @@ validate-adr:
         echo "No YAML files — skipping"
       fi
 
-      echo "=== Linting examples/ ==="
-      if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
-        yamllint -c /tmp/yamllint-config.yml examples/
+      echo "=== Linting examples-reference/ ==="
+      if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
+        yamllint -c /tmp/yamllint-config.yml examples-reference/
       else
         echo "No YAML files — skipping"
       fi

@@ -23,7 +23,7 @@ trigger:
   paths:
     include:
       - architecture-decision-log/*
-      - examples/*
+      - examples-reference/*
       - schemas/*
       - scripts/validate-adr.py
 
@@ -34,7 +34,7 @@ pr:
   paths:
     include:
       - architecture-decision-log/*
-      - examples/*
+      - examples-reference/*
       - schemas/*
       - scripts/validate-adr.py
 
@@ -59,12 +59,12 @@ steps:
     displayName: "Validate ADL (architecture-decision-log/)"
 
   - script: |
-      if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
-        python3 scripts/validate-adr.py examples/
+      if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
+        python3 scripts/validate-adr.py examples-reference/
       else
-        echo "No ADR files in examples/ — skipping validation"
+        echo "No ADR files in examples-reference/ — skipping validation"
       fi
-    displayName: "Validate examples/"
+    displayName: "Validate examples-reference/"
 
   - script: |
       cat <<'EOF' > /tmp/yamllint-config.yml
@@ -83,9 +83,9 @@ steps:
         echo "No YAML files — skipping"
       fi
 
-      echo "=== Linting examples/ ==="
-      if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
-        yamllint -c /tmp/yamllint-config.yml examples/
+      echo "=== Linting examples-reference/ ==="
+      if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
+        yamllint -c /tmp/yamllint-config.yml examples-reference/
       else
         echo "No YAML files — skipping"
       fi

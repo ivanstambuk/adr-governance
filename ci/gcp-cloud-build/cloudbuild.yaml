@@ -43,7 +43,7 @@ steps:
           echo "No ADR files in architecture-decision-log/ — skipping validation"
         fi
 
-  # Step 3: Validate examples/
+  # Step 3: Validate examples-reference/
   - name: "python:3.12-slim"
     id: "validate-examples"
     entrypoint: "bash"
@@ -51,10 +51,10 @@ steps:
       - "-c"
       - |
         export PATH="$$HOME/.local/bin:$$PATH"
-        if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
-          python3 scripts/validate-adr.py examples/
+        if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
+          python3 scripts/validate-adr.py examples-reference/
         else
-          echo "No ADR files in examples/ — skipping validation"
+          echo "No ADR files in examples-reference/ — skipping validation"
         fi
 
   # Step 4: YAML lint
@@ -82,9 +82,9 @@ steps:
           echo "No YAML files — skipping"
         fi
 
-        echo "=== Linting examples/ ==="
-        if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
-          yamllint -c /tmp/yamllint-config.yml examples/
+        echo "=== Linting examples-reference/ ==="
+        if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
+          yamllint -c /tmp/yamllint-config.yml examples-reference/
         else
           echo "No YAML files — skipping"
         fi

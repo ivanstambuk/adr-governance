@@ -46,13 +46,13 @@ phases:
           echo "No ADR files in architecture-decision-log/ — skipping validation"
         fi
 
-      # Validate examples/
+      # Validate examples-reference/
       - |
-        echo "=== Validating examples/ ==="
-        if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
-          python3 scripts/validate-adr.py examples/
+        echo "=== Validating examples-reference/ ==="
+        if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
+          python3 scripts/validate-adr.py examples-reference/
         else
-          echo "No ADR files in examples/ — skipping validation"
+          echo "No ADR files in examples-reference/ — skipping validation"
         fi
 
   post_build:
@@ -75,9 +75,9 @@ phases:
           echo "No YAML files — skipping"
         fi
 
-        echo "=== Linting examples/ ==="
-        if [ -d "examples" ] && ls examples/*.yaml 1>/dev/null 2>&1; then
-          yamllint -c /tmp/yamllint-config.yml examples/
+        echo "=== Linting examples-reference/ ==="
+        if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
+          yamllint -c /tmp/yamllint-config.yml examples-reference/
         else
           echo "No YAML files — skipping"
         fi

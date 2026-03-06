@@ -4,14 +4,14 @@ on:
   pull_request:
     paths:
       - "architecture-decision-log/**"
-      - "examples/**"
+      - "examples-reference/**"
       - "schemas/**"
       - "scripts/validate-adr.py"
   push:
     branches: [main]
     paths:
       - "architecture-decision-log/**"
-      - "examples/**"
+      - "examples-reference/**"
       - "schemas/**"
       - "scripts/validate-adr.py"
 
@@ -38,12 +38,12 @@ jobs:
             echo "No ADR files in architecture-decision-log/ — skipping validation"
           fi
 
-      - name: Validate examples/
+      - name: Validate examples-reference-reference/
         run: |
-          if [ -d "examples" ] && [ "$(ls -A examples/*.yaml 2>/dev/null)" ]; then
-            python3 scripts/validate-adr.py examples/
+          if [ -d "examples-reference" ] && [ "$(ls -A examples-reference/*.yaml 2>/dev/null)" ]; then
+            python3 scripts/validate-adr.py examples-reference/
           else
-            echo "No ADR files in examples/ — skipping validation"
+            echo "No ADR files in examples-reference/ — skipping validation"
           fi
 
       - name: YAML lint (ADL)
@@ -59,10 +59,10 @@ jobs:
                 check-keys: false
         if: hashFiles('architecture-decision-log/*.yaml') != ''
 
-      - name: YAML lint (examples)
+      - name: YAML lint (examples-reference)
         uses: ibiqlik/action-yamllint@v3
         with:
-          file_or_dir: examples/
+          file_or_dir: examples-reference/
           config_data: |
             extends: default
             rules:
@@ -70,4 +70,4 @@ jobs:
                 max: 300
               truthy:
                 check-keys: false
-        if: hashFiles('examples/*.yaml') != ''
+        if: hashFiles('examples-reference/*.yaml') != ''

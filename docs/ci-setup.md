@@ -255,7 +255,7 @@ To add custom validation rules (e.g., enforcing naming conventions, checking for
 
 ### Removing Example Validation
 
-If you don't want CI to validate the `examples/` directory (e.g., you've deleted it), remove the corresponding step from the pipeline file.
+If you don't want CI to validate the `examples-reference/` directory (e.g., you've deleted it), remove the corresponding step from the pipeline file.
 
 ---
 
@@ -274,7 +274,7 @@ The repository already includes a GitHub Actions workflow at .github/workflows/v
 
 Please help me:
 1. Fork or clone the adr-governance repo into my GitHub organization.
-2. Delete the examples/ directory (those are sample ADRs, not ours).
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
 3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
 4. Set up branch protection on the main branch:
    - Require the "validate" status check to pass before merging
@@ -297,7 +297,7 @@ I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-go
 Please help me set this up in Azure DevOps:
 
 1. Clone or import the adr-governance repo into our Azure DevOps project.
-2. Delete the examples/ directory (those are sample ADRs, not ours).
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
 3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
 4. Copy ci/azure-devops/azure-pipelines.yml to the repository root as azure-pipelines.yml.
 5. Create a new pipeline in Azure Pipelines pointing to this file.
@@ -321,7 +321,7 @@ I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-go
 Please help me set this up with GCP Cloud Build:
 
 1. Clone or mirror the adr-governance repo into our source repository (GitHub or Cloud Source Repositories).
-2. Delete the examples/ directory (those are sample ADRs, not ours).
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
 3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
 4. Copy ci/gcp-cloud-build/cloudbuild.yaml to the repository root.
 5. Connect our repository to Cloud Build (2nd gen repository connection).
@@ -347,7 +347,7 @@ I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-go
 Please help me set this up with AWS CodeBuild:
 
 1. Clone the adr-governance repo into our source repository (GitHub or CodeCommit).
-2. Delete the examples/ directory (those are sample ADRs, not ours).
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
 3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
 4. Copy ci/aws-codebuild/buildspec.yml to the repository root.
 5. Create a CodeBuild project:
@@ -375,7 +375,7 @@ I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-go
 Please help me set this up in GitLab:
 
 1. Import or mirror the adr-governance repo into our GitLab group.
-2. Delete the examples/ directory (those are sample ADRs, not ours).
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
 3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
 4. Copy ci/gitlab-ci/.gitlab-ci.yml to the repository root as .gitlab-ci.yml.
 5. Configure merge request settings:

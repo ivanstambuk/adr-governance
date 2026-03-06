@@ -2,9 +2,9 @@
 """Render ADR YAML files to Markdown documents.
 
 Usage:
-    python3 scripts/render-adr.py examples/ADR-0001-*.yaml
-    python3 scripts/render-adr.py examples/           # render all in directory
-    python3 scripts/render-adr.py --output-dir out/ examples/ADR-0001-*.yaml
+    python3 scripts/render-adr.py examples-reference/ADR-0001-*.yaml
+    python3 scripts/render-adr.py examples-reference/           # render all in directory
+    python3 scripts/render-adr.py --output-dir out/ examples-reference/ADR-0001-*.yaml
 """
 
 import argparse

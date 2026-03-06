@@ -36,7 +36,7 @@ Use this skill when the user:
 
 ### Step 1: Determine the next ADR ID
 
-Check existing ADR files in the `architecture-decision-log/` directory (or `examples/` for reference). The ID format is `ADR-NNNN` (zero-padded 4 digits). Use the next sequential number.
+Check existing ADR files in the `architecture-decision-log/` directory (or `examples-reference/` for reference). The ID format is `ADR-NNNN` (zero-padded 4 digits). Use the next sequential number.
 
 ### Step 2: Gather context from the user
 
@@ -136,7 +136,7 @@ context:
 
 - See [the glossary](../../docs/glossary.md) for all enum values and term definitions
 - See [the JSON Schema](references/SCHEMA_REFERENCE.md) for the full meta-model specification
-- See example ADRs in the repository's `examples/` directory for well-formed samples
+- See example ADRs in the repository's `examples-reference/` directory for well-formed samples
 
 ## Validation
 

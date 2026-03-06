@@ -132,8 +132,8 @@ confirmation:
   description: ADR governance process validated by authoring 7 example ADRs (ADR-0001 through ADR-0007) covering technology,
     security, and process decisions across accepted and rejected statuses.
   artifact_ids:
-  - examples/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
-  - examples/ADR-0007-centralized-secret-store-for-api-keys.yaml
+  - examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
+  - examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml
   - TEST-SUITE-validate-adr-all-examples
 dependencies:
   internal:

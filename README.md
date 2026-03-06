@@ -28,7 +28,7 @@ Good **Architecture Knowledge Management (AKM)** treats decisions as first-class
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
 - **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
 - **Repomix bundling** — the entire ADL is concatenated into a single Markdown file that agents can search with standard tools, enabling cross-repository decision enforcement
-- **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) — real-world contended decisions with sizable pros and cons on each side, not strawman examples
+- **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) in `examples-reference/` — real-world contended decisions with sizable pros and cons on each side, not strawman examples. Kept as a reference for quality and style; not real decisions
 
 ## Philosophy
 
@@ -86,14 +86,16 @@ git push origin main
 
 Or fork the repository directly from GitHub and rename it.
 
-### 2. Clean up example content
+### 2. Review examples *(optional cleanup)*
 
-Delete the example ADRs — they are fictional NovaTrust Financial Services decisions included for reference:
+The `examples-reference/` directory contains 8 fictional ADRs from "NovaTrust Financial Services" — they demonstrate the meta-model at production quality. **These are not real decisions.** You can:
 
-```bash
-rm -rf examples/
-git add -A && git commit -m "chore: remove example ADRs"
-```
+- **Keep them** as a reference for your team (recommended initially)
+- **Delete them** once your team is comfortable with the format:
+  ```bash
+  rm -rf examples-reference/
+  git add -A && git commit -m "chore: remove reference examples"
+  ```
 
 ### 3. Customize ADR-0000
 
@@ -179,7 +181,7 @@ The CI pipeline validates schema compliance and lints the YAML. Reviewers are au
 │   └── research/                # Template & process comparison research
 ├── architecture-decision-log/   # The ADL — your ADRs go here
 │   └── ADR-0000-adopt-governed-adr-process.yaml  # Meta-ADR (bootstrap)
-├── examples/                    # 8 well-formed example ADRs
+├── examples-reference/           # 8 fictional example ADRs (NovaTrust Financial Services) — reference only
 │   ├── ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
 │   ├── ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml
 │   ├── ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml
@@ -214,7 +216,7 @@ The CI pipeline validates schema compliance and lints the YAML. Reviewers are au
 ├── .github/
 │   └── workflows/
 │       └── validate-adr.yml     # PR validation CI (GitHub Actions)
-└── repomix.config.json          # Bundles core project (excludes examples + CI)
+└── repomix.config.json          # Bundles core project (excludes examples-reference + CI)
 ```
 
 ## ADR Meta-Model
@@ -400,7 +402,7 @@ To create the single-file bundle:
 ./scripts/bundle.sh
 ```
 
-This generates `adr-governance-bundle.md` — the entire ADR governance framework and decision log in one file. The bundle includes the schema, process documentation, glossary, and all ADRs in `architecture-decision-log/` (it excludes `examples/` and CI files).
+This generates `adr-governance-bundle.md` — the entire ADR governance framework and decision log in one file. The bundle includes the schema, process documentation, glossary, and all ADRs in `architecture-decision-log/` (it excludes `examples-reference/` and CI files).
 
 **Usage options:**
 - **Paste** into any LLM context window for instant AKM context
@@ -414,15 +416,15 @@ To render ADR YAML files to polished Markdown (with Mermaid passthrough):
 
 ```bash
 # Single file to stdout
-python3 scripts/render-adr.py examples/ADR-0001-*.yaml
+python3 scripts/render-adr.py examples-reference/ADR-0001-*.yaml
 
 # All examples to a directory
-python3 scripts/render-adr.py --output-dir rendered/ examples/
+python3 scripts/render-adr.py --output-dir rendered/ examples-reference/
 ```
 
 ## Example ADRs
 
-The `examples/` directory contains interconnected ADRs from a fictional IAM department. These are **low-level implementation decisions** — the kind of contended ADs you face *within* an already-adopted technology, with sizable pros and cons on each side:
+The `examples-reference/` directory contains interconnected ADRs from a **fictional** IAM department at NovaTrust Financial Services. These are **not real decisions** — they demonstrate the meta-model at production quality. Use them as a reference for style, depth, and interconnection:
 
 | ID | Title | Status |
 |----|-------|--------|
@@ -434,6 +436,8 @@ The `examples/` directory contains interconnected ADRs from a fictional IAM depa
 | ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted |
 | ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** |
 | ADR-0008 | Defer OpenID Federation for Automated Trust Establishment | **deferred** |
+
+See [`examples-reference/README.md`](examples-reference/README.md) for details on each example.
 
 Additionally, `architecture-decision-log/ADR-0000` is a meta-ADR documenting the AD to adopt this governance process itself.
 

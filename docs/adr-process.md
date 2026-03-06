@@ -113,7 +113,7 @@ If **none** of these apply, the decision is likely not architecturally significa
 
 2. **Create the ADR file** in `architecture-decision-log/` using the schema:
    ```bash
-   cp examples/ADR-0001-*.yaml architecture-decision-log/ADR-NNNN-short-title.yaml
+   cp examples-reference/ADR-0001-*.yaml architecture-decision-log/ADR-NNNN-short-title.yaml
    ```
 
 3. **Set status to `draft`** while authoring:

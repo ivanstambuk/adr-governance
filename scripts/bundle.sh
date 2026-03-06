@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bundle the ADR governance project into a single markdown file using repomix.
-# Excludes examples/ and .github/ (CI/CD) — see repomix.config.json.
+# Excludes examples-reference/ and .github/ (CI/CD) — see repomix.config.json.
 #
 # Usage:
 #   ./scripts/bundle.sh
