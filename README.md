@@ -11,13 +11,13 @@ Most teams make **Architecture Decisions (ADs)** every week. Few document them w
 - **Meetings are the wrong medium for decisions.** They reward whoever is present and articulate in the moment, not whoever has done the deepest analysis. They produce no durable artifact. They don't scale across time zones.
 - **Decisions without structure are decisions without quality.** When there's no template forcing you to consider alternatives, tradeoffs, and risks, corners get cut. Important ADs get made on gut feeling.
 - **Stakeholder input is ad-hoc.** The right person wasn't in the room, the email got buried, the Slack thread moved on. Decisions get made without the people most affected by them ever weighing in.
+- **The process is entirely human-centric.** AI can find gaps in reasoning, check consistency across decisions, suggest alternatives the team didn't consider, and validate conclusions against broad industry knowledge. But traditional decision-making doesn't leverage any of this — it relies solely on whoever is in the room and what they happen to remember. A process that isn't AI-native today is leaving compounding value on the table, and the gap will only widen as AI capabilities improve.
 
 ### 2. Decisions aren't traceable or enforceable
 
 - **Undocumented decisions create compliance gaps.** Auditors ask for evidence of decision-making and get blank stares. New team members have no way to understand *why* the architecture looks the way it does.
 - **Documented decisions that aren't enforced are just suggestions.** Even teams that write **Architecture Decision Records (ADRs)** rarely close the loop. The decision says "use DPoP," but nothing stops someone from committing mTLS code. Without a feedback mechanism from the **Architecture Decision Log (ADL)** back to the codebase, decisions and implementation drift apart silently.
 - **Decisions rot.** A decision made 18 months ago under different constraints may no longer be the right call — but nobody scheduled a review, nobody re-evaluated, and by the time someone notices, the technical debt is structural.
-- **Traditional decision-making doesn't benefit from AI.** AI can find gaps in reasoning, check consistency across decisions, suggest alternatives the team didn't consider, validate conclusions against industry knowledge, and revisit past decisions when the landscape changes. But none of this is possible if decisions live in meeting minutes, slide decks, or unstructured wiki pages. A process that isn't AI-native today is leaving compounding value on the table — and the gap will only widen as AI capabilities improve.
 
 ### 3. Traditional tooling can't scale
 
