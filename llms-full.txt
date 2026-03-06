@@ -92,7 +92,7 @@ See [`docs/adr-process.md`](docs/adr-process.md) for the full normative governan
 
 ## Quick Start — Adopting for Your Organization
 
-> **⚡ Fastest path.** Paste the prompt below into any AI coding assistant (Codex, Claude Code, Antigravity, Copilot) to have it set up the entire framework for your organization in one shot. For manual step-by-step instructions, continue to [step 1](#1-create-your-adr-repository).
+> **⚡ Fastest path.** Paste the prompt below into any AI coding assistant (Codex, Claude Code, Antigravity, Copilot) to have it set up the entire framework for your organization in one shot. For manual step-by-step instructions, skip to [Manual Setup](#manual-setup).
 
 ```
 I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization.
@@ -118,7 +118,11 @@ My Git identity is: [INSERT YOUR GIT USERNAME]
 
 ---
 
-### 1. Create your ADR repository
+### Manual Setup
+
+> If you used the AI prompt above, skip this section. These are the step-by-step manual instructions.
+
+#### 1. Create your ADR repository
 
 Create a new repository in your organization and clone this framework into it:
 
@@ -136,7 +140,7 @@ git push origin main
 
 Or fork the repository directly from GitHub and rename it.
 
-### 2. Review examples *(optional cleanup)*
+#### 2. Review examples *(optional cleanup)*
 
 The [`examples-reference/`](examples-reference/) directory contains 8 fictional ADRs from "NovaTrust Financial Services" — they demonstrate the meta-model at production quality. **These are not real decisions.** You can:
 
@@ -147,7 +151,7 @@ The [`examples-reference/`](examples-reference/) directory contains 8 fictional 
   git add -A && git commit -m "chore: remove reference examples"
   ```
 
-### 3. Customize ADR-0000
+#### 3. Customize ADR-0000
 
 [`architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is the **meta-ADR** — it documents the decision to adopt this governance framework. Update it for your organization:
 
@@ -156,7 +160,7 @@ The [`examples-reference/`](examples-reference/) directory contains 8 fictional 
 - Update timestamps and audit trail entries
 - Adjust the `context.summary` if your adoption rationale differs
 
-### 4. Set up CI
+#### 4. Set up CI
 
 Copy the pipeline file for your platform to the repository root:
 
@@ -170,7 +174,7 @@ Copy the pipeline file for your platform to the repository root:
 
 Then configure branch protection to make the CI check a **required merge gate** — see **[`docs/ci-setup.md`](docs/ci-setup.md)** for platform-specific instructions and LLM-ready setup prompts.
 
-### 5. Enable the pre-commit hook
+#### 5. Enable the pre-commit hook
 
 ```bash
 git config core.hooksPath .githooks
@@ -178,7 +182,7 @@ git config core.hooksPath .githooks
 
 This activates automatic Markdown rendering — every commit that touches `architecture-decision-log/*.yaml` will regenerate the human-friendly files in `rendered/` and the decision log index. Both the YAML source and its Markdown rendering are committed together, so reviewers approve both in the same PR.
 
-### 6. Configure CODEOWNERS *(optional but recommended)*
+#### 6. Configure CODEOWNERS *(optional but recommended)*
 
 ```bash
 cp CODEOWNERS.example .github/CODEOWNERS
@@ -186,11 +190,11 @@ cp CODEOWNERS.example .github/CODEOWNERS
 
 Edit `.github/CODEOWNERS` to replace the placeholder team handles (`@org/architecture-team`, etc.) with your real GitHub teams. This ensures ADRs and schema changes automatically request review from the right people.
 
-### 7. Copy the Agent Skill to your code repositories *(optional)*
+#### 7. Copy the Agent Skill to your code repositories *(optional)*
 
 The [`.skills/adr-author/`](.skills/adr-author/) directory is a portable AI skill. Copy it to any repository where developers will be authoring ADRs — agents like Antigravity, Claude Code, and Copilot will pick it up automatically and guide ADR creation through interactive questioning.
 
-### 8. Create your first real ADR
+#### 8. Create your first real ADR
 
 Use an AI assistant with the `adr-author` skill — it will guide you through every field via Socratic dialogue:
 
@@ -205,7 +209,7 @@ cp .skills/adr-author/assets/adr-template.yaml \
    architecture-decision-log/ADR-0001-your-decision-title.yaml
 ```
 
-### 9. Validate and submit
+#### 9. Validate and submit
 
 ```bash
 # Install dependencies
@@ -228,21 +232,21 @@ The CI pipeline validates schema compliance and lints the YAML. Reviewers are au
 
 ## ADR Meta-Model
 
-Each ADR YAML file contains these sections:
+Each ADR YAML file captures a single **architecturally significant** decision — not every design choice, but the ones that shape the system's structure, quality attributes, and long-term constraints. Each file contains these sections:
 
 | Section | Required | Description |
 |---------|:--------:|-------------|
 | `adr` | ✅ | ID, title, status, summary, timestamps, project, tags, priority, decision type, schema version |
 | `authors` | ✅ | Who drafted the ADR |
 | `decision_owner` | ✅ | Single accountable person |
-| `context` | ✅ | Problem summary (**Markdown**), business/technical drivers, constraints |
-| `alternatives` | ✅ | ≥2 alternatives with summary (**Markdown**), pros, cons, cost, risk, rejection rationale |
-| `decision` | ✅ | Chosen alternative, rationale (**Markdown**), tradeoffs (**Markdown**), date, confidence |
+| `context` | ✅ | Problem summary (Markdown), business/technical drivers, constraints |
+| `alternatives` | ✅ | ≥2 alternatives with summary (Markdown), pros, cons, cost, risk, rejection rationale |
+| `decision` | ✅ | Chosen alternative, rationale (Markdown), tradeoffs (Markdown), date, confidence |
 | `consequences` | ✅ | Positive and negative outcomes |
 | `confirmation` | ✅ | How the decision's implementation will be verified; artifact IDs (optional, backfilled later) |
 | `reviewers` | | People who reviewed |
 | `approvals` | | Formal approvals with timestamps and platform identities for CI verification |
-| `requirements` | | Embedded functional and non-functional requirements (ASRs) |
+| `requirements` | | **Architecturally Significant Requirements (ASRs)** — quality attributes, architectural constraints, and non-functional requirements that drove this decision. Not feature-level requirements |
 | `dependencies` | | Internal and external dependencies |
 | `references` | | External references, standards, evidence |
 | `lifecycle` | | Review cadence, supersession chain, archival |
@@ -271,162 +275,25 @@ Automated validation is the enforcement mechanism that makes the governance proc
 
 ADRs are not meant to be filled in manually like a form. They are authored through **Socratic dialogue with an AI assistant** — the AI asks probing questions, challenges weak rationale, surfaces missing edge cases, and iteratively refines the document until it is clear, complete, and internally consistent.
 
-This is a fundamental shift from traditional architecture governance: instead of the proposer writing a draft in isolation and then scheduling a meeting to "walk through" it (where reviewers discover ambiguities in real time and the meeting devolves into clarification rather than decision-making), the AI assistant resolves those ambiguities *before the first human reviewer ever sees the document*.
+This is a fundamental shift: instead of the proposer writing a draft in isolation and scheduling a meeting to "walk through" it (where reviewers discover ambiguities in real time), the AI assistant resolves those ambiguities *before the first human reviewer ever sees the document*.
 
-### Agent Skill
+The framework provides two paths:
 
-The [`.skills/adr-author/`](.skills/adr-author/) directory follows the [agentskills.io specification](https://agentskills.io/specification) and works with:
+- **Agent Skill** ([`.skills/adr-author/`](.skills/adr-author/)) — works with Google Antigravity, Claude Code, VS Code Copilot, and any [agentskills.io](https://agentskills.io)-conforming agent. The skill knows the full meta-model and governance lifecycle, and guides ADR creation through interactive questioning — probing for ASRs, demanding balanced alternatives, and verifying that rationale connects to stated drivers.
+- **Web Chat** — upload the Repomix bundle (`adr-governance-bundle.md`) to any web-based AI chat (ChatGPT, Claude.ai, Gemini, Copilot) for the same authoring capability without a coding agent. See [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md).
 
-- **Google Antigravity** (VS Code)
-- **Claude Code** (terminal)
-- **VS Code Copilot** (with skills support)
-- Any agent implementing the Agent Skills standard
+A **pre-review quality gate** ([`scripts/review-adr.py`](scripts/review-adr.py)) generates a structured AI review prompt that covers semantic clarity, completeness, logical consistency, assumption risks, and cross-reference consistency. The result: human reviewers receive ADRs that are already coherent — review meetings become strategic discussions about the *decision*, not debugging sessions about what the proposer meant.
 
-The skill guides AI assistants to author ADRs through interactive questioning — probing for Architecturally Significant Requirements (ASRs), demanding balanced alternatives (not strawmen), checking that constraints are testable, and verifying that the rationale actually connects to the stated drivers. It understands the full meta-model and governance lifecycle.
+See **[`docs/ai-authoring.md`](docs/ai-authoring.md)** for agent skill setup, web chat quickstart, pre-review usage, and stakeholder summaries.
 
-### Web Chat (No Skill Required)
-
-Don't have access to a coding agent? The Repomix bundle (`adr-governance-bundle.md`) includes **embedded AI instructions** that replicate the full skill — upload the single file to any web-based AI chat:
-
-- **ChatGPT** (with Code Interpreter for large file search)
-- **Claude.ai** (200K–1M token context)
-- **Google Gemini** (1M+ token context)
-- **Microsoft Copilot** (web)
-
-The AI will be able to author new ADRs through Socratic dialogue, query the decision log with citations, review ADRs for completeness, summarize decisions for stakeholders, and validate YAML against the schema — all from a single uploaded file.
-
-See **[`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md)** for platform-specific starter prompts and tips.
-
-
-### Pre-Review Quality Gate
-
-Before submitting an ADR for human review, run it through an AI semantic review using [`scripts/review-adr.py`](scripts/review-adr.py):
-
-```bash
-# Generate a Socratic review prompt (pipe to your LLM)
-python3 scripts/review-adr.py architecture-decision-log/ADR-0009.yaml
-
-# Include cross-reference context from existing decisions
-python3 scripts/review-adr.py architecture-decision-log/ADR-0009.yaml \
-  --context-from architecture-decision-log/
-
-# Pipe directly to an LLM
-python3 scripts/review-adr.py architecture-decision-log/ADR-0009.yaml | \
-  llm -m gpt-4o
-```
-
-The generated prompt instructs the LLM to perform a structured review covering:
-- **Semantic clarity** — are there ambiguous terms or vague claims?
-- **Completeness** — are alternatives balanced, constraints testable, consequences honest?
-- **Logical consistency** — does the rationale align with the pros/cons?
-- **Assumption risks** — what happens if the assumptions are wrong?
-- **Missing perspectives** — are there unconsidered stakeholders or alternatives?
-- **Cross-reference consistency** — does this decision conflict with existing ADRs?
-
-The AI outputs a verdict (**READY FOR REVIEW**, **NEEDS REWORK**, or **MAJOR GAPS**), a list of issues with severity, and open questions for the proposer. The proposer addresses the feedback, re-runs the check, and iterates until the ADR passes. *Then* they open the PR.
-
-> **The result:** Human reviewers receive ADRs that are already semantically coherent and complete. Review meetings become strategic discussions about the *decision* — not debugging sessions about what the proposer meant.
-
-## Stakeholder Summaries
-
-Not every stakeholder needs the full ADR. After a decision is made (or after an architecture review meeting), use [`scripts/summarize-adr.py`](scripts/summarize-adr.py) to produce concise summaries for communication:
-
-```bash
-# Email-length summary (~10–15 lines: decision, rationale, alternatives, tradeoffs, impact)
-python3 scripts/summarize-adr.py architecture-decision-log/ADR-0001.yaml
-
-# Ultra-short chat summary (3–5 lines for Slack/Teams)
-python3 scripts/summarize-adr.py --format chat architecture-decision-log/ADR-0001.yaml
-
-# Meeting recap — digest of multiple ADRs
-python3 scripts/summarize-adr.py architecture-decision-log/ADR-0001.yaml \
-    architecture-decision-log/ADR-0002.yaml
-
-# Save to file
-python3 scripts/summarize-adr.py -o meeting-recap.md architecture-decision-log/
-```
-
-Each summary links back to the full YAML source. For a richer, rendered view, point stakeholders to the auto-generated Markdown in [`rendered/`](rendered/).
 
 ## ADL as Source of Truth
 
 The Architecture Decision Log isn't just documentation — it's a **machine-readable specification** that AI agents and CI pipelines can enforce against your codebase. This closes the gap between *deciding* and *doing*.
 
-### Spec-Driven Development (SDD)
-
-AI coding agents (Copilot, Claude Code, Antigravity, Cursor, etc.) can use the bundled ADL as a **single source of truth** during code generation. When the ADL says "use DPoP for sender-constrained tokens" (ADR-0001), the agent can search the bundled decision log, find the decision with its full rationale and constraints, and generate code that aligns with it — without the developer having to explain the architectural context in every prompt.
-
-The workflow:
-
-1. **Bundle the ADL** into a single file:
-   ```bash
-   ./scripts/bundle.sh
-   ```
-   This generates `adr-governance-bundle.md` — the entire governance framework, schema, and all accepted decisions in one searchable file.
-
-2. **Point your agent to it.** Paste the bundle into an LLM context window, add it to your agent's project knowledge, or reference it as a file. The agent can then use standard text search (grep, semantic search, `Ctrl+F`) to find relevant decisions.
-
-3. **Generate code that complies.** When the agent encounters an architectural question — which token format to use, which signing algorithm, which authentication pattern — it searches the ADL instead of guessing or asking you.
-
-> **Cross-repository enforcement:** The ADL repo and the code repo don't need to be the same. Point your agent at the ADL bundle from *any* repository. The decisions are self-contained — each ADR includes the full context, rationale, and constraints needed to understand and apply it.
-
-### Semantic Guardrails in CI
-
-The ADL can also serve as a **pre-merge guardrail** in your *code* repositories — not just the ADR repository itself. Before a PR is merged, a CI step can validate that the code changes are consistent with accepted architectural decisions.
-
-This works at two levels:
-
-**1. Local enforcement (during development):**
-Coding agents that have the ADL in context will naturally align with it. When you ask "implement the token endpoint," an agent with ADR-0001 in context will use DPoP, not mTLS — because the decision and its rationale are right there in the searchable bundle.
-
-**2. CI pipeline enforcement (pre-merge):**
-Use [`scripts/extract-decisions.py`](scripts/extract-decisions.py) to extract active decisions and generate an LLM compliance prompt. Add a step in your code repository's CI pipeline:
-
-```yaml
-# Example: GitHub Actions step in your CODE repo (not this repo)
-- name: Check ADR compliance
-  run: |
-    # Fetch the extraction script and ADR files from the governance repo
-    git clone --depth 1 https://github.com/your-org/adr-governance.git /tmp/adl
-    pip install pyyaml
-
-    # Generate a compliance prompt with the code diff
-    python3 /tmp/adl/scripts/extract-decisions.py \
-      --compliance-prompt \
-      --diff <(git diff origin/main...HEAD) \
-      /tmp/adl/architecture-decision-log/ \
-      > /tmp/compliance-prompt.md
-
-    # Pipe to your LLM of choice for automated review
-    # (replace with your preferred LLM CLI — openai, claude, gemini, llm, etc.)
-    cat /tmp/compliance-prompt.md | your-llm-cli "Review this for compliance"
-```
-
-The key insight: **the ADL is structured YAML that any tool can parse**. The `extract-decisions.py` script handles the parsing and prompt generation — you just plug in your LLM provider.
-
-### Decision Extraction
-
-The [`scripts/extract-decisions.py`](scripts/extract-decisions.py) script is the bridge between the ADL and downstream enforcement tooling:
-
-```bash
-# Markdown summary of all accepted decisions (for agent context)
-python3 scripts/extract-decisions.py architecture-decision-log/
-
-# JSON output for programmatic consumption
-python3 scripts/extract-decisions.py --format json architecture-decision-log/
-
-# Filter by tags (e.g., only OAuth-related decisions)
-python3 scripts/extract-decisions.py --tags oauth,security architecture-decision-log/
-
-# Generate an LLM compliance-check prompt with a code diff
-python3 scripts/extract-decisions.py --compliance-prompt \
-  --diff <(git diff main) architecture-decision-log/
-
-# Save to a file for agent context injection
-python3 scripts/extract-decisions.py -o active-decisions.md architecture-decision-log/
-```
-
-### What This Enables
+- **Spec-Driven Development (SDD)** — AI coding agents can use the bundled ADL as a single source of truth during code generation. When the ADL says "use DPoP for sender-constrained tokens," the agent searches the bundled decision log, finds the decision with its full rationale and constraints, and generates code that aligns with it — without the developer having to explain the context in every prompt.
+- **Semantic guardrails in CI** — the ADL can serve as a pre-merge guardrail in your *code* repositories. A CI step extracts active decisions, generates an LLM compliance prompt with the code diff, and flags architectural drift before merge.
+- **Cross-repository enforcement** — the ADL repo and the code repo don't need to be the same. Point your agent at the ADL bundle from any repository. The decisions are self-contained.
 
 | Scenario | Without ADL enforcement | With ADL enforcement |
 |----------|------------------------|---------------------|
@@ -436,56 +303,19 @@ python3 scripts/extract-decisions.py -o active-decisions.md architecture-decisio
 | Annual audit | Scramble to reconstruct decision history | ADL is the audit trail; every decision is timestamped, attributed, and version-controlled |
 | LLM generates code | Guesses at patterns based on training data | Searches the ADL and follows your organization's actual decisions |
 
-### Repomix Bundle
+See **[`docs/decision-enforcement.md`](docs/decision-enforcement.md)** for SDD workflow, CI pipeline examples, decision extraction CLI, and Repomix bundle details.
 
-To create the single-file bundle:
+## Rendered Markdown (Human-Friendly Views)
 
-```bash
-./scripts/bundle.sh
-```
+ADRs are authored and stored as **structured YAML** — optimised for machine consumption, validation, and AI-assisted workflows. But humans need a readable format too. Every ADR YAML file has a corresponding **Markdown rendering** in [`rendered/`](rendered/), auto-generated via a Git pre-commit hook. Both the YAML source and its Markdown rendering are committed together — reviewers approve both in the same PR.
 
-This generates `adr-governance-bundle.md` — the entire ADR governance framework in one file. The bundle includes the schema, process documentation, glossary, skill instructions, YAML template, all ADRs in `architecture-decision-log/`, example ADRs from `examples-reference/`, validation scripts, and **embedded AI instructions** that enable web-based AI chats to emulate the full authoring skill.
-
-**Usage options:**
-- **Upload** to any AI web chat (ChatGPT, Claude, Gemini, Copilot) — see [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md)
-- **Paste** into any LLM context window for instant AKM context
-- **Add** to your coding agent's project knowledge base
-- **Fetch** from CI pipelines in other repositories (as shown above)
-- **Commit** to other repositories as a versioned reference artifact
-
-## Rendered Markdown (Auto-Generated)
-
-Every ADR YAML file has a corresponding **human-friendly Markdown rendering** in [`rendered/`](rendered/). These are designed for browsing on GitHub, Azure DevOps, Azure Repos, and other platforms that render Markdown natively.
-
-- **[`rendered/architecture-decision-log.md`](rendered/architecture-decision-log.md)** — the decision log index with clickable links, status, and decision dates
+- **[`rendered/architecture-decision-log.md`](rendered/architecture-decision-log.md)** — the decision log index with status, dates, and clickable links
 - **`rendered/ADR-NNNN-*.md`** — individual ADR renderings with a provenance disclaimer
 
-> **⚠️ Do not edit files in `rendered/` directly.** They are auto-generated from the YAML source. Each rendered file includes a `[!CAUTION]` banner and HTML comment pointing to the source YAML.
+> **⚠️ Do not edit files in `rendered/` directly.** They are auto-generated from the YAML source.
 
-### Pre-commit hook (automatic rendering)
+See **[`docs/rendering.md`](docs/rendering.md)** for pre-commit hook setup, manual rendering commands, and the rationale behind the dual-format model.
 
-A Git pre-commit hook automatically re-renders all ADR files and regenerates the index whenever you commit changes to `architecture-decision-log/`. This means both the YAML source and its Markdown rendering are part of the same commit and PR — **reviewers approve both together**.
-
-**One-time setup** (per clone):
-
-```bash
-git config core.hooksPath .githooks
-```
-
-After this, any commit that touches `architecture-decision-log/*.yaml` will automatically:
-1. Render all ADR YAML files to `rendered/*.md` with a provenance disclaimer
-2. Regenerate [`rendered/architecture-decision-log.md`](rendered/architecture-decision-log.md) (the decision log index)
-3. Stage the rendered files alongside the YAML changes
-
-### Manual rendering
-
-```bash
-# Single file to stdout (no disclaimer — useful for previewing)
-python3 scripts/render-adr.py architecture-decision-log/ADR-0001-*.yaml
-
-# Render to rendered/ with disclaimer + index
-python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/
-```
 
 ## Example ADRs
 
