@@ -28,7 +28,7 @@ Good **Architecture Knowledge Management (AKM)** treats decisions as first-class
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
 - **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
 - **Repomix bundling** — the entire ADL is concatenated into a single Markdown file that agents can search with standard tools, enabling cross-repository decision enforcement
-- **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) in `examples-reference/` — real-world contended decisions with sizable pros and cons on each side, not strawman examples. Kept as a reference for quality and style; not real decisions
+- **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) in [`examples-reference/`](examples-reference/) — real-world contended decisions with sizable pros and cons on each side, not strawman examples. Kept as a reference for quality and style; not real decisions
 
 ## Philosophy
 
@@ -88,7 +88,7 @@ Or fork the repository directly from GitHub and rename it.
 
 ### 2. Review examples *(optional cleanup)*
 
-The `examples-reference/` directory contains 8 fictional ADRs from "NovaTrust Financial Services" — they demonstrate the meta-model at production quality. **These are not real decisions.** You can:
+The [`examples-reference/`](examples-reference/) directory contains 8 fictional ADRs from "NovaTrust Financial Services" — they demonstrate the meta-model at production quality. **These are not real decisions.** You can:
 
 - **Keep them** as a reference for your team (recommended initially)
 - **Delete them** once your team is comfortable with the format:
@@ -402,7 +402,7 @@ To create the single-file bundle:
 ./scripts/bundle.sh
 ```
 
-This generates `adr-governance-bundle.md` — the entire ADR governance framework and decision log in one file. The bundle includes the schema, process documentation, glossary, and all ADRs in `architecture-decision-log/` (it excludes `examples-reference/` and CI files).
+This generates `adr-governance-bundle.md` — the entire ADR governance framework and decision log in one file. The bundle includes the schema, process documentation, glossary, and all ADRs in `architecture-decision-log/` (it excludes [`examples-reference/`](examples-reference/) and CI files).
 
 **Usage options:**
 - **Paste** into any LLM context window for instant AKM context
@@ -424,7 +424,7 @@ python3 scripts/render-adr.py --output-dir rendered/ examples-reference/
 
 ## Example ADRs
 
-The `examples-reference/` directory contains interconnected ADRs from a **fictional** IAM department at NovaTrust Financial Services. These are **not real decisions** — they demonstrate the meta-model at production quality. Use them as a reference for style, depth, and interconnection:
+The [`examples-reference/`](examples-reference/) directory contains interconnected ADRs from a **fictional** IAM department at NovaTrust Financial Services. These are **not real decisions** — they demonstrate the meta-model at production quality. Use them as a reference for style, depth, and interconnection:
 
 | ID | Title | Status |
 |----|-------|--------|
