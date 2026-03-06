@@ -3,9 +3,9 @@
 # Pre-commit hook: Auto-render ADR Markdown
 # =============================================================================
 #
-# When ADR YAML files in architecture-decision-log/ are staged, this hook
-# automatically renders them to human-friendly Markdown in rendered/ and
-# regenerates the decision log index.
+# When ADR YAML files in architecture-decision-log/ or examples-reference/
+# are staged, this hook automatically renders them to human-friendly Markdown
+# in their respective rendered/ directories and regenerates the decision log index.
 #
 # Install once per clone:
 #   git config core.hooksPath .githooks
@@ -15,13 +15,11 @@
 
 set -e
 
-ADR_DIR="architecture-decision-log"
-OUTPUT_DIR="rendered"
+# Only trigger if ADR YAML files are staged in either directory
+STAGED_ADL=$(git diff --cached --name-only -- "architecture-decision-log/*.yaml" 2>/dev/null || true)
+STAGED_EXAMPLES=$(git diff --cached --name-only -- "examples-reference/*.yaml" 2>/dev/null || true)
 
-# Only trigger if ADR YAML files are staged
-STAGED_ADRS=$(git diff --cached --name-only -- "${ADR_DIR}/*.yaml" 2>/dev/null || true)
-
-if [ -z "$STAGED_ADRS" ]; then
+if [ -z "$STAGED_ADL" ] && [ -z "$STAGED_EXAMPLES" ]; then
     exit 0
 fi
 
@@ -36,14 +34,24 @@ if ! python3 -c "import yaml" 2>/dev/null; then
     exit 0
 fi
 
-echo "🔄 ADR changes detected — rendering Markdown..."
+# Render architecture-decision-log/ if changed
+if [ -n "$STAGED_ADL" ]; then
+    echo "🔄 ADR changes detected in architecture-decision-log/ — rendering Markdown..."
+    python3 scripts/render-adr.py \
+        --output-dir "rendered/" \
+        --generate-index \
+        "architecture-decision-log/"
+    git add "rendered/"
+fi
 
-python3 scripts/render-adr.py \
-    --output-dir "${OUTPUT_DIR}/" \
-    --generate-index \
-    "${ADR_DIR}/"
-
-# Stage the rendered output alongside the YAML changes
-git add "${OUTPUT_DIR}/"
+# Render examples-reference/ if changed
+if [ -n "$STAGED_EXAMPLES" ]; then
+    echo "🔄 ADR changes detected in examples-reference/ — rendering Markdown..."
+    python3 scripts/render-adr.py \
+        --output-dir "examples-reference/rendered/" \
+        --generate-index \
+        "examples-reference/"
+    git add "examples-reference/rendered/"
+fi
 
 echo "✅ Rendered ADR Markdown staged for commit"
