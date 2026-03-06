@@ -42,10 +42,12 @@ reviewers:
 approvals:
   - name: Marcus Chen
     role: Head of IAM
+    identity: "@marcuschen"
     approved_at: "2026-01-24T10:00:00Z"
     signature_id: sig-dpop-001
   - name: Jonas Eriksen
     role: CISO
+    identity: "@jonaseriksen"
     approved_at: "2026-01-25T09:00:00Z"
     signature_id: sig-dpop-002
 context:

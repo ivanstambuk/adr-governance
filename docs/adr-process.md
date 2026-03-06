@@ -157,6 +157,7 @@ If **none** of these apply, the decision is likely not architecturally significa
     - [ ] Tradeoffs are explicitly acknowledged
     - [ ] Risk assessment covers realistic failure modes
     - [ ] No conflict with existing `accepted` ADRs (search `architecture-decision-log/` for related decisions)
+    - [ ] `approvals[].identity` is populated with the platform handle for each required approver (§3.4.1)
 
 11. **Reviewers comment on the PR.** Discussions happen in PR comments.
 
@@ -168,13 +169,13 @@ If **none** of these apply, the decision is likely not architecturally significa
 
 13. **All required approvers must approve the PR** before merge. This is enforced via GitHub branch protection rules:
     - Require approvals from designated CODEOWNERS
-    - Require passing CI (schema validation)
+    - Require passing CI (schema validation + approval identity verification)
     - No self-approval (author cannot be sole approver)
 
 14. **Once approved:**
     - Author (or decision owner) sets status to `accepted`
     - Author populates `decision.decision_date`
-    - Author adds entries to `approvals` with names, roles, and timestamps
+    - Author adds entries to `approvals` with names, roles, **platform identities**, and timestamps
     - Author adds an `approved` event to `audit_trail`
 
     > **Who sets the status?** The author or decision owner updates the YAML. The branch protection rules prevent self-approval — the author cannot be the *sole* approver. Setting the status to `accepted` is a clerical action that happens *after* PR approval, not a governance action.
@@ -182,6 +183,46 @@ If **none** of these apply, the decision is likely not architecturally significa
     > **Bootstrap exception:** ADR-0000 (the meta-ADR adopting this governance process) was self-approved by the initial author. The no-self-approval rule applies to all subsequent ADRs.
 
 15. **Merge the PR** to `main`. The ADR is now binding.
+
+### 3.4.1 Approval Identity Rule
+
+> **Principle:** The ADR's `approvals[]` list and the pull request's actual approvers **must match**. Every person listed in `approvals` must have actually approved the pull request, and their `identity` field must resolve to their platform account.
+
+The `identity` field on each approval entry is the **platform-resolvable handle** that CI uses to verify the approval:
+
+| Platform | Identity format | Example | API used for verification |
+|----------|----------------|---------|--------------------------|
+| GitHub | `@username` | `@janedoe` | `GET /repos/{owner}/{repo}/pulls/{number}/reviews` |
+| Azure DevOps | Email or UPN | `jane.doe@org.com` | `GET /_apis/git/pullRequests/{id}/reviewers` |
+| GitLab | `@username` | `@janedoe` | `GET /projects/:id/merge_requests/:iid/approval_state` |
+| AWS CodeBuild | *(uses GitHub/CodeCommit API)* | Depends on source | Depends on source provider |
+| GCP Cloud Build | *(uses GitHub API)* | Depends on source | Depends on source provider |
+
+**How CI enforcement works:**
+
+1. The CI pipeline detects which ADR files were changed in the PR
+2. For each changed ADR with `status: proposed` or `status: accepted`:
+   - Extracts all `approvals[].identity` values
+   - Queries the platform API for the list of users who **actually approved** the PR
+   - Compares the two sets
+3. **If any listed approver has not approved the PR**, the check fails and merge is blocked
+4. **If the ADR has no `identity` fields**, the check emits a warning but does not block (backward-compatible)
+
+> **Why this matters:** Without this rule, anyone can write arbitrary names in `approvals[]` and merge with a different set of PR approvers. The identity binding ensures that the ADR's formal approval record matches the Git platform's cryptographic approval record.
+
+> **When to populate `identity`:** Add the `identity` field when the ADR enters `proposed` status and approvers are known. The field uses whatever format your Git platform identifies reviewers by — typically a username prefixed with `@`.
+
+**Example:**
+
+```yaml
+approvals:
+  - name: "Jane Doe"
+    role: "Lead Architect"
+    identity: "@janedoe"          # ← CI verifies this account approved the PR
+    approved_at: "2026-03-15T10:00:00Z"
+    signature_id: sig-example-001
+```
+
 
 ### 3.5 Rejection
 

@@ -392,6 +392,81 @@ Our group/namespace is: [INSERT GROUP NAME]
 
 ---
 
+## Approval Identity Verification
+
+In addition to schema validation and YAML linting, CI pipelines can verify that the people listed in an ADR's `approvals[]` section have **actually approved the pull request**. This creates an auditable link between the ADR's approval record and the Git platform's approval record.
+
+### How it works
+
+The `scripts/verify-approvals.py` script:
+
+1. **Detects the CI platform** (GitHub, Azure DevOps, GitLab) via environment variables
+2. **Identifies changed ADR files** in the PR using `git diff`
+3. **Extracts `approvals[].identity`** from each changed ADR with `status: proposed` or `accepted`
+4. **Queries the platform API** for users who actually approved the PR
+5. **Compares the two sets** and fails the build if any required approver has not approved
+
+### Prerequisites
+
+Each ADR approver needs an `identity` field matching their platform handle:
+
+```yaml
+approvals:
+  - name: "Jane Doe"
+    role: "Lead Architect"
+    identity: "@janedoe"         # GitHub username (without @)
+    approved_at: "2026-03-15T10:00:00Z"
+    signature_id: sig-example-001
+```
+
+### Platform-specific configuration
+
+#### GitHub Actions
+
+The workflow is already configured with the verify step. Ensure the following:
+
+1. **Branch protection** must require the `Validate ADR` status check
+2. **`GITHUB_TOKEN`** is automatically available — no additional secrets needed
+3. The workflow triggers on `pull_request_review` events so re-checks happen when new reviews are submitted
+
+#### Azure DevOps
+
+1. **`System.AccessToken`** is passed as an environment variable to the verify step
+2. Configure **Build Validation** as a required policy on the `main` branch
+3. Identity format: use the reviewer's **email address** or **UPN** (e.g., `jane.doe@org.com`)
+
+#### GitLab CI
+
+1. **`CI_JOB_TOKEN`** is automatically available for API calls to the same GitLab instance
+2. For cross-instance calls, set a `GITLAB_TOKEN` CI/CD variable with `api` scope
+3. Enable **"Pipelines must succeed"** in Settings → Merge Requests → Merge checks
+4. Identity format: use the reviewer's **GitLab username** (e.g., `janedoe`)
+
+#### AWS CodeBuild / GCP Cloud Build
+
+These platforms don't natively manage PR approvals. The verify script runs in **dry-run mode** by default, listing the required identities without calling an API.
+
+To enable full verification when your source is GitHub:
+1. Store a `GITHUB_TOKEN` as an environment variable in the build project
+2. Change `--dry-run` to remove the flag in the buildspec/cloudbuild configuration
+3. The script will auto-detect the GitHub API based on the token
+
+### Configuring mandatory reviewers
+
+For the approval identity check to be meaningful, configure your platform to require approvals from specific people:
+
+| Platform | Configuration |
+|----------|--------------|
+| **GitHub** | Settings → Branches → Branch protection → "Require pull request reviews" + CODEOWNERS |
+| **Azure DevOps** | Repos → Branches → main → Branch policies → "Automatically included reviewers" |
+| **GitLab** | Settings → Merge Requests → "Approval rules" → add required approvers |
+
+### Backward compatibility
+
+- ADRs **without `identity` fields** emit a warning but **do not block** the merge
+- ADRs in `draft`, `rejected`, `deferred`, or `superseded` status are **skipped**
+- When running outside a PR context (e.g., `push` to `main`), the check is **skipped**
+
 ## Troubleshooting
 
 ### Pipeline passes but PR is not gated

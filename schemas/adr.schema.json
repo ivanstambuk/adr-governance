@@ -161,6 +161,10 @@
                     "role": {
                         "type": "string"
                     },
+                    "identity": {
+                        "type": "string",
+                        "description": "Platform-resolvable handle for CI approval verification. Use the format your Git platform identifies approvers by: GitHub username (e.g., '@janedoe'), Azure DevOps email or UPN, GitLab username. CI pipelines use this field to verify that every listed approver actually approved the pull request before merge."
+                    },
                     "approved_at": {
                         "type": [
                             "string",
@@ -178,7 +182,7 @@
                     }
                 }
             },
-            "description": "Formal approvals with optional timestamps and signature references."
+            "description": "Formal approvals with optional timestamps, platform identity for CI verification, and signature references. The identity field enables CI pipelines to verify that every listed approver actually approved the pull request."
         },
         "context": {
             "type": "object",

@@ -81,3 +81,11 @@ phases:
         else
           echo "No YAML files — skipping"
         fi
+
+      # Verify approval identities
+      # Note: AWS CodeBuild does not natively manage PR approvals.
+      # If your source is GitHub, set GITHUB_TOKEN as an environment variable
+      # in the CodeBuild project and the script will query the GitHub API.
+      - |
+        echo "=== Verifying approval identities ==="
+        python3 scripts/verify-approvals.py --dry-run

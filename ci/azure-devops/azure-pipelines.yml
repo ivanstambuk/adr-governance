@@ -90,3 +90,13 @@ steps:
         echo "No YAML files — skipping"
       fi
     displayName: "YAML lint"
+
+  - script: |
+      if [ -n "$(System.PullRequest.PullRequestId)" ]; then
+        python3 scripts/verify-approvals.py
+      else
+        echo "Not a PR build — skipping approval identity verification"
+      fi
+    displayName: "Verify approval identities"
+    env:
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken)

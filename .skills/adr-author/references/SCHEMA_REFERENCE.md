@@ -20,7 +20,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 | Section | Description |
 |---------|-------------|
 | `reviewers` | People who reviewed the ADR |
-| `approvals` | Formal approvals with timestamps and signature IDs |
+| `approvals` | Formal approvals with timestamps, platform identities, and signature IDs |
 | `requirements` | Embedded functional and non-functional requirements |
 | `dependencies` | Internal and external dependencies |
 

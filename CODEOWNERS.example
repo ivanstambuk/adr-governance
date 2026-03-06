@@ -30,3 +30,12 @@ scripts/                         @org/architecture-team
 # For more sophisticated routing, implement a CI-based reviewer assignment step
 # that reads `decision_type` from the YAML and requests the appropriate GitHub
 # team via the GitHub API.
+
+# RELATIONSHIP TO ADR APPROVAL IDENTITY ENFORCEMENT:
+# CODEOWNERS determines who is *requested* to review an ADR PR.
+# The `approvals[].identity` field in the ADR determines who *must* approve.
+# CI (verify-approvals.py) validates that the identity-listed approvers
+# have actually approved the PR — this is enforced even if CODEOWNERS does
+# not match the same people. Both mechanisms complement each other:
+#   - CODEOWNERS: "These people should be notified and asked to review"
+#   - approvals[].identity: "These specific people must have approved"

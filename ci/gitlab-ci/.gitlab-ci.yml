@@ -83,3 +83,12 @@ validate-adr:
       else
         echo "No YAML files — skipping"
       fi
+
+    # Verify approval identities (MR only)
+    - |
+      if [ -n "$CI_MERGE_REQUEST_IID" ]; then
+        echo "=== Verifying approval identities ==="
+        python3 scripts/verify-approvals.py
+      else
+        echo "Not a merge request pipeline — skipping approval identity verification"
+      fi

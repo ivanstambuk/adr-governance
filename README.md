@@ -24,6 +24,7 @@ Good **Architecture Knowledge Management (AKM)** treats decisions as first-class
 - **GitOps-based governance process** — ADR status transitions happen through Git commits and pull requests, not manual coordination
 - **Validation tooling** — a Python validator that checks schema compliance, referential integrity, and semantic consistency on every PR
 - **Pre-built CI/CD pipelines** for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — ready to copy into your repo and enforce as a merge gate
+- **Approval identity enforcement** — CI verifies that the people listed in `approvals[]` have actually approved the pull request, creating an auditable link between ADR approvals and Git platform approvals
 - **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
 - **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
@@ -101,7 +102,7 @@ The [`examples-reference/`](examples-reference/) directory contains 8 fictional 
 
 `architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml` is the **meta-ADR** — it documents the decision to adopt this governance framework. Update it for your organization:
 
-- Replace the `authors`, `decision_owner`, `reviewers`, and `approvals` names
+- Replace the `authors`, `decision_owner`, `reviewers`, and `approvals` names and identities
 - Update `adr.project` to your project or organisation name
 - Update timestamps and audit trail entries
 - Adjust the `context.summary` if your adoption rationale differs
@@ -209,6 +210,7 @@ The CI pipeline validates schema compliance and lints the YAML. Reviewers are au
 │           └── SCHEMA_REFERENCE.md
 ├── scripts/
 │   ├── validate-adr.py          # Schema + semantic validation
+│   ├── verify-approvals.py      # CI approval identity enforcement
 │   ├── extract-decisions.py     # ADL → Markdown/JSON for agent context & CI enforcement
 │   ├── review-adr.py            # Pre-review Socratic quality gate (LLM prompt generator)
 │   ├── render-adr.py            # YAML → Markdown renderer (Mermaid passthrough)
@@ -234,7 +236,7 @@ Each ADR YAML file contains these sections:
 | `consequences` | ✅ | Positive and negative outcomes |
 | `confirmation` | ✅ | How the decision's implementation will be verified; artifact IDs (optional, backfilled later) |
 | `reviewers` | | People who reviewed |
-| `approvals` | | Formal approvals with timestamps |
+| `approvals` | | Formal approvals with timestamps and platform identities for CI verification |
 | `requirements` | | Embedded functional and non-functional requirements (ASRs) |
 | `dependencies` | | Internal and external dependencies |
 | `references` | | External references, standards, evidence |

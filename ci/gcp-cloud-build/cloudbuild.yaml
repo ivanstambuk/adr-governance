@@ -89,5 +89,19 @@ steps:
           echo "No YAML files — skipping"
         fi
 
+  # Step 5: Verify approval identities
+  # Note: GCP Cloud Build does not natively manage PR approvals.
+  # If your source is GitHub, set GITHUB_TOKEN as a substitution variable
+  # and the script will query the GitHub API.
+  - name: "python:3.12-slim"
+    id: "verify-approvals"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        export PATH="$$HOME/.local/bin:$$PATH"
+        echo "=== Verifying approval identities ==="
+        python3 scripts/verify-approvals.py --dry-run
+
 options:
   logging: CLOUD_LOGGING_ONLY
