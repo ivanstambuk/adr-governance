@@ -34,234 +34,9 @@ The validator itself is [`scripts/validate-adr.py`](../scripts/validate-adr.py) 
 
 ---
 
-## Platform Setup
-
-### GitHub Actions
-
-> **Pipeline file:** [`.github/workflows/validate-adr.yml`](../.github/workflows/validate-adr.yml) (already included in this repository)
-
-GitHub Actions is preconfigured out of the box. The only remaining step is to enable **branch protection** to enforce it as a merge gate.
-
-#### Steps
-
-1. **Verify the workflow exists.** The file [`.github/workflows/validate-adr.yml`](../.github/workflows/validate-adr.yml) is already in the repository. Push it to your GitHub remote and it will start running automatically on PRs.
-
-2. **Enable branch protection** (merge gate):
-   - Go to **Settings → Branches → Add branch ruleset** (or classic branch protection rule)
-   - Branch name pattern: `main`
-   - Enable: ✅ **Require status checks to pass before merging**
-   - Search for and select the `validate` status check
-   - Enable: ✅ **Require branches to be up to date before merging** (recommended)
-   - Save
-
-3. **(Optional) Configure CODEOWNERS:**
-   - Copy `CODEOWNERS.example` to `.github/CODEOWNERS`
-   - Replace `@org/architecture-team`, `@org/security-team`, `@org/compliance-team` with your actual GitHub team handles
-   - In branch protection, enable: ✅ **Require review from Code Owners**
-
-#### Verification
-
-Create a branch, add or modify an ADR YAML file with an intentional error (e.g., set `status: invalid`), open a PR, and verify the `validate` check fails.
-
----
-
-### Azure DevOps
-
-> **Pipeline file:** [`ci/azure-devops/azure-pipelines.yml`](../ci/azure-devops/azure-pipelines.yml)
-
-#### Steps
-
-1. **Copy the pipeline file** to your repository root (or reference it by path):
-   ```bash
-   cp ci/azure-devops/azure-pipelines.yml azure-pipelines.yml
-   ```
-
-2. **Create the pipeline** in Azure DevOps:
-   - Go to **Pipelines → New Pipeline**
-   - Select your repository source (Azure Repos Git, GitHub, etc.)
-   - Choose **"Existing Azure Pipelines YAML file"**
-   - Select `/azure-pipelines.yml` (or the subdirectory path if you kept it in `ci/`)
-   - Click **Run** to verify it works
-
-3. **Enable branch policy** (merge gate):
-   - Go to **Repos → Branches**
-   - Click the `⋯` menu on the `main` branch → **Branch policies**
-   - Under **Build Validation**, click **+ Add build policy**
-   - Select the pipeline you just created
-   - Trigger: **Automatic**
-   - Policy requirement: **Required**
-   - Build expiration: **Immediately when `main` is updated** (recommended)
-   - Save
-
-4. **(Optional) Require reviewers:**
-   - In the same Branch policies page, set **Minimum number of reviewers** ≥ 1
-   - Enable: ✅ **Allow requestors to approve their own changes** → No (mirrors the ADR "no self-approval" rule from §3.4)
-
-#### Verification
-
-Create a branch, push a malformed ADR, create a Pull Request targeting `main`, and confirm the build policy blocks completion.
-
----
-
-### GCP Cloud Build
-
-> **Pipeline file:** [`ci/gcp-cloud-build/cloudbuild.yaml`](../ci/gcp-cloud-build/cloudbuild.yaml)
-
-#### Steps
-
-1. **Copy the pipeline file** to your repository root:
-   ```bash
-   cp ci/gcp-cloud-build/cloudbuild.yaml cloudbuild.yaml
-   ```
-
-2. **Connect your repository** to Cloud Build:
-   - Go to **Cloud Build → Repositories** (2nd gen)
-   - Click **Create host connection** → select GitHub, GitLab, or Cloud Source Repos
-   - Link your repository
-
-3. **Create a build trigger:**
-   - Go to **Cloud Build → Triggers → Create Trigger**
-   - Name: `validate-adr`
-   - Event: **Pull request** (for GitHub/GitLab)  
-     *For Cloud Source Repos: use "Push to a branch" with pattern `^main$`*
-   - Source: select your linked repository
-   - Configuration: **Cloud Build configuration file (yaml or json)**
-   - Cloud Build configuration file location: `/cloudbuild.yaml`
-   - Save
-
-4. **Enable merge gating** (GitHub repos only):
-   - The Cloud Build GitHub App automatically reports build status as a **GitHub Check**
-   - In your GitHub repo: **Settings → Branches → Branch protection rule**
-   - Enable: ✅ **Require status checks to pass before merging**
-   - Select the Cloud Build status check
-   - Save
-
-#### IAM Permissions
-
-The Cloud Build service account needs no special permissions beyond the defaults for this pipeline — it only runs Python scripts inside the checkout.
-
-#### Verification
-
-Open a PR on GitHub with a schema-violating ADR and confirm Cloud Build reports a failing check.
-
----
-
-### AWS CodeBuild
-
-> **Pipeline file:** [`ci/aws-codebuild/buildspec.yml`](../ci/aws-codebuild/buildspec.yml)
-
-#### Steps
-
-1. **Copy the buildspec** to your repository root:
-   ```bash
-   cp ci/aws-codebuild/buildspec.yml buildspec.yml
-   ```
-
-2. **Create a CodeBuild project:**
-   - Go to **AWS Console → CodeBuild → Create build project**
-   - Project name: `validate-adr`
-   - Source: **GitHub** (connect via OAuth or AWS CodeStar Connections)
-     - Repository: select your repo
-     - Enable: ✅ **Rebuild every time a code change is pushed to this repository**
-     - Event type: ✅ **PULL_REQUEST_CREATED**, ✅ **PULL_REQUEST_UPDATED**, ✅ **PULL_REQUEST_REOPENED**
-   - Enable: ✅ **Report build statuses to source provider**
-   - Environment:
-     - Managed image → **Ubuntu** → Standard → `aws/codebuild/standard:7.0` (or latest)
-     - Runtime: Standard
-   - Buildspec: **Use a buildspec file** (defaults to `buildspec.yml` in the repo root)
-   - Click **Create build project**
-
-3. **Enable merge gating** (GitHub repos):
-   - CodeBuild automatically reports status back to GitHub when "Report build statuses" is enabled
-   - In your GitHub repo: **Settings → Branches → Branch protection rule**
-   - Enable: ✅ **Require status checks to pass before merging**
-   - Select the CodeBuild status check (appears as `CodeBuild:<region>:<account>:<project>`)
-   - Save
-
-4. **For AWS CodeCommit** (alternative):
-   - Create an **EventBridge rule** that matches `pullRequestCreated` and `pullRequestSourceBranchUpdated` events from CodeCommit
-   - Target: your CodeBuild project
-   - For merge gating: use **CodePipeline** with an approval action, or use the CodeCommit approval rule templates API
-
-#### IAM Permissions
-
-The CodeBuild service role needs:
-- `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` (default)
-- Source provider connection permissions (created automatically via OAuth/CodeStar)
-
-#### Verification
-
-Create a PR on GitHub, push a malformed ADR, and verify the CodeBuild check fails.
-
----
-
-### GitLab CI/CD
-
-> **Pipeline file:** [`ci/gitlab-ci/.gitlab-ci.yml`](../ci/gitlab-ci/.gitlab-ci.yml)
-
-#### Steps
-
-1. **Copy the pipeline file** to your repository root:
-   ```bash
-   cp ci/gitlab-ci/.gitlab-ci.yml .gitlab-ci.yml
-   ```
-
-2. **Push to GitLab.** GitLab CI automatically detects `.gitlab-ci.yml` and starts running pipelines — no additional setup needed.
-
-3. **Enable merge gating:**
-   - Go to **Settings → Merge Requests**
-   - Under **Merge checks**, enable: ✅ **Pipelines must succeed**
-   - (Recommended) Also enable: ✅ **All threads must be resolved**
-   - Save
-
-4. **(Optional) Protected branch:**
-   - Go to **Settings → Repository → Protected branches**
-   - Protect `main` with:
-     - Allowed to merge: **Developers + Maintainers** (or restrict further)
-     - Allowed to push and merge: **No one** (force merge requests)
-
-#### Verification
-
-Create a merge request with a schema-violating ADR and confirm the pipeline fails, blocking the MR.
-
----
-
-## Pipeline Comparison
-
-| Feature | GitHub Actions | Azure DevOps | GCP Cloud Build | AWS CodeBuild | GitLab CI |
-|---------|:-:|:-:|:-:|:-:|:-:|
-| Pipeline file | `.github/workflows/*.yml` | `azure-pipelines.yml` | `cloudbuild.yaml` | `buildspec.yml` | `.gitlab-ci.yml` |
-| Pre-configured in this repo | ✅ | Copy from `ci/` | Copy from `ci/` | Copy from `ci/` | Copy from `ci/` |
-| PR trigger (native) | ✅ | ✅ | ✅ (via GitHub App) | ✅ (via webhook) | ✅ |
-| Path filtering | ✅ | ✅ | ❌ (filter in trigger) | ❌ (filter in trigger) | ✅ |
-| Merge gate enforcement | Branch protection | Branch policies | GitHub branch protection | GitHub branch protection | Merge checks |
-| Status check reporting | Native | Native | GitHub Check | GitHub Check | Native |
-| Self-hosted runners | ✅ | ✅ | ✅ (private pools) | ✅ (custom images) | ✅ |
-| Free tier | 2,000 min/mo | 1 parallel job (free) | 120 min/day | 100 min/mo | 400 min/mo |
-
----
-
-## Customization
-
-### Changing the ADL Directory
-
-If you rename `architecture-decision-log/` to something else (e.g., `adrs/` or `decisions/`), update the path references in:
-1. The pipeline file (trigger paths and script commands)
-2. `CODEOWNERS` (if using GitHub)
-
-### Adding Additional Validation
-
-To add custom validation rules (e.g., enforcing naming conventions, checking for required tags), modify [`scripts/validate-adr.py`](../scripts/validate-adr.py). The validator is designed to be extended — add your checks in the `validate_file()` function between the schema validation and the return statement.
-
-### Removing Example Validation
-
-If you don't want CI to validate the `examples-reference/` directory (e.g., you've deleted it), remove the corresponding step from the pipeline file.
-
----
-
 ## LLM-Ready Setup Prompts
 
-The following prompts can be **copy-pasted into any AI assistant** (ChatGPT, Claude, Gemini, Copilot, etc.) to have it set up ADR validation CI for your organization. Pick the prompt matching your platform.
+> **⚡ Fastest path.** Copy-paste the prompt for your platform into any AI assistant (ChatGPT, Claude, Gemini, Copilot, etc.) and it will set up ADR validation CI for your organization. For manual step-by-step instructions, see [Platform Setup (Manual)](#platform-setup-manual) below.
 
 ---
 
@@ -392,6 +167,232 @@ Our group/namespace is: [INSERT GROUP NAME]
 
 ---
 
+## Pipeline Comparison
+
+| Feature | GitHub Actions | Azure DevOps | GCP Cloud Build | AWS CodeBuild | GitLab CI |
+|---------|:-:|:-:|:-:|:-:|:-:|
+| Pipeline file | `.github/workflows/*.yml` | `azure-pipelines.yml` | `cloudbuild.yaml` | `buildspec.yml` | `.gitlab-ci.yml` |
+| Pre-configured in this repo | ✅ | Copy from `ci/` | Copy from `ci/` | Copy from `ci/` | Copy from `ci/` |
+| PR trigger (native) | ✅ | ✅ | ✅ (via GitHub App) | ✅ (via webhook) | ✅ |
+| Path filtering | ✅ | ✅ | ❌ (filter in trigger) | ❌ (filter in trigger) | ✅ |
+| Merge gate enforcement | Branch protection | Branch policies | GitHub branch protection | GitHub branch protection | Merge checks |
+| Status check reporting | Native | Native | GitHub Check | GitHub Check | Native |
+| Self-hosted runners | ✅ | ✅ | ✅ (private pools) | ✅ (custom images) | ✅ |
+| Free tier | 2,000 min/mo | 1 parallel job (free) | 120 min/day | 100 min/mo | 400 min/mo |
+
+---
+
+## Platform Setup (Manual)
+
+> If you used an [LLM prompt above](#llm-ready-setup-prompts), you can skip this section. These are the detailed manual steps for each platform.
+
+### GitHub Actions
+
+> **Pipeline file:** [`.github/workflows/validate-adr.yml`](../.github/workflows/validate-adr.yml) (already included in this repository)
+
+GitHub Actions is preconfigured out of the box. The only remaining step is to enable **branch protection** to enforce it as a merge gate.
+
+#### Steps
+
+1. **Verify the workflow exists.** The file [`.github/workflows/validate-adr.yml`](../.github/workflows/validate-adr.yml) is already in the repository. Push it to your GitHub remote and it will start running automatically on PRs.
+
+2. **Enable branch protection** (merge gate):
+   - Go to **Settings → Branches → Add branch ruleset** (or classic branch protection rule)
+   - Branch name pattern: `main`
+   - Enable: ✅ **Require status checks to pass before merging**
+   - Search for and select the `validate` status check
+   - Enable: ✅ **Require branches to be up to date before merging** (recommended)
+   - Save
+
+3. **(Optional) Configure CODEOWNERS:**
+   - Copy `CODEOWNERS.example` to `.github/CODEOWNERS`
+   - Replace `@org/architecture-team`, `@org/security-team`, `@org/compliance-team` with your actual GitHub team handles
+   - In branch protection, enable: ✅ **Require review from Code Owners**
+
+#### Verification
+
+Create a branch, add or modify an ADR YAML file with an intentional error (e.g., set `status: invalid`), open a PR, and verify the `validate` check fails.
+
+---
+
+### Azure DevOps
+
+> **Pipeline file:** [`ci/azure-devops/azure-pipelines.yml`](../ci/azure-devops/azure-pipelines.yml)
+
+#### Steps
+
+1. **Copy the pipeline file** to your repository root (or reference it by path):
+   ```bash
+   cp ci/azure-devops/azure-pipelines.yml azure-pipelines.yml
+   ```
+
+2. **Create the pipeline** in Azure DevOps:
+   - Go to **Pipelines → New Pipeline**
+   - Select your repository source (Azure Repos Git, GitHub, etc.)
+   - Choose **"Existing Azure Pipelines YAML file"**
+   - Select `/azure-pipelines.yml` (or the subdirectory path if you kept it in `ci/`)
+   - Click **Run** to verify it works
+
+3. **Enable branch policy** (merge gate):
+   - Go to **Repos → Branches**
+   - Click the `⋯` menu on the `main` branch → **Branch policies**
+   - Under **Build Validation**, click **+ Add build policy**
+   - Select the pipeline you just created
+   - Trigger: **Automatic**
+   - Policy requirement: **Required**
+   - Build expiration: **Immediately when `main` is updated** (recommended)
+   - Save
+
+4. **(Optional) Require reviewers:**
+   - In the same Branch policies page, set **Minimum number of reviewers** ≥ 1
+   - Enable: ✅ **Allow requestors to approve their own changes** → No (mirrors the ADR "no self-approval" rule from §3.4)
+
+#### Verification
+
+Create a branch, push a malformed ADR, create a Pull Request targeting `main`, and confirm the build policy blocks completion.
+
+---
+
+### GCP Cloud Build
+
+> **Pipeline file:** [`ci/gcp-cloud-build/cloudbuild.yaml`](../ci/gcp-cloud-build/cloudbuild.yaml)
+
+#### Steps
+
+1. **Copy the pipeline file** to your repository root:
+   ```bash
+   cp ci/gcp-cloud-build/cloudbuild.yaml cloudbuild.yaml
+   ```
+
+2. **Connect your repository** to Cloud Build:
+   - Go to **Cloud Build → Repositories** (2nd gen)
+   - Click **Create host connection** → select GitHub, GitLab, or Cloud Source Repos
+   - Link your repository
+
+3. **Create a build trigger:**
+   - Go to **Cloud Build → Triggers → Create Trigger**
+   - Name: `validate-adr`
+   - Event: **Pull request** (for GitHub/GitLab)
+     *For Cloud Source Repos: use "Push to a branch" with pattern `^main$`*
+   - Source: select your linked repository
+   - Configuration: **Cloud Build configuration file (yaml or json)**
+   - Cloud Build configuration file location: `/cloudbuild.yaml`
+   - Save
+
+4. **Enable merge gating** (GitHub repos only):
+   - The Cloud Build GitHub App automatically reports build status as a **GitHub Check**
+   - In your GitHub repo: **Settings → Branches → Branch protection rule**
+   - Enable: ✅ **Require status checks to pass before merging**
+   - Select the Cloud Build status check
+   - Save
+
+#### IAM Permissions
+
+The Cloud Build service account needs no special permissions beyond the defaults for this pipeline — it only runs Python scripts inside the checkout.
+
+#### Verification
+
+Open a PR on GitHub with a schema-violating ADR and confirm Cloud Build reports a failing check.
+
+---
+
+### AWS CodeBuild
+
+> **Pipeline file:** [`ci/aws-codebuild/buildspec.yml`](../ci/aws-codebuild/buildspec.yml)
+
+#### Steps
+
+1. **Copy the buildspec** to your repository root:
+   ```bash
+   cp ci/aws-codebuild/buildspec.yml buildspec.yml
+   ```
+
+2. **Create a CodeBuild project:**
+   - Go to **AWS Console → CodeBuild → Create build project**
+   - Project name: `validate-adr`
+   - Source: **GitHub** (connect via OAuth or AWS CodeStar Connections)
+     - Repository: select your repo
+     - Enable: ✅ **Rebuild every time a code change is pushed to this repository**
+     - Event type: ✅ **PULL_REQUEST_CREATED**, ✅ **PULL_REQUEST_UPDATED**, ✅ **PULL_REQUEST_REOPENED**
+   - Enable: ✅ **Report build statuses to source provider**
+   - Environment:
+     - Managed image → **Ubuntu** → Standard → `aws/codebuild/standard:7.0` (or latest)
+     - Runtime: Standard
+   - Buildspec: **Use a buildspec file** (defaults to `buildspec.yml` in the repo root)
+   - Click **Create build project**
+
+3. **Enable merge gating** (GitHub repos):
+   - CodeBuild automatically reports status back to GitHub when "Report build statuses" is enabled
+   - In your GitHub repo: **Settings → Branches → Branch protection rule**
+   - Enable: ✅ **Require status checks to pass before merging**
+   - Select the CodeBuild status check (appears as `CodeBuild:<region>:<account>:<project>`)
+   - Save
+
+4. **For AWS CodeCommit** (alternative):
+   - Create an **EventBridge rule** that matches `pullRequestCreated` and `pullRequestSourceBranchUpdated` events from CodeCommit
+   - Target: your CodeBuild project
+   - For merge gating: use **CodePipeline** with an approval action, or use the CodeCommit approval rule templates API
+
+#### IAM Permissions
+
+The CodeBuild service role needs:
+- `logs:CreateLogGroup`, `logs:CreateLogStream`, `logs:PutLogEvents` (default)
+- Source provider connection permissions (created automatically via OAuth/CodeStar)
+
+#### Verification
+
+Create a PR on GitHub, push a malformed ADR, and verify the CodeBuild check fails.
+
+---
+
+### GitLab CI/CD
+
+> **Pipeline file:** [`ci/gitlab-ci/.gitlab-ci.yml`](../ci/gitlab-ci/.gitlab-ci.yml)
+
+#### Steps
+
+1. **Copy the pipeline file** to your repository root:
+   ```bash
+   cp ci/gitlab-ci/.gitlab-ci.yml .gitlab-ci.yml
+   ```
+
+2. **Push to GitLab.** GitLab CI automatically detects `.gitlab-ci.yml` and starts running pipelines — no additional setup needed.
+
+3. **Enable merge gating:**
+   - Go to **Settings → Merge Requests**
+   - Under **Merge checks**, enable: ✅ **Pipelines must succeed**
+   - (Recommended) Also enable: ✅ **All threads must be resolved**
+   - Save
+
+4. **(Optional) Protected branch:**
+   - Go to **Settings → Repository → Protected branches**
+   - Protect `main` with:
+     - Allowed to merge: **Developers + Maintainers** (or restrict further)
+     - Allowed to push and merge: **No one** (force merge requests)
+
+#### Verification
+
+Create a merge request with a schema-violating ADR and confirm the pipeline fails, blocking the MR.
+
+---
+
+## Customization
+
+### Changing the ADL Directory
+
+If you rename `architecture-decision-log/` to something else (e.g., `adrs/` or `decisions/`), update the path references in:
+1. The pipeline file (trigger paths and script commands)
+2. `CODEOWNERS` (if using GitHub)
+
+### Adding Additional Validation
+
+To add custom validation rules (e.g., enforcing naming conventions, checking for required tags), modify [`scripts/validate-adr.py`](../scripts/validate-adr.py). The validator is designed to be extended — add your checks in the `validate_file()` function between the schema validation and the return statement.
+
+### Removing Example Validation
+
+If you don't want CI to validate the `examples-reference/` directory (e.g., you've deleted it), remove the corresponding step from the pipeline file.
+
+---
 ## Approval Identity Verification
 
 In addition to schema validation and YAML linting, CI pipelines can verify that the people listed in an ADR's `approvals[]` section have **actually approved the pull request**. This creates an auditable link between the ADR's approval record and the Git platform's approval record.

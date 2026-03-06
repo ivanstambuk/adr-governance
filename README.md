@@ -50,7 +50,7 @@ Most teams make **Architecture Decisions (ADs)** every week. Few document them w
 
 ## Philosophy
 
-Every ADR is **self-contained**. All context, Architecturally Significant Requirements (ASRs), alternatives, consequences, and audit trails are embedded directly in the YAML file. There are no foreign-key dependencies between ADRs — the only explicit link is the `lifecycle.supersedes` / `superseded_by` chain for replacements. An ADR can *mention* other ADR IDs in prose, but it must be fully understandable on its own.
+Every ADR is **self-contained**. All context, **Architecturally Significant Requirements (ASRs)**, alternatives, consequences, and audit trails are embedded directly in the YAML file. There are no foreign-key dependencies between ADRs — the only explicit link is the `lifecycle.supersedes` / `superseded_by` chain for replacements. An ADR can *mention* other ADR IDs in prose, but it must be fully understandable on its own.
 
 The ADL is an **append-only decision log**. ADRs are never deleted — they transition through a governed lifecycle. Rejected and superseded ADRs remain as historical records, preserving the decision-making trail for auditors, new team members, and your future self.
 
@@ -79,10 +79,6 @@ stateDiagram-v2
     superseded --> [*]
     deprecated --> [*]
 ```
-
-> **Why are rejected ADRs merged?** They are part of the ADL — they document *why* an option was evaluated and not pursued. Closing the PR without merging would lose this history from `main`.
-
-> **Where is `archived`?** Archival is **not a status value** — it is a metadata overlay. Archived ADRs retain their pre-archival status (`superseded`, `deprecated`, or `rejected`) and are annotated with `lifecycle.archival.archived_at` and `lifecycle.archival.archive_reason` fields, plus an `archived` event in `audit_trail`. See [§8 Archival](docs/adr-process.md#8-archival) for the full workflow.
 
 See [`docs/adr-process.md`](docs/adr-process.md) for the full normative governance process, including review checklists, the Architectural Significance Test, branch protection rules, and CODEOWNERS configuration.
 
