@@ -6,7 +6,7 @@ for use by AI agents, CI pipelines, and compliance tooling.
 This script bridges the gap between the ADL (Architecture Decision Log) and
 downstream enforcement: it reads ADR YAML files, filters to active decisions,
 and outputs a compact representation that any tool — from grep to a full LLM —
-can consume for spec-driven development and pre-merge compliance checks.
+can consume for Spec-Driven Development (SDD) and pre-merge compliance checks.
 
 Usage:
     # Markdown summary of active decisions (default)

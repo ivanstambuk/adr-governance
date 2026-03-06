@@ -1,22 +1,22 @@
 # adr-governance
 
-A schema-governed, AI-native Architecture Decision Record (ADR) framework for teams that want their architectural decisions to be **structured**, **traceable**, and **asynchronous** — not debated in meetings, forgotten in Slack threads, or buried in wiki pages nobody reads.
+A schema-governed, AI-native **Architecture Decision Record (ADR)** framework for teams that want their architectural decisions to be **structured**, **traceable**, and **asynchronous** — not debated in meetings, forgotten in Slack threads, or buried in wiki pages nobody reads.
 
 ## The Problem
 
-Most teams make Architecture Decisions (ADs) every week. Few document them well. Decisions happen in meetings where the loudest voice wins, context is lost the moment people leave the room, and six months later nobody can explain *why* something was built the way it was.
+Most teams make **Architecture Decisions (ADs)** every week. Few document them well. Decisions happen in meetings where the loudest voice wins, context is lost the moment people leave the room, and six months later nobody can explain *why* something was built the way it was.
 
 - **Meetings are the wrong medium for decisions.** They reward whoever is present and articulate in the moment, not whoever has done the deepest analysis. They produce no durable artifact. They don't scale across time zones.
 - **Decisions without structure are decisions without quality.** When there's no template forcing you to consider alternatives, tradeoffs, and risks, corners get cut. Important ADs get made on gut feeling.
 - **Undocumented decisions create compliance gaps.** Auditors ask for evidence of decision-making and get blank stares. New team members have no way to understand *why* the architecture looks the way it does.
-- **Documented decisions that aren't enforced are just suggestions.** Even teams that write ADRs rarely close the loop. The decision says "use DPoP," but nothing stops someone from committing mTLS code. Without a feedback mechanism from the ADL back to the codebase, decisions and implementation drift apart silently.
+- **Documented decisions that aren't enforced are just suggestions.** Even teams that write ADRs rarely close the loop. The decision says "use DPoP," but nothing stops someone from committing mTLS code. Without a feedback mechanism from the **Architecture Decision Log (ADL)** back to the codebase, decisions and implementation drift apart silently.
 - **Traditional tooling is a dead end for scalable decision management.** Decisions captured in Confluence pages, SharePoint wikis, PowerPoint decks, Notion databases, or meeting minutes in Microsoft Teams are *opaque to machines*. They can't be schema-validated, they don't support programmable multi-party approval workflows, they can't be diffed or version-controlled with meaningful merges, and — critically — they can't be consumed by AI agents or CI pipelines for automated enforcement. As AI becomes central to the software delivery chain, decisions locked in proprietary formats become an integration liability. A structured, Git-native, schema-governed ADL is AI-native by design — every improvement in AI tooling automatically makes your decision management better, because the data is already in the right shape.
 
 The alternative is **shift-left decision-making**: instead of debating in a meeting, the proposer prepares a well-structured ADR upfront — context, alternatives, risks, tradeoffs — and submits it as a pull request. Every stakeholder can review it asynchronously, on their own time, with full context in front of them. The decision process becomes a code review, not a calendar invite. And because it's GitOps-native, every approval by every relevant stakeholder is traceable — who approved what, when, and with what context — for free.
 
-AI makes this dramatically better. A well-structured schema means AI assistants can help **author** ADRs (probing for gaps, suggesting alternatives, checking consistency), **review** them (verifying completeness, flagging missing risks), and **validate** them (schema compliance, referential integrity). The better the structure, the better the AI assistance. The better the AI assistance, the better the decisions. This is an AI-native way of working.
+AI makes this dramatically better — and not just for validation. A well-structured schema means AI assistants can help **author** ADRs through Socratic dialogue (probing for gaps, challenging vague rationale, surfacing unstated assumptions), **review** them before any human sees them (verifying completeness, flagging ambiguities, checking cross-reference consistency), and **enforce** them against your codebase (validating code compliance with accepted decisions in CI). The proposer doesn't fill in a template manually — they have a *conversation* with an AI assistant that interrogates them until every section is clear, complete, and internally consistent. By the time the ADR reaches a human reviewer, the low-hanging issues are already resolved. The reviewer focuses on strategic judgement, not on asking "what do you mean by 'scalable'?" This is what shift-left means for architecture governance.
 
-Good Architecture Knowledge Management (AKM) treats decisions as first-class engineering artifacts — not afterthoughts. Each AD is captured as an ADR, and the collection of all ADRs for a project forms an Architecture Decision Log (ADL) — the `architecture-decision-log/` directory in this repository. This framework gives you the tooling and governance process to build an ADL that is schema-validated, Git-governed, AI-assisted, and auditable.
+Good **Architecture Knowledge Management (AKM)** treats decisions as first-class engineering artifacts — not afterthoughts. Each AD is captured as an ADR, and the collection of all ADRs for a project forms the ADL — the `architecture-decision-log/` directory in this repository. This framework gives you the tooling and governance process to build an ADL that is schema-validated, Git-governed, AI-assisted, and auditable.
 
 ## What This Provides
 
@@ -26,7 +26,7 @@ Good Architecture Knowledge Management (AKM) treats decisions as first-class eng
 - **Pre-built CI/CD pipelines** for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — ready to copy into your repo and enforce as a merge gate
 - **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
-- **Decision enforcement** — the ADL can serve as a single source of truth for spec-driven development: AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
+- **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
 - **Repomix bundling** — the entire ADL is concatenated into a single Markdown file that agents can search with standard tools, enabling cross-repository decision enforcement
 - **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) — real-world contended decisions with sizable pros and cons on each side, not strawman examples
 
@@ -136,6 +136,7 @@ The CI pipeline automatically validates your ADR against the schema and lints th
 ├── scripts/
 │   ├── validate-adr.py          # Schema + semantic validation
 │   ├── extract-decisions.py     # ADL → Markdown/JSON for agent context & CI enforcement
+│   ├── review-adr.py            # Pre-review Socratic quality gate (LLM prompt generator)
 │   ├── render-adr.py            # YAML → Markdown renderer (Mermaid passthrough)
 │   └── bundle.sh                # Repomix bundling
 ├── .github/
@@ -185,7 +186,13 @@ Automated validation is the enforcement mechanism that makes the governance proc
 
 **Step-by-step setup instructions**, platform-specific enforcement configuration, troubleshooting, and **LLM-ready prompts** (copy-paste into any AI assistant to have it set up CI for you) are in **[`docs/ci-setup.md`](docs/ci-setup.md)**.
 
-## Agent Skill
+## AI-Assisted Authoring & Pre-Review
+
+ADRs are not meant to be filled in manually like a form. They are authored through **Socratic dialogue with an AI assistant** — the AI asks probing questions, challenges weak rationale, surfaces missing edge cases, and iteratively refines the document until it is clear, complete, and internally consistent.
+
+This is a fundamental shift from traditional architecture governance: instead of the proposer writing a draft in isolation and then scheduling a meeting to "walk through" it (where reviewers discover ambiguities in real time and the meeting devolves into clarification rather than decision-making), the AI assistant resolves those ambiguities *before the first human reviewer ever sees the document*.
+
+### Agent Skill
 
 The `.skills/adr-author/` directory follows the [agentskills.io specification](https://agentskills.io/specification) and works with:
 
@@ -194,13 +201,42 @@ The `.skills/adr-author/` directory follows the [agentskills.io specification](h
 - **VS Code Copilot** (with skills support)
 - Any agent implementing the Agent Skills standard
 
-The skill enables AI assistants to author new ADRs through guided questioning, review existing ADRs for completeness, validate YAML against the schema, and navigate the governance lifecycle (supersession, deprecation, archival). It understands the full meta-model and will probe for Architecturally Significant Requirements (ASRs), balanced alternatives, and consequences.
+The skill guides AI assistants to author ADRs through interactive questioning — probing for Architecturally Significant Requirements (ASRs), demanding balanced alternatives (not strawmen), checking that constraints are testable, and verifying that the rationale actually connects to the stated drivers. It understands the full meta-model and governance lifecycle.
+
+### Pre-Review Quality Gate
+
+Before submitting an ADR for human review, run it through an AI semantic review using `scripts/review-adr.py`:
+
+```bash
+# Generate a Socratic review prompt (pipe to your LLM)
+python3 scripts/review-adr.py architecture-decision-log/ADR-0009.yaml
+
+# Include cross-reference context from existing decisions
+python3 scripts/review-adr.py architecture-decision-log/ADR-0009.yaml \
+  --context-from architecture-decision-log/
+
+# Pipe directly to an LLM
+python3 scripts/review-adr.py architecture-decision-log/ADR-0009.yaml | \
+  llm -m gpt-4o
+```
+
+The generated prompt instructs the LLM to perform a structured review covering:
+- **Semantic clarity** — are there ambiguous terms or vague claims?
+- **Completeness** — are alternatives balanced, constraints testable, consequences honest?
+- **Logical consistency** — does the rationale align with the pros/cons?
+- **Assumption risks** — what happens if the assumptions are wrong?
+- **Missing perspectives** — are there unconsidered stakeholders or alternatives?
+- **Cross-reference consistency** — does this decision conflict with existing ADRs?
+
+The AI outputs a verdict (**READY FOR REVIEW**, **NEEDS REWORK**, or **MAJOR GAPS**), a list of issues with severity, and open questions for the proposer. The proposer addresses the feedback, re-runs the check, and iterates until the ADR passes. *Then* they open the PR.
+
+> **The result:** Human reviewers receive ADRs that are already semantically coherent and complete. Review meetings become strategic discussions about the *decision* — not debugging sessions about what the proposer meant.
 
 ## ADL as Source of Truth
 
 The Architecture Decision Log isn't just documentation — it's a **machine-readable specification** that AI agents and CI pipelines can enforce against your codebase. This closes the gap between *deciding* and *doing*.
 
-### Spec-Driven Development
+### Spec-Driven Development (SDD)
 
 AI coding agents (Copilot, Claude Code, Antigravity, Cursor, etc.) can use the bundled ADL as a **single source of truth** during code generation. When the ADL says "use DPoP for sender-constrained tokens" (ADR-0001), the agent can search the bundled decision log, find the decision with its full rationale and constraints, and generate code that aligns with it — without the developer having to explain the architectural context in every prompt.
 
