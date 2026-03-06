@@ -25,7 +25,7 @@
 
 ## Context
 
-NovaTrust's architecture team makes dozens of significant decisions per year — technology choices, security protocols, vendor selections, and process changes. These decisions are currently captured in meeting notes, Confluence pages, and Slack threads, leading to lost context, repeated discussions, and inconsistent application. We need a structured, version-controlled, machine-readable format for recording architectural decisions with full audit trails.
+Architecture teams make dozens of significant decisions per year — technology choices, security protocols, vendor selections, and process changes. These decisions are often captured in meeting notes, Confluence pages, and Slack threads, leading to lost context, repeated discussions, and inconsistent application. We need a structured, version-controlled, machine-readable format for recording architectural decisions with full audit trails.
 
 ### Business Drivers
 
