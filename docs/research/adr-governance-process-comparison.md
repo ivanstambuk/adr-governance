@@ -599,7 +599,7 @@ Based on the comparison, the ideal ADR governance process for our regulated ente
 | Schema validation | ✅ | `schemas/adr.schema.json` + `scripts/validate-adr.py` + CI |
 | Code review validation | ✅ | `adr-process.md` §7.4 — enforcement tooling (CODEOWNERS, PR templates, fitness functions) is downstream, varies by organization |
 | Review meeting protocol | 🟡 | `adr-process.md` §3.3 — escalation triggers + format tip (not a full protocol — meeting logistics are downstream) |
-| RFC-before-ADR phase | ❌ | Not defined as a process |
+| RFC-before-ADR phase | 🟡 | `adr-process.md` §3.1 — optional pre-drafting guidance. RFC/design docs linked via `references`. Not a formal process state. |
 
 **Conclusion:** Our schema already supports the most comprehensive process metadata of any ADR system surveyed. What we lack are **process definitions** (review meeting protocol) — these are organizational practices, not schema features. Enforcement tooling (Decision Guardian, ArchUnit, etc.) is explicitly a downstream concern: ADRs capture decisions; teams that depend on those decisions enforce them.
 
@@ -633,7 +633,7 @@ Our `adr-governance` schema sits at the **high-formality, high-granularity** end
 1. ✅ **Add `draft` status** to the schema — Done
 2. ✅ **Document code review validation** — Done (`adr-process.md` §7.4). Enforcement tooling is downstream.
 3. ✅ **Document review meeting guidance** — Done (`adr-process.md` §3.3). Escalation triggers + format tip, not a full protocol.
-4. ⚠️ **Consider RFC-before-ADR** — useful at scale, but adds process weight; defer until we have >20 ADRs
+4. ✅ **Document RFC-before-ADR guidance** — Done (`adr-process.md` §3.1). Optional pre-drafting practice, not a formal phase.
 
 ---
 

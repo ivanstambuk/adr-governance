@@ -130,6 +130,12 @@ If **none** of these apply, the decision is likely not architecturally significa
    python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-title.yaml
    ```
 
+> **Pre-drafting exploration:** Complex or high-impact decisions may benefit from informal exploration before the ADR is drafted — design docs, RFCs, technical spikes, PoCs, or whiteboard sessions. These are not part of the ADR governance process, but their outputs should be referenced:
+> - Link exploration documents in `references` (title + URL)
+> - Link PoC results or benchmarks in `confirmation.artifact_ids` (see §7)
+>
+> The ADR captures the *decision and its justification*. Exploration artifacts provide supporting evidence.
+
 ### 3.2 Proposal Phase
 
 5. **Set status to `proposed`** when the ADR is complete and ready for review:
