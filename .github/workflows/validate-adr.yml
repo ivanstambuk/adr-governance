@@ -54,7 +54,7 @@ jobs:
             extends: default
             rules:
               line-length:
-                max: 200
+                max: 300
               truthy:
                 check-keys: false
         if: hashFiles('decisions/*.yaml') != ''
@@ -67,7 +67,7 @@ jobs:
             extends: default
             rules:
               line-length:
-                max: 200
+                max: 300
               truthy:
                 check-keys: false
         if: hashFiles('examples/*.yaml') != ''

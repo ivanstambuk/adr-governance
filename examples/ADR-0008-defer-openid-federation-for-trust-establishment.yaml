@@ -1,0 +1,201 @@
+adr:
+  id: ADR-0008
+  title: Defer adoption of OpenID Federation 1.0 for automated trust establishment
+  summary:
+    Deferred proposal to adopt OpenID Federation 1.0 for automated trust establishment between NovaTrust
+    and partner identity providers. Specification is not yet final and PingFederate support is roadmapped
+    but not GA.
+  status: deferred
+  created_at: "2026-02-01T10:00:00Z"
+  last_modified: "2026-02-15T16:00:00Z"
+  version: "0.1"
+  schema_version: 1.0.0
+  project: API Authorization Layer — Federation
+  component: Trust Establishment
+  tags:
+    - openid
+    - federation
+    - trust
+    - deferred
+    - identity-provider
+  priority: medium
+  decision_type: technology
+authors:
+  - name: Elena Vasquez
+    role: IAM Architect
+    email: elena.vasquez@novatrust.example.com
+decision_owner:
+  name: Marcus Chen
+  role: Head of IAM
+  email: marcus.chen@novatrust.example.com
+reviewers:
+  - name: Jonas Eriksen
+    role: CISO
+    email: jonas.eriksen@novatrust.example.com
+  - name: Priya Sharma
+    role: API Platform Lead
+    email: priya.sharma@novatrust.example.com
+context:
+  summary: |
+    NovaTrust currently establishes trust with partner identity providers (banks, fintechs, insurance
+    companies) through manual metadata exchange — downloading SAML/OIDC metadata XML, verifying
+    certificates out-of-band, and configuring each partner connection in PingFederate manually.
+
+    With 40+ partner connections and 5–10 new partners onboarding per quarter, the manual process
+    creates operational bottlenecks and human error risks (expired certificates, stale metadata).
+
+    OpenID Federation 1.0 promises automated trust establishment via trust chains — federating entities
+    publish signed entity statements, and trust anchors (e.g., national banking authorities) vouch
+    for subordinate entities. This would eliminate manual metadata exchange.
+  business_drivers:
+    - Partner onboarding takes 2–4 weeks due to manual metadata exchange and certificate verification
+    - 3 incidents in the past year caused by expired partner certificates that were not rotated in time
+    - Regulatory push toward automated trust frameworks in PSD2 and eIDAS 2.0 ecosystems
+  technical_drivers:
+    - Manual metadata exchange does not scale beyond 50 partner connections without dedicated staff
+    - OpenID Federation 1.0 trust chains enable automated certificate rotation and metadata refresh
+    - PingFederate has OpenID Federation support on its product roadmap (expected H2 2026)
+  constraints:
+    - Must not break existing partner connections during any transition
+    - PingFederate is the authorization server — mechanism must be natively supported or plugin-compatible
+    - Partners must also support the chosen mechanism — unilateral adoption is not possible
+  assumptions:
+    - OpenID Federation 1.0 specification will reach final status in 2026
+    - PingFederate will ship GA support for OpenID Federation by end of 2026
+    - At least 5 key partners are willing to pilot the new trust establishment mechanism
+requirements:
+  functional:
+    - id: F-001
+      description: Automated discovery and validation of partner identity provider metadata via trust chains
+    - id: F-002
+      description: Automated certificate rotation without manual intervention or service disruption
+    - id: F-003
+      description: Fallback to manual metadata exchange for partners that do not support federation
+  non_functional:
+    - id: NF-001
+      description: Trust chain resolution must complete in < 2 seconds
+    - id: NF-002
+      description: Federation metadata must be cached with configurable TTL (default 24 hours)
+    - id: NF-003
+      description: Must not introduce a single point of failure in the trust resolution chain
+alternatives:
+  - name: OpenID Federation 1.0 trust chains
+    summary:
+      Adopt OpenID Federation 1.0 for automated trust establishment. NovaTrust registers as a
+      subordinate entity under a trust anchor (e.g., national banking authority). Partners do the same.
+      Trust is established automatically via signed entity statements and trust chain resolution.
+    pros:
+      - Eliminates manual metadata exchange — trust established automatically via trust chains
+      - Automated certificate rotation via entity statement refresh
+      - Standards-based — aligns with eIDAS 2.0 and PSD2 regulatory direction
+      - Scales to hundreds of partners without additional operational overhead
+    cons:
+      - Specification is not yet final (draft stage as of February 2026)
+      - PingFederate support is roadmapped but not GA — requires waiting for vendor
+      - Requires trust anchor infrastructure (national banking authority or equivalent)
+      - Partner adoption is uncertain — unilateral adoption provides no benefit
+      - Limited production deployments to learn from — early adopter risk
+    estimated_cost: medium
+    risk: high
+  - name: Automated metadata exchange via well-known endpoints
+    summary: |
+      Use OIDC Discovery (/.well-known/openid-configuration) with automated polling and certificate
+      pinning. A custom service periodically fetches partner metadata, validates certificates against
+      a pinned trust store, and updates PingFederate configuration via admin API.
+    pros:
+      - Can be built today — no dependency on unfinished specifications
+      - Leverages existing OIDC Discovery that all partners already support
+      - Incremental improvement over manual exchange
+    cons:
+      - Custom automation code to build and maintain
+      - Certificate pinning requires manual trust store updates when partners rotate CAs
+      - No formal trust chain — trust is based on TLS and manual CA pinning, not cryptographic attestation
+      - Does not address the fundamental scaling problem — just automates parts of it
+    estimated_cost: low
+    risk: low
+    rejection_rationale:
+      This is a tactical improvement, not a strategic solution. It automates metadata
+      fetching but does not solve the trust establishment problem — certificate pinning still requires
+      manual trust store management. However, it could serve as a bridge while waiting for OpenID Federation.
+decision:
+  chosen_alternative: OpenID Federation 1.0 trust chains
+  rationale: |
+    - Standards-based approach aligns with regulatory direction (eIDAS 2.0, PSD2)
+    - Eliminates the root cause of operational bottlenecks — manual trust establishment
+    - Automated certificate rotation addresses the recurring incident pattern
+    - Scales to hundreds of partners, supporting NovaTrust's growth trajectory
+
+    However, the decision is **deferred** because:
+    - The specification is not yet final — adopting a draft standard carries specification change risk
+    - PingFederate GA support is not available — building on pre-release features is not production-ready
+    - Partner readiness is unknown — unilateral adoption provides zero value
+  tradeoffs: |
+    - Deferring means continued manual metadata exchange for 6–12 months
+    - Risk of 2–3 more certificate expiry incidents during the deferral period
+    - May need to implement the tactical alternative (Option 2) as a bridge if deferral extends beyond 12 months
+  decision_date: "2026-02-15"
+  confidence: low
+consequences:
+  positive:
+    - No investment in an immature specification that may change before finalization
+    - No dependency on pre-release vendor features
+    - Time to build partner consensus and pilot readiness
+  negative:
+    - Continued manual metadata exchange — operational bottleneck persists
+    - Ongoing certificate expiry risk for existing partner connections
+    - Potential competitive disadvantage if peers adopt federation earlier
+risk_assessment:
+  risks:
+    - id: R-001
+      description: Deferral extends beyond 12 months due to specification delays or vendor deprioritization
+      likelihood: medium
+      impact: medium
+      mitigation:
+        - Set calendar reminder to re-evaluate at 6-month mark (August 2026)
+        - Track PingFederate roadmap updates quarterly
+        - Implement tactical metadata automation (Option 2) if deferral exceeds 12 months
+    - id: R-002
+      description: Certificate expiry incident occurs during deferral period
+      likelihood: medium
+      impact: medium
+      mitigation:
+        - Implement certificate expiry monitoring with 30-day advance alerting
+        - Document partner certificate rotation contacts for emergency response
+  residual_risk: medium
+dependencies:
+  internal:
+    - PingFederate 12.x (authorization server — pending OpenID Federation support)
+  external:
+    - OpenID Federation 1.0 specification finalization
+    - PingFederate product roadmap (OpenID Federation GA)
+    - Partner bank readiness for federation
+references:
+  - title: OpenID Federation 1.0 — Draft Specification
+    url: https://openid.net/specs/openid-federation-1_0.html
+  - title: eIDAS 2.0 Technical Architecture Reference Framework
+    url: https://eu-digital-identity-wallet.github.io/eudi-doc-architecture-and-reference-framework/latest/arf/
+  - title: PingFederate Product Roadmap (internal)
+    url: https://docs.pingidentity.com/pingfederate/latest/release-notes.html
+lifecycle:
+  review_cycle_months: 6
+  next_review_date: "2026-08-15"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+audit_trail:
+  - event: created
+    by: Elena Vasquez
+    at: "2026-02-01T10:00:00Z"
+    details: Initial proposal for OpenID Federation adoption
+  - event: updated
+    by: Elena Vasquez
+    at: "2026-02-10T11:00:00Z"
+    details: Added tactical alternative (automated metadata exchange) after discussion with API platform team
+  - event: deferred
+    by: Marcus Chen
+    at: "2026-02-15T16:00:00Z"
+    details:
+      Deferred until OpenID Federation 1.0 reaches final specification status and PingFederate ships
+      GA support. Re-evaluate in August 2026. PR closed with 'deferred' label.

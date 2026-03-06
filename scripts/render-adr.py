@@ -257,6 +257,7 @@ def render_adr(data: dict) -> str:
         next_review = lifecycle.get("next_review_date")
         sup_by = lifecycle.get("superseded_by")
         sup = lifecycle.get("supersedes")
+        archival = lifecycle.get("archival", {})
         if review:
             lines.append(f"- **Review cycle:** {review} months")
         if next_review:
@@ -265,6 +266,13 @@ def render_adr(data: dict) -> str:
             lines.append(f"- **Superseded by:** {sup_by}")
         if sup:
             lines.append(f"- **Supersedes:** {sup}")
+        if archival:
+            archived_at = archival.get("archived_at")
+            archive_reason = archival.get("archive_reason")
+            if archived_at:
+                lines.append(f"- **Archived at:** {archived_at}")
+            if archive_reason:
+                lines.append(f"- **Archive reason:** {archive_reason}")
         lines.append("")
 
     # --- Audit Trail ---
@@ -280,6 +288,27 @@ def render_adr(data: dict) -> str:
             at = str(e.get("at", ""))[:10]  # date portion only
             details = e.get("details", "")
             lines.append(f"| `{event}` | {by} | {at} | {details} |")
+        lines.append("")
+
+    # --- Custom Extensions (x- prefixed) ---
+    extension_keys = sorted(k for k in data if k.startswith("x-"))
+    if extension_keys:
+        lines.append("## Custom Extensions")
+        lines.append("")
+        for key in extension_keys:
+            value = data[key]
+            if isinstance(value, str):
+                lines.append(f"- **{key}:** {value}")
+            elif isinstance(value, list):
+                lines.append(f"**{key}:**")
+                for item in value:
+                    lines.append(f"- {item}")
+            elif isinstance(value, dict):
+                lines.append(f"**{key}:**")
+                for k, v in value.items():
+                    lines.append(f"- **{k}:** {v}")
+            else:
+                lines.append(f"- **{key}:** {value}")
         lines.append("")
 
     return "\n".join(lines)

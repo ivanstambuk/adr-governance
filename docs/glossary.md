@@ -59,6 +59,8 @@
 | `medium` | Reasonable confidence based on available evidence. Standard review cycle. |
 | `high` | Strong empirical evidence (PoC, benchmarks, prior experience). Extended review cycle acceptable. |
 
+> **Confidence on rejected ADRs:** Confidence applies to the *decision outcome*, not the proposal. A `rejected` ADR with `confidence: high` means the team is highly confident in the rejection (e.g., strong evidence that the proposed approach is wrong). A rejected ADR with `confidence: low` means the rejection was made under uncertainty and may warrant re-evaluation.
+
 
 ## ID Formats
 
@@ -77,6 +79,13 @@ Supersession is tracked via `lifecycle.supersedes` and `lifecycle.superseded_by`
 - **`lifecycle.superseded_by`** — ADR ID that replaces this decision (set on the **old** ADR).
 
 > Both fields must be set symmetrically when one ADR supersedes another. The validator checks this.
+
+## Deprecation vs. Archival Timestamps
+
+| Action | Timestamp location | Notes |
+|--------|--------------------|-------|
+| **Deprecation** | `audit_trail` → `deprecated` event `at` field | Deprecation has no dedicated lifecycle field — query the audit trail for timing. |
+| **Archival** | `lifecycle.archival.archived_at` | Archival has a dedicated field because it is a terminal, queryable state. |
 
 
 

@@ -25,6 +25,11 @@ decision_owner:
   name: Ivan Stambuk
   role: Principal Architect
   email: ivan.stambuk@novatrust.example.com
+approvals:
+- name: Ivan Stambuk
+  role: Principal Architect
+  approved_at: '2026-03-05T18:00:00Z'
+  signature_id: null
 context:
   summary: NovaTrust's architecture team makes dozens of significant decisions per year — technology choices, security protocols,
     vendor selections, and process changes. These decisions are currently captured in meeting notes, Confluence pages, and

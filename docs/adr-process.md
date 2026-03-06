@@ -162,6 +162,8 @@ If **none** of these apply, the decision is likely not architecturally significa
 
 12. **Author addresses feedback** by pushing new commits to the branch.
 
+> **Note on `reviewed` audit events:** The initial proposal review happens through the PR process. Do **not** add a `reviewed` event to `audit_trail` during the initial review — the `approved` or `rejected` event records the outcome. The `reviewed` event is reserved for **periodic reviews** (§9) of already-accepted ADRs.
+
 ### 3.4 Approval Phase
 
 13. **All required approvers must approve the PR** before merge. This is enforced via GitHub branch protection rules:
@@ -233,6 +235,8 @@ Deprecation marks a decision as no longer recommended, but not yet replaced.
    - **Deprecate** when the decision is outdated but no replacement has been decided yet
    - **Supersede** when a new ADR has been accepted that replaces this one
 3. A deprecated ADR should eventually be either superseded by a new ADR or left as a historical record.
+
+> **Timestamp convention:** Unlike archival (which has a dedicated `lifecycle.archival.archived_at` field), deprecation has no dedicated timestamp field. The deprecation time is recorded in the `audit_trail` via the `deprecated` event's `at` field. This is intentional — deprecation is a transitional state, not a terminal one.
 
 ---
 

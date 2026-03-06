@@ -3,8 +3,8 @@
 Validate ADR YAML files against the ADR JSON Schema.
 
 Usage:
-    python3 validate-adr.py <file_or_directory>
-    python3 validate-adr.py --strict <file_or_directory>
+    python3 validate-adr.py <file_or_directory> [<file_or_directory> ...]
+    python3 validate-adr.py --strict decisions/ examples/
 
 Flags:
     --strict    Warn on missing optional-but-recommended sections for accepted ADRs
@@ -14,8 +14,10 @@ Requires: pip install jsonschema pyyaml
 """
 
 import json
+import re
 import sys
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -28,6 +30,9 @@ except ImportError:
 
 SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "adr.schema.json"
 
+# Regex to extract ADR-NNNN prefix from filenames
+FILENAME_ID_RE = re.compile(r"^(ADR-\d{4})")
+
 
 def load_schema():
     """Load the ADR JSON Schema."""
@@ -36,6 +41,23 @@ def load_schema():
         sys.exit(2)
     with open(SCHEMA_PATH, "r") as f:
         return json.load(f)
+
+
+def parse_iso_datetime(ts_str: str) -> datetime | None:
+    """Parse an ISO 8601 datetime string to a timezone-aware datetime.
+
+    Returns None if parsing fails.
+    """
+    if not ts_str:
+        return None
+    try:
+        # Python 3.11+ handles most ISO 8601 strings directly
+        dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+    except (ValueError, TypeError):
+        return None
 
 
 def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[list[str], list[str]]:
@@ -117,9 +139,10 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
 
         # Check for invalid state transitions (status vs audit trail events)
         invalid_event_for_status = {
-            "draft": {"approved", "superseded", "deprecated"},
+            "draft": {"approved", "superseded", "deprecated", "deferred"},
             "proposed": {"superseded", "deprecated"},
-            "rejected": {"approved", "superseded", "deprecated"},
+            "accepted": {"deferred"},
+            "rejected": {"approved", "superseded", "deprecated", "deferred"},
             "deferred": {"approved", "superseded", "deprecated"},
         }
         if status in invalid_event_for_status and audit_trail:
@@ -156,19 +179,31 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
                     f"(elevator pitch for stakeholder triage)"
                 )
 
-        # --- Check audit_trail temporal ordering ---
+        # --- [strict] Warn if schema_version is missing ---
+        if strict:
+            schema_version = data.get("adr", {}).get("schema_version", "")
+            if not schema_version:
+                warnings.append(
+                    f"  [strict] 'adr.schema_version' is missing — recommended per schema versioning policy (§10)"
+                )
+
+        # --- Check audit_trail temporal ordering (proper datetime parsing) ---
         if audit_trail:
-            prev_ts = None
+            prev_dt = None
+            prev_ts_str = None
             for i, entry in enumerate(audit_trail):
                 if isinstance(entry, dict):
                     ts_str = entry.get("at", "")
-                    if ts_str and prev_ts and ts_str < prev_ts:
-                        warnings.append(
-                            f"  audit_trail[{i}]: event '{entry.get('event', '')}' at {ts_str} "
-                            f"is earlier than previous event at {prev_ts} — events should be in chronological order"
-                        )
                     if ts_str:
-                        prev_ts = ts_str
+                        current_dt = parse_iso_datetime(str(ts_str))
+                        if current_dt and prev_dt and current_dt < prev_dt:
+                            warnings.append(
+                                f"  audit_trail[{i}]: event '{entry.get('event', '')}' at {ts_str} "
+                                f"is earlier than previous event at {prev_ts_str} — events should be in chronological order"
+                            )
+                        if current_dt:
+                            prev_dt = current_dt
+                            prev_ts_str = ts_str
 
         # --- [strict] Warn if accepted ADR has no approval with timestamp ---
         if strict and status == "accepted":
@@ -197,23 +232,60 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
             last_modified = data.get("adr", {}).get("last_modified", "")
             if decision_date and created_at:
                 # Compare date strings (ISO 8601 sorts lexicographically)
-                created_date = created_at[:10]  # extract date portion
-                if decision_date < created_date:
+                created_date = str(created_at)[:10]  # extract date portion
+                if str(decision_date) < created_date:
                     warnings.append(
                         f"  [strict] decision.decision_date ({decision_date}) is before "
                         f"adr.created_at ({created_date}) — decision cannot predate the ADR"
+                    )
+
+        # --- [strict] Warn if consequences is one-sided ---
+        if strict:
+            consequences = data.get("consequences", {})
+            if consequences:
+                positive = consequences.get("positive", [])
+                negative = consequences.get("negative", [])
+                if not positive:
+                    warnings.append(
+                        f"  [strict] 'consequences.positive' is missing or empty — "
+                        f"a balanced decision should acknowledge positive outcomes"
+                    )
+                if not negative:
+                    warnings.append(
+                        f"  [strict] 'consequences.negative' is missing or empty — "
+                        f"a balanced decision should acknowledge negative outcomes or tradeoffs"
+                    )
+
+        # --- Check filename ↔ adr.id consistency ---
+        adr_id = data.get("adr", {}).get("id", "")
+        if adr_id:
+            filename = filepath.stem  # e.g. "ADR-0001-dpop-over-mtls"
+            match = FILENAME_ID_RE.match(filename)
+            if match:
+                filename_id = match.group(1)
+                # Extract just the ADR-NNNN portion from the YAML id
+                yaml_id_match = FILENAME_ID_RE.match(adr_id)
+                yaml_id_prefix = yaml_id_match.group(1) if yaml_id_match else adr_id
+                if filename_id != yaml_id_prefix:
+                    errors.append(
+                        f"  filename prefix '{filename_id}' does not match adr.id '{adr_id}'"
                     )
 
     return errors, warnings
 
 
 def validate_cross_references(all_data: dict[str, dict]):
-    """Check cross-file referential integrity via lifecycle supersession chain.
+    """Check cross-file referential integrity.
+
+    Checks:
+    - Lifecycle supersession symmetry
+    - Duplicate ADR IDs across all files
 
     Args:
         all_data: mapping of filepath → parsed YAML data
     """
     warnings = []
+    errors = []
     # Collect all known ADR IDs and their lifecycle supersession fields
     known_ids = set()
     id_to_filepath = {}
@@ -223,6 +295,12 @@ def validate_cross_references(all_data: dict[str, dict]):
         if isinstance(data, dict):
             adr_id = data.get("adr", {}).get("id", "")
             if adr_id:
+                # --- Check for duplicate ADR IDs ---
+                if adr_id in known_ids:
+                    errors.append(
+                        f"  duplicate ADR ID '{adr_id}': found in both "
+                        f"'{id_to_filepath[adr_id]}' and '{filepath}'"
+                    )
                 known_ids.add(adr_id)
                 id_to_filepath[adr_id] = filepath
                 lifecycle = data.get("lifecycle", {})
@@ -252,7 +330,7 @@ def validate_cross_references(all_data: dict[str, dict]):
                     f"lifecycle.supersedes '{adr_id}'"
                 )
 
-    return warnings
+    return errors, warnings
 
 
 def main():
@@ -264,22 +342,26 @@ def main():
         args.remove("--strict")
 
     if len(args) < 1:
-        print(f"Usage: {sys.argv[0]} [--strict] <file_or_directory>")
+        print(f"Usage: {sys.argv[0]} [--strict] <file_or_directory> [<file_or_directory> ...]")
         sys.exit(2)
 
-    target = Path(args[0])
     schema = load_schema()
 
-    if target.is_file():
-        files = [target]
-    elif target.is_dir():
-        files = sorted(target.glob("*.yaml")) + sorted(target.glob("*.yml"))
-    else:
-        print(f"ERROR: {target} is not a file or directory")
-        sys.exit(2)
+    # Collect files from all positional arguments
+    files = []
+    for arg in args:
+        target = Path(arg)
+        if target.is_file():
+            files.append(target)
+        elif target.is_dir():
+            files.extend(sorted(target.glob("*.yaml")))
+            files.extend(sorted(target.glob("*.yml")))
+        else:
+            print(f"ERROR: {target} is not a file or directory")
+            sys.exit(2)
 
     if not files:
-        print(f"No YAML files found in {target}")
+        print(f"No YAML files found in: {', '.join(args)}")
         sys.exit(0)
 
     total_errors = 0
@@ -311,9 +393,14 @@ def main():
                 print(f"  WARN: {warn.strip()}")
             total_warnings += len(warnings)
 
-    # Cross-file reference checks (only when validating a directory)
-    if target.is_dir() and len(all_data) > 1:
-        xref_warnings = validate_cross_references(all_data)
+    # Cross-file reference checks (when more than 1 file loaded)
+    if len(all_data) > 1:
+        xref_errors, xref_warnings = validate_cross_references(all_data)
+        if xref_errors:
+            print("\nCross-reference errors:")
+            for err in xref_errors:
+                print(f"  ERROR: {err.strip()}")
+            total_errors += len(xref_errors)
         if xref_warnings:
             print("\nCross-reference warnings:")
             for warn in xref_warnings:

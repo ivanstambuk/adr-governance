@@ -71,8 +71,10 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 Run the validation script to check the YAML against the JSON Schema:
 
 ```bash
-python3 scripts/validate-adr.py decisions/ADR-NNNN-short-title.yaml
+python3 scripts/validate-adr.py --strict decisions/ADR-NNNN-short-title.yaml
 ```
+
+> **Always use `--strict`** during authoring. Strict mode checks for missing summaries, one-sided consequences, confidence/review-cycle misalignment, and other quality signals that catch issues early.
 
 ### Step 5: File naming convention
 

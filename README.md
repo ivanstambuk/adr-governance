@@ -10,7 +10,7 @@ This repository provides a **self-contained, YAML-based ADR meta-model** with:
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review
 - **Validation tooling** (Python script + GitHub Actions CI)
 - **Repomix bundling** for LLM context injection
-- **7 example ADRs** from a fictional IAM department (NovaTrust Financial Services) — low-level implementation decisions with contended alternatives
+- **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) — low-level implementation decisions with contended alternatives
 
 ## Philosophy
 
@@ -135,7 +135,7 @@ python3 scripts/render-adr.py --output-dir rendered/ examples/
 
 ## Example ADRs
 
-The `examples/` directory contains 7 interconnected ADRs from a fictional IAM department. These are **low-level implementation decisions** — the kind of contended pattern choices you face *within* an already-adopted technology, with sizable pros and cons on each side:
+The `examples/` directory contains interconnected ADRs from a fictional IAM department. These are **low-level implementation decisions** — the kind of contended pattern choices you face *within* an already-adopted technology, with sizable pros and cons on each side:
 
 | ID | Title | Status |
 |----|-------|--------|
@@ -146,6 +146,7 @@ The `examples/` directory contains 7 interconnected ADRs from a fictional IAM de
 | ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | accepted |
 | ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted |
 | ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** |
+| ADR-0008 | Defer OpenID Federation for Automated Trust Establishment | **deferred** |
 
 Additionally, `decisions/ADR-0000` is a meta-ADR documenting the decision to adopt this governance process.
 

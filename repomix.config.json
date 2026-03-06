@@ -9,7 +9,8 @@
         "decisions/**",
         ".skills/**",
         "scripts/**",
-        "README.md"
+        "README.md",
+        "CODEOWNERS.example"
     ],
     "ignore": {
         "useGitignore": true,
