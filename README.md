@@ -135,6 +135,7 @@ The CI pipeline automatically validates your ADR against the schema and lints th
 │           └── SCHEMA_REFERENCE.md
 ├── scripts/
 │   ├── validate-adr.py          # Schema + semantic validation
+│   ├── extract-decisions.py     # ADL → Markdown/JSON for agent context & CI enforcement
 │   ├── render-adr.py            # YAML → Markdown renderer (Mermaid passthrough)
 │   └── bundle.sh                # Repomix bundling
 ├── .github/
@@ -227,24 +228,51 @@ This works at two levels:
 Coding agents that have the ADL in context will naturally align with it. When you ask "implement the token endpoint," an agent with ADR-0001 in context will use DPoP, not mTLS — because the decision and its rationale are right there in the searchable bundle.
 
 **2. CI pipeline enforcement (pre-merge):**
-Add a step in your code repository's CI pipeline that checks for architectural compliance. This can be as simple as a linter rule or as sophisticated as an LLM-based review:
+Use `scripts/extract-decisions.py` to extract active decisions and generate an LLM compliance prompt. Add a step in your code repository's CI pipeline:
 
 ```yaml
 # Example: GitHub Actions step in your CODE repo (not this repo)
 - name: Check ADR compliance
   run: |
-    # Fetch the latest ADL bundle from the governance repo
-    curl -sL https://raw.githubusercontent.com/your-org/adr-governance/main/adr-governance-bundle.md \
-      -o /tmp/adl-bundle.md
-    # Run your compliance checks against the changed files
-    # (implementation depends on your tooling — could be a custom script,
-    # an LLM-based reviewer, or a pattern-matching linter)
-    python3 scripts/check-adr-compliance.py \
-      --adl /tmp/adl-bundle.md \
-      --changed-files $(git diff --name-only origin/main...HEAD)
+    # Fetch the extraction script and ADR files from the governance repo
+    git clone --depth 1 https://github.com/your-org/adr-governance.git /tmp/adl
+    pip install pyyaml
+
+    # Generate a compliance prompt with the code diff
+    python3 /tmp/adl/scripts/extract-decisions.py \
+      --compliance-prompt \
+      --diff <(git diff origin/main...HEAD) \
+      /tmp/adl/architecture-decision-log/ \
+      > /tmp/compliance-prompt.md
+
+    # Pipe to your LLM of choice for automated review
+    # (replace with your preferred LLM CLI — openai, claude, gemini, llm, etc.)
+    cat /tmp/compliance-prompt.md | your-llm-cli "Review this for compliance"
 ```
 
-The key insight: **the ADL bundle is a plain-text, searchable, self-contained artifact**. Any tool — from `grep` to a full LLM — can consume it. You don't need a special SDK or API. The structured YAML embedded in the bundle is parseable by any programming language, and the Markdown wrapper makes it readable by any LLM.
+The key insight: **the ADL is structured YAML that any tool can parse**. The `extract-decisions.py` script handles the parsing and prompt generation — you just plug in your LLM provider.
+
+### Decision Extraction
+
+The `scripts/extract-decisions.py` script is the bridge between the ADL and downstream enforcement tooling:
+
+```bash
+# Markdown summary of all accepted decisions (for agent context)
+python3 scripts/extract-decisions.py architecture-decision-log/
+
+# JSON output for programmatic consumption
+python3 scripts/extract-decisions.py --format json architecture-decision-log/
+
+# Filter by tags (e.g., only OAuth-related decisions)
+python3 scripts/extract-decisions.py --tags oauth,security architecture-decision-log/
+
+# Generate an LLM compliance-check prompt with a code diff
+python3 scripts/extract-decisions.py --compliance-prompt \
+  --diff <(git diff main) architecture-decision-log/
+
+# Save to a file for agent context injection
+python3 scripts/extract-decisions.py -o active-decisions.md architecture-decision-log/
+```
 
 ### What This Enables
 

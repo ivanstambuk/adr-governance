@@ -36,6 +36,7 @@ The ADL (Architecture Decision Log) isn't just documentation — it's a machine-
 ## Tooling
 
 - [Validator Script](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/validate-adr.py): Python script — validates ADR YAML against JSON Schema, checks semantic consistency (chosen_alternative ↔ alternatives, status ↔ audit_trail, supersession symmetry, temporal ordering), and quality signals (missing summaries, premature confidence, decision date consistency)
+- [Decision Extractor](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/extract-decisions.py): Extracts active decisions into Markdown or JSON for agent context injection and CI enforcement. Includes `--compliance-prompt` mode that generates LLM-ready compliance review prompts with code diffs. Supports filtering by status, tags, and decision type.
 - [Markdown Renderer](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/render-adr.py): Renders ADR YAML to polished Markdown with Mermaid diagram passthrough
 - [Repomix Bundle Script](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/bundle.sh): Creates single-file bundle for LLM context injection
 
