@@ -1,21 +1,33 @@
 {
     "output": {
         "filePath": "adr-governance-bundle.md",
-        "style": "markdown"
+        "style": "markdown",
+        "instructionFilePath": "repomix-instruction.md"
     },
     "include": [
         "schemas/**",
         "docs/**",
         "architecture-decision-log/**",
+        "examples-reference/*.yaml",
         ".skills/**",
+        ".adr-governance/**",
         "scripts/**",
         "README.md",
-        "CODEOWNERS.example"
+        "CODEOWNERS.example",
+        "llms.txt"
     ],
     "ignore": {
         "useGitignore": true,
         "customPatterns": [
-            "examples-reference/**",
+            "examples-reference/rendered/**",
+            "examples-reference/README.md",
+            "docs/web-chat-adr-authoring.md",
+            "docs/web-chat-quickstart.md",
+            "docs/ci-setup.md",
+            "scripts/verify-approvals.py",
+            "scripts/render-adr.py",
+            "scripts/extract-decisions.py",
+            "scripts/bundle.sh",
             "rendered/**",
             "docs/research/**",
             ".github/**",

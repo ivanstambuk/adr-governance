@@ -236,6 +236,20 @@ The `.skills/adr-author/` directory follows the [agentskills.io specification](h
 
 The skill guides AI assistants to author ADRs through interactive questioning — probing for Architecturally Significant Requirements (ASRs), demanding balanced alternatives (not strawmen), checking that constraints are testable, and verifying that the rationale actually connects to the stated drivers. It understands the full meta-model and governance lifecycle.
 
+### Web Chat (No Skill Required)
+
+Don't have access to a coding agent? The Repomix bundle (`adr-governance-bundle.md`) includes **embedded AI instructions** that replicate the full skill — upload the single file to any web-based AI chat:
+
+- **ChatGPT** (with Code Interpreter for large file search)
+- **Claude.ai** (200K–1M token context)
+- **Google Gemini** (1M+ token context)
+- **Microsoft Copilot** (web)
+
+The AI will be able to author new ADRs through Socratic dialogue, query the decision log with citations, review ADRs for completeness, summarize decisions for stakeholders, and validate YAML against the schema — all from a single uploaded file.
+
+See **[`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md)** for platform-specific starter prompts and tips.
+
+
 ### Pre-Review Quality Gate
 
 Before submitting an ADR for human review, run it through an AI semantic review using `scripts/review-adr.py`:
@@ -382,9 +396,10 @@ To create the single-file bundle:
 ./scripts/bundle.sh
 ```
 
-This generates `adr-governance-bundle.md` — the entire ADR governance framework and decision log in one file. The bundle includes the schema, process documentation, glossary, and all ADRs in `architecture-decision-log/` (it excludes [`examples-reference/`](examples-reference/) and CI files).
+This generates `adr-governance-bundle.md` — the entire ADR governance framework in one file. The bundle includes the schema, process documentation, glossary, skill instructions, YAML template, all ADRs in `architecture-decision-log/`, example ADRs from `examples-reference/`, validation scripts, and **embedded AI instructions** that enable web-based AI chats to emulate the full authoring skill.
 
 **Usage options:**
+- **Upload** to any AI web chat (ChatGPT, Claude, Gemini, Copilot) — see [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md)
 - **Paste** into any LLM context window for instant AKM context
 - **Add** to your coding agent's project knowledge base
 - **Fetch** from CI pipelines in other repositories (as shown above)

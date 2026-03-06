@@ -10,6 +10,7 @@
 - [Glossary](https://github.com/ivanstambuk/adr-governance/blob/main/docs/glossary.md): All enum values (status, decision_type, priority, confidence, risk levels), ID formats, audit trail events, and abbreviations (AD, ADL, ADR, AKM, ASR)
 - [JSON Schema](https://github.com/ivanstambuk/adr-governance/blob/main/schemas/adr.schema.json): The complete ADR meta-model — Draft 2020-12, defines all required/optional sections, field types, enums, and constraints
 - [Agent Skill (SKILL.md)](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/SKILL.md): Instructions for AI assistants — how to author, review, validate, and supersede ADRs using the governed meta-model
+- [Web Chat Quickstart](https://github.com/ivanstambuk/adr-governance/blob/main/docs/web-chat-quickstart.md): Platform-specific starter prompts for using the Repomix bundle with ChatGPT, Claude.ai, Google Gemini, and Microsoft Copilot — no skill execution required
 - [ADR Template](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/assets/adr-template.yaml): Blank YAML template with all sections
 - [Schema Reference](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/references/SCHEMA_REFERENCE.md): Human-readable schema documentation for the Agent Skill
 
