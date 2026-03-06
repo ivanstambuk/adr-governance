@@ -229,6 +229,7 @@ The CI pipeline validates schema compliance and lints the YAML. Reviewers are au
 │   ├── verify-approvals.py      # CI approval identity enforcement
 │   ├── extract-decisions.py     # ADL → Markdown/JSON for agent context & CI enforcement
 │   ├── review-adr.py            # Pre-review Socratic quality gate (LLM prompt generator)
+│   ├── summarize-adr.py         # Stakeholder summaries (email/chat/digest)
 │   ├── render-adr.py            # YAML → Markdown renderer + index generator
 │   └── bundle.sh                # Repomix bundling
 ├── .github/
@@ -323,6 +324,27 @@ The generated prompt instructs the LLM to perform a structured review covering:
 The AI outputs a verdict (**READY FOR REVIEW**, **NEEDS REWORK**, or **MAJOR GAPS**), a list of issues with severity, and open questions for the proposer. The proposer addresses the feedback, re-runs the check, and iterates until the ADR passes. *Then* they open the PR.
 
 > **The result:** Human reviewers receive ADRs that are already semantically coherent and complete. Review meetings become strategic discussions about the *decision* — not debugging sessions about what the proposer meant.
+
+## Stakeholder Summaries
+
+Not every stakeholder needs the full ADR. After a decision is made (or after an architecture review meeting), use `scripts/summarize-adr.py` to produce concise summaries for communication:
+
+```bash
+# Email-length summary (~10–15 lines: decision, rationale, alternatives, tradeoffs, impact)
+python3 scripts/summarize-adr.py architecture-decision-log/ADR-0001.yaml
+
+# Ultra-short chat summary (3–5 lines for Slack/Teams)
+python3 scripts/summarize-adr.py --format chat architecture-decision-log/ADR-0001.yaml
+
+# Meeting recap — digest of multiple ADRs
+python3 scripts/summarize-adr.py architecture-decision-log/ADR-0001.yaml \
+    architecture-decision-log/ADR-0002.yaml
+
+# Save to file
+python3 scripts/summarize-adr.py -o meeting-recap.md architecture-decision-log/
+```
+
+Each summary links back to the full YAML source. For a richer, rendered view, point stakeholders to the auto-generated Markdown in [`rendered/`](rendered/).
 
 ## ADL as Source of Truth
 

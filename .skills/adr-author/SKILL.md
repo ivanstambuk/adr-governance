@@ -1,11 +1,12 @@
 ---
 name: adr-author
 description: >
-  Author, review, and validate Architecture Decision Records (ADRs) using a
-  governed YAML meta-model. Use when the user asks to create a new ADR,
-  review an existing ADR, validate ADR YAML files against the schema, or
-  needs guidance on the ADR governance process. Covers the full lifecycle:
-  drafting, review, approval, supersession, and archival.
+  Author, review, validate, and summarize Architecture Decision Records (ADRs)
+  using a governed YAML meta-model. Use when the user asks to create a new ADR,
+  review an existing ADR, validate ADR YAML files against the schema, summarize
+  decisions for stakeholders (email/chat), or needs guidance on the ADR governance
+  process. Covers the full lifecycle: drafting, review, approval, supersession,
+  and archival.
 license: MIT
 metadata:
   author: "ivanstambuk"
@@ -20,6 +21,7 @@ Use this skill when the user:
 - Wants to **create a new ADR** (architecture decision record)
 - Wants to **review or audit an existing ADR** for completeness
 - Needs to **validate** an ADR YAML file against the schema
+- Wants to **summarize** an ADR for stakeholders (email, chat, digest)
 - Asks about the **ADR governance process** or lifecycle
 - Wants to **supersede, deprecate, or archive** an existing ADR
 - Needs to understand the **ADR meta-model** fields and allowed values
@@ -138,6 +140,51 @@ context:
 - See [the JSON Schema](references/SCHEMA_REFERENCE.md) for the full meta-model specification
 - See example ADRs in the repository's `examples-reference/` directory for well-formed samples
 
+## Summarizing ADRs for stakeholders
+
+Sometimes the full ADR is too detailed for stakeholders who just need to know *what was decided and why*. Use `scripts/summarize-adr.py` to produce concise summaries.
+
+### Email format (default)
+
+A ~10–15 line summary covering: the decision, why it was chosen, what alternatives were considered, key tradeoffs, consequences, and next steps. Suitable for post-meeting emails, status updates, or stakeholder briefings.
+
+```bash
+# Single ADR
+python3 scripts/summarize-adr.py architecture-decision-log/ADR-0001.yaml
+
+# Multiple ADRs → produces a numbered digest
+python3 scripts/summarize-adr.py architecture-decision-log/ADR-0001.yaml \
+    architecture-decision-log/ADR-0002.yaml
+
+# All ADRs in a directory → full digest
+python3 scripts/summarize-adr.py architecture-decision-log/
+
+# Save to file for emailing
+python3 scripts/summarize-adr.py -o meeting-recap.md architecture-decision-log/
+```
+
+### Chat format
+
+A 3–5 line ultra-short summary for Slack, Teams, or any chat platform. Just the headline, the decision, one positive and one negative consequence, and a link to the full document.
+
+```bash
+python3 scripts/summarize-adr.py --format chat architecture-decision-log/ADR-0001.yaml
+```
+
+### When to use which format
+
+| Scenario | Format |
+|----------|--------|
+| Post-meeting email to stakeholders | `email` (default) |
+| Slack/Teams announcement | `chat` |
+| Weekly architecture digest | `email` with multiple ADRs |
+| Quick reply to "what did you decide?" | `chat` |
+| Architecture newsletter | `email` with all accepted ADRs |
+
+### AI-assisted summarization
+
+When the user asks you to summarize an ADR, **prefer running the script** — it extracts the most salient fields deterministically. If the user wants a *custom* summary (e.g., focused on security implications, or tailored for a specific audience like C-level or compliance), generate a custom summary using the ADR YAML as context, following the same structure: decision, rationale, alternatives, tradeoffs, impact, next steps.
+
 ## Validation
 
 The `scripts/validate-adr.py` script validates any ADR YAML file against the JSON Schema:
@@ -151,3 +198,4 @@ python3 scripts/validate-adr.py architecture-decision-log/
 ```
 
 The script exits with code 0 if valid, 1 if validation errors are found.
+
