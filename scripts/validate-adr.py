@@ -147,6 +147,63 @@ def validate_file(filepath: Path, schema: dict, strict: bool = False) -> tuple[l
                         f"is {review_months} — extended cycle (≥12 months) is acceptable for high-confidence decisions"
                     )
 
+        # --- [strict] Warn if adr.summary is missing on proposed/accepted ADRs ---
+        if strict and status in {"proposed", "accepted"}:
+            summary = data.get("adr", {}).get("summary", "")
+            if not summary or not summary.strip():
+                warnings.append(
+                    f"  [strict] 'adr.summary' is missing or empty — recommended for {status} ADRs "
+                    f"(elevator pitch for stakeholder triage)"
+                )
+
+        # --- Check audit_trail temporal ordering ---
+        if audit_trail:
+            prev_ts = None
+            for i, entry in enumerate(audit_trail):
+                if isinstance(entry, dict):
+                    ts_str = entry.get("at", "")
+                    if ts_str and prev_ts and ts_str < prev_ts:
+                        warnings.append(
+                            f"  audit_trail[{i}]: event '{entry.get('event', '')}' at {ts_str} "
+                            f"is earlier than previous event at {prev_ts} — events should be in chronological order"
+                        )
+                    if ts_str:
+                        prev_ts = ts_str
+
+        # --- [strict] Warn if accepted ADR has no approval with timestamp ---
+        if strict and status == "accepted":
+            approvals_with_ts = [
+                a for a in approvals
+                if isinstance(a, dict) and a.get("approved_at") is not None
+            ]
+            if not approvals_with_ts:
+                warnings.append(
+                    f"  [strict] status is 'accepted' but no approval entry has an 'approved_at' timestamp"
+                )
+
+        # --- [strict] Warn if confidence is set on a draft ADR ---
+        if strict and status == "draft":
+            conf = decision.get("confidence", "")
+            if conf:
+                warnings.append(
+                    f"  [strict] decision.confidence is '{conf}' but status is 'draft' — "
+                    f"confidence is premature before the decision is proposed"
+                )
+
+        # --- [strict] Check decision_date within created_at → last_modified range ---
+        if strict:
+            decision_date = decision.get("decision_date", "")
+            created_at = data.get("adr", {}).get("created_at", "")
+            last_modified = data.get("adr", {}).get("last_modified", "")
+            if decision_date and created_at:
+                # Compare date strings (ISO 8601 sorts lexicographically)
+                created_date = created_at[:10]  # extract date portion
+                if decision_date < created_date:
+                    warnings.append(
+                        f"  [strict] decision.decision_date ({decision_date}) is before "
+                        f"adr.created_at ({created_date}) — decision cannot predate the ADR"
+                    )
+
     return errors, warnings
 
 

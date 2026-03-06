@@ -430,13 +430,12 @@ Our custom YAML-based meta-model with JSON Schema (Draft 2020-12) validation.
 | `confirmation` | Optional | `description` (free text), `artifacts` (list of verification artifact IDs) |
 | `risk_assessment` | Optional | Risks with `id`, `description`, `likelihood`, `impact`, `mitigation`; `residual_risk` |
 | `dependencies` | Optional | `internal`, `external` |
-| `related_adrs` | Optional | `id`, `title`, `relationship` (supersedes, related, depends_on, etc.) |
-| `attachments` | Optional | `diagrams`, `runbooks` |
+| `references` | Optional | External links and evidence |
 | `lifecycle` | Optional | `review_cycle_months`, `next_review_date`, `superseded_by`, `supersedes`, `archival` |
 | `audit_trail` | Optional | Append-only event log: `event`, `by`, `at`, `details` |
 
 **Characteristics:**
-- **Most comprehensive template in this survey.** ~17 top-level sections.
+- **Most comprehensive template in this survey.** ~15 top-level sections.
 - **Machine-readable YAML** with JSON Schema validation.
 - **Unique sections not found in any other template:**
   - `confirmation` (description + verification artifact IDs — inspired by MADR 4.0 / NHS Wales)

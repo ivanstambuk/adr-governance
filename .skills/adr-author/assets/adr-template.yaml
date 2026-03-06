@@ -140,7 +140,7 @@ lifecycle:
     archived_at: null
     archive_reason: null
 
-# --- REQUIRED: append-only ---
+# --- Strongly recommended: append-only (schema: optional, but expected for all non-draft ADRs) ---
 audit_trail:
   - event: "created"
     by: ""

@@ -10,7 +10,7 @@ This repository provides a **self-contained, YAML-based ADR meta-model** with:
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review
 - **Validation tooling** (Python script + GitHub Actions CI)
 - **Repomix bundling** for LLM context injection
-- **6 example ADRs** from a fictional IAM department (NovaTrust Financial Services) — low-level implementation decisions with contended alternatives
+- **7 example ADRs** from a fictional IAM department (NovaTrust Financial Services) — low-level implementation decisions with contended alternatives
 
 ## Philosophy
 
@@ -148,6 +148,8 @@ The `examples/` directory contains 7 interconnected ADRs from a fictional IAM de
 | ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** |
 
 Additionally, `decisions/ADR-0000` is a meta-ADR documenting the decision to adopt this governance process.
+
+> **Bootstrap exception:** ADR-0000 was self-approved by the initial author as the bootstrapping meta-decision. The "no self-approval" rule (§3.4) applies to all subsequent ADRs.
 
 ## License
 

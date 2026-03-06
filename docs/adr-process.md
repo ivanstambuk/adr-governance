@@ -156,7 +156,7 @@ If **none** of these apply, the decision is likely not architecturally significa
     - [ ] Rationale explains *why* the chosen option is preferred
     - [ ] Tradeoffs are explicitly acknowledged
     - [ ] Risk assessment covers realistic failure modes
-    - [ ] No conflict with existing `accepted` ADRs (check `related_adrs`)
+    - [ ] No conflict with existing `accepted` ADRs (search `decisions/` for related decisions)
 
 11. **Reviewers comment on the PR.** Discussions happen in PR comments.
 
@@ -177,6 +177,8 @@ If **none** of these apply, the decision is likely not architecturally significa
 
     > **Who sets the status?** The author or decision owner updates the YAML. The branch protection rules prevent self-approval — the author cannot be the *sole* approver. Setting the status to `accepted` is a clerical action that happens *after* PR approval, not a governance action.
 
+    > **Bootstrap exception:** ADR-0000 (the meta-ADR adopting this governance process) was self-approved by the initial author. The no-self-approval rule applies to all subsequent ADRs.
+
 15. **Merge the PR** to `main`. The ADR is now binding.
 
 ### 3.5 Rejection
@@ -185,6 +187,8 @@ If **none** of these apply, the decision is likely not architecturally significa
     - Author sets status to `rejected`
     - Rejection reason is documented in the PR and in the ADR's `audit_trail`
     - PR is **merged** (not closed) — rejected ADRs are preserved for historical record
+
+> **What does `chosen_alternative` mean for rejected ADRs?** When the *proposal* is rejected but the team selects a different approach (e.g., ADR-0007: Vault was proposed but native cloud stores were chosen), `chosen_alternative` records the alternative the team will actually pursue. The `status: rejected` signals that the *proposed approach* was rejected, not the ADR itself. The ADR serves as a record of both the rejection and the actual path forward.
 
 ---
 
@@ -204,17 +208,17 @@ A deferred ADR can be re-proposed when the blocking condition is resolved.
 ## 5. Workflow: Superseding an Existing ADR
 
 1. **Create a new ADR** (ADR-MMMM) following the standard proposal workflow
-2. In the new ADR, reference the old one:
+2. In the new ADR, set the supersession field:
    ```yaml
-   related_adrs:
-     - id: "ADR-NNNN"
-       title: "Original decision title"
-       relationship: supersedes
+   lifecycle:
+     supersedes: "ADR-NNNN"
    ```
 3. When the new ADR is accepted, **update the old ADR** in the same PR:
    - Set `adr.status: "superseded"`
    - Set `lifecycle.superseded_by: "ADR-MMMM"`
    - Add a `superseded` event to `audit_trail`
+
+> **Symmetry rule:** Both fields must be set — the new ADR's `lifecycle.supersedes` and the old ADR's `lifecycle.superseded_by`. The validator checks this.
 
 ---
 

@@ -30,7 +30,7 @@ Use this skill when the user:
 2. **Schema-governed**: All ADRs must validate against `schemas/adr.schema.json` (JSON Schema Draft 2020-12).
 3. **At least two alternatives**: Every decision requires evaluation of ≥2 alternatives with pros, cons, cost, and risk.
 4. **Immutable audit trail**: The `audit_trail` section is append-only. Never delete or modify existing entries.
-5. **Relationships are navigational, not structural**: `related_adrs` are cross-reference pointers. Each ADR remains fully self-contained.
+5. **Self-contained with navigational links**: Supersession is tracked via `lifecycle.supersedes`/`superseded_by`. Each ADR remains fully self-contained — no structural dependencies on other ADRs.
 
 ## How to create a new ADR
 

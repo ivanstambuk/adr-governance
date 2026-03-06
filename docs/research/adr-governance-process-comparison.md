@@ -591,7 +591,7 @@ Based on the comparison, the ideal ADR governance process for our regulated ente
 | Formal approvals | ✅ | `approvals` (timestamp + signature ID) |
 | Status lifecycle | ✅ | `adr.status` (6 values) |
 | Audit trail | ✅ | `audit_trail` (append-only events) |
-| Supersession chain | ✅ | `lifecycle.superseded_by` / `supersedes` + `related_adrs` |
+| Supersession chain | ✅ | `lifecycle.superseded_by` / `supersedes` |
 | Periodic review | ✅ | `lifecycle.review_cycle_months` + `next_review_date` |
 | Archival | ✅ | `lifecycle.archival` |
 | Schema validation | ✅ | `schemas/adr.schema.json` + `scripts/validate-adr.py` + CI |

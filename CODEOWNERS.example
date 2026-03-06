@@ -22,3 +22,11 @@ docs/                            @org/architecture-team
 
 # Validation script changes require architect approval
 scripts/                         @org/architecture-team
+
+# NOTE: GitHub CODEOWNERS uses fnmatch-style patterns. The patterns above for
+# security and compliance decisions match on *filename*, not YAML content.
+# For reliable decision-type routing, include the domain in the ADR filename
+# (e.g. ADR-0007-security-adopt-passkeys.yaml).
+# For more sophisticated routing, implement a CI-based reviewer assignment step
+# that reads `decision_type` from the YAML and requests the appropriate GitHub
+# team via the GitHub API.

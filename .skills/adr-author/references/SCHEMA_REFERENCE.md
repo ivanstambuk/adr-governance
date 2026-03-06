@@ -24,8 +24,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 | `requirements` | Embedded functional and non-functional requirements |
 | `risk_assessment` | Identified risks with mitigation strategies |
 | `dependencies` | Internal and external dependencies |
-| `related_adrs` | Cross-references to other ADRs |
-| `attachments` | Diagrams, runbooks, other supporting documents |
+
 | `references` | External links and evidence |
 | `lifecycle` | Review cadence, supersession chain, archival |
 | `audit_trail` | Immutable event log (events: created, updated, reviewed, approved, rejected, superseded, deprecated, archived) |
