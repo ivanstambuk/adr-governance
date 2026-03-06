@@ -122,7 +122,15 @@ Copy the pipeline file for your platform to the repository root:
 
 Then configure branch protection to make the CI check a **required merge gate** — see **[`docs/ci-setup.md`](docs/ci-setup.md)** for platform-specific instructions and LLM-ready setup prompts.
 
-### 5. Configure CODEOWNERS *(optional but recommended)*
+### 5. Enable the pre-commit hook
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This activates automatic Markdown rendering — every commit that touches `architecture-decision-log/*.yaml` will regenerate the human-friendly files in `rendered/` and the decision log index. Both the YAML source and its Markdown rendering are committed together, so reviewers approve both in the same PR.
+
+### 6. Configure CODEOWNERS *(optional but recommended)*
 
 ```bash
 cp CODEOWNERS.example .github/CODEOWNERS
@@ -130,11 +138,11 @@ cp CODEOWNERS.example .github/CODEOWNERS
 
 Edit `.github/CODEOWNERS` to replace the placeholder team handles (`@org/architecture-team`, etc.) with your real GitHub teams. This ensures ADRs and schema changes automatically request review from the right people.
 
-### 6. Copy the Agent Skill to your code repositories *(optional)*
+### 7. Copy the Agent Skill to your code repositories *(optional)*
 
 The `.skills/adr-author/` directory is a portable AI skill. Copy it to any repository where developers will be authoring ADRs — agents like Antigravity, Claude Code, and Copilot will pick it up automatically and guide ADR creation through interactive questioning.
 
-### 7. Create your first real ADR
+### 8. Create your first real ADR
 
 Use an AI assistant with the `adr-author` skill — it will guide you through every field via Socratic dialogue:
 
@@ -149,7 +157,7 @@ cp .skills/adr-author/assets/adr-template.yaml \
    architecture-decision-log/ADR-0001-your-decision-title.yaml
 ```
 
-### 8. Validate and submit
+### 9. Validate and submit
 
 ```bash
 # Install dependencies
@@ -176,6 +184,8 @@ The CI pipeline validates schema compliance and lints the YAML. Reviewers are au
 .
 ├── .adr-governance/
 │   └── config.yaml              # Governance rules: admins, single-ADR-per-PR, change classification
+├── .githooks/
+│   └── pre-commit               # Auto-renders ADR Markdown on commit
 ├── schemas/
 │   └── adr.schema.json          # JSON Schema (Draft 2020-12) — the ADR meta-model
 ├── docs/
@@ -183,8 +193,11 @@ The CI pipeline validates schema compliance and lints the YAML. Reviewers are au
 │   ├── ci-setup.md              # CI/CD setup guide (all platforms)
 │   ├── glossary.md              # Terms, enum values, abbreviations
 │   └── research/                # Template & process comparison research
-├── architecture-decision-log/   # The ADL — your ADRs go here
+├── architecture-decision-log/   # The ADL — your ADRs go here (YAML source of truth)
 │   └── ADR-0000-adopt-governed-adr-process.yaml  # Meta-ADR (bootstrap)
+├── rendered/                    # ⚠️ AUTO-GENERATED — human-friendly Markdown views
+│   ├── architecture-decision-log.md  # Decision log index (clickable links, status, dates)
+│   └── ADR-0000-adopt-governed-adr-process.md
 ├── examples-reference/           # 8 fictional example ADRs (NovaTrust Financial Services) — reference only
 │   ├── ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml
 │   ├── ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml
@@ -216,7 +229,7 @@ The CI pipeline validates schema compliance and lints the YAML. Reviewers are au
 │   ├── verify-approvals.py      # CI approval identity enforcement
 │   ├── extract-decisions.py     # ADL → Markdown/JSON for agent context & CI enforcement
 │   ├── review-adr.py            # Pre-review Socratic quality gate (LLM prompt generator)
-│   ├── render-adr.py            # YAML → Markdown renderer (Mermaid passthrough)
+│   ├── render-adr.py            # YAML → Markdown renderer + index generator
 │   └── bundle.sh                # Repomix bundling
 ├── .github/
 │   └── workflows/
@@ -415,16 +428,38 @@ This generates `adr-governance-bundle.md` — the entire ADR governance framewor
 - **Fetch** from CI pipelines in other repositories (as shown above)
 - **Commit** to other repositories as a versioned reference artifact
 
-## Rendering ADRs to Markdown
+## Rendered Markdown (Auto-Generated)
 
-To render ADR YAML files to polished Markdown (with Mermaid passthrough):
+Every ADR YAML file has a corresponding **human-friendly Markdown rendering** in [`rendered/`](rendered/). These are designed for browsing on GitHub, Azure DevOps, Azure Repos, and other platforms that render Markdown natively.
+
+- **[`rendered/architecture-decision-log.md`](rendered/architecture-decision-log.md)** — the decision log index with clickable links, status, and decision dates
+- **`rendered/ADR-NNNN-*.md`** — individual ADR renderings with a provenance disclaimer
+
+> **⚠️ Do not edit files in `rendered/` directly.** They are auto-generated from the YAML source. Each rendered file includes a `[!CAUTION]` banner and HTML comment pointing to the source YAML.
+
+### Pre-commit hook (automatic rendering)
+
+A Git pre-commit hook automatically re-renders all ADR files and regenerates the index whenever you commit changes to `architecture-decision-log/`. This means both the YAML source and its Markdown rendering are part of the same commit and PR — **reviewers approve both together**.
+
+**One-time setup** (per clone):
 
 ```bash
-# Single file to stdout
-python3 scripts/render-adr.py examples-reference/ADR-0001-*.yaml
+git config core.hooksPath .githooks
+```
 
-# All examples to a directory
-python3 scripts/render-adr.py --output-dir rendered/ examples-reference/
+After this, any commit that touches `architecture-decision-log/*.yaml` will automatically:
+1. Render all ADR YAML files to `rendered/*.md` with a provenance disclaimer
+2. Regenerate `rendered/architecture-decision-log.md` (the decision log index)
+3. Stage the rendered files alongside the YAML changes
+
+### Manual rendering
+
+```bash
+# Single file to stdout (no disclaimer — useful for previewing)
+python3 scripts/render-adr.py architecture-decision-log/ADR-0001-*.yaml
+
+# Render to rendered/ with disclaimer + index
+python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/
 ```
 
 ## Example ADRs

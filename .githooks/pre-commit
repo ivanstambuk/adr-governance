@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# =============================================================================
+# Pre-commit hook: Auto-render ADR Markdown
+# =============================================================================
+#
+# When ADR YAML files in architecture-decision-log/ are staged, this hook
+# automatically renders them to human-friendly Markdown in rendered/ and
+# regenerates the decision log index.
+#
+# Install once per clone:
+#   git config core.hooksPath .githooks
+#
+# Requires: python3, pyyaml
+# =============================================================================
+
+set -e
+
+ADR_DIR="architecture-decision-log"
+OUTPUT_DIR="rendered"
+
+# Only trigger if ADR YAML files are staged
+STAGED_ADRS=$(git diff --cached --name-only -- "${ADR_DIR}/*.yaml" 2>/dev/null || true)
+
+if [ -z "$STAGED_ADRS" ]; then
+    exit 0
+fi
+
+# Verify dependencies — warn and skip gracefully if missing
+if ! command -v python3 &>/dev/null; then
+    echo "⚠️  python3 not found — skipping ADR rendering"
+    exit 0
+fi
+
+if ! python3 -c "import yaml" 2>/dev/null; then
+    echo "⚠️  pyyaml not installed — skipping ADR rendering (pip install pyyaml)"
+    exit 0
+fi
+
+echo "🔄 ADR changes detected — rendering Markdown..."
+
+python3 scripts/render-adr.py \
+    --output-dir "${OUTPUT_DIR}/" \
+    --generate-index \
+    "${ADR_DIR}/"
+
+# Stage the rendered output alongside the YAML changes
+git add "${OUTPUT_DIR}/"
+
+echo "✅ Rendered ADR Markdown staged for commit"
