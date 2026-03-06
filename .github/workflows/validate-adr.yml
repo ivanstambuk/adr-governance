@@ -34,7 +34,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install jsonschema pyyaml yamllint
+        run: pip install -r requirements.txt
 
       - name: Validate ADL
         run: |
@@ -56,26 +56,14 @@ jobs:
         uses: ibiqlik/action-yamllint@v3
         with:
           file_or_dir: architecture-decision-log/
-          config_data: |
-            extends: default
-            rules:
-              line-length:
-                max: 300
-              truthy:
-                check-keys: false
+          config_file: .yamllint.yml
         if: hashFiles('architecture-decision-log/*.yaml') != ''
 
       - name: YAML lint (examples-reference)
         uses: ibiqlik/action-yamllint@v3
         with:
           file_or_dir: examples-reference/
-          config_data: |
-            extends: default
-            rules:
-              line-length:
-                max: 300
-              truthy:
-                check-keys: false
+          config_file: .yamllint.yml
         if: hashFiles('examples-reference/*.yaml') != ''
 
       - name: Verify approval identities

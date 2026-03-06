@@ -29,6 +29,8 @@
 | `rejected` | Explicitly rejected after evaluation. Preserved for historical record. |
 | `deferred` | Decision postponed. Context or drivers are insufficient to decide now. |
 
+> **Note:** `archived` is **not a status value** — it is a metadata overlay tracked via `lifecycle.archival` fields (`archived_at`, `archive_reason`) and the `archived` event in `audit_trail`. Archived ADRs retain their pre-archival status (`superseded`, `deprecated`, or `rejected`).
+
 ## Decision Type Classification
 
 | Type | Description |

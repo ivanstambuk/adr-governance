@@ -27,7 +27,7 @@ steps:
   - name: "python:3.12-slim"
     id: "install-deps"
     entrypoint: "pip"
-    args: ["install", "--user", "jsonschema", "pyyaml", "yamllint"]
+    args: ["install", "--user", "-r", "requirements.txt"]
 
   # Step 2: Validate architecture-decision-log/
   - name: "python:3.12-slim"
@@ -66,25 +66,16 @@ steps:
       - |
         export PATH="$$HOME/.local/bin:$$PATH"
 
-        cat <<'EOF' > /tmp/yamllint-config.yml
-        extends: default
-        rules:
-          line-length:
-            max: 300
-          truthy:
-            check-keys: false
-        EOF
-
         echo "=== Linting architecture-decision-log/ ==="
         if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
-          yamllint -c /tmp/yamllint-config.yml architecture-decision-log/
+          yamllint -c .yamllint.yml architecture-decision-log/
         else
           echo "No YAML files — skipping"
         fi
 
         echo "=== Linting examples-reference/ ==="
         if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
-          yamllint -c /tmp/yamllint-config.yml examples-reference/
+          yamllint -c .yamllint.yml examples-reference/
         else
           echo "No YAML files — skipping"
         fi

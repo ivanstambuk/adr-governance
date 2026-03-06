@@ -107,8 +107,7 @@ consequences:
 # --- REQUIRED (artifact_ids can be added later) ---
 confirmation:
   description: "" # How the implementation of this decision will be verified
-  artifact_ids:
-    - "" # Jira tickets, PR URLs, test suite IDs, PoC results, benchmarks
+  artifact_ids: [] # Jira tickets, PR URLs, test suite IDs, PoC results, benchmarks
 
 # --- Optional ---
 dependencies:

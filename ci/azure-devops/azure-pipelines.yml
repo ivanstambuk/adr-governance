@@ -49,7 +49,7 @@ steps:
       versionSpec: "3.12"
     displayName: "Set up Python 3.12"
 
-  - script: pip install jsonschema pyyaml yamllint
+  - script: pip install -r requirements.txt
     displayName: "Install dependencies"
 
   - script: |
@@ -69,25 +69,16 @@ steps:
     displayName: "Validate examples-reference/"
 
   - script: |
-      cat <<'EOF' > /tmp/yamllint-config.yml
-      extends: default
-      rules:
-        line-length:
-          max: 300
-        truthy:
-          check-keys: false
-      EOF
-
       echo "=== Linting architecture-decision-log/ ==="
       if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
-        yamllint -c /tmp/yamllint-config.yml architecture-decision-log/
+        yamllint -c .yamllint.yml architecture-decision-log/
       else
         echo "No YAML files — skipping"
       fi
 
       echo "=== Linting examples-reference/ ==="
       if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
-        yamllint -c /tmp/yamllint-config.yml examples-reference/
+        yamllint -c .yamllint.yml examples-reference/
       else
         echo "No YAML files — skipping"
       fi

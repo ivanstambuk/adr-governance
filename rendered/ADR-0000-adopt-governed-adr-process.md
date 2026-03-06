@@ -151,7 +151,7 @@ Record decisions in Confluence pages with a standardized template. Approvals man
 
 ## Confirmation
 
-ADR governance process validated by authoring 7 example ADRs (ADR-0001 through ADR-0007) covering technology, security, and process decisions across accepted and rejected statuses.
+ADR governance process validated by authoring 8 example ADRs (ADR-0001 through ADR-0008) covering technology, security, and process decisions across accepted, rejected, and deferred statuses.
 
 **Artifacts:**
 - `examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml`
@@ -177,4 +177,4 @@ ADR governance process validated by authoring 7 example ADRs (ADR-0001 through A
 | Event | By | Date | Details |
 |-------|----|------|---------|
 | `created` | Ivan Stambuk | 2026-03-05 | Initial ADR governance process design based on research of 14 ADR templates and 6 governance processes |
-| `approved` | Ivan Stambuk | 2026-03-05 | Process adopted after authoring 7 example ADRs and validating schema, CI, and Agent Skill integration |
+| `approved` | Ivan Stambuk | 2026-03-05 | Process adopted after authoring 8 example ADRs and validating schema, CI, and Agent Skill integration |

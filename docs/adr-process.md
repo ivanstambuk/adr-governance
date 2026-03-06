@@ -83,6 +83,8 @@ stateDiagram-v2
 
 > **Why are rejected ADRs merged?** Rejected ADRs are part of the decision log — they document *why* an option was evaluated and not pursued. Closing the PR without merging would lose this history from `main`.
 
+> **Where is `archived` in this diagram?** Archival is **not a status value** — it is a metadata overlay tracked via `lifecycle.archival` fields. Archived ADRs retain their pre-archival status (`superseded`, `deprecated`, or `rejected`). See §8 for the archival workflow.
+
 ---
 
 ## 3. Workflow: Proposing a New ADR
@@ -447,6 +449,8 @@ Archival is for decisions that are no longer active and should be removed from r
 
 > **Never delete an ADR.** Archival preserves the decision record for historical reference and audit compliance. Archived ADRs remain in the `architecture-decision-log/` directory.
 
+> **Archival is not a status.** The ADR retains its pre-archival `adr.status` (`superseded`, `deprecated`, or `rejected`). Archival is signalled by the presence of `lifecycle.archival.archived_at` and the `archived` event in `audit_trail`. This is intentional — archival is a metadata annotation, not a state transition, and archived ADRs remain queryable by their logical status.
+
 ---
 
 ## 9. Periodic Review
@@ -495,6 +499,17 @@ Each ADR records the schema version it was authored against in `adr.schema_versi
 | **Backward compatibility is required** | New schema versions MUST validate all existing ADRs without errors. Only add optional fields; never make previously-optional fields required. |
 | **Breaking changes require migration** | If a required field is added or renamed, provide a migration script and bump the major version. Update `schema_version` in affected ADRs. |
 | **Current version** | `1.0.0` (see `schemas/adr.schema.json`) |
+
+### ADR document versioning (`adr.version`)
+
+Each ADR also tracks its own document version in `adr.version` (format: `MAJOR.MINOR`). This is separate from `schema_version`:
+
+| Change Type | Version Bump | Example |
+|-------------|:------------:|---------|
+| **Substantive change** (decision, rationale, alternatives, consequences) | MAJOR | `1.0` → `2.0` |
+| **Maintenance change** (typos, formatting, metadata corrections) | MINOR | `1.0` → `1.1` |
+| **Initial draft** | — | Start at `0.1` |
+| **First accepted version** | — | Set to `1.0` on acceptance |
 
 ---
 

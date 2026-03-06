@@ -27,6 +27,7 @@ Good **Architecture Knowledge Management (AKM)** treats decisions as first-class
 - **Approval identity enforcement** — CI verifies that the people listed in `approvals[]` have actually approved the pull request, creating an auditable link between ADR approvals and Git platform approvals
 - **Governance rules** — configurable single-ADR-per-PR enforcement, substantive vs. maintenance change classification, and admin overrides — all defined in a platform-agnostic `.adr-governance/config.yaml`
 - **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
+- `llms.txt` — Machine-readable project summary for AI assistants ([llms.txt convention](https://llmstxt.org/))
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
 - **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
 - **Repomix bundling** — the entire ADL is concatenated into a single Markdown file that agents can search with standard tools, enabling cross-repository decision enforcement
@@ -65,6 +66,8 @@ stateDiagram-v2
 ```
 
 > **Why are rejected ADRs merged?** They are part of the ADL — they document *why* an option was evaluated and not pursued. Closing the PR without merging would lose this history from `main`.
+
+> **Where is `archived`?** Archival is **not a status value** — it is a metadata overlay. Archived ADRs retain their pre-archival status (`superseded`, `deprecated`, or `rejected`) and are annotated with `lifecycle.archival.archived_at` and `lifecycle.archival.archive_reason` fields, plus an `archived` event in `audit_trail`. See [§8 Archival](docs/adr-process.md#8-archival) for the full workflow.
 
 See [`docs/adr-process.md`](docs/adr-process.md) for the full normative governance process, including review checklists, the Architectural Significance Test, branch protection rules, and CODEOWNERS configuration.
 

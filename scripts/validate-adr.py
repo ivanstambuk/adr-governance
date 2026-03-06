@@ -208,6 +208,17 @@ def validate_file(filepath: Path, schema: dict) -> tuple[list[str], list[str]]:
                     f"adr.created_at ({created_date}) — decision cannot predate the ADR"
                 )
 
+        # --- Check archival consistency ---
+        archival = data.get("lifecycle", {}).get("archival", {})
+        archived_at = archival.get("archived_at") if archival else None
+        if archived_at:
+            terminal_statuses = {"superseded", "deprecated", "rejected"}
+            if status and status not in terminal_statuses:
+                warnings.append(
+                    f"  lifecycle.archival.archived_at is set but adr.status is '{status}' "
+                    f"— archived ADRs should have a terminal status ({', '.join(sorted(terminal_statuses))})"
+                )
+
 
         # --- Check filename ↔ adr.id consistency ---
         adr_id = data.get("adr", {}).get("id", "")

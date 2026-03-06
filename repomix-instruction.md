@@ -291,7 +291,7 @@ Report issues as: `ERROR` (schema violation), `WARNING` (semantic concern), or `
 
 **Cost / Risk scales:** `low` | `medium` | `high` (risk also allows `critical`)
 
-**ID format:** `ADR-NNNN` or `ADR-NNNN-slug` (e.g., `ADR-0001`, `ADR-0001-dpop-over-mtls`)
+**ID format:** `ADR-NNNN-slug` — slug is mandatory (e.g., `ADR-0001-dpop-over-mtls`)
 
 **Audit trail events:** `created` | `updated` | `reviewed` | `approved` | `rejected` | `deferred` | `superseded` | `deprecated` | `archived`
 

@@ -35,8 +35,8 @@ Thank you for considering contributing to the ADR Governance framework!
 ### What requires special care?
 
 - **Schema changes** must be backward-compatible or bump the `schema_version`.
-- **ADR template** (`assets/adr-template.yaml`) must stay in sync with the schema.
-- **Glossary and SCHEMA_REFERENCE.md** must reflect any enum or field changes.
+- **ADR template** (`.skills/adr-author/assets/adr-template.yaml`) must stay in sync with the schema.
+- **Glossary** (`docs/glossary.md` + `.skills/adr-author/references/GLOSSARY.md`) and **Schema Reference** (`.skills/adr-author/references/SCHEMA_REFERENCE.md`) must reflect any enum or field changes.
 
 ## Code of Conduct
 
