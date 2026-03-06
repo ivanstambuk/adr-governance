@@ -26,17 +26,17 @@ Thank you for considering contributing to the ADR Governance framework!
 
 ### What can I contribute?
 
-- **Schema improvements**: Changes to `schemas/adr.schema.json` — please include updated examples and validator checks.
+- **Schema improvements**: Changes to [`schemas/adr.schema.json`](schemas/adr.schema.json) — please include updated examples and validator checks.
 - **Documentation**: Fixes, clarifications, or new guides in `docs/`.
 - **Tooling**: Enhancements to the Python scripts in `scripts/`.
-- **CI pipelines**: Improvements to platform-specific configs in `ci/` and `.github/workflows/`.
+- **CI pipelines**: Improvements to platform-specific configs in [`ci/`](ci/) and [`.github/workflows/`](.github/workflows/).
 - **Examples**: New example ADRs in `examples-reference/` that demonstrate edge cases or new decision types.
 
 ### What requires special care?
 
 - **Schema changes** must be backward-compatible or bump the `schema_version`.
-- **ADR template** (`.skills/adr-author/assets/adr-template.yaml`) must stay in sync with the schema.
-- **Glossary** (`docs/glossary.md` + `.skills/adr-author/references/GLOSSARY.md`) and **Schema Reference** (`.skills/adr-author/references/SCHEMA_REFERENCE.md`) must reflect any enum or field changes.
+- **ADR template** ([`.skills/adr-author/assets/adr-template.yaml`](.skills/adr-author/assets/adr-template.yaml)) must stay in sync with the schema.
+- **Glossary** ([`docs/glossary.md`](docs/glossary.md) + [`.skills/adr-author/references/GLOSSARY.md`](.skills/adr-author/references/GLOSSARY.md)) and **Schema Reference** ([`.skills/adr-author/references/SCHEMA_REFERENCE.md`](.skills/adr-author/references/SCHEMA_REFERENCE.md)) must reflect any enum or field changes.
 
 ## Code of Conduct
 

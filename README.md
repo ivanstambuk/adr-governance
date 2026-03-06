@@ -25,7 +25,7 @@ Good **Architecture Knowledge Management (AKM)** treats decisions as first-class
 - **Validation tooling** — a Python validator that checks schema compliance, referential integrity, and semantic consistency on every PR
 - **Pre-built CI/CD pipelines** for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — ready to copy into your repo and enforce as a merge gate
 - **Approval identity enforcement** — CI verifies that the people listed in `approvals[]` have actually approved the pull request, creating an auditable link between ADR approvals and Git platform approvals
-- **Governance rules** — configurable single-ADR-per-PR enforcement, substantive vs. maintenance change classification, and admin overrides — all defined in a platform-agnostic `.adr-governance/config.yaml`
+- **Governance rules** — configurable single-ADR-per-PR enforcement, substantive vs. maintenance change classification, and admin overrides — all defined in a platform-agnostic [`.adr-governance/config.yaml`](.adr-governance/config.yaml)
 - **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
 - `llms.txt` — Machine-readable project summary for AI assistants ([llms.txt convention](https://llmstxt.org/))
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
@@ -117,7 +117,7 @@ Copy the pipeline file for your platform to the repository root:
 
 | Platform | Copy from | Copy to |
 |----------|-----------|---------|
-| **GitHub Actions** | Already at `.github/workflows/validate-adr.yml` | *(nothing to do)* |
+| **GitHub Actions** | Already at [`.github/workflows/validate-adr.yml`](.github/workflows/validate-adr.yml) | *(nothing to do)* |
 | Azure DevOps | `ci/azure-devops/azure-pipelines.yml` | `azure-pipelines.yml` |
 | GCP Cloud Build | `ci/gcp-cloud-build/cloudbuild.yaml` | `cloudbuild.yaml` |
 | AWS CodeBuild | `ci/aws-codebuild/buildspec.yml` | `buildspec.yml` |
@@ -143,7 +143,7 @@ Edit `.github/CODEOWNERS` to replace the placeholder team handles (`@org/archite
 
 ### 7. Copy the Agent Skill to your code repositories *(optional)*
 
-The `.skills/adr-author/` directory is a portable AI skill. Copy it to any repository where developers will be authoring ADRs — agents like Antigravity, Claude Code, and Copilot will pick it up automatically and guide ADR creation through interactive questioning.
+The [`.skills/adr-author/`](.skills/adr-author/) directory is a portable AI skill. Copy it to any repository where developers will be authoring ADRs — agents like Antigravity, Claude Code, and Copilot will pick it up automatically and guide ADR creation through interactive questioning.
 
 ### 8. Create your first real ADR
 
@@ -209,7 +209,7 @@ Each ADR YAML file contains these sections:
 
 Automated validation is the enforcement mechanism that makes the governance process real. Without it, the schema is a suggestion; with it, the schema is a contract.
 
-**GitHub Actions** is preconfigured — the workflow at `.github/workflows/validate-adr.yml` runs on every PR. You just need to [enable branch protection](docs/ci-setup.md#github-actions) to make it a merge gate.
+**GitHub Actions** is preconfigured — the workflow at [`.github/workflows/validate-adr.yml`](.github/workflows/validate-adr.yml) runs on every PR. You just need to [enable branch protection](docs/ci-setup.md#github-actions) to make it a merge gate.
 
 **Other platforms** have ready-to-use pipeline files in the `ci/` directory:
 
@@ -230,7 +230,7 @@ This is a fundamental shift from traditional architecture governance: instead of
 
 ### Agent Skill
 
-The `.skills/adr-author/` directory follows the [agentskills.io specification](https://agentskills.io/specification) and works with:
+The [`.skills/adr-author/`](.skills/adr-author/) directory follows the [agentskills.io specification](https://agentskills.io/specification) and works with:
 
 - **Google Antigravity** (VS Code)
 - **Claude Code** (terminal)
@@ -255,7 +255,7 @@ See **[`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md)** for platfor
 
 ### Pre-Review Quality Gate
 
-Before submitting an ADR for human review, run it through an AI semantic review using `scripts/review-adr.py`:
+Before submitting an ADR for human review, run it through an AI semantic review using [`scripts/review-adr.py`](scripts/review-adr.py):
 
 ```bash
 # Generate a Socratic review prompt (pipe to your LLM)
@@ -284,7 +284,7 @@ The AI outputs a verdict (**READY FOR REVIEW**, **NEEDS REWORK**, or **MAJOR GAP
 
 ## Stakeholder Summaries
 
-Not every stakeholder needs the full ADR. After a decision is made (or after an architecture review meeting), use `scripts/summarize-adr.py` to produce concise summaries for communication:
+Not every stakeholder needs the full ADR. After a decision is made (or after an architecture review meeting), use [`scripts/summarize-adr.py`](scripts/summarize-adr.py) to produce concise summaries for communication:
 
 ```bash
 # Email-length summary (~10–15 lines: decision, rationale, alternatives, tradeoffs, impact)
@@ -335,7 +335,7 @@ This works at two levels:
 Coding agents that have the ADL in context will naturally align with it. When you ask "implement the token endpoint," an agent with ADR-0001 in context will use DPoP, not mTLS — because the decision and its rationale are right there in the searchable bundle.
 
 **2. CI pipeline enforcement (pre-merge):**
-Use `scripts/extract-decisions.py` to extract active decisions and generate an LLM compliance prompt. Add a step in your code repository's CI pipeline:
+Use [`scripts/extract-decisions.py`](scripts/extract-decisions.py) to extract active decisions and generate an LLM compliance prompt. Add a step in your code repository's CI pipeline:
 
 ```yaml
 # Example: GitHub Actions step in your CODE repo (not this repo)
@@ -361,7 +361,7 @@ The key insight: **the ADL is structured YAML that any tool can parse**. The `ex
 
 ### Decision Extraction
 
-The `scripts/extract-decisions.py` script is the bridge between the ADL and downstream enforcement tooling:
+The [`scripts/extract-decisions.py`](scripts/extract-decisions.py) script is the bridge between the ADL and downstream enforcement tooling:
 
 ```bash
 # Markdown summary of all accepted decisions (for agent context)

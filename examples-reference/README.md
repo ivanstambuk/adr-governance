@@ -9,7 +9,7 @@ The ADRs in this directory are from a fictional organisation called **NovaTrust 
 - See how the schema fields work together (context → alternatives → decision → consequences → confirmation)
 - Study interconnected decisions (e.g., ADR-0002 references ADR-0001's DPoP decision)
 - Train AI agents on the expected quality level
-- Test validation tooling (`scripts/validate-adr.py`)
+- Test validation tooling ([`scripts/validate-adr.py`](../scripts/validate-adr.py))
 
 **Do not** treat these as your organization's decisions. When adopting this framework, you can keep this directory as a reference or delete it — your real ADRs go in `architecture-decision-log/`.
 

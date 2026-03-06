@@ -5,7 +5,7 @@
 > **Status:** Final — HISTORICAL REFERENCE
 > **Repository:** `adr-governance`
 
-> ⚠️ **This document was created during the initial process design phase and may reference features that were subsequently adopted or modified (e.g., `draft` status was adopted). Refer to the current `docs/adr-process.md` as the source of truth.**
+> ⚠️ **This document was created during the initial process design phase and may reference features that were subsequently adopted or modified (e.g., `draft` status was adopted). Refer to the current [`docs/adr-process.md`](../adr-process.md) as the source of truth.**
 
 ---
 

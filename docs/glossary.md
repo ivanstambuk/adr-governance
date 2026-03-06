@@ -5,7 +5,7 @@
 | Term | Definition |
 |------|-----------|
 | **ADR** | Architecture Decision Record. A structured document capturing a significant architectural decision, its context, alternatives considered, and consequences. |
-| **ADR Administrator** | A person listed in `.adr-governance/config.yaml` who is authorised to make maintenance (Tier 2) changes to any ADR without requiring re-approval from the original ADR approvers. See `adr-process.md` §3.4.4. |
+| **ADR Administrator** | A person listed in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) who is authorised to make maintenance (Tier 2) changes to any ADR without requiring re-approval from the original ADR approvers. See [`adr-process.md` §3.4.4](adr-process.md#344-adr-administrators). |
 | **Approval Identity Rule** | Governance rule stating that every person listed in an ADR's `approvals[]` must have actually approved the associated pull request. Enforced via the `identity` field and CI validation. See `adr-process.md` §3.4.1. |
 | **ASR** | Architecturally Significant Requirement. A requirement (functional or non-functional) that directly shapes or constrains the architecture. |
 | **Change Classification** | The categorisation of ADR changes as either *substantive* (Tier 1 — requires original approver re-approval) or *maintenance* (Tier 2 — no re-approval required). See `adr-process.md` §3.4.3. |

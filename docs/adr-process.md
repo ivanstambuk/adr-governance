@@ -237,7 +237,7 @@ This ensures each merge commit maps to exactly one architectural decision, keepi
 
 The CI script validates this automatically — if a PR modifies two ADRs that form a valid supersession chain (the symmetry is verified), the check passes. Any other multi-ADR PR is rejected.
 
-This rule is configured in `.adr-governance/config.yaml`:
+This rule is configured in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml):
 
 ```yaml
 governance:
@@ -286,7 +286,7 @@ audit_trail:
     details: "Administrative: corrected reviewer email address"
 ```
 
-The substantive fields list is configured in `.adr-governance/config.yaml` and can be customized per organisation.
+The substantive fields list is configured in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) and can be customized per organisation.
 
 ### 3.4.4 ADR Administrator
 
@@ -298,7 +298,7 @@ An **ADR Administrator** is a person authorised to make Tier 2 (maintenance) cha
 - Adding references or clarifying context
 - Updating review cadence dates
 
-Administrators are listed in `.adr-governance/config.yaml`:
+Administrators are listed in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml):
 
 ```yaml
 governance:
@@ -321,7 +321,7 @@ governance:
 
 > **Key point:** The admin role doesn't grant the ability to make substantive changes without approval. It only provides an explicit governance signal in CI output. Maintenance changes skip the identity check for *everyone* — the admin designation is primarily for auditability and clarity.
 
-> **Governance of the config itself:** Changes to `.adr-governance/config.yaml` should be subject to the same review process as any governance artefact. Add it to `CODEOWNERS` so that admin roster changes require approval from the architecture team.
+> **Governance of the config itself:** Changes to [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) should be subject to the same review process as any governance artefact. Add it to `CODEOWNERS` so that admin roster changes require approval from the architecture team.
 
 
 ### 3.5 Rejection
@@ -498,7 +498,7 @@ Each ADR records the schema version it was authored against in `adr.schema_versi
 | **Existing ADRs are NOT updated** when the schema evolves | If the schema adds new optional fields, old ADRs remain valid without modification. |
 | **Backward compatibility is required** | New schema versions MUST validate all existing ADRs without errors. Only add optional fields; never make previously-optional fields required. |
 | **Breaking changes require migration** | If a required field is added or renamed, provide a migration script and bump the major version. Update `schema_version` in affected ADRs. |
-| **Current version** | `1.0.0` (see `schemas/adr.schema.json`) |
+| **Current version** | `1.0.0` (see [`schemas/adr.schema.json`](../schemas/adr.schema.json)) |
 
 ### ADR document versioning (`adr.version`)
 

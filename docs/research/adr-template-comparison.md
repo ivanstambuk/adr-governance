@@ -5,7 +5,7 @@
 > **Status:** Final — HISTORICAL REFERENCE
 > **Repository:** `adr-governance`
 
-> ⚠️ **This document was created during the initial schema design phase and may reference features that were subsequently adopted, modified, or removed (e.g., `risk_assessment` was removed, `summary` and `rejection_rationale` were adopted). Refer to the current `schemas/adr.schema.json` as the source of truth.**
+> ⚠️ **This document was created during the initial schema design phase and may reference features that were subsequently adopted, modified, or removed (e.g., `risk_assessment` was removed, `summary` and `rejection_rationale` were adopted). Refer to the current [`schemas/adr.schema.json`](../../schemas/adr.schema.json) as the source of truth.**
 
 ---
 

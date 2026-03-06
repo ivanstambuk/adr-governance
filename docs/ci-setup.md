@@ -12,7 +12,7 @@ The validation pipeline runs three checks:
 | **Semantic consistency** | `validate-adr.py` (built-in) | ✅ Yes (errors) / ⚠️ No (warnings) |
 | **YAML formatting** | `yamllint` | ✅ Yes |
 
-**Schema compliance** verifies every ADR YAML file conforms to the ADR meta-model (`schemas/adr.schema.json`) — correct structure, types, required fields, and enum values.
+**Schema compliance** verifies every ADR YAML file conforms to the ADR meta-model ([`schemas/adr.schema.json`](../schemas/adr.schema.json)) — correct structure, types, required fields, and enum values.
 
 **Semantic consistency** goes beyond the schema to check logical invariants:
 - `decision.chosen_alternative` matches an entry in `alternatives[].name`
@@ -30,7 +30,7 @@ All platforms need:
 - **Python 3.11+** (the validator uses `datetime.fromisoformat` improvements and `X | Y` union syntax)
 - **pip packages:** `jsonschema`, `pyyaml` (for validation), `yamllint` (for linting)
 
-The validator itself is `scripts/validate-adr.py` and the schema is `schemas/adr.schema.json` — both are included in this repository.
+The validator itself is [`scripts/validate-adr.py`](../scripts/validate-adr.py) and the schema is [`schemas/adr.schema.json`](../schemas/adr.schema.json) — both are included in this repository.
 
 ---
 
