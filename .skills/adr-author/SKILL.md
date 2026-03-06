@@ -5,12 +5,14 @@ description: >
   using a governed YAML meta-model. Use when the user asks to create a new ADR,
   review an existing ADR, validate ADR YAML files against the schema, summarize
   decisions for stakeholders (email/chat), or needs guidance on the ADR governance
-  process. Covers the full lifecycle: drafting, review, approval, supersession,
-  and archival.
+  process. Supports two creation modes: interactive Socratic dialogue and
+  artifact-driven extraction from uploaded documents (meeting transcripts,
+  slides, design docs, images, etc.). Covers the full lifecycle: drafting,
+  review, approval, supersession, and archival.
 license: MIT
 metadata:
   author: "ivanstambuk"
-  version: "1.0"
+  version: "1.1"
 ---
 
 # ADR Author Skill
@@ -18,7 +20,8 @@ metadata:
 ## When to use this skill
 
 Use this skill when the user:
-- Wants to **create a new ADR** (architecture decision record)
+- Wants to **create a new ADR** (architecture decision record) — either through interactive questioning or from uploaded documents
+- Wants to **generate an ADR from artifacts** — meeting transcripts, PowerPoint slides, PDFs, design documents, images, or other reference materials
 - Wants to **review or audit an existing ADR** for completeness
 - Needs to **validate** an ADR YAML file against the schema
 - Wants to **summarize** an ADR for stakeholders (email, chat, digest)
@@ -36,11 +39,18 @@ Use this skill when the user:
 
 ## How to create a new ADR
 
-### Step 1: Determine the next ADR ID
+The skill supports two creation modes:
+
+- **Mode A: Socratic interview** (default) — interactive questioning
+- **Mode B: Artifact-driven** — extract from uploaded documents, then fill gaps
+
+### Mode A: Socratic interview (default)
+
+#### Step 1: Determine the next ADR ID
 
 Check existing ADR files in the `architecture-decision-log/` directory (or `examples-reference/` for reference). The ID format is `ADR-NNNN` (zero-padded 4 digits). Use the next sequential number.
 
-### Step 2: Gather context from the user
+#### Step 2: Gather context from the user
 
 Ask the user for:
 1. **Title**: What decision is being made? (10-200 characters)
@@ -53,7 +63,7 @@ Ask the user for:
 8. **Summary** (`adr.summary`): 2-4 sentence elevator pitch for stakeholder triage (max 500 chars). This is distinct from `context.summary`, which is the full narrative problem statement.
 9. **Confidence**: `low` | `medium` | `high` — how confident are we in this decision?
 
-### Step 3: Generate the ADR YAML
+#### Step 3: Generate the ADR YAML
 
 Use the template at `assets/adr-template.yaml` as the starting point. Fill in all required sections:
 
@@ -69,7 +79,7 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 - `dependencies` — internal and external dependency tracking
 - `audit_trail` — initial `created` event
 
-### Step 4: Validate
+#### Step 4: Validate
 
 Run the validation script to check the YAML against the JSON Schema:
 
@@ -77,13 +87,63 @@ Run the validation script to check the YAML against the JSON Schema:
 python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-title.yaml
 ```
 
-### Step 5: File naming convention
+#### Step 5: File naming convention
 
 ```
 architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml
 ```
 
 Example: `architecture-decision-log/ADR-0007-adopt-passkeys-for-workforce-mfa.yaml`
+
+### Mode B: Artifact-driven authoring
+
+Use this mode when the user provides **reference documents** instead of (or in addition to) answering questions interactively. Supported artifacts include:
+
+- **Text-based**: Meeting transcripts, meeting notes, design documents, RFC drafts, email threads, Slack/Teams chat exports, Markdown files, plain text
+- **Documents**: PDFs, Word documents (.docx), PowerPoint slides (.pptx)
+- **Visual**: Architecture diagrams, whiteboard photos, screenshots, decision matrices, any image the platform can process
+
+#### Step 1: Ingest and extract
+
+Read/parse every provided artifact:
+- For **text-based files**: extract decisions discussed, alternatives mentioned, arguments for/against, action items, participants (potential authors/decision owners), constraints, and drivers.
+- For **slide decks and documents**: extract key claims, data points, comparison tables, architectural options, risk assessments, and recommendations.
+- For **images**: describe what you see (architecture diagrams, whiteboard sketches, decision matrices) and extract visible text, labels, or structural information. If a diagram is identified, attempt to map it to a Mermaid representation for embedding in the ADR.
+
+#### Step 2: Present extraction summary
+
+Present a structured extraction summary organized by ADR schema section. For each section, show:
+- Whether information was found (✅ / ❌)
+- The source file/location
+- A brief summary of what was extracted
+
+Flag any **ambiguities or contradictions** across documents.
+
+#### Step 3: Targeted gap-filling
+
+For sections not covered by the artifacts (marked ❌) or flagged as ambiguous, ask targeted questions. Use the same batched numerical format (up to 5 per batch) as Mode A. Only ask about what's actually missing.
+
+#### Step 4: Coherence check
+
+Run the same coherence check as Mode A. Additionally:
+- Flag **cross-document contradictions** (e.g., transcript says one thing, slides say another)
+- Flag **stale information** (earlier thinking that may have been superseded)
+- Surface **implicit assumptions** that should be made explicit
+
+#### Step 5: Generate YAML
+
+Follow the same YAML generation process as Mode A. In the `audit_trail` entry, note the source artifacts:
+```yaml
+audit_trail:
+  - event: "created"
+    date: "2026-03-06"
+    author: "AI Assistant"
+    description: "ADR generated from uploaded artifacts: [list filenames]. Gap-filling interview conducted for [list sections]."
+```
+
+#### Step 6: Validate and save
+
+Same as Mode A Steps 4–5.
 
 ## How to review an existing ADR
 

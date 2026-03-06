@@ -1,6 +1,11 @@
 # AI-Assisted Authoring & Pre-Review
 
-ADRs are not meant to be filled in manually like a form. They are authored through **Socratic dialogue with an AI assistant** — the AI asks probing questions, challenges weak rationale, surfaces missing edge cases, and iteratively refines the document until it is clear, complete, and internally consistent.
+ADRs are not meant to be filled in manually like a form. They are authored through **AI-assisted dialogue** — the AI asks probing questions, challenges weak rationale, surfaces missing edge cases, and iteratively refines the document until it is clear, complete, and internally consistent.
+
+The framework supports **two creation modes**:
+
+- **Socratic interview** (default) — The AI walks you through every section via interactive questioning. Best when starting from scratch or when the decision is still forming.
+- **Artifact-driven** — You upload existing materials (meeting transcripts, slides, design docs, images, etc.) and the AI extracts an ADR from them, asking targeted questions only for what's missing. Best when the decision has already been discussed and context exists in documents.
 
 This is a fundamental shift from traditional architecture governance: instead of the proposer writing a draft in isolation and then scheduling a meeting to "walk through" it (where reviewers discover ambiguities in real time and the meeting devolves into clarification rather than decision-making), the AI assistant resolves those ambiguities *before the first human reviewer ever sees the document*.
 
@@ -19,10 +24,24 @@ The skill guides AI assistants to author ADRs through interactive questioning �
 
 ### What the skill does
 
-1. **Author new ADRs** — The AI walks you through every section via Socratic dialogue. It doesn't accept vague answers — it pushes back on ambiguous terms, asks for measurable constraints, and demands that alternatives are genuinely competitive
-2. **Review existing ADRs** — Structured semantic review: clarity, completeness, logical consistency, assumption risks, and cross-reference consistency with other decisions
-3. **Supersede ADRs** — Guides the creation of a replacement ADR while maintaining the supersession chain (`lifecycle.supersedes` / `lifecycle.superseded_by`)
-4. **Validate YAML** — Checks conformance against the JSON Schema and flags semantic issues
+1. **Author new ADRs (Socratic mode)** — The AI walks you through every section via Socratic dialogue. It doesn't accept vague answers — it pushes back on ambiguous terms, asks for measurable constraints, and demands that alternatives are genuinely competitive
+2. **Author new ADRs (artifact-driven mode)** — Upload meeting transcripts, PowerPoint slides, PDFs, design documents, architecture diagrams, images, email threads, or other reference materials. The AI extracts relevant information, presents a structured summary mapped to ADR schema sections, identifies gaps, and asks targeted questions only for what's missing
+3. **Review existing ADRs** — Structured semantic review: clarity, completeness, logical consistency, assumption risks, and cross-reference consistency with other decisions
+4. **Supersede ADRs** — Guides the creation of a replacement ADR while maintaining the supersession chain (`lifecycle.supersedes` / `lifecycle.superseded_by`)
+5. **Validate YAML** — Checks conformance against the JSON Schema and flags semantic issues
+
+### Artifact-driven mode — supported file types
+
+The AI can process any file type supported by the platform:
+
+| Category | Formats |
+|---|---|
+| **Text** | Meeting transcripts, notes, Markdown, plain text, chat exports |
+| **Documents** | PDF, Word (.docx), PowerPoint (.pptx) |
+| **Visual** | Architecture diagrams, whiteboard photos, screenshots, decision matrices, any image |
+| **Structured** | RFC drafts, design documents, email threads, Slack/Teams exports |
+
+The AI reads all uploaded files, maps extracted information to ADR schema sections, flags contradictions across documents, and asks only about what's missing.
 
 ### Copying the skill to other repositories
 
@@ -45,7 +64,11 @@ Don't have access to a coding agent? The Repomix bundle (`adr-governance-bundle.
 - **Google Gemini** (1M+ token context)
 - **Microsoft Copilot** (web)
 
-The AI will be able to author new ADRs through Socratic dialogue, query the decision log with citations, review ADRs for completeness, summarize decisions for stakeholders, and validate YAML against the schema — all from a single uploaded file.
+The AI will be able to author new ADRs through Socratic dialogue or from uploaded documents, query the decision log with citations, review ADRs for completeness, summarize decisions for stakeholders, and validate YAML against the schema — all from a single uploaded file.
+
+### Artifact-driven mode in web chat
+
+To use artifact-driven mode, upload the `adr-governance-bundle.md` **plus** your reference documents (transcripts, slides, PDFs, images, etc.) in the same prompt. The AI will detect the additional files and switch to extraction mode automatically. See the starter prompts in the quickstart guide for copy-paste-ready examples.
 
 See **[`docs/web-chat-quickstart.md`](web-chat-quickstart.md)** for platform-specific starter prompts and tips.
 

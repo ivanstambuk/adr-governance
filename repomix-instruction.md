@@ -176,6 +176,90 @@ The context section can be arbitrarily large — diagrams, extended narratives, 
 - **Challenge strawman alternatives.** If one alternative has only cons and no pros, push back — every real option has *some* advantages.
 - **Challenge lopsided comparisons.** If the "obvious" choice has 5 pros and 0 cons, probe for hidden costs.
 
+#### Artifact-driven mode (alternative to Socratic interview)
+
+If the user uploads **additional files alongside this bundle** — such as meeting transcripts, PowerPoint slides, PDFs, Word documents, design documents, RFC drafts, architecture diagrams, images, email threads, Slack/Teams exports, or any other reference material — switch to **artifact-driven mode** instead of the standard Socratic interview.
+
+**How to detect this mode:** The user uploads one or more files *in addition to* the governance bundle, and/or says something like "create an ADR from these", "here are my meeting notes", "I have a transcript", or "generate an ADR from this". If unsure, ask: *"I see you've uploaded additional files. Would you like me to extract an ADR from these documents, or would you prefer the interactive interview?"*
+
+**Step 1 — Ingest and extract:**
+- Read/parse every uploaded artifact. Support all file types the platform can process: text files, Markdown, PDFs, Word documents (.docx), PowerPoint slides (.pptx), images (screenshots, whiteboard photos, architecture diagrams), meeting transcripts, chat exports, and any other readable format.
+- For **images**: describe what you see (architecture diagrams, whiteboard sketches, decision matrices) and extract any visible text, labels, or structural information. If an image shows a diagram, attempt to map it to a Mermaid representation for embedding in the ADR.
+- For **meeting transcripts and notes**: identify decisions discussed, alternatives mentioned, arguments for/against, action items, participants (potential authors/decision owners), and any stated constraints or drivers.
+- For **slide decks and documents**: extract key claims, data points, comparison tables, architectural options, risk assessments, and recommendations.
+
+**Step 2 — Map to ADR schema sections:**
+
+Present a **structured extraction summary** to the user, organized by ADR schema section. For each section, show what you found and where you found it:
+
+> **📋 Extraction Summary**
+>
+> I've analyzed your uploaded documents. Here's what I was able to extract, mapped to the ADR schema:
+>
+> | ADR Section | Extracted? | Source | Summary |
+> |---|---|---|---|
+> | **Title** | ✅ / ❌ | *filename, page/timestamp* | *extracted or "not found"* |
+> | **Decision type** | ✅ / ❌ | ... | ... |
+> | **Priority** | ✅ / ❌ | ... | ... |
+> | **Context / Problem** | ✅ / ❌ | ... | ... |
+> | **Business drivers** | ✅ / ❌ | ... | ... |
+> | **Technical drivers** | ✅ / ❌ | ... | ... |
+> | **Constraints** | ✅ / ❌ | ... | ... |
+> | **Assumptions** | ✅ / ❌ | ... | ... |
+> | **Decision owner** | ✅ / ❌ | ... | ... |
+> | **Alternatives** | ✅ / ❌ | ... | *list names found* |
+> | **Recommendation** | ✅ / ❌ | ... | ... |
+> | **Rationale** | ✅ / ❌ | ... | ... |
+> | **Tradeoffs** | ✅ / ❌ | ... | ... |
+> | **Consequences** | ✅ / ❌ | ... | ... |
+> | **Verification** | ✅ / ❌ | ... | ... |
+> | **Authors** | ✅ / ❌ | ... | ... |
+> | **Tags** | ✅ / ❌ | ... | ... |
+>
+> **Gaps identified:** [list sections marked ❌]
+
+Also flag any **ambiguities or contradictions** found across documents (e.g., "The transcript mentions preferring Option A but the slide deck recommends Option B").
+
+**Step 3 — Targeted gap-filling:**
+
+For sections marked ❌ (not found) or flagged as ambiguous, ask **targeted questions in batched numerical format** (up to 5 per batch). Only ask about what's actually missing — do NOT re-ask about information already extracted from the artifacts.
+
+Example:
+> I was able to extract most of the ADR from your documents, but I need your input on a few gaps:
+>
+> 1. **Decision owner**: The transcript mentions Sarah Chen and James Park as key participants — who is the single accountable decision owner?
+> 2. **Priority**: No explicit priority was stated. Given the business context, would you classify this as:
+>    - low
+>    - medium
+>    - high
+>    - critical
+> 3. **Tradeoffs**: The slides list pros and cons, but don't explicitly state what you're giving up by choosing Option A. What are the key tradeoffs?
+> 4. ...
+
+Continue with follow-up batches if needed, following the same batched numerical format as the standard Socratic mode.
+
+**Step 4 — Coherence check:**
+
+After gap-filling, run the same coherence check as the standard Socratic mode. Pay special attention to:
+- **Cross-document contradictions**: Information from different artifacts may conflict. Flag these explicitly.
+- **Stale information**: Meeting notes may reflect earlier thinking that was superseded by later discussions. Ask the user to confirm the final position.
+- **Implicit assumptions**: Artifacts often contain unstated assumptions that should be made explicit in the ADR.
+
+**Step 5 — Generate YAML:**
+
+Follow the same YAML generation process as the standard Socratic mode. In the `audit_trail` entry, note the source artifacts:
+```yaml
+audit_trail:
+  - event: "created"
+    date: "2026-03-06"
+    author: "AI Assistant"
+    description: "ADR generated from uploaded artifacts: [list filenames]. Gap-filling interview conducted for [list sections]."
+```
+
+**Step 6 — Search-Before-Ask still applies:**
+
+Even in artifact-driven mode, search this bundle for existing ADRs, glossary terms, and documentation related to the extracted topic. Reference relevant findings in the extraction summary (e.g., "I see ADR-0003 covers a related authentication decision — the new ADR should reference it as a dependency").
+
 ### 2. Query the Architecture Decision Log (ADL)
 
 When the user asks a question about architectural decisions, **search the ADR files in this bundle** and provide a well-sourced answer.

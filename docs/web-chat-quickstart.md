@@ -41,7 +41,7 @@ If your organization's decision log has additional ADRs beyond the examples, mak
 
 ## Starter Prompts
 
-### Creating a New ADR
+### Creating a New ADR (Interactive)
 
 #### ChatGPT
 
@@ -92,6 +92,79 @@ Then help me create a new ADR by asking me questions about my architectural deci
 following the step-by-step process described in those instructions.
 
 My decision: [describe your decision]
+```
+
+---
+
+### Creating an ADR from Documents (Artifact-Driven)
+
+> **Use this when you have existing materials** — meeting transcripts, PowerPoint slides, design documents, PDFs, images, architecture diagrams, email threads, or any other reference materials — and want the AI to extract an ADR from them automatically.
+
+Upload the `adr-governance-bundle.md` **plus** your artifact files, then paste one of these prompts:
+
+#### ChatGPT
+
+```
+I've uploaded the adr-governance bundle and several additional documents.
+The bundle contains the ADR governance framework with instructions under "# Instruction".
+
+Please read those instructions (specifically the "Artifact-driven mode" section), then:
+1. Read and analyze ALL the other uploaded files
+2. Extract information relevant to an Architecture Decision Record
+3. Show me a structured extraction summary — what you found mapped to each ADR section
+4. Ask me targeted questions only for what's missing
+5. Generate valid ADR YAML at the end
+
+The uploaded documents are: [briefly describe what you uploaded, e.g., "meeting transcript
+from our architecture review and the vendor comparison slides"]
+```
+
+#### Claude.ai
+
+```
+I've attached the adr-governance framework bundle along with additional documents.
+The bundle has embedded instructions — search for "Artifact-driven mode" in the
+"# Instruction" section near the end.
+
+Please follow the artifact-driven workflow:
+- Analyze all the attached documents
+- Present an extraction summary showing what ADR sections you could fill from my documents
+- Ask me targeted questions only for gaps
+- Generate the complete ADR YAML
+
+The additional files are: [briefly describe what you uploaded]
+```
+
+#### Google Gemini
+
+```
+I've uploaded the ADR governance framework bundle plus additional reference documents.
+Please read the embedded instructions (look for "# Instruction" at the end, specifically
+the "Artifact-driven mode" section).
+
+Analyze all uploaded documents and extract an Architecture Decision Record from them.
+Show me what you found mapped to each ADR section, flag any gaps or contradictions,
+ask me targeted questions for missing information, then generate valid YAML.
+
+Search the bundle for "adr-template.yaml" for the template and "adr.schema.json"
+for the schema.
+
+The documents I uploaded are: [briefly describe what you uploaded]
+```
+
+#### Microsoft Copilot
+
+```
+I've uploaded an ADR governance framework file and additional documents. The framework
+file has instructions under "# Instruction" at the end — please read the
+"Artifact-driven mode" section.
+
+Analyze my additional documents and extract an Architecture Decision Record:
+1. Show me what information you found for each ADR section
+2. Ask only about what's missing
+3. Generate the ADR YAML
+
+My documents are: [briefly describe what you uploaded]
 ```
 
 ---

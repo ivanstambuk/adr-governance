@@ -79,14 +79,17 @@ See [`docs/adr-process.md`](docs/adr-process.md) for the full normative governan
 
 ![AI-Native ADR Authoring — From Intent to Governed Decision](visuals/03-ai-socratic-authoring.jpg)
 
-ADRs are not meant to be filled in manually like a form. They are authored through **Socratic dialogue with an AI assistant** — the AI asks probing questions, challenges weak rationale, surfaces missing edge cases, and iteratively refines the document until it is clear, complete, and internally consistent.
+ADRs are not meant to be filled in manually like a form. The framework supports **two creation modes**:
+
+- **Socratic interview** (default) — The AI walks you through every section via interactive questioning, probing for gaps, challenging weak rationale, and surfacing missing edge cases. Best when starting from scratch.
+- **Artifact-driven** — Upload existing materials (meeting transcripts, PowerPoint slides, PDFs, design documents, architecture diagrams, images, email threads, etc.) and the AI extracts an ADR from them automatically, asking targeted questions only for what's missing. Best when the decision has already been discussed and context exists in documents.
 
 This is a fundamental shift: instead of the proposer writing a draft in isolation and scheduling a meeting to "walk through" it (where reviewers discover ambiguities in real time), the AI assistant resolves those ambiguities *before the first human reviewer ever sees the document*.
 
-The framework provides two paths:
+The framework provides two paths to both modes:
 
-- **Agent Skill** ([`.skills/adr-author/`](.skills/adr-author/)) — works with Google Antigravity, Claude Code, VS Code Copilot, and any [agentskills.io](https://agentskills.io)-conforming agent. The skill knows the full meta-model and governance lifecycle, and guides ADR creation through interactive questioning — probing for ASRs, demanding balanced alternatives, and verifying that rationale connects to stated drivers.
-- **Web Chat** — upload the Repomix bundle (`adr-governance-bundle.md`) to any web-based AI chat (ChatGPT, Claude.ai, Gemini, Copilot) for the same authoring capability without a coding agent. See [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md).
+- **Agent Skill** ([`.skills/adr-author/`](.skills/adr-author/)) — works with Google Antigravity, Claude Code, VS Code Copilot, and any [agentskills.io](https://agentskills.io)-conforming agent. The skill knows the full meta-model and governance lifecycle, and supports both interactive and artifact-driven authoring.
+- **Web Chat** — upload the Repomix bundle (`adr-governance-bundle.md`) to any web-based AI chat (ChatGPT, Claude.ai, Gemini, Copilot). For artifact-driven mode, upload the bundle plus your documents together. See [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md).
 
 A **pre-review quality gate** ([`scripts/review-adr.py`](scripts/review-adr.py)) generates a structured AI review prompt that covers semantic clarity, completeness, logical consistency, assumption risks, and cross-reference consistency. The result: human reviewers receive ADRs that are already coherent — review meetings become strategic discussions about the *decision*, not debugging sessions about what the proposer meant.
 
@@ -223,6 +226,14 @@ Use an AI assistant with the `adr-author` skill — it will guide you through ev
 ```
 "I need to create a new ADR for [your decision]. Guide me through it."
 ```
+
+Alternatively, if you have existing materials (meeting transcripts, slides, design documents), provide them to the AI and ask it to extract an ADR:
+
+```
+"Here are my meeting notes and architecture slides. Generate an ADR from these documents."
+```
+
+The AI will analyze your documents, present a structured extraction summary, and ask targeted questions only for what's missing.
 
 Or copy the template manually:
 
