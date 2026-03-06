@@ -425,8 +425,8 @@ Our custom YAML-based meta-model with JSON Schema (Draft 2020-12) validation.
 | `reviewers` | Optional | People who reviewed |
 | `approvals` | Optional | Formal approvals with timestamps and signature IDs |
 | `context` | ✅ | `summary`, `business_drivers`, `technical_drivers`, `constraints`, `assumptions` |
-| `requirements` | Optional | `functional` (id + description), `non_functional` (id + description) |
-| `alternatives` | ✅ | ≥2 options, each with `name`, `summary`, `pros`, `cons`, `estimated_cost`, `risk` |
+| `architecturally_significant_requirements` | Optional | `functional` (id + description), `non_functional` (id + description) |
+| `alternatives` | ✅ | ≥2 options, each with `name`, `description`, `pros`, `cons`, `estimated_cost`, `risk` |
 | `decision` | ✅ | `chosen_alternative`, `rationale`, `tradeoffs`, `decision_date` |
 | `consequences` | ✅ | `positive`, `negative` |
 | `confirmation` | Optional | `description` (free text), `artifacts` (list of verification artifact IDs) |
@@ -580,7 +580,9 @@ Gareth Morgan is the only template that asks: *"How will compliance with this de
 
 ### 6.5 No Template Has Structured Impact Assessment — Except EdgeX
 
-EdgeX Foundry uniquely asks authors to enumerate: services/modules impacted, model/DTO changes, API impact, configuration changes, and devops impact. This is a lightweight **change impact analysis** that no other template captures. We don't explicitly ask "what will this decision break or change?" — this would be a potential future addition under `consequences` or as a standalone `impact_assessment` section.
+EdgeX Foundry uniquely asks authors to enumerate: services/modules impacted, model/DTO changes, API impact, configuration changes, and devops impact. This is a lightweight **change impact analysis** that no other template captures.
+
+> **Resolution (2026-03-06):** After detailed analysis, we decided **not** to add `impact_assessment`. EdgeX's context (change proposals for a specific, well-defined codebase with known services and DTOs) differs from ours (architectural pattern decisions where impacted systems depend on the adopting organization). In our ADRs, impact information is already captured across `dependencies.internal` (what systems are involved), `consequences.negative` (operational costs), and `decision.tradeoffs` (what teams must adapt). Adding a dedicated section would create overlap and author confusion about field boundaries. Teams needing EdgeX-style structured impact can use `x-impact-assessment` via extension fields.
 
 ### 6.6 No Template Captures Rationale for Rejected Alternatives — Except Merson and DRF
 
@@ -592,9 +594,9 @@ Merson's template explicitly includes reasoning for significant alternatives tha
 |---------|--------|-------|----------|
 | **`confirmation`** | MADR 4.0, NHS Wales | "How will we verify this decision was implemented correctly?" — links decision to validation. NHS Wales extends this with ownership and enforcement questions. | ✅ **Add** |
 | **`governance_enforcement`** | Gareth Morgan | "How will compliance be monitored? Who is accountable?" — bridges decision to operational enforcement. | ⚠️ **Consider** |
-| **`impact_assessment`** | EdgeX Foundry | Structured list of systems/APIs/configurations impacted. Lightweight change impact analysis. | ⚠️ **Consider** |
+| ~~**`impact_assessment`**~~ | ~~EdgeX Foundry~~ | ~~Structured list of systems/APIs/configurations impacted.~~ | ❌ **Skip** — impact is already captured across `dependencies`, `consequences.negative`, and `decision.tradeoffs`. EdgeX's codebase-specific context doesn't apply to our architectural pattern decisions. Use `x-impact-assessment` if needed. |
 | **`rationale_for_rejected`** | Merson, DRF | Explicit reasoning for why significant alternatives were *not* chosen. | ✅ **Add** |
-| **`summary`** | NHS Wales | Executive elevator pitch (2–4 sentences). Helps stakeholders triage ADRs without reading the full document. | ⚠️ **Consider** |
+| ~~**`summary`**~~ | ~~NHS Wales~~ | ~~Executive elevator pitch (2–4 sentences).~~ | ✅ **Done** — added as `adr.summary` |
 
 ---
 
@@ -609,7 +611,7 @@ Our `adr-governance` schema is the most comprehensive ADR meta-model in the fiel
 3. **`audit_trail`** — append-only event log. Satisfies auditability requirements.
 4. **`lifecycle`** — review cadence, supersession chain, and archival. Prevents decision rot.
 5. **`schema_version`** — pins each ADR to a specific schema version. Future-proofs the format.
-6. **`requirements`** — embedded functional and non-functional requirements with IDs.
+6. **`architecturally_significant_requirements`** — embedded functional and non-functional ASRs with IDs.
 7. **`dependencies`** — internal and external dependency tracking.
 
 These are enterprise-grade extensions that should be preserved and documented as the **"Enterprise ADR extensions"** of this project.
@@ -621,7 +623,7 @@ These are enterprise-grade extensions that should be preserved and documented as
 | ~~**`extension_fields` (x-*)**~~ | smadr | ✅ **Done** | Added via `patternProperties` at top level. Any `x-` prefixed field is accepted. |
 | ~~**`summary`**~~ | NHS Wales | ✅ **Done** | Added as optional string field (max 500 chars) in `adr` metadata. |
 | ~~**`rationale_for_rejected`**~~ | Merson, DRF | ✅ **Done** | Added as optional `rejection_rationale` field on each alternative. |
-| **`impact_assessment`** | EdgeX Foundry | ⚠️ **Consider** | Structured list of impacted systems, APIs, configurations. Useful for change-heavy decisions. Could be added under `consequences` or as a standalone section. |
+| ~~**`impact_assessment`**~~ | ~~EdgeX Foundry~~ | ❌ **Skip** | Impact is already captured across `dependencies.internal` (systems involved), `consequences.negative` (operational costs), and `decision.tradeoffs` (adaptation required). EdgeX's template targets change proposals for a specific codebase with enumerable services/DTOs — our ADRs describe architectural patterns where impacted systems vary by adopter. Adding a dedicated section would create overlap. Teams needing this can use `x-impact-assessment`. |
 | **`related_principles`** | Tyree–Akerman | ⚠️ **Consider** | Links decisions to enterprise architecture principles. Valuable for organizations with a formal principles registry (e.g., TOGAF). Add if/when we have a principles registry. |
 | **`risk_per_option` (3D)** | smadr | ❌ **Skip** | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with the overall `risk_assessment` section provides equivalent coverage. |
 | **`neutral_consequences`** | MADR 4.0 | ❌ **Skip** | Neutral consequences are rarely informative. Our positive/negative split is sufficient. |
@@ -707,7 +709,7 @@ The expanded survey surfaced several **features worth adding**:
 | ~~🟢 High~~ | ~~`summary`~~ | ~~NHS Wales~~ | ✅ Done — added to `adr` metadata |
 | ~~🟢 High~~ | ~~`extension_fields` (x-*)~~ | ~~smadr~~ | ✅ Done — added via `patternProperties` |
 | ~~🟢 High~~ | ~~`rationale_for_rejected`~~ | ~~Merson, DRF~~ | ✅ Done — added as per-alternative field |
-| 🟡 Medium | `impact_assessment` | EdgeX Foundry | Consider adding under `consequences` |
+| ~~🟡 Medium~~ | ~~`impact_assessment`~~ | ~~EdgeX Foundry~~ | ❌ Skip — impact captured across `dependencies`, `consequences.negative`, `decision.tradeoffs`. Use `x-impact-assessment` if needed. |
 | ⚪ Low | `context_validation` | DRF | Watch for DRF maturity |
 
 The tradeoff remains **weight**: a full `adr-governance` ADR is significantly heavier than a Nygard or MADR record. This is acceptable for our use case (enterprise IAM decisions in regulated financial services) but would be overkill for a startup documenting database choices.
