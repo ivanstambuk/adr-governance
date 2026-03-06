@@ -1,5 +1,7 @@
 # adr-governance
 
+![ADR Governance — Schema-governed, AI-native Architecture Decision Records](visuals/01-hero-overview.jpg)
+
 A schema-governed, AI-native **Architecture Decision Record (ADR)** framework for teams that want their architectural decisions to be **structured**, **traceable**, and **asynchronous** — not debated in meetings, forgotten in Slack threads, or buried in wiki pages nobody reads.
 
 ## The Problem
@@ -58,29 +60,47 @@ The ADL is an **append-only decision log**. ADRs are never deleted — they tran
 
 Every ADR follows a governed state machine. All transitions happen through pull requests.
 
-```mermaid
-stateDiagram-v2
-    [*] --> draft
-
-    draft --> proposed : Open PR
-
-    proposed --> proposed : Rework (changes requested)
-    proposed --> accepted : Approved → PR merged
-    proposed --> rejected : Rejected → PR merged
-    proposed --> deferred : Postponed → PR closed
-
-    deferred --> proposed : Reopened
-
-    accepted --> superseded : Replaced by new ADR
-    accepted --> deprecated : No longer recommended
-
-    rejected --> [*]
-    deferred --> [*]
-    superseded --> [*]
-    deprecated --> [*]
-```
+![ADR Lifecycle — Governed State Machine](visuals/02-lifecycle-state-machine.jpg)
 
 See [`docs/adr-process.md`](docs/adr-process.md) for the full normative governance process, including review checklists, the Architectural Significance Test, branch protection rules, and CODEOWNERS configuration.
+
+## AI-Assisted Authoring & Pre-Review
+
+![AI-Native ADR Authoring — From Intent to Governed Decision](visuals/03-ai-socratic-authoring.jpg)
+
+ADRs are not meant to be filled in manually like a form. They are authored through **Socratic dialogue with an AI assistant** — the AI asks probing questions, challenges weak rationale, surfaces missing edge cases, and iteratively refines the document until it is clear, complete, and internally consistent.
+
+This is a fundamental shift: instead of the proposer writing a draft in isolation and scheduling a meeting to "walk through" it (where reviewers discover ambiguities in real time), the AI assistant resolves those ambiguities *before the first human reviewer ever sees the document*.
+
+The framework provides two paths:
+
+- **Agent Skill** ([`.skills/adr-author/`](.skills/adr-author/)) — works with Google Antigravity, Claude Code, VS Code Copilot, and any [agentskills.io](https://agentskills.io)-conforming agent. The skill knows the full meta-model and governance lifecycle, and guides ADR creation through interactive questioning — probing for ASRs, demanding balanced alternatives, and verifying that rationale connects to stated drivers.
+- **Web Chat** — upload the Repomix bundle (`adr-governance-bundle.md`) to any web-based AI chat (ChatGPT, Claude.ai, Gemini, Copilot) for the same authoring capability without a coding agent. See [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md).
+
+A **pre-review quality gate** ([`scripts/review-adr.py`](scripts/review-adr.py)) generates a structured AI review prompt that covers semantic clarity, completeness, logical consistency, assumption risks, and cross-reference consistency. The result: human reviewers receive ADRs that are already coherent — review meetings become strategic discussions about the *decision*, not debugging sessions about what the proposer meant.
+
+See **[`docs/ai-authoring.md`](docs/ai-authoring.md)** for agent skill setup, web chat quickstart, pre-review usage, and stakeholder summaries.
+
+
+## ADL as Source of Truth
+
+![ADL Enforcement Loop — Closing the Gap Between Decisions and Code](visuals/04-adl-enforcement-loop.jpg)
+
+The Architecture Decision Log isn't just documentation — it's a **machine-readable specification** that AI agents and CI pipelines can enforce against your codebase. This closes the gap between *deciding* and *doing*.
+
+- **Spec-Driven Development (SDD)** — AI coding agents can use the bundled ADL as a single source of truth during code generation. When the ADL says "use DPoP for sender-constrained tokens," the agent searches the bundled decision log, finds the decision with its full rationale and constraints, and generates code that aligns with it — without the developer having to explain the context in every prompt.
+- **Semantic guardrails in CI** — the ADL can serve as a pre-merge guardrail in your *code* repositories. A CI step extracts active decisions, generates an LLM compliance prompt with the code diff, and flags architectural drift before merge.
+- **Cross-repository enforcement** — the ADL repo and the code repo don't need to be the same. Point your agent at the ADL bundle from any repository. The decisions are self-contained.
+
+| Scenario | Without ADL enforcement | With ADL enforcement |
+|----------|------------------------|---------------------|
+| New developer joins | Reads (or doesn't read) wiki docs | Agent has full ADL context; generates compliant code from day one |
+| PR introduces mTLS | Merges — nobody notices the ADR says DPoP | CI flags the drift; reviewer is alerted |
+| Architect proposes supersession | Searches Slack history for context | Searches the ADL bundle; full decision chain is traceable |
+| Annual audit | Scramble to reconstruct decision history | ADL is the audit trail; every decision is timestamped, attributed, and version-controlled |
+| LLM generates code | Guesses at patterns based on training data | Searches the ADL and follows your organization's actual decisions |
+
+See **[`docs/decision-enforcement.md`](docs/decision-enforcement.md)** for SDD workflow, CI pipeline examples, decision extraction CLI, and Repomix bundle details.
 
 ## Quick Start — Adopting for Your Organization
 
@@ -223,7 +243,6 @@ The CI pipeline validates schema compliance and lints the YAML. Reviewers are au
 
 </details>
 
-
 ## ADR Meta-Model
 
 Each ADR YAML file captures a single **architecturally significant** decision — not every design choice, but the ones that shape the system's structure, quality attributes, and long-term constraints. Each file contains these sections:
@@ -264,40 +283,6 @@ Automated validation is the enforcement mechanism that makes the governance proc
 | GitLab CI | [`ci/gitlab-ci/.gitlab-ci.yml`](ci/gitlab-ci/.gitlab-ci.yml) | `.gitlab-ci.yml` (repo root) |
 
 **Step-by-step setup instructions**, platform-specific enforcement configuration, troubleshooting, and **LLM-ready prompts** (copy-paste into any AI assistant to have it set up CI for you) are in **[`docs/ci-setup.md`](docs/ci-setup.md)**.
-
-## AI-Assisted Authoring & Pre-Review
-
-ADRs are not meant to be filled in manually like a form. They are authored through **Socratic dialogue with an AI assistant** — the AI asks probing questions, challenges weak rationale, surfaces missing edge cases, and iteratively refines the document until it is clear, complete, and internally consistent.
-
-This is a fundamental shift: instead of the proposer writing a draft in isolation and scheduling a meeting to "walk through" it (where reviewers discover ambiguities in real time), the AI assistant resolves those ambiguities *before the first human reviewer ever sees the document*.
-
-The framework provides two paths:
-
-- **Agent Skill** ([`.skills/adr-author/`](.skills/adr-author/)) — works with Google Antigravity, Claude Code, VS Code Copilot, and any [agentskills.io](https://agentskills.io)-conforming agent. The skill knows the full meta-model and governance lifecycle, and guides ADR creation through interactive questioning — probing for ASRs, demanding balanced alternatives, and verifying that rationale connects to stated drivers.
-- **Web Chat** — upload the Repomix bundle (`adr-governance-bundle.md`) to any web-based AI chat (ChatGPT, Claude.ai, Gemini, Copilot) for the same authoring capability without a coding agent. See [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md).
-
-A **pre-review quality gate** ([`scripts/review-adr.py`](scripts/review-adr.py)) generates a structured AI review prompt that covers semantic clarity, completeness, logical consistency, assumption risks, and cross-reference consistency. The result: human reviewers receive ADRs that are already coherent — review meetings become strategic discussions about the *decision*, not debugging sessions about what the proposer meant.
-
-See **[`docs/ai-authoring.md`](docs/ai-authoring.md)** for agent skill setup, web chat quickstart, pre-review usage, and stakeholder summaries.
-
-
-## ADL as Source of Truth
-
-The Architecture Decision Log isn't just documentation — it's a **machine-readable specification** that AI agents and CI pipelines can enforce against your codebase. This closes the gap between *deciding* and *doing*.
-
-- **Spec-Driven Development (SDD)** — AI coding agents can use the bundled ADL as a single source of truth during code generation. When the ADL says "use DPoP for sender-constrained tokens," the agent searches the bundled decision log, finds the decision with its full rationale and constraints, and generates code that aligns with it — without the developer having to explain the context in every prompt.
-- **Semantic guardrails in CI** — the ADL can serve as a pre-merge guardrail in your *code* repositories. A CI step extracts active decisions, generates an LLM compliance prompt with the code diff, and flags architectural drift before merge.
-- **Cross-repository enforcement** — the ADL repo and the code repo don't need to be the same. Point your agent at the ADL bundle from any repository. The decisions are self-contained.
-
-| Scenario | Without ADL enforcement | With ADL enforcement |
-|----------|------------------------|---------------------|
-| New developer joins | Reads (or doesn't read) wiki docs | Agent has full ADL context; generates compliant code from day one |
-| PR introduces mTLS | Merges — nobody notices the ADR says DPoP | CI flags the drift; reviewer is alerted |
-| Architect proposes supersession | Searches Slack history for context | Searches the ADL bundle; full decision chain is traceable |
-| Annual audit | Scramble to reconstruct decision history | ADL is the audit trail; every decision is timestamped, attributed, and version-controlled |
-| LLM generates code | Guesses at patterns based on training data | Searches the ADL and follows your organization's actual decisions |
-
-See **[`docs/decision-enforcement.md`](docs/decision-enforcement.md)** for SDD workflow, CI pipeline examples, decision extraction CLI, and Repomix bundle details.
 
 ## Rendered Markdown (Human-Friendly Views)
 
