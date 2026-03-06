@@ -26,6 +26,7 @@ trigger:
       - examples-reference/*
       - schemas/*
       - scripts/validate-adr.py
+      - scripts/verify-approvals.py
 
 pr:
   branches:
@@ -37,6 +38,7 @@ pr:
       - examples-reference/*
       - schemas/*
       - scripts/validate-adr.py
+      - scripts/verify-approvals.py
 
 pool:
   vmImage: "ubuntu-latest"
@@ -91,12 +93,8 @@ steps:
       fi
     displayName: "YAML lint"
 
-  - script: |
-      if [ -n "$(System.PullRequest.PullRequestId)" ]; then
-        python3 scripts/verify-approvals.py
-      else
-        echo "Not a PR build — skipping approval identity verification"
-      fi
+  - script: python3 scripts/verify-approvals.py
     displayName: "Verify approval identities"
+    condition: eq(variables['Build.Reason'], 'PullRequest')
     env:
       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
