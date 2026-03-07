@@ -36,6 +36,8 @@ The validation pipeline runs four checks:
 
 The Repomix web-chat bundle (`adr-governance-bundle.md`) is intentionally out of scope for freshness enforcement. It is treated as an on-demand export artifact, not a required committed deliverable.
 
+Out-of-the-box full approval-identity verification is available in the shipped GitHub Actions, Azure DevOps, and GitLab CI setups. The AWS CodeBuild and GCP Cloud Build templates run the verifier in dry-run mode by default until you add custom PR metadata wiring.
+
 ## Prerequisites
 
 All platforms need:

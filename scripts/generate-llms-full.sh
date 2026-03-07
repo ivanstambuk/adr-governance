@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Generate llms-full.txt — complete inline documentation for AI assistants.
+# Generate llms-full.txt — curated inline documentation for AI assistants.
 # =============================================================================
 #
 # Concatenates key documentation files into a single Markdown document
@@ -88,7 +88,7 @@ mkdir -p "$(dirname "$OUTPUT")"
 cat > "$OUTPUT" << 'HEADER'
 # adr-governance
 
-> A schema-governed, AI-native Architecture Decision Record (ADR) framework. This is the full documentation — for a concise overview with links, see [llms.txt](https://github.com/ivanstambuk/adr-governance/blob/main/llms.txt).
+> A schema-governed, AI-native Architecture Decision Record (ADR) framework. This is a curated inline documentation set — for a concise overview with links, see [llms.txt](https://github.com/ivanstambuk/adr-governance/blob/main/llms.txt).
 
 ---
 

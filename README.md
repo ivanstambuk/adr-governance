@@ -55,12 +55,12 @@ Most teams make **Architecture Decisions (ADs)** every week. Few document them w
 - **GitOps-based governance process** — ADR status transitions happen through Git commits and pull requests, not manual coordination
 - **Validation tooling** — a Python validator that checks schema compliance, referential integrity, and semantic consistency on every PR
 - **Pre-built CI/CD pipelines** for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — ready to copy into your repo and enforce as a merge gate
-- **Approval identity enforcement** — CI verifies that the people listed in `approvals[]` have actually approved the pull request, creating an auditable link between ADR approvals and Git platform approvals
-- **Governance rules** — configurable single-ADR-per-PR enforcement, substantive vs. maintenance change classification, and admin overrides — all defined in a platform-agnostic [`.adr-governance/config.yaml`](.adr-governance/config.yaml)
+- **Approval identity enforcement** — out-of-the-box on GitHub Actions, Azure DevOps, and GitLab CI; AWS/GCP templates ship the verifier in dry-run mode until you add custom PR metadata wiring. This creates an auditable link between ADR approvals and Git platform approvals where the platform integration supports it
+- **Governance rules** — configurable single-ADR-per-PR enforcement, substantive vs. maintenance change classification, and admin roster metadata — all defined in a platform-agnostic [`.adr-governance/config.yaml`](.adr-governance/config.yaml)
 - **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
-- [`llms.txt`](llms.txt) + [`llms-full.txt`](llms-full.txt) — Machine-readable project summaries for AI assistants ([llms.txt convention](https://llmstxt.org/)). `llms.txt` provides a concise overview with links; `llms-full.txt` embeds the complete documentation inline for context injection
+- [`llms.txt`](llms.txt) + [`llms-full.txt`](llms-full.txt) — Machine-readable project summaries for AI assistants ([llms.txt convention](https://llmstxt.org/)). `llms.txt` provides a concise overview with links; `llms-full.txt` embeds a curated inline documentation set for context injection
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
-- **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
+- **Decision enforcement** — the ADL YAML is the source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL for context, and CI pipelines can validate compliance before merge using the repo's ADR YAML plus scripts such as `extract-decisions.py`
 - **Repomix bundling** — the schema, ADR corpus, core authoring docs, skill assets, and validator guidance are concatenated into a single Markdown file that chat-based and coding agents can search with standard tools
 - **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) in [`examples-reference/`](examples-reference/) — real-world contended decisions with sizable pros and cons on each side, not strawman examples. Kept as a reference for quality and style; not real decisions
 
@@ -181,6 +181,8 @@ The [`examples-reference/`](examples-reference/) directory contains 8 fictional 
   git add -A && git commit -m "chore: remove reference examples"
   ```
 
+While the directory exists, the default validation flow treats it as part of the same ADR ID namespace as `architecture-decision-log/`. In practice, that means your real ADR IDs must not collide with the example IDs until you delete the reference set.
+
 #### 3. Customize ADR-0000
 
 [`architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is the **meta-ADR** — it documents the decision to adopt this governance framework. Update it for your organization:
@@ -266,7 +268,7 @@ git commit -m "feat(adr): ADR-0001 your decision title"
 git push origin adr/ADR-0001-your-decision-title
 ```
 
-The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
+The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. On GitHub Actions, Azure DevOps, and GitLab CI, the shipped setup can also verify approval identities; AWS/GCP require custom PR metadata wiring for that check to be enforceable instead of advisory. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
 
 </details>
 

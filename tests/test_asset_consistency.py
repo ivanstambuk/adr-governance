@@ -141,6 +141,24 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertIn("bundle is treated as an on-demand export artifact", decision_enforcement)
         self.assertIn("not as a freshness-checked committed deliverable", web_chat)
 
+    def test_llm_and_ci_docs_describe_current_boundaries_honestly(self):
+        readme = read_text("README.md")
+        llms = read_text("llms.txt")
+        process = read_text("docs/adr-process.md")
+        ci_setup = read_text("docs/ci-setup.md")
+        glossary = read_text("docs/glossary.md")
+        generator = read_text("scripts/generate-llms-full.sh")
+
+        self.assertIn("curated inline documentation", readme)
+        self.assertIn("curated inline documentation", llms)
+        self.assertIn("portable projection", llms)
+        self.assertIn("extract-decisions.py", llms)
+        self.assertIn("repository scripts do not currently add a second independent self-approval check", process)
+        self.assertIn("mainly improves auditability and CI messaging", process)
+        self.assertIn("mainly affects auditability / CI messaging", glossary)
+        self.assertIn("AWS CodeBuild and GCP Cloud Build templates run the verifier in dry-run mode by default", ci_setup)
+        self.assertIn("curated inline documentation set", generator)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 # adr-governance
 
-> A schema-governed, AI-native Architecture Decision Record (ADR) framework. This is the full documentation — for a concise overview with links, see [llms.txt](https://github.com/ivanstambuk/adr-governance/blob/main/llms.txt).
+> A schema-governed, AI-native Architecture Decision Record (ADR) framework. This is a curated inline documentation set — for a concise overview with links, see [llms.txt](https://github.com/ivanstambuk/adr-governance/blob/main/llms.txt).
 
 ---
 
@@ -63,12 +63,12 @@ Most teams make **Architecture Decisions (ADs)** every week. Few document them w
 - **GitOps-based governance process** — ADR status transitions happen through Git commits and pull requests, not manual coordination
 - **Validation tooling** — a Python validator that checks schema compliance, referential integrity, and semantic consistency on every PR
 - **Pre-built CI/CD pipelines** for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — ready to copy into your repo and enforce as a merge gate
-- **Approval identity enforcement** — CI verifies that the people listed in `approvals[]` have actually approved the pull request, creating an auditable link between ADR approvals and Git platform approvals
-- **Governance rules** — configurable single-ADR-per-PR enforcement, substantive vs. maintenance change classification, and admin overrides — all defined in a platform-agnostic [`.adr-governance/config.yaml`](.adr-governance/config.yaml)
+- **Approval identity enforcement** — out-of-the-box on GitHub Actions, Azure DevOps, and GitLab CI; AWS/GCP templates ship the verifier in dry-run mode until you add custom PR metadata wiring. This creates an auditable link between ADR approvals and Git platform approvals where the platform integration supports it
+- **Governance rules** — configurable single-ADR-per-PR enforcement, substantive vs. maintenance change classification, and admin roster metadata — all defined in a platform-agnostic [`.adr-governance/config.yaml`](.adr-governance/config.yaml)
 - **LLM-ready setup prompts** — copy-paste prompts for AI assistants to set up CI for your platform in minutes
-- [`llms.txt`](llms.txt) + [`llms-full.txt`](llms-full.txt) — Machine-readable project summaries for AI assistants ([llms.txt convention](https://llmstxt.org/)). `llms.txt` provides a concise overview with links; `llms-full.txt` embeds the complete documentation inline for context injection
+- [`llms.txt`](llms.txt) + [`llms-full.txt`](llms-full.txt) — Machine-readable project summaries for AI assistants ([llms.txt convention](https://llmstxt.org/)). `llms.txt` provides a concise overview with links; `llms-full.txt` embeds a curated inline documentation set for context injection
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
-- **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
+- **Decision enforcement** — the ADL YAML is the source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL for context, and CI pipelines can validate compliance before merge using the repo's ADR YAML plus scripts such as `extract-decisions.py`
 - **Repomix bundling** — the schema, ADR corpus, core authoring docs, skill assets, and validator guidance are concatenated into a single Markdown file that chat-based and coding agents can search with standard tools
 - **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) in [`examples-reference/`](examples-reference/) — real-world contended decisions with sizable pros and cons on each side, not strawman examples. Kept as a reference for quality and style; not real decisions
 
@@ -189,6 +189,8 @@ The [`examples-reference/`](examples-reference/) directory contains 8 fictional 
   git add -A && git commit -m "chore: remove reference examples"
   ```
 
+While the directory exists, the default validation flow treats it as part of the same ADR ID namespace as `architecture-decision-log/`. In practice, that means your real ADR IDs must not collide with the example IDs until you delete the reference set.
+
 #### 3. Customize ADR-0000
 
 [`architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is the **meta-ADR** — it documents the decision to adopt this governance framework. Update it for your organization:
@@ -274,7 +276,7 @@ git commit -m "feat(adr): ADR-0001 your decision title"
 git push origin adr/ADR-0001-your-decision-title
 ```
 
-The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
+The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. On GitHub Actions, Azure DevOps, and GitLab CI, the shipped setup can also verify approval identities; AWS/GCP require custom PR metadata wiring for that check to be enforceable instead of advisory. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
 
 </details>
 
@@ -550,10 +552,10 @@ Async PR review is the default. However, some decisions benefit from real-time d
 
 ### 3.4 Approval Phase
 
-13. **All required approvers must approve the PR** before merge. This is enforced via GitHub branch protection rules:
+13. **All required approvers must approve the PR** before merge. This is enforced primarily via Git platform branch protection / reviewer policy settings:
     - Require approvals from designated CODEOWNERS
     - Require passing CI (schema validation + approval identity verification)
-    - No self-approval (author cannot be sole approver)
+    - No self-approval (author cannot be sole approver) where the platform can enforce it
 
 14. **Once approved:**
     - Author (or decision owner) sets status to `accepted`
@@ -561,7 +563,7 @@ Async PR review is the default. However, some decisions benefit from real-time d
     - Author adds entries to `approvals` with names, roles, **platform identities**, and timestamps
     - Author adds an `approved` event to `audit_trail`
 
-    > **Who sets the status?** The author or decision owner updates the YAML. The branch protection rules prevent self-approval — the author cannot be the *sole* approver. Setting the status to `accepted` is a clerical action that happens *after* PR approval, not a governance action.
+    > **Who sets the status?** The author or decision owner updates the YAML. The branch protection settings prevent self-approval where configured; the repository scripts do not currently add a second independent self-approval check. Setting the status to `accepted` is a clerical action that happens *after* PR approval, not a governance action.
 
     > **Bootstrap exception:** ADR-0000 (the meta-ADR adopting this governance process) was self-approved by the initial author. The no-self-approval rule applies to all subsequent ADRs.
 
@@ -706,7 +708,7 @@ If you discover that the accepted decision itself is wrong or incomplete, do **n
 
 ### 3.4.4 ADR Administrator
 
-An **ADR Administrator** is a person authorised to make Tier 2 (maintenance) changes to any ADR without obtaining the original ADR approvers' re-approval. This is useful for:
+An **ADR Administrator** is a person listed in governance config as a named maintainer for ADR metadata and process hygiene. In the current implementation, this role mainly improves auditability and CI messaging around maintenance changes; it does **not** grant extra powers for substantive changes. This is useful for:
 
 - Typo fixes and formatting corrections
 - Schema version bumps during migrations
@@ -975,7 +977,7 @@ architecture-decision-log/ADR-*compliance*  @org/compliance-team
 | Term | Definition |
 |------|-----------|
 | **ADR** | Architecture Decision Record. A structured document capturing a significant architectural decision, its context, alternatives considered, and consequences. |
-| **ADR Administrator** | A person listed in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) who is authorised to make maintenance (Tier 2) changes to any ADR without requiring re-approval from the original ADR approvers. See [`adr-process.md` §3.4.4](adr-process.md#344-adr-administrators). |
+| **ADR Administrator** | A person listed in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) as a named maintainer for ADR metadata and process hygiene. In the current implementation this role mainly affects auditability / CI messaging for maintenance changes; it does not grant extra powers for substantive changes. See [`adr-process.md` §3.4.4](adr-process.md#344-adr-administrators). |
 | **Approval Identity Rule** | Governance rule stating that every person listed in an ADR's `approvals[]` must have actually approved the associated pull request. Enforced via the `identity` field and CI validation. See [`adr-process.md` §3.4.1](adr-process.md#341-approval-identity-rule). |
 | **ASR** | Architecturally Significant Requirement. A requirement (functional or non-functional) that directly shapes or constrains the architecture. |
 | **Change Classification** | The categorisation of ADR changes as either *substantive* (Tier 1 — requires original approver re-approval while the ADR is still mutable) or *maintenance* (Tier 2 — no ADR re-approval required). Accepted ADRs also have an immutable decision core that may not be edited in place. See [`adr-process.md` §3.4.3](adr-process.md#343-change-classification). |
@@ -1248,6 +1250,8 @@ The validation pipeline runs four checks:
 - Freshness checks for committed generated artifacts: `rendered/`, `examples-reference/rendered/`, and `llms-full.txt`
 
 The Repomix web-chat bundle (`adr-governance-bundle.md`) is intentionally out of scope for freshness enforcement. It is treated as an on-demand export artifact, not a required committed deliverable.
+
+Out-of-the-box full approval-identity verification is available in the shipped GitHub Actions, Azure DevOps, and GitLab CI setups. The AWS CodeBuild and GCP Cloud Build templates run the verifier in dry-run mode by default until you add custom PR metadata wiring.
 
 ## Prerequisites
 

@@ -2,7 +2,7 @@
 
 > A schema-governed, AI-native Architecture Decision Record (ADR) framework. Provides a JSON Schema (Draft 2020-12) meta-model for structured YAML-based ADRs, a GitOps governance process, Python validation tooling, pre-built CI/CD pipelines for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI, and an agentskills.io Agent Skill for AI-assisted authoring and review. The Architecture Decision Log (ADL) lives in `architecture-decision-log/`. Example ADRs cover IAM/security scenarios from a fictional enterprise.
 
-For full inline documentation (README + process + glossary + schema reference + CI setup), see [llms-full.txt](https://github.com/ivanstambuk/adr-governance/blob/main/llms-full.txt).
+For curated inline documentation (README + process + glossary + schema reference + CI setup), see [llms-full.txt](https://github.com/ivanstambuk/adr-governance/blob/main/llms-full.txt).
 
 ## Documentation
 
@@ -18,11 +18,11 @@ For full inline documentation (README + process + glossary + schema reference + 
 
 ## Decision Enforcement
 
-The ADL (Architecture Decision Log) isn't just documentation — it's a machine-readable specification. The Repomix bundle (`adr-governance-bundle.md`) concatenates the entire ADL into a single searchable file that serves as a **single source of truth for Spec-Driven Development (SDD)**:
+The ADL (Architecture Decision Log) isn't just documentation — it's a machine-readable specification. The ADR YAML in the repository is the source of truth for Spec-Driven Development (SDD), and the Repomix bundle (`adr-governance-bundle.md`) is a portable projection optimized for chat and agent context:
 
 - **Agent context injection:** Point any coding agent (Copilot, Claude Code, Antigravity, Cursor) at the bundle file. The agent can search it using standard text search to find relevant architectural decisions and generate code that complies with them — across any repository.
-- **CI pipeline guardrails:** Add a step in your code repository's CI pipeline that fetches the ADL bundle and validates code changes for architectural compliance before merge. The bundle is plain text — any tool from `grep` to an LLM can consume it.
-- **Cross-repository enforcement:** The ADL repository and the code repository don't need to be the same. Fetch the bundle at CI time or include it in your agent's knowledge base.
+- **CI pipeline guardrails:** For repo-side CI enforcement, fetch the ADR YAML and scripts such as `extract-decisions.py` from the governance repo rather than wiring your merge gate to the chat bundle.
+- **Cross-repository enforcement:** The ADL repository and the code repository don't need to be the same. Use the bundle for agent context injection, and use the repository itself for CI-time extraction and enforcement plumbing.
 
 ## Examples
 

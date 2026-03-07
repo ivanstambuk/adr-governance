@@ -188,10 +188,10 @@ Async PR review is the default. However, some decisions benefit from real-time d
 
 ### 3.4 Approval Phase
 
-13. **All required approvers must approve the PR** before merge. This is enforced via GitHub branch protection rules:
+13. **All required approvers must approve the PR** before merge. This is enforced primarily via Git platform branch protection / reviewer policy settings:
     - Require approvals from designated CODEOWNERS
     - Require passing CI (schema validation + approval identity verification)
-    - No self-approval (author cannot be sole approver)
+    - No self-approval (author cannot be sole approver) where the platform can enforce it
 
 14. **Once approved:**
     - Author (or decision owner) sets status to `accepted`
@@ -199,7 +199,7 @@ Async PR review is the default. However, some decisions benefit from real-time d
     - Author adds entries to `approvals` with names, roles, **platform identities**, and timestamps
     - Author adds an `approved` event to `audit_trail`
 
-    > **Who sets the status?** The author or decision owner updates the YAML. The branch protection rules prevent self-approval — the author cannot be the *sole* approver. Setting the status to `accepted` is a clerical action that happens *after* PR approval, not a governance action.
+    > **Who sets the status?** The author or decision owner updates the YAML. The branch protection settings prevent self-approval where configured; the repository scripts do not currently add a second independent self-approval check. Setting the status to `accepted` is a clerical action that happens *after* PR approval, not a governance action.
 
     > **Bootstrap exception:** ADR-0000 (the meta-ADR adopting this governance process) was self-approved by the initial author. The no-self-approval rule applies to all subsequent ADRs.
 
@@ -344,7 +344,7 @@ If you discover that the accepted decision itself is wrong or incomplete, do **n
 
 ### 3.4.4 ADR Administrator
 
-An **ADR Administrator** is a person authorised to make Tier 2 (maintenance) changes to any ADR without obtaining the original ADR approvers' re-approval. This is useful for:
+An **ADR Administrator** is a person listed in governance config as a named maintainer for ADR metadata and process hygiene. In the current implementation, this role mainly improves auditability and CI messaging around maintenance changes; it does **not** grant extra powers for substantive changes. This is useful for:
 
 - Typo fixes and formatting corrections
 - Schema version bumps during migrations
