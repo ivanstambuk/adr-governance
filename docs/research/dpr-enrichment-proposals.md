@@ -898,27 +898,7 @@ The description now focuses on *what and why*; the measure captures the *verifia
 
 ### Motivation
 
-DPR's `activities/DPR-ArchitecturalDecisionCapturing.md` (line 71) references Zimmermann's "ecADR" — a Definition of Done for AD making. From the linked blog post and `artifact-templates/DPR-ArchitecturalDecisionRecordYForm.md` (line 89), the DoD comprises:
-
-| DoD Criterion | Our Coverage |
-|---|---|
-| ≥ 2 alternatives considered | ✅ Schema-enforced (`minItems: 2`) |
-| Pros and cons for each alternative | ✅ Schema-enforced (`required: [pros, cons]`) |
-| Decision outcome stated | ✅ Schema-enforced (`required: [chosen_alternative]`) |
-| Rational/justification provided | ✅ Schema-enforced (`required: [rationale]`) |
-| Consequences captured (positive + negative) | ✅ Schema-enforced (`required: [consequences]`) |
-| NFRs/quality goals referenced | ⚠️ *Optional* (`architecturally_significant_requirements` not required) |
-| Tradeoffs explicitly acknowledged | ⚠️ *Optional* (`decision.tradeoffs` not required) |
-| Decision reviewed by peers | ⚠️ *Process-level* (PR workflow, not schema) |
-| Alternatives given fair treatment | ⚠️ `review-adr.py` checks balance heuristically |
-| Accountability established | ✅ `decision_owner` is required |
-| Consistency between decisions checked | ⚠️ Manual / AI review |
-| Status and timestamp assigned | ✅ Schema-enforced |
-
-The DPR also emphasizes three quality properties for decision logs (line 73):
-- **Accountability** of decision makers
-- **Consistency** between decisions and implementations
-- **Continuity** (currentness of all design artifacts)
+DPR's `activities/DPR-ArchitecturalDecisionCapturing.md` (line 71) references Zimmermann's "ecADR" — a Definition of Done for AD making. The DPR also emphasizes three quality properties for decision logs (line 73): **Accountability**, **Consistency**, and **Continuity**.
 
 ### DPR Source Files
 
@@ -927,23 +907,117 @@ The DPR also emphasizes three quality properties for decision logs (line 73):
 | `activities/DPR-ArchitecturalDecisionCapturing.md` | ecADR reference (line 71), quality properties (line 73), five-step EC-ADR process |
 | `artifact-templates/DPR-ArchitecturalDecisionRecordYForm.md` | DoD blog link (line 89), "ADR = Any Decision Record?" (line 90) |
 
-### Proposed Implementation
+### Deep Research: Zimmermann's ecADR Framework
 
-**Documentation-only change.** Add a "Definition of Done for ADRs" section to `docs/adr-process.md`:
+Zimmermann's blog post [*"A Definition of Done for Architectural Decision Making"*](https://ozimmer.ch/practices/2020/05/22/ADDefinitionOfDone.html) (2020) proposes five criteria for when an AD can be considered "DONE-done". The name **ecADR** captures these as an acronym:
 
-1. List completeness criteria with enforcement mechanism (schema / script / manual)
-2. Map DPR's ecADR to our existing validations
-3. Credit Zimmermann's blog post as source
+#### The Five ecADR Criteria
 
-Optionally, enhance `review-adr.py` with soft warnings when:
-- `architecturally_significant_requirements` is absent
-- `decision.tradeoffs` is absent
-- All alternatives have identical pros/cons count
+| # | Criterion | Zimmermann's Definition | What It Asks |
+|---|-----------|------------------------|-------------|
+| **E** | **Evidence** | You have reason to believe the chosen design will work: (a) it satisfies measurable quality requirements, (b) it doesn't break previous ADs, (c) it's actionable — implementable in the short term and maintainable long-term. | *"Are we confident enough that this design will work?"* |
+| **C** | **Criteria** | At least two alternatives identified and compared by stakeholder concerns and decision drivers. One chosen, others rejected (or kept as fallbacks). | *"Have we decided between at least two options, and compared them (semi-)systematically?"* |
+| **A** | **Agreement** | At least one peer/mentor and the team have challenged the AD and agree with outcome and rationale. Amount of "decision socialization" depends on context. | *"Have we discussed among each other and with peers just enough and come to a common view?"* |
+| **D** | **Documentation** | Decision captured in a lean template (Y-Statement, MADR, Nygard) and shared with all affected parties. Justification references requirements and evidence from E, C, A. | *"Have we captured the decision outcome and shared the decision record?"* |
+| **R** | **Realization/Review** | (a) Implementation work has been scheduled. (b) When to evaluate whether the AD was implemented as intended. (c) When to revisit/revise in a retrospective. | *"Do we know when to realize, review and possibly revise this decision?"* |
+
+Zimmermann notes the analogy to agile Definition of Done for user stories, but applied to *technical decision-making tasks* rather than feature increments. His condensed checklist: if you can answer "yes" five times, you are done. If any answer is missing, invest more time — or justify why the criterion doesn't apply.
+
+**Key insight from the blog post:** Zimmermann warns against over-engineering this — *"It is not cost-effective to establish and evaluate 20+ criteria for 5+ alternatives per AD thoroughly (you might have to make 100s while sprinting!)."* The DoD must be proportional to decision significance.
+
+#### Relationship to P7 (Definition of Ready) and P8 (Verbosity Levels)
+
+Zimmermann also proposed a companion **Definition of Ready (DoR)** using the acronym **START** (Stakeholders identified, Time is right, Alternatives identified, Requirements clear, Template chosen). The DoR answers *"Is there enough context to start making this decision?"* while the DoD answers *"Is this decision complete enough to act on?"*
+
+In our lifecycle:
+- **DoR** → gate for `draft` → `proposed` transition (P7)
+- **DoD** → gate for `proposed` → `accepted` transition (P4)
+- **Verbosity calibration** → how much rigor each criterion requires (P8)
+
+### Coverage Analysis: ecADR vs. Our Framework
+
+| ecADR Criterion | Sub-criterion | Our Enforcement | Mechanism | Gap? |
+|---|---|:---:|---|:---:|
+| **E: Evidence** | Design will satisfy quality requirements | ⚠️ | `architecturally_significant_requirements` is optional; measures embedded in prose | Soft |
+| | Doesn't break previous ADs | ⚠️ | `review-adr.py` generates cross-reference prompt; manual review in §3.3 checklist item 7 | Soft |
+| | Actionable/implementable | ⚠️ | Not checked — implicit in `alternatives[].estimated_cost` | Soft |
+| **C: Criteria** | ≥ 2 alternatives considered | ✅ | Schema-enforced (`minItems: 2` on `alternatives`) | None |
+| | Pros/cons for each alternative | ✅ | Schema-enforced (`required: [pros, cons]` per alternative) | None |
+| | One chosen, others compared | ✅ | Schema-enforced (`required: [chosen_alternative, rationale]`) | None |
+| | Rejection rationale for unchosen | ⚠️ | `alternatives[].rejection_rationale` is optional | Soft |
+| **A: Agreement** | Peer review occurred | ✅ | PR-based review workflow (§3.3); `reviewers` field | None |
+| | Team agrees with outcome | ✅ | PR approval via `approvals[].identity` (§3.4.1) | None |
+| | Stakeholder involvement proportional to reach | ⚠️ | Process guidance in §3.3 (escalation to sync meeting) but not codified as DoD | Soft |
+| **D: Documentation** | Decision captured in template | ✅ | Schema-valid YAML; full ADR template with all sections | None |
+| | Justification references E, C, A evidence | ⚠️ | `decision.rationale` is required but content quality is not validated | Soft |
+| | Shared with affected parties | ✅ | Git merge to `main`; PR notifications | None |
+| **R: Realization/Review** | Implementation scheduled | ⚠️ | `confirmation.description` required, but not `artifact_ids` at proposal time | Soft |
+| | Review/retrospective planned | ✅ | `lifecycle.review_cycle_months` + `lifecycle.next_review_date` | None |
+| | How to evaluate success | ⚠️ | `confirmation` section exists but not tied to specific success criteria | Soft |
+
+**Summary:** We **fully satisfy** 8 of 15 sub-criteria through schema enforcement or process. The remaining 7 are "soft gaps" — the framework *supports* them but doesn't *require* or explicitly *prompt* for them. This is by design (not everything should be schema-enforced), but a documented DoD checklist would make these expectations explicit.
+
+### What Other Templates Do
+
+No ADR template in our survey (§3 of `adr-template-comparison.md`) includes a formal Definition of Done. This is because:
+- Most templates are *document formats*, not *process frameworks*
+- The DoD is a process concept that applies to how teams *use* templates, not to the template itself
+
+The closest equivalents:
+- **MADR 4.0** has a `Confirmation` section — covers the "R" (Realization) criterion partially
+- **arc42** has a "Quality Requirements" section with target/actual comparison — touches "E" (Evidence)
+- **ISO 42010** requires traceability from decisions to requirements — touches "E" (Evidence)
+
+Our framework is uniquely positioned to codify a DoD because we have *both* the template (schema) *and* the process (adr-process.md).
+
+### Proposed ecADR Checklist for Our Framework
+
+Map Zimmermann's 5 criteria to our existing fields and processes, creating a checklist for the `proposed` → `accepted` transition:
+
+| # | ecADR | Checklist Question | Enforcement |
+|---|:-----:|---|---|
+| 1 | **E** | Is there evidence the chosen alternative will meet requirements? (PoC results, benchmarks, prior art, team experience) | Soft — `confirmation.description` guidance |
+| 2 | **E** | Does this decision conflict with any existing accepted ADR? | Soft — `review-adr.py` cross-reference check |
+| 3 | **C** | Are at least 2 alternatives genuinely considered (not strawmen)? | Hard — schema `minItems: 2` + review checklist |
+| 4 | **C** | Does each alternative have balanced pros and cons? | Soft — `review-adr.py` balance heuristic |
+| 5 | **A** | Have all required reviewers and approvers been assigned? | Hard — `approvals[].identity` + CI verification |
+| 6 | **A** | Is the level of review proportional to the decision's reach? | Soft — escalation guidance in §3.3 |
+| 7 | **D** | Is the Y-Statement populated for accepted ADRs? | Hard — schema conditional requirement |
+| 8 | **D** | Does the rationale reference specific evidence, not just opinion? | Soft — review checklist guidance |
+| 9 | **R** | Is there a verification plan? (`confirmation.description`) | Hard — schema-required field |
+| 10 | **R** | Is a review cycle set? (`lifecycle.review_cycle_months`) | Soft — optional but recommended |
+
+**Hard enforcement** = schema validation or CI will catch it.
+**Soft enforcement** = documented in checklist; caught by reviewers or AI review.
+
+### Implementation Plan
+
+| Step | Description | Effort |
+|---|---|---|
+| 1 | Add "Definition of Done for ADRs" section to `docs/adr-process.md` between §3.3 (Review) and §3.4 (Approval) | 15 min |
+| 2 | Include the 10-item checklist mapped to ecADR criteria with enforcement mechanism | 10 min |
+| 3 | Credit Zimmermann's ecADR blog post | 2 min |
+| 4 | Update the review checklist in §3.3 to reference the DoD | 5 min |
+| 5 | (Optional) Add soft warning to `review-adr.py` when `decision.tradeoffs` is absent | 10 min |
+| 6 | Regenerate bundle | 2 min |
+
+**Total estimated effort:** ~45 minutes
+
+### Credits
+
+| Concept | Source |
+|---|---|
+| ecADR (Definition of Done for ADs) | Zimmermann, O. (2020). [*"A Definition of Done for Architectural Decision Making"*](https://ozimmer.ch/practices/2020/05/22/ADDefinitionOfDone.html) |
+| ecADR (Medium version) | Zimmermann, O. (2020). [*"A Definition of Done for Architectural Decisions"*](https://medium.com/olzzio/a-definition-of-done-for-architectural-decisions-426cf5a952b9) |
+| START (Definition of Ready for ADs) | Zimmermann, O. (2023). [*"A Definition of Ready for Architectural Decisions"*](https://medium.com/olzzio/a-definition-of-ready-for-architectural-decisions-ads-2814e399b09b) |
+| DPR reference | `activities/DPR-ArchitecturalDecisionCapturing.md` (line 71, 131) |
+| Decision log quality properties | DPR: Accountability, Consistency, Continuity (line 73) |
 
 ### Implementation Checklist
 
 - [ ] Add "Definition of Done for ADRs" section to `docs/adr-process.md`
 - [ ] Add credit/reference to Zimmermann's ecADR blog post
+- [ ] Update §3.3 review checklist to reference the DoD
 - [ ] (Optional) Add soft warnings to `review-adr.py`
 - [ ] Update AI bundle Socratic interview to check DoD before finalizing
 - [ ] Regenerate bundle
