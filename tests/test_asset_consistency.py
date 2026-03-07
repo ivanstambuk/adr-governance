@@ -97,6 +97,20 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertIn("filename exactly matches `adr.id`", text)
         self.assertIn("PR approval identity binding is confirmed in-repo", text)
 
+    def test_draft_is_defined_as_complete_but_not_yet_proposed(self):
+        process = read_text("docs/adr-process.md")
+        glossary = read_text("docs/glossary.md")
+        instruction = read_text("repomix-instruction.md")
+        template = read_text(".skills/adr-author/assets/adr-template.yaml")
+
+        self.assertNotIn("WIP on feature branch.<br>Not ready for review.", process)
+        self.assertIn("Schema-valid, not yet proposed.", process)
+        self.assertIn("schema-valid and substantially complete", process)
+        self.assertIn("complete-but-not-yet-proposed", read_text("AUDIT_REPORT.md"))
+        self.assertIn("Schema-valid, substantially complete ADR", glossary)
+        self.assertIn("schema-valid ADR that is complete enough to validate but not yet proposed", instruction)
+        self.assertIn("`draft` means author-owned and not yet proposed", template)
+
 
 if __name__ == "__main__":
     unittest.main()

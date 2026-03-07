@@ -171,7 +171,7 @@ The context section can be arbitrarily large — diagrams, extended narratives, 
 **After all questions and the coherence check pass:** Generate the complete ADR YAML:
 - Search for `adr-template.yaml` in this file to get the skeleton
 - Fill in all required sections from the interview answers
-- Set status to `draft` or `proposed`
+- Set status to `draft` for a schema-valid ADR that is complete enough to validate but not yet proposed, or `proposed` when the user explicitly wants a formal review-ready artifact
 - Add an initial `audit_trail` entry: `event: "created"`
 - Use YAML literal block scalars (`|`) for Markdown fields
 - Use ISO 8601 for all timestamps
@@ -394,6 +394,8 @@ Report issues as: `ERROR` (schema violation or hard author-facing rule), `WARNIN
 **Cost / Risk scales:** `low` | `medium` | `high` (risk also allows `critical`)
 
 **ID format:** `ADR-NNNN-slug` — slug is mandatory (e.g., `ADR-0001-dpop-over-mtls`)
+
+**Draft semantics:** `draft` still means a schema-valid, substantially complete ADR. It is not a partial scratch document; it simply has not yet been proposed for formal review.
 
 **Audit trail events:** `created` | `updated` | `reviewed` | `approved` | `rejected` | `deferred` | `superseded` | `deprecated` | `archived`
 

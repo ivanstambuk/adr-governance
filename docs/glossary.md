@@ -22,7 +22,7 @@
 
 | Status | Meaning |
 |--------|---------|
-| `draft` | ADR is being authored. Not ready for review. |
+| `draft` | Schema-valid, substantially complete ADR that is still author-owned and not yet proposed for review. |
 | `proposed` | ADR is complete and under review. Not yet binding. |
 | `accepted` | Decision has been formally approved and is in effect. The decision core is frozen; later material changes require a new superseding ADR. |
 | `superseded` | Replaced by a newer ADR (see `lifecycle.superseded_by`). |

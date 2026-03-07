@@ -39,6 +39,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 8. Existing `audit_trail` history is append-only across PRs: prior entries may not be edited, deleted, or reordered; new entries may only be appended
 9. If an ADR is already `accepted`, its decision core is immutable in place; material changes require a new superseding ADR
 10. Extension fields: any key starting with `x-` is allowed at the top level
+11. `draft` still means a schema-valid, substantially complete ADR; the distinction from `proposed` is governance state, not missing core sections
 
 ## Enum Values
 

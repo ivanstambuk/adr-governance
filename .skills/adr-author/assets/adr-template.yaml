@@ -1,13 +1,15 @@
 # ADR Template
 # Copy this file and fill in all sections.
 # Required sections are marked. Optional sections can be removed if not applicable.
+# A `draft` ADR is still expected to be schema-valid and substantially complete;
+# `draft` means author-owned and not yet proposed, not a half-filled scratch file.
 
 # --- REQUIRED ---
 adr:
   id: "ADR-NNNN-short-kebab-case-title" # Replace with next sequential ID + slug
   title: "" # 10-200 characters
   summary: "" # Optional: 2-4 sentence elevator pitch (max 500 chars)
-  status: "draft" # draft | proposed | accepted | superseded | deprecated | rejected | deferred
+  status: "draft" # draft | proposed | accepted | superseded | deprecated | rejected | deferred; use draft for complete-but-not-yet-proposed ADRs
   created_at: "" # ISO 8601 datetime
   last_modified: "" # ISO 8601 datetime
   version: "0.1"

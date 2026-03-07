@@ -9,7 +9,7 @@ This document defines the process for proposing, reviewing, approving, and maint
 
 | I want to... | Do this |
 |--------------|---------|
-| Start a new decision | Branch → create YAML in `architecture-decision-log/` with `status: draft` → iterate |
+| Start a new decision | Branch → create a schema-valid ADR in `architecture-decision-log/` with `status: draft` → iterate locally |
 | Submit for review | Set `status: proposed` → open PR → assign reviewers |
 | Approve a decision | Approve the PR → author sets `status: accepted` → merge |
 | Reject a decision | Comment reason → author sets `status: rejected` → merge (preserve history) |
@@ -59,7 +59,7 @@ stateDiagram-v2
     superseded --> [*]
     deprecated --> [*]
 
-    note right of draft : WIP on feature branch.<br>Not ready for review.
+    note right of draft : Author-owned ADR on feature branch.<br>Schema-valid, not yet proposed.
     note right of proposed : PR is open.<br>Under active review.
     note right of deferred : Parked — revisit later.<br>PR is closed.
     note left of accepted : Decision is binding.<br>Decision core is immutable.
@@ -118,31 +118,29 @@ If **none** of these apply, the decision is likely not architecturally significa
    cp .skills/adr-author/assets/adr-template.yaml architecture-decision-log/ADR-NNNN-short-title.yaml
    ```
 
-3. **Set status to `draft`** while authoring:
+3. **Set status to `draft`** while authoring the first governed ADR artifact:
    ```yaml
    adr:
      id: "ADR-NNNN-short-title"
      status: "draft"
    ```
 
+   A `draft` ADR is expected to be **schema-valid and substantially complete**. It is not a half-filled scratch document. The difference between `draft` and `proposed` is governance state: `draft` is still author-owned and not yet submitted for formal review.
+
 4. **Iterate locally.** Validate against the schema:
    ```bash
    python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-title.yaml
    ```
 
-> **Pre-drafting exploration:** Complex or high-impact decisions may benefit from informal exploration before the ADR is drafted — design docs, RFCs, technical spikes, PoCs, or whiteboard sessions. These are not part of the ADR governance process, but their outputs should be referenced:
-> - Link exploration documents in `references` (title + URL)
-> - Link PoC results or benchmarks in `confirmation.artifact_ids` (see §7)
->
-> The ADR captures the *decision and its justification*. Exploration artifacts provide supporting evidence.
-
 ### 3.2 Proposal Phase
 
-5. **Set status to `proposed`** when the ADR is complete and ready for review:
+5. **Set status to `proposed`** when the ADR is ready for formal review:
    ```yaml
    adr:
      status: "proposed"
    ```
+
+   Moving from `draft` to `proposed` should not require filling in missing core sections. The ADR should already be complete enough to validate in `draft`; `proposed` means the document has now entered the PR-based review and approval process.
 
 6. **Open a Pull Request.** The PR title should match the ADR title:
    ```

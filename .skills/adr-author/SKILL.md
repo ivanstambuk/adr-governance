@@ -67,7 +67,7 @@ Ask the user for:
 
 Use the template at `assets/adr-template.yaml` as the starting point. Fill in all required sections:
 
-- `adr` — metadata (id, title, status: `proposed`, timestamps, tags, priority, decision_type)
+- `adr` — metadata (id, title, status: `draft` for a complete author-owned ADR not yet proposed, or `proposed` when the user explicitly wants a review-ready artifact, timestamps, tags, priority, decision_type)
 - `authors` — who is writing this
 - `decision_owner` — who is accountable
 - `context` — summary, business_drivers, technical_drivers, constraints, assumptions
