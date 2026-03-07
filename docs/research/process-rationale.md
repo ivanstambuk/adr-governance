@@ -50,7 +50,9 @@ The Y-Statement is a single structured sentence that captures the entire archite
 
 ### Academic Lineage
 
-The Y-Statement was introduced by Olaf Zimmermann at SATURN 2012, building on George Fairbanks' Architecture Haiku concept (WICSA 2011):
+#### Zimmermann's Y-Statement (SATURN 2012)
+
+The Y-Statement was introduced by Olaf Zimmermann at SATURN 2012. The canonical structure maps directly to our schema fields:
 
 | # | Part | Maps to Schema Field | Purpose |
 |---|---|---|---|
@@ -62,35 +64,126 @@ The Y-Statement was introduced by Olaf Zimmermann at SATURN 2012, building on Ge
 | 6 | "accepting that..." | `decision.tradeoffs` or `consequences.negative` | Captures acknowledged cost |
 | 7 | "because..." | `decision.rationale` | Provides the reasoning (long form) |
 
+Zimmermann distinguishes three verbosity levels for Y-Statements:
+- **Short form** (parts 1–4): Context + decision + rejected. Suitable for indexes.
+- **Medium form** (parts 1–6): Adds consequences. Suitable for most uses.
+- **Long form** (parts 1–7): Adds the "because" rationale. Our chosen format.
+
+Zimmermann's practical advice: *"A convincing justification is key. The more evidence you can provide for your choice (...), the stronger your justification will be."*
+
+#### Fairbanks' Architecture Haiku (WICSA 2011)
+
+George Fairbanks introduced the **Architecture Haiku** — a one-page summary of an architecture's key decisions, constraints, and quality attribute tradeoffs. The Haiku's structure directly influenced the Y-Statement's tradeoff parts:
+
+| Haiku Element | Y-Statement Mapping |
+|---|---|
+| "This system must..." (quality goals) | "to achieve..." (part 5) |
+| "but we accept..." (tradeoffs) | "accepting that..." (part 6) |
+| "because..." (rationale) | "because..." (part 7) |
+
+The key insight: Fairbanks recognized that architecture is fundamentally about **tradeoffs**, not just choices. The Y-Statement inherits this by *requiring* the author to name what they're giving up — not just what they gain. This is the most important difference from MADR's Decision Outcome format, which captures only the positive.
+
+#### MADR 4.0 — Decision Outcome (Comparison)
+
+MADR's closest equivalent to the Y-Statement is the **"Decision Outcome"** section:
+
+> *"Chosen option: '{title of option 1}', because {justification}."*
+
+| Dimension | MADR Decision Outcome | Y-Statement (long) |
+|---|---|---|
+| **Standalone?** | ❌ Requires reading full MADR for context | ✅ Fully self-contained |
+| **Includes rejected alternatives?** | ❌ Only names the chosen option | ✅ "and neglected [alternatives]" |
+| **Includes tradeoffs?** | ❌ Only mentions positive justification | ✅ "accepting that [tradeoffs]" |
+| **Includes context?** | ❌ Assumed from document heading | ✅ "In the context of [scope]" |
+| **Machine-generable?** | ⚠️ Partially — just option + because | ✅ All 7 parts map to schema fields |
+
+**Assessment:** MADR's Decision Outcome is a sentence fragment. The Y-Statement is a self-contained paragraph. For AI-generated summaries, chat messages, or decision indexes, the Y-Statement is strictly more informative.
+
+#### Nygard Format — Decision Section (Comparison)
+
+Michael Nygard's original ADR format (2011) uses three sections: **Context**, **Decision**, **Consequences**.
+
+> *"We will use [technology/pattern]..."*
+
+The Decision section is free-form prose that describes the choice but doesn't follow a structured template. It typically omits rejected alternatives and doesn't explicitly surface tradeoffs. It also lacks the "in the context of" framing — readers must infer context from the Context section above.
+
+**Assessment:** Nygard's format works well as a full document but produces no extractable single-sentence summary. The Y-Statement provides exactly the missing "elevator pitch" layer.
+
+#### Tyree-Akerman Template — Decision Field (Comparison)
+
+The IEEE Software template (Tyree & Akerman, 2005) includes:
+
+> *"The architecture decision made, with justification."*
+
+This is the closest enterprise template to a structured decision summary. Its strength is thorough cross-referencing (Related Decisions, Related Requirements), but it has no single-sentence summary equivalent to the Y-Statement. Its comprehensiveness makes it ill-suited for quick communication — exactly the gap the Y-Statement fills.
+
+#### Emerging Pattern: AI-Generated Decision Summaries
+
+Recent industry practice (2024–2026) shows growing use of LLMs for:
+- **Generating Y-Statements from structured ADR data** — exactly what our framework supports
+- **Producing audience-adapted summaries** — same decision, different phrasing for executives vs. engineers
+- **Quality-checking Y-Statements** — verifying the summary accurately reflects the full ADR content
+
+Equal Experts' ADR approach and research (arxiv.org, "LLMs for Software Architecture") demonstrate that LLMs can produce Y-Statements that are "relevant and accurate" when given structured input, though they may "fall short of human-level performance" for the justification clause.
+
+> **Key insight:** Our structured YAML schema provides *exactly* the kind of clean, well-separated input that LLMs need to generate accurate Y-Statements. The six constituent fields map directly to the six Y-Statement parts with no ambiguity.
+
 ### Comparative Analysis
 
-| Format | Standalone? | Includes Rejected? | Includes Tradeoffs? | Best For |
-|---|:---:|:---:|:---:|---|
-| **Y-Statement (long)** | ✅ | ✅ | ✅ | Indexes, chat, dashboards, full summary |
-| MADR Decision Outcome | ❌ | ❌ | ❌ | Within full MADR documents |
-| Nygard Decision section | ❌ | ❌ | ❌ | Within full Nygard ADRs |
-| Architecture Haiku | ✅ | ✅ | ✅ | Architecture overview (1 page) |
+| Format | Length | Standalone? | Includes Rejected? | Includes Tradeoffs? | Machine-Generable? | Best For |
+|---|:---:|:---:|:---:|:---:|:---:|---|
+| **Y-Statement (long)** | 1–2 sentences | ✅ | ✅ | ✅ | ✅ | Indexes, chat, dashboards, full summary |
+| **Y-Statement (short)** | 1 sentence | ✅ | ✅ | ❌ | ✅ | Quick indexes, log entries |
+| MADR Decision Outcome | 1 sentence | ❌ | ❌ | ❌ | ⚠️ | Within full MADR documents |
+| Nygard Decision section | Free-text paragraph | ❌ | ❌ | ❌ | ⚠️ | Within full Nygard ADRs |
+| Tyree-Akerman Decision | 1–2 sentences + justification | ❌ | ❌ | ❌ | ⚠️ | Enterprise governance |
+| Architecture Haiku | 1 page | ✅ | ✅ | ✅ | ❌ | Architecture overview |
 
-**Conclusion:** The Y-Statement is the most information-dense standalone decision summary format available.
+**Conclusion:** The Y-Statement is the **most information-dense** standalone decision summary format available. No other format packs context, decision, rejected alternatives, benefits, and tradeoffs into a single sentence.
 
 ### Design Decisions
 
-1. **Static field, not dynamic generation.** The constituent schema fields are multi-paragraph Markdown with Mermaid diagrams. Assembling a Y-Statement from these is a *summarization* task requiring authorial judgment, not a mechanical concatenation. Since accepted ADRs are immutable, there is no drift/maintenance burden.
+1. **Static field, not dynamic generation.** The constituent schema fields (`context.description`, `consequences.positive`, `decision.tradeoffs`, etc.) are **multi-paragraph Markdown** — often containing Mermaid diagrams, bullet lists, and detailed prose. Assembling a Y-Statement from these is a *summarization* task, not a *concatenation* task. A deterministic script cannot distill 5 paragraphs of context into the "In the context of..." clause — that requires authorial judgment (human or AI-assisted).
 
-2. **Long form only.** We use the "because" extension. The short form omits the rationale — the most important part of any decision record. The "because" clause maps to `decision.rationale`, the core "why."
+   | Approach | Assessment | Status |
+   |---|---|---|
+   | **Schema field** (authored once at acceptance) | Static, curated distillation | ✅ Adopted |
+   | **Render script** (template assembly from fields) | Can't summarize multi-paragraph fields | ❌ Rejected |
+   | **AI Bundle** (generate on-the-fly from context) | Non-deterministic, hallucination risk | ❌ Rejected |
 
-3. **Replaced `adr.summary`.** The Y-Statement is a strictly more informative summary than a free-text elevator pitch. No established template uses both. The `adr.summary` field was removed to eliminate DRY violation.
+   **Why the DRY objection was wrong:** The DRY argument assumed the Y-Statement is a mechanical derivation. It isn't — it's a *curated distillation*, like any summary. Since accepted ADRs are immutable (status changes require supersession), there is no drift/maintenance burden.
+
+2. **Long form only.** We use the "because" extension. The short form omits the rationale — the most important part of any decision record. The "because" clause maps to `decision.rationale`, the core "why." Since the Y-Statement is a static field (not dynamically generated), the extra clause adds critical context that makes the statement self-contained.
+
+3. **Replaced `adr.summary`.** The Y-Statement is a strictly more informative summary than a free-text elevator pitch. No established ADR template (MADR, Nygard, Tyree/Akerman, DPR) uses both a summary and a Y-Statement. Zimmermann explicitly positions the Y-Statement as a self-contained summary. The `adr.summary` field was removed to eliminate DRY violation.
+
+### Example Y-Statement
+
+For ADR-0001 (DPoP over mTLS):
+
+> *In the context of the OIDC-based IAM platform, facing the need for sender-constrained tokens across public (mobile), confidential (backend), and partner clients, we decided for DPoP (RFC 9449) and against mTLS (RFC 8705) and a hybrid approach, to achieve unified sender-constraining without CDN/proxy infrastructure changes, accepting per-request proof generation overhead (~500 bytes) and client-side implementation complexity, because DPoP is the only mechanism that works for all three client types without infrastructure modifications, survives CDN TLS termination (eliminating a $50K/year Cloudflare add-on), and provides a single validation path that reduces operational complexity.*
+
+### DPR Source Files
+
+| File | Relevant Content |
+|------|-----------------|
+| `artifact-templates/DPR-ArchitecturalDecisionRecordYForm.md` | Full Y-Statement template, examples, and Wikipedia citation |
+| `activities/DPR-ArchitecturalDecisionCapturing.md` | Y-Statement as a "medium verbosity" option (line 34) |
 
 ### Sources
 
 | Source | Year | Contribution |
 |---|---|---|
-| Zimmermann, Y-Statements (SATURN 2012) | 2012 | Canonical six-part template, "because" extension |
-| Fairbanks, Architecture Haiku (WICSA 2011) | 2011 | Tradeoff structure ("to achieve / accepting that") |
-| Zimmermann, AD Making Of (ozimmer.ch) | 2020 | Short/medium/long-form verbosity guidance |
-| DPR Y-Statement Template (GitHub) | 2022 | Canonical template, examples, tool support |
+| Zimmermann, Y-Statements (SATURN 2012) | 2012 | Canonical six-part template, "because" extension, practical pitfalls |
+| Fairbanks, Architecture Haiku (WICSA 2011) | 2011 | Intellectual ancestor — the "to achieve / accepting that" tradeoff structure |
+| Zimmermann, Y-Statements (Medium blog) | 2020 | Expanded examples, known uses, advice on convincing justifications |
+| Zimmermann, AD Making Of (ozimmer.ch) | 2020 | Historical context, short/medium/long-form verbosity guidance |
+| DPR Y-Statement Template (GitHub) | 2022 | Canonical template structure, Wikipedia example, tool support |
 | MADR 4.0.0 (adr.github.io) | Ongoing | Decision Outcome comparison — lacks standalone self-containment |
+| Nygard, "Documenting Architecture Decisions" | 2011 | Original ADR format — Context/Decision/Consequences mapping |
+| Tyree & Akerman, IEEE Software | 2005 | Comprehensive template — no single-sentence summary equivalent |
 | Equal Experts, AI-assisted ADR | 2024 | LLM-generated summaries from structured input — validates approach |
+| Arxiv, "LLMs for Software Architecture" | 2024 | GPT-4 can generate "relevant and accurate" decisions from structured contexts |
 
 ---
 

@@ -1086,6 +1086,8 @@ This enables a **progressive strictness** model — drafts are loose, proposed/a
 
 ## Sources
 
+Consolidated bibliography of all sources referenced across sections. Sections §1.11, §4.2, and §4.3 also include per-section credits for their deep research.
+
 | Source | Year | Contribution to schema design |
 |---|---|---|
 | Nygard, "Documenting Architecture Decisions" | 2011 | Established the ADR format; validated minimal structure |
