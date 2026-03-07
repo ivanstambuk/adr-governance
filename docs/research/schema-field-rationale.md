@@ -82,9 +82,18 @@ The `adr` object contains identification and classification metadata. Its design
 | **Type** | `string`, minLength: 10, maxLength: 200 |
 | **Required?** | ✅ Yes |
 
-**Precedent:** Present in every template surveyed (13/13). The most universal ADR field.
+**Precedent:**
 
-**Rationale:** Self-evident. The `minLength: 10` constraint prevents placeholder titles; `maxLength: 200` prevents prose paragraphs masquerading as titles. These bounds were chosen empirically from our example ADRs (shortest: 36 chars, longest: 67 chars).
+| Template | Title field | Length constraints? |
+|---|---|---|
+| Nygard | ✅ Short decision title | ❌ |
+| MADR 4.0 | ✅ "# [short title]" | ❌ |
+| smadr | ✅ `title` in frontmatter | ❌ |
+| Tyree-Akerman | ✅ "Issue" | ❌ |
+| All others | ✅ (13/13) | ❌ |
+| **adr-governance** | ✅ `adr.title` | ✅ minLength: 10, maxLength: 200 |
+
+**Rationale:** Present in every template surveyed (13/13) — the most universal ADR field. The `minLength: 10` constraint prevents placeholder titles; `maxLength: 200` prevents prose paragraphs masquerading as titles. These bounds were chosen empirically from our example ADRs (shortest: 36 chars, longest: 67 chars).
 
 **Rejected alternatives:**
 - *No length constraints* — allows empty or single-word titles ("Auth") and paragraph-length titles that belong in `context.description`
@@ -349,7 +358,15 @@ This is analogous to how content management systems separate structured metadata
 | **Type** | `enum`: `low`, `medium`, `high`, `critical` |
 | **Required?** | Optional |
 
-**Precedent:** Only Planguage has a structured priority field. DRF has a `priority` in context objectives. No other template in our survey (Nygard, MADR, smadr, Tyree-Akerman, EdgeX, Merson, NHS Wales, Gareth Morgan) has a structured priority field.
+**Precedent:**
+
+| Template | Priority field | Structured? | Levels |
+|---|---|---|---|
+| Planguage | ✅ Priority keyword | 🟡 Free-text | Unstructured |
+| DRF | ✅ `priority` in context objectives | ✅ | Varies |
+| MADR / Nygard / smadr | ❌ Absent | — | — |
+| Tyree-Akerman / EdgeX / Merson | ❌ Absent | — | — |
+| **adr-governance** | ✅ `adr.priority` | ✅ Enum | low / medium / high / critical |
 
 **Rationale:** Priority signals review urgency and implementation ordering. A `critical` decision demands immediate attention; a `low` decision can wait for a convenient sprint. The four-level enum aligns with standard risk/priority scales used in ITSM and project management.
 
@@ -366,14 +383,35 @@ This is analogous to how content management systems separate structured metadata
 | **Type** | `enum`: `technology`, `process`, `organizational`, `vendor`, `security`, `compliance` |
 | **Required?** | ✅ Yes |
 
-**Precedent:** Tyree-Akerman uses a "Category" field. smadr uses tags. MADR has no domain classification.
+**Precedent:**
+
+| Template | Decision classification | Structured? | Categories |
+|---|---|---|---|
+| Tyree-Akerman | "Category" field | 🟡 Free-text | Not prescribed |
+| smadr | Tags-based | 🟡 Freeform tags | Not prescribed |
+| Zimmermann SOA | ✅ Conceptual/Technology/Asset | ✅ | 3 levels (abstraction, not domain) |
+| Kruchten | ✅ Existence/Property/Executive | ✅ | 3 types (orthogonal to scope) |
+| MADR / Nygard / EdgeX | ❌ No domain classification | — | — |
+| **adr-governance** | ✅ `adr.decision_type` | ✅ Enum | 6 domains |
 
 **Rationale:** Domain classification enables stakeholder routing — security decisions go to the CISO, compliance decisions go to the DPO, vendor decisions go to procurement. The six values cover the domains that emerge in enterprise architecture practice.
+
+**Per-enum-value justification:**
+
+| Value | Covers | Example ADRs |
+|---|---|---|
+| `technology` | Protocol, library, framework, algorithm choices | DPoP over mTLS, Ed25519 for JWT signing |
+| `process` | Workflow, methodology, governance decisions | Adopt Governed ADR Process (ADR-0000) |
+| `organizational` | Team structure, ownership, responsibility | Team topology changes, RACI assignments |
+| `vendor` | Third-party product, SaaS, cloud provider | Choose cloud provider, select IdP |
+| `security` | Authentication, authorization, cryptography patterns | BFF Token Mediator, Session Enrichment |
+| `compliance` | Regulatory, legal, audit-driven | GDPR data residency, SOC 2 controls |
 
 **Rejected alternatives:**
 - *TOGAF four domains (Business/Data/Application/Technology)* — too enterprise-architecture-specific and not action-oriented
 - *Unlimited free-text category* — prevents programmatic filtering and dashboard aggregation
 - *DDD-aligned categories (Domain/Infrastructure/Integration)* — too narrow for organizations not practicing DDD
+- *Fewer categories (e.g., technical/non-technical)* — too coarse. A `vendor` decision has different stakeholders than a `technology` decision, even though both are "technical"
 
 ### 1.11 `adr.decision_level`
 
@@ -627,6 +665,43 @@ Adding these would create **three fields duplicating information already in `dec
 
 ## Section 2: People & Governance
 
+### 2.0 `$defs/person` Reusable Type
+
+| Attribute | Value |
+|---|---|
+| **Schema path** | `$defs/person` (referenced by `authors`, `decision_owner`, `reviewers`) |
+| **Type** | `object`: `name` (required), `role` (required), `email` (optional) |
+| **Used by** | `authors[]`, `decision_owner`, `reviewers[]` |
+
+**Precedent:**
+
+| Template | Person representation | Structured? | Role captured? |
+|---|---|---|---|
+| Nygard | None — no author field | ❌ | ❌ |
+| MADR 4.0 | `decision-makers` (list of names in frontmatter) | 🟡 Flat strings | ❌ |
+| smadr | `author` (name string) | 🟡 Single string | ❌ |
+| Tyree-Akerman | None | ❌ | ❌ |
+| Planguage | `Owner` / `Author` (name strings) | 🟡 Flat strings | ❌ |
+| EdgeX | `Submitters` (list of names) | 🟡 Flat strings | ❌ |
+| DRF | Participant objects with roles | ✅ | ✅ |
+| **adr-governance** | `person` object: name + role + email | ✅ | ✅ |
+
+**Why a structured type, not a plain string?** Three fields, three purposes:
+
+1. **`name` (required)** — human-readable identifier. Self-evident.
+
+2. **`role` (required)** — the person's organizational role *in the context of this decision*. This is the distinguishing design choice. Knowing the approver is a "CISO" vs. a "Senior Developer" changes how a reader interprets the approval's weight. The same person may serve different roles across ADRs — an engineer who authored ADR-0001 as a "Developer" might review ADR-0005 as a "Security Champion." Role is per-usage, not per-person.
+
+3. **`email` (optional)** — contact channel. Optional because: (a) email addresses change when people leave organizations, (b) many organizations use Slack/Teams handles or platform usernames (`approvals[].identity`) instead, (c) privacy regulations (GDPR) may prohibit storing email in public repositories.
+
+**Why a reusable `$defs` type?** The person structure appears in four places (`authors[]`, `decision_owner`, `reviewers[]`, and conceptually in `approvals[]` which extends it with `identity`/`approved_at`/`signature_id`). A `$ref` definition ensures consistency — changing the person structure updates all usages simultaneously.
+
+**Rejected alternatives:**
+- *Plain string per person (MADR/smadr/EdgeX style)* — loses role context. "Jane Doe" tells you nothing about her authority to approve. "Jane Doe, CISO" is more informative but requires parsing a convention
+- *Separate `name` and `role` fields without `$defs` (inline per usage)* — duplicates the type definition in four places, creating drift risk when the schema evolves
+- *Platform identity in person type (username/email as primary key)* — platform identities are volatile (people change jobs, rename GitHub accounts). The `name` + `role` combination is human-readable and platform-independent. Platform identity is reserved for `approvals[].identity` where CI verification needs it
+- *Required email* — privacy risk in public repos; organizational churn makes emails stale. The `identity` field in `approvals` serves the CI verification purpose without requiring email
+
 ### 2.1 `authors`
 
 | Attribute | Value |
@@ -635,13 +710,25 @@ Adding these would create **three fields duplicating information already in `dec
 | **Type** | `array` of `$ref: person` (name + role + optional email), minItems: 1 |
 | **Required?** | ✅ Yes |
 
-**Precedent:** MADR (as `decision-makers` in frontmatter), smadr (structured `author`), EdgeX (as "Submitters"), Planguage (as "Owner"/"Author"). Absent in Nygard, Tyree-Akerman, Merson.
+**Precedent:**
 
-**Rationale:** Every decision has an author who can be consulted for context. The structured `person` type (name + role) enables organizational context — knowing the author is a "Security Architect" vs. "Junior Developer" informs how to weight the decision.
+| Template | Author field | Structured? | Multiple authors? |
+|---|---|---|---|
+| Nygard | ❌ None | — | — |
+| MADR 4.0 | `decision-makers` (frontmatter) | 🟡 Flat strings | ✅ |
+| smadr | `author` (frontmatter) | 🟡 Single string | ❌ |
+| Tyree-Akerman | ❌ None | — | — |
+| Planguage | `Author` keyword | 🟡 Single string | ❌ |
+| EdgeX | `Submitters` | 🟡 Flat strings | ✅ |
+| DRF | Participant with role | ✅ | ✅ |
+| **adr-governance** | `authors[]` of `$ref: person` | ✅ | ✅ (minItems: 1) |
+
+**Rationale:** Every decision has an author who can be consulted for context. The structured `person` type (name + role) enables organizational context — knowing the author is a "Security Architect" vs. "Junior Developer" informs how to weight the decision. The `minItems: 1` constraint ensures accountability — every ADR must have at least one named author.
 
 **Rejected alternatives:**
 - *Plain string author name (MADR/smadr style)* — loses the role context. The same person may author ADRs in different capacities across projects
 - *Git author only (no schema field)* — Git tracks the committer, not the decision author. Decisions are often authored collaboratively or by someone different from the committer
+- *Single author (smadr/Planguage style)* — architectural decisions are frequently co-authored; limiting to one author misrepresents collaborative authoring
 
 ### 2.2 `decision_owner`
 
@@ -651,7 +738,14 @@ Adding these would create **three fields duplicating information already in `dec
 | **Type** | `$ref: person` |
 | **Required?** | ✅ Yes |
 
-**Precedent:** Only Planguage (as "Owner" vs. "Author") explicitly separates ownership from authorship. MADR conflates them in `decision-makers`.
+**Precedent:**
+
+| Template | Ownership concept | Separate from author? |
+|---|---|---|
+| Planguage | `Owner` keyword | ✅ Yes — distinct from `Author` |
+| MADR 4.0 | `decision-makers` | ❌ Conflated |
+| NHS Wales | Informal "decision maker" | 🟡 Mentioned, not structured |
+| **adr-governance** | `decision_owner` (structured person) | ✅ Yes |
 
 **Rationale:** The author writes the ADR; the **decision owner** is accountable for the outcome. These are often different people — a senior architect may delegate authoring to a team member while retaining accountability. Enterprise governance requires knowing who holds the decision, not just who typed it.
 
@@ -667,11 +761,19 @@ Adding these would create **three fields duplicating information already in `dec
 | **Type** | `array` of `$ref: person` |
 | **Required?** | Optional |
 
-**Precedent:** MADR (as `consulted` + `informed` in RACI-style frontmatter), NHS Wales (informal reference). No other template separates reviewers from approvers.
+**Precedent:**
 
-**Rationale:** Records who reviewed the ADR without necessarily approving it. Important for auditability — "who looked at this?" is a different question from "who approved it?"
+| Template | Reviewer concept | Structured? | Separate from approvers? |
+|---|---|---|---|
+| MADR 4.0 | `consulted` + `informed` (RACI) | 🟡 Flat strings | ✅ |
+| NHS Wales | Informal "reviewed by" | 🟡 | ❌ |
+| **adr-governance** | `reviewers[]` of `$ref: person` | ✅ | ✅ |
 
-**Rejected alternative:** *RACI matrix (MADR style)* — MADR 4.0 uses `consulted` + `informed` in a RACI model. Our simpler `reviewers` + `approvals` split covers the same ground without RACI overhead.
+**Rationale:** Records who reviewed the ADR without necessarily approving it. Important for auditability — "who looked at this?" is a different question from "who approved it?" Optional because not all ADRs go through formal review (operational/low-priority decisions may skip this).
+
+**Rejected alternatives:**
+- *RACI matrix (MADR style)* — MADR 4.0 uses `consulted` + `informed` in a RACI model. Our simpler `reviewers` + `approvals` split covers the same ground without RACI overhead. The four RACI roles (Responsible/Accountable/Consulted/Informed) are overkill for ADRs — `authors` = R, `decision_owner` = A, `reviewers` = C, and the PR notification system handles I.
+- *Required field* — operational decisions often don't need formal review. Making reviewers mandatory would add friction to low-ceremony decisions.
 
 ### 2.4 `approvals`
 
@@ -681,11 +783,33 @@ Adding these would create **three fields duplicating information already in `dec
 | **Type** | `array` of objects: name, role, identity, approved_at, signature_id |
 | **Required?** | Conditionally — required when `status` is `proposed` or `accepted` |
 
-**Precedent:** **No other ADR template has formal approvals as a structured section.** This is unique to adr-governance.
+**Precedent:**
 
-**Rationale:** Enterprise and regulated environments require formal sign-off trails. The `identity` field enables CI pipelines to verify that every listed approver actually approved the pull request — bridging the gap between the ADR document and the Git platform's approval mechanism. The `signature_id` field supports external signature references (e.g., DocuSign IDs, Jira ticket numbers) for fully auditable trails.
+| Template | Approval mechanism | Structured? | CI-verifiable? |
+|---|---|---|---|
+| Nygard | ❌ None | — | ❌ |
+| MADR 4.0 | ❌ None (implicit via PR merge) | — | ❌ |
+| smadr | 🟡 Compliance table | Partially | ❌ |
+| Planguage | ❌ None | — | ❌ |
+| **adr-governance** | ✅ Structured array with identity + timestamps | ✅ | ✅ |
+
+**Rationale:** Enterprise and regulated environments require formal sign-off trails. **No other ADR template has formal approvals as a structured section** — this is unique to adr-governance.
+
+**Sub-field rationale:**
+
+| Sub-field | Why it exists |
+|---|---|
+| `name` + `role` | Who approved and in what capacity (inherited from `person` type) |
+| `identity` | Platform-resolvable handle (GitHub `@username`, Azure DevOps email) enabling **CI verification** — the CI script checks that every listed identity actually approved the PR |
+| `approved_at` | ISO 8601 timestamp; nullable (`null` = pending approval). Enables tracking how long approval took |
+| `signature_id` | External signature reference (DocuSign ID, Jira ticket, e-signature reference). Nullable. Bridges ADRs to external compliance systems |
 
 **Why conditional requirement?** Drafts don't need approvers; propositions and acceptances do. The JSON Schema `allOf/if/then` block enforces this — `proposed` and `accepted` ADRs *must* have at least one approval with an `identity` field.
+
+**Rejected alternatives:**
+- *Git-only approvals (implicit via PR approval)* — no audit trail in the ADR itself. When ADRs are exported, bundled, or stored outside Git, the approval history is lost
+- *Simple boolean `approved: true/false`* — loses who, when, and in what capacity
+- *Always-required approvals* — drafts and deferred ADRs don't need approvals. Conditional requirement avoids blocking early-stage authoring
 
 ---
 
@@ -699,11 +823,28 @@ Adding these would create **three fields duplicating information already in `dec
 | **Type** | `string`, minLength: 20 (Markdown-native) |
 | **Required?** | ✅ Yes |
 
-**Precedent:** Present in every template (13/13) as "Context", "Problem Statement", or "Context and Problem Statement." The most universal ADR section alongside "Title."
+**Precedent:**
 
-**Rationale:** Self-evident — every architectural decision exists in a context. The Markdown-native type (supporting embedded Mermaid diagrams, code blocks, and rich formatting) enables architectural prose that goes beyond plain text. The `minLength: 20` constraint prevents stub contexts.
+| Template | Context section name | Markdown? | Required? |
+|---|---|---|---|
+| Nygard | "Context" | ❌ Plain text | ✅ |
+| MADR 4.0 | "Context and Problem Statement" | 🟡 Basic | ✅ |
+| smadr | "Context" | 🟡 Basic | ✅ |
+| Tyree-Akerman | "Issue or Problem Statement" | ❌ | ✅ |
+| Planguage | "Background" + "Impact" | ❌ | ✅ |
+| Merson | "Context" | ❌ | ✅ |
+| EdgeX | "Context" | 🟡 Basic | ✅ |
+| DRF | `context.description` + `context.validation` | ✅ | ✅ |
+| **adr-governance** | `context.description` (Markdown-native) | ✅ Full (Mermaid, code blocks) | ✅ |
+
+**Rationale:** Present in every template surveyed (13/13) — the most universal ADR section alongside "Title." The Markdown-native type (supporting embedded Mermaid diagrams, code blocks, and rich formatting) enables architectural prose that goes beyond plain text. The `minLength: 20` constraint prevents stub contexts.
 
 **Naming:** Originally `context.summary`; renamed to `context.description` to avoid confusion with the Y-Statement (which is the true decision "summary") and to use a more semantically accurate term for a problem narrative.
+
+**Rejected alternatives:**
+- *Separate "Problem Statement" and "Context" fields (MADR style)* — MADR 4.0 titles the section "Context and Problem Statement" suggesting these might be separate concerns. We merged them because: the problem statement *is* context, and separating them creates ambiguity about what goes where
+- *`context.validation` field (DRF style)* — DRF adds a validation mechanism for checking whether the context is still accurate against organizational knowledge. Requires CRF infrastructure; deferred until DRF matures past v0.1.0
+- *Plain text only (Nygard/Tyree-Akerman style)* — prevents embedding architectural diagrams. Mermaid sequence diagrams in context descriptions are among the most valuable visual aids in our example ADRs
 
 ### 3.2 `context.business_drivers` / `context.technical_drivers`
 
@@ -738,9 +879,23 @@ Adding these would create **three fields duplicating information already in `dec
 | **Type** | `array` of strings |
 | **Required?** | Optional |
 
-**Precedent:** Tyree-Akerman (dedicated "Constraints" section), Merson (informally in rationale), DRF (with "sourcing" — linking constraints to organizational facts). Absent in Nygard, MADR.
+**Precedent:**
+
+| Template | Constraints concept | Structured? |
+|---|---|---|
+| Tyree-Akerman | ✅ Dedicated "Constraints" section | 🟡 Free-text |
+| Planguage | ✅ "Constraints" keyword | 🟡 Free-text |
+| Merson | 🟡 Informal in rationale | ❌ |
+| DRF | ✅ Explicit field with "sourcing" | ✅ |
+| MADR / Nygard / smadr | ❌ Absent | — |
+| **adr-governance** | ✅ `context.constraints` array | ✅ Structured |
 
 **Rationale:** Constraints bound the solution space and are non-negotiable — "we must use vendor X" or "deployment must be on-premises." Capturing them explicitly prevents evaluating alternatives that were never viable, and prevents future reviewers from asking "why didn't you consider Y?" when Y was constrained out.
+
+**Rejected alternatives:**
+- *Embed constraints in `context.description` prose (Nygard/MADR style)* — buries constraints in narrative where they're easy to miss. Structured arrays enable machine extraction ("what constraints apply to IAM decisions?") and explicit review during lifecycle checks
+- *Typed constraints with categories (technical/regulatory/organizational)* — over-structures the field. A constraint like "must deploy on-premises" is simultaneously technical and regulatory. Categories would create classification debates without adding value
+- *Required field* — not all decisions are externally constrained. Pure technology choices may have no non-negotiable constraints beyond team preferences
 
 ### 3.4 `context.assumptions`
 
@@ -750,15 +905,50 @@ Adding these would create **three fields duplicating information already in `dec
 | **Type** | `array` of strings |
 | **Required?** | Optional |
 
-**Precedent:** Tyree-Akerman (dedicated "Assumptions" section), Planguage (as "Assumptions"), DRF (explicit field). Absent in Nygard, MADR.
+**Precedent:**
+
+| Template | Assumptions concept | Structured? |
+|---|---|---|
+| Tyree-Akerman | ✅ Dedicated "Assumptions" section | 🟡 Free-text |
+| Planguage | ✅ "Assumptions" keyword | 🟡 Free-text |
+| DRF | ✅ Explicit field | ✅ |
+| MADR / Nygard / smadr | ❌ Absent | — |
+| **adr-governance** | ✅ `context.assumptions` array | ✅ Structured array |
 
 **Rationale:** Assumptions are the most dangerous hidden dependencies in any decision. "We assume the API gateway handles TLS termination" — if that assumption is wrong, the entire decision may be invalid. Explicit assumptions enable review ("is this assumption still true?") and serve as triggers for re-evaluation during lifecycle reviews.
 
-**Rejected alternative:** *Context Validation / CRF (DRF style)* — DRF proposes a Context Relevance Framework for validating assumptions against organizational knowledge graphs. Requires knowledge graph infrastructure that doesn't exist yet. Worth revisiting when DRF matures past v0.1.0.
+**Rejected alternatives:**
+- *Context Validation / CRF (DRF style)* — DRF proposes a Context Relevance Framework for validating assumptions against organizational knowledge graphs. Requires knowledge graph infrastructure that doesn't exist yet. Worth revisiting when DRF matures past v0.1.0.
+- *Required field* — many operational decisions have no explicit assumptions worth documenting. Making it mandatory would produce noise ("we assume the internet exists")
+- *Embed in `context.description` prose* — same argument as constraints: structured arrays enable machine extraction and explicit review during lifecycle checks
 
 ---
 
 ## Section 4: `architecturally_significant_requirements` — Requirement Traceability
+
+### 4.0 `$defs/architecturally_significant_requirement` Reusable Type
+
+| Attribute | Value |
+|---|---|
+| **Schema path** | `$defs/architecturally_significant_requirement` |
+| **Type** | `object`: `id` (required, pattern: `^(F|NF)-[0-9]{3}$`), `description` (required, string) |
+| **Used by** | `architecturally_significant_requirements.functional[]`, `.non_functional[]` |
+
+**Rationale:** The ASR type is deliberately minimal — just `id` + `description`. This is a conscious design trade-off:
+
+1. **Why `id`?** Enables cross-referencing ASRs from within `alternatives[].pros`, `alternatives[].cons`, `decision.rationale`, and `consequences`. Example: "Pro: Satisfies NF-002 (latency < 200ms)." Without IDs, cross-references become fragile text matches.
+
+2. **Why the pattern `^(F|NF)-[0-9]{3}$`?** The `F-` / `NF-` prefix immediately communicates the requirement category without reading the description. Three digits (001–999) provide ample range per ADR — no known ADR has >50 requirements.
+
+3. **Why per-ADR scoping?** Each ADR starts from F-001/NF-001. This avoids requiring a global requirement registry (which most teams don't have) and makes ADRs self-contained. The IDs are *local identifiers*, not globally unique — F-001 in ADR-0001 is unrelated to F-001 in ADR-0005.
+
+4. **Why only `description`, not full QAS (6-part)?** The SEI Quality Attribute Scenario has 6 components (Source, Stimulus, Artifact, Environment, Response, Response Measure). Embedding all 6 in every ASR would make the ADR a requirements specification document rather than a decision record. A separate `measure` field was evaluated and rejected (see §4.2).
+
+**Rejected alternatives:**
+- *Full SEI QAS type (6 fields per requirement)* — over-structures ADRs into requirements documents. ADRs reference ASRs; they don't *specify* them
+- *No `id` field (description only)* — prevents cross-referencing from other sections. "Satisfies NF-002" is more precise than "satisfies the latency requirement"
+- *UUID or globally unique IDs* — requires a central registry. ADRs should be self-contained documents
+- *Four-digit pattern (`F-0001`)* — no ADR realistically has >999 ASRs. Four digits add visual noise
 
 ### 4.1 ASR Structure: `functional[]` / `non_functional[]`
 
@@ -962,6 +1152,31 @@ The landing zone **concept** is valuable educational content referenced in our v
 - *No minimum (MADR/smadr style)* — allows single-option ADRs that are effectively fait accompli notifications rather than decision records
 - *`minItems: 3` (force three options)* — overly prescriptive; for some decisions, two genuine alternatives is the reality. Forcing a third often produces a strawman option that wastes reviewer time
 
+### 5.1.1 `alternatives[].name`
+
+| Attribute | Value |
+|---|---|
+| **Schema path** | `alternatives[].name` |
+| **Type** | `string` |
+| **Required?** | ✅ Yes |
+
+**Precedent:**
+
+| Template | Alternative naming | Cross-referenced? |
+|---|---|---|
+| MADR 4.0 | Option titles (e.g., "Option 1 – Use Docker") | 🟡 Repeated in "Decision Outcome" |
+| smadr | Option names | 🟡 Repeated |
+| Tyree-Akerman | "Position" names | 🟡 Repeated |
+| Business Case | "Candidate" names | 🟡 Repeated |
+| **adr-governance** | `name` string, cross-referenced by `decision.chosen_alternative` | ✅ Name-matched |
+
+**Rationale:** The name serves as the **human-readable identifier** for each alternative and is the key that `decision.chosen_alternative` references. Short, descriptive names ("DPoP", "mTLS", "BFF Token Mediator") enable scanning and comparison without reading full descriptions.
+
+**Rejected alternatives:**
+- *Numbered alternatives ("Alternative 1", "Alternative 2")* — generic numbers carry no semantic meaning. "DPoP" is immediately comprehensible; "Alternative 1" requires reading the description
+- *No explicit name (description only)* — prevents concise cross-referencing from `decision.chosen_alternative`, pros/cons discussions, and Y-Statement composition
+- *Slug-enforced naming pattern* — considered requiring `kebab-case` names for machine processing. Rejected because human-readable names ("BFF Token Mediator") are more important for ADR consumption than machine identifiers
+
 ### 5.2 `alternatives[].description` (Markdown-native)
 
 | Attribute | Value |
@@ -986,11 +1201,22 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `array` of strings (minItems: 1 each, minLength: 1 per item) |
 | **Required?** | ✅ Yes |
 
-**Precedent:** MADR ("Good, because…" / "Bad, because…"), smadr (structured), NHS Wales. Absent in Nygard, Merson.
+**Precedent:**
+
+| Template | Pros/Cons structure | Format |
+|---|---|---|
+| MADR 4.0 | "Good, because…" / "Bad, because…" | 🟡 Prefixed strings |
+| smadr | Structured pros/cons per option | ✅ |
+| NHS Wales | Structured evaluation | ✅ |
+| Tyree-Akerman | Free-text in "Implications" | 🟡 |
+| Nygard / Merson | ❌ Absent | — |
+| **adr-governance** | `pros[]` + `cons[]` arrays (minItems: 1 each) | ✅ |
 
 **Rationale:** Structured pros/cons force balanced evaluation. The `minItems: 1` constraints ensure that no option is presented as exclusively positive or negative — every real-world alternative has both.
 
-**Rejected alternative:** *MADR's three-way split (Good/Neutral/Bad)* — "Neutral" consequences are rarely informative and create authoring friction ("what goes in Neutral?"). The binary split is sufficient.
+**Rejected alternatives:**
+- *MADR's three-way split (Good/Neutral/Bad)* — "Neutral" consequences are rarely informative and create authoring friction ("what goes in Neutral?"). The binary split is sufficient.
+- *Weighted pros/cons (score per item)* — creates false precision. "How much does 'better security' weigh against 'slower deployment'?" These are incommensurable qualities best left to human judgment in the rationale.
 
 ### 5.4 `alternatives[].estimated_cost` / `alternatives[].risk`
 
@@ -999,13 +1225,21 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Schema path** | `alternatives[].estimated_cost` (low/medium/high), `alternatives[].risk` (low/medium/high/critical) |
 | **Required?** | Optional |
 
-**Precedent:** No other ADR template has per-option cost estimates. smadr has a 3D risk model (Technical/Schedule/Ecosystem). Business Case (Henderson) has SWOT with cost.
+**Precedent:**
+
+| Template | Per-option cost? | Per-option risk? | Risk dimensions |
+|---|---|---|---|
+| smadr | ❌ | ✅ 3D risk model | Technical / Schedule / Ecosystem |
+| Business Case (Henderson) | ✅ SWOT with cost | ✅ SWOT with risk | SWOT matrix |
+| MADR / Nygard / others | ❌ | ❌ | — |
+| **adr-governance** | ✅ Enum (low/med/high) | ✅ Enum (low/med/high/critical) | Single dimension |
 
 **Rationale:** Relative cost and risk enums provide machine-filterable decision metadata without requiring detailed financial analysis. An alternative with `estimated_cost: high` and `risk: critical` creates a very different decision context than `cost: low`, `risk: low`.
 
 **Rejected alternatives:**
 - *smadr's 3D risk model (Technical/Schedule/Ecosystem)* — interesting but our per-option `risk` field combined with pros/cons provides equivalent coverage with less schema complexity
 - *SWOT per option (Business Case / Henderson)* — overlaps with pros/cons/cost/risk. SWOT is a management lens, not an engineering lens.
+- *Numeric cost/risk (1–10)* — same false precision problem as numeric priority. Categorical labels are easier to reason about.
 
 ### 5.5 `alternatives[].rejection_rationale`
 
@@ -1018,6 +1252,10 @@ The landing zone **concept** is valuable educational content referenced in our v
 **Precedent:** Merson (explicit rationale for rejected alternatives in Rationale section), DRF (rejection reasoning in `synthesis`). No other template has per-option rejection reasoning.
 
 **Rationale:** Pros/cons explain what's good and bad about each option. `rejection_rationale` explains **why this specific option was not chosen** — a more focused explanation that addresses the decision context rather than the option's abstract qualities. Future teams benefit most from knowing not just "what were the options" but "why didn't you pick this one?"
+
+**Rejected alternatives:**
+- *Mandatory rejection rationale for all alternatives* — the chosen alternative doesn't have a rejection rationale. Making it conditionally required (only for non-chosen alternatives) would require cross-field validation that JSON Schema can't express. Tooling-level enforcement is used instead.
+- *Embed rejection reasoning in `cons` array* — conflates abstract disadvantages with the actual reason for rejection. An option's cons exist regardless of whether it was chosen; rejection rationale is decision-specific.
 
 ---
 
@@ -1048,9 +1286,22 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `string`, minLength: 20 (Markdown-native) |
 | **Required?** | ✅ Yes |
 
-**Precedent:** Merson has a dedicated "Rationale" section (unique at the time). Most templates embed rationale in the Decision section. Tyree-Akerman has "Justification." Richards and Ford explicitly advocate for rationale as the most important part of an ADR.
+**Precedent:**
 
-**Rationale:** The rationale is the **most important field in the entire schema**. It answers "why" — the question that future architects will ask most often. Markdown-native formatting supports the depth this field deserves.
+| Template | Rationale section | Dedicated? | Markdown? |
+|---|---|---|---|
+| Nygard | Embedded in "Decision" prose | ❌ Combined | ❌ |
+| MADR 4.0 | Embedded in "Decision Outcome" | ❌ Combined | 🟡 Basic |
+| Merson | ✅ Dedicated "Rationale" section | ✅ | ❌ |
+| Tyree-Akerman | ✅ "Justification" | ✅ | ❌ |
+| smadr | Embedded in decision | ❌ Combined | 🟡 |
+| **adr-governance** | ✅ `decision.rationale` (Markdown-native) | ✅ | ✅ Full |
+
+**Rationale:** The rationale is the **most important field in the entire schema**. It answers "why" — the question that future architects will ask most often. Markdown-native formatting supports the depth this field deserves. Richards and Ford (*Fundamentals of Software Architecture*, 2020) explicitly advocate for rationale as the most important part of an ADR.
+
+**Rejected alternatives:**
+- *Embed rationale in `decision.chosen_alternative` prose (Nygard/MADR style)* — buries the "why" in a section primarily about the "what." Separating rationale makes it reviewable and searchable independently
+- *Structured rationale (template with slots)* — rationale is inherently narrative; imposing structure would constrain the author's ability to build a coherent argument
 
 ### 6.3 `decision.tradeoffs`
 
@@ -1060,9 +1311,20 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `string` (Markdown-native) |
 | **Required?** | Optional |
 
-**Precedent:** Y-Statements ("accepting that…"), MADR (informal in consequences). No template has a dedicated tradeoffs field.
+**Precedent:**
+
+| Template | Tradeoff concept | Dedicated field? |
+|---|---|---|
+| Y-Statements (Zimmermann) | "accepting that…" clause | ✅ Structural slot |
+| MADR 4.0 | Informal in consequences | ❌ |
+| Nygard | Implicit in prose | ❌ |
+| **adr-governance** | `decision.tradeoffs` (Markdown-native) | ✅ |
 
 **Rationale:** Every architectural decision involves tradeoffs — "we gained X but lost Y." Separating tradeoffs from rationale prevents the rationale from becoming defensive ("we chose X despite Y") and creates a clear space for acknowledging costs. This field maps directly to the "accepting that" clause in the Y-Statement.
+
+**Rejected alternatives:**
+- *Embed tradeoffs in `decision.rationale`* — conflates justification with acknowledged costs. Reviewers want to quickly scan "what are we giving up?" without parsing the rationale
+- *Structured tradeoff matrix (gained/lost per quality attribute)* — over-structures the content. Tradeoffs are better expressed as narrative ("we accept higher latency in exchange for stronger isolation") than as cells in a matrix
 
 ### 6.4 `decision.decision_date`
 
@@ -1104,13 +1366,24 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `array` of strings |
 | **Required?** | At least one field required (via `minProperties: 1`) |
 
-**Precedent:** MADR (Good/Neutral/Bad), smadr, NHS Wales, Nygard (flat prose). All templates have consequences; structuring varies.
+**Precedent:**
+
+| Template | Consequences section | Structure | Categories |
+|---|---|---|---|
+| Nygard | "Consequences" | 🟡 Flat prose | ❌ |
+| MADR 4.0 | "Consequences" | ✅ Listed | Good / Neutral / Bad |
+| smadr | "Consequences" | ✅ Listed | Positive / Negative |
+| NHS Wales | "Consequences" | ✅ Listed | Positive / Negative |
+| Merson | "Consequences" in rationale | 🟡 Informal | ❌ |
+| **adr-governance** | `consequences.positive` / `.negative` | ✅ Separate arrays | Positive / Negative |
 
 **Rationale:** The positive/negative split enables structured reasoning about outcomes. The `minProperties: 1` constraint ensures that consequences are not completely empty — at least one category must be populated.
 
 **Rejected alternatives:**
-- *Three-way split with "Neutral" (MADR style)* — excluded; neutral consequences are rarely informative
+- *Three-way split with "Neutral" (MADR style)* — excluded; neutral consequences are rarely informative and create authoring friction ("what's a neutral consequence?")
 - *Categorized consequences (security/compliance/operational)* — evaluated and removed to keep ADRs focused on decisions rather than operational runbooks. See [template comparison §6.1](adr-template-comparison.md#61-no-template-has-structured-implications)
+- *Single `consequences` array without polarity* — loses the structured positive/negative distinction that enables quick scanning ("what are we gaining? what are we losing?")
+- *Markdown string (like rationale)* — prevents machine extraction. Consequences as structured arrays enable automated impact analysis across the ADR corpus
 
 ---
 
@@ -1149,13 +1422,25 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `array` of strings |
 | **Required?** | Optional |
 
-**Precedent:** **No other ADR template has explicit dependency tracking.** EdgeX has "Affected Services" (similar to internal dependencies but limited to a specific product).
+**Precedent:**
 
-**Rationale:** Architectural decisions don't exist in isolation. Knowing that "this decision depends on the payment team's API migration" (internal) or "this decision requires AWS availability zones in eu-west-1" (external) enables impact analysis when dependencies change.
+| Template | Dependency tracking | Internal/External split? |
+|---|---|---|
+| EdgeX | 🟡 "Affected Services" (similar to internal deps) | ❌ Product-specific |
+| Tyree-Akerman | 🟡 "Related Decisions" (adjacency, not dependency) | ❌ |
+| DRF | 🟡 Context Relevance Framework (implicit) | ❌ |
+| All others | ❌ Absent | — |
+| **adr-governance** | ✅ `dependencies.internal` + `.external` | ✅ |
+
+**Rationale:** **No other ADR template has explicit dependency tracking as a dedicated section.** Architectural decisions don't exist in isolation. Knowing that "this decision depends on the payment team's API migration" (internal) or "this decision requires AWS availability zones in eu-west-1" (external) enables impact analysis when dependencies change. The internal/external split matters because:
+- **Internal dependencies** are under organizational control — you can negotiate, escalate, or schedule around them
+- **External dependencies** are outside organizational control — vendor decisions, cloud provider changes, regulatory shifts. These carry higher risk.
 
 **Rejected alternatives:**
 - *EdgeX-style structured impact assessment* — too specific to a single codebase. Our ADRs describe architectural patterns where impacted systems vary by adopter.
 - *Standalone `risk_assessment` section* — no ADR template has this as a standalone section. Risk is already distributed across `alternatives[].risk`, `alternatives[].cons`, `consequences.negative`, `decision.tradeoffs`, and `context.constraints`. A formal risk register belongs in threat models / ISMS artifacts, not in decision records.
+- *Combined `dependencies` list (no internal/external split)* — loses the controllability distinction. "We depend on the IAM team" (negotiable) vs. "we depend on AWS us-east-1" (non-negotiable) have fundamentally different risk profiles
+- *Required field* — not all decisions have explicit dependencies. Self-contained technology choices ("use Ed25519 for signing") may have no external or internal dependencies
 
 ---
 
@@ -1169,7 +1454,16 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `array` of objects: `title` + `url` |
 | **Required?** | Optional |
 
-**Precedent:** Present informally in most templates ("More Information" in MADR, "Related Artifacts" in Tyree-Akerman, "Notes" in Nygard). None have structured title+URL references.
+**Precedent:**
+
+| Template | References section | Structured (title+URL)? |
+|---|---|---|
+| Nygard | 🟡 "Notes" (informal) | ❌ Free prose |
+| MADR 4.0 | 🟡 "More Information" (links in prose) | ❌ Inline links |
+| Tyree-Akerman | 🟡 "Related Artifacts" | ❌ Free-text |
+| smadr | 🟡 "References" (Markdown links) | 🟡 |
+| EdgeX | ✅ "References" section | 🟡 |
+| **adr-governance** | ✅ `references[]` with `title` + `url` | ✅ |
 
 **Rationale:** Structured references (title + URL) enable link validation and bibliography generation. RFCs, standards documents, vendor documentation, and research papers referenced in the decision rationale should be formally captured.
 
@@ -1177,6 +1471,7 @@ The landing zone **concept** is valuable educational content referenced in our v
 - *Unstructured prose links (MADR "More Information" style)* — prevents automated link checking and bibliography extraction
 - *BibTeX-style citation format* — overly academic; architects are not researchers. Simple title + URL is sufficient for ADR contexts
 - *Required field* — not all decisions reference external documents. Operational decisions ("use Ed25519 for signing") may be entirely self-contained
+- *`title` + `url` + `type` (with category enum)* — considered adding a reference type (RFC, paper, vendor doc, internal wiki). Rejected because the categories are endless and the title is usually descriptive enough
 
 ---
 
@@ -1190,9 +1485,21 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `integer` (min: 1), `string` (date) |
 | **Required?** | Optional |
 
-**Precedent:** Only NHS Wales has informal review scheduling. **No other template has structured review cadence.**
+**Precedent:**
 
-**Rationale:** Architectural decisions decay — context changes, technologies evolve, teams turn over. Without explicit review triggers, decisions become fossilized. The `review_cycle_months` field enables automated reminders; `next_review_date` captures the concrete date for the next review.
+| Template | Review scheduling | Structured? |
+|---|---|---|
+| NHS Wales | 🟡 Informal review mention | ❌ |
+| Cervantes & Woods | ✅ Architectural retrospectives (concept) | ❌ Process, not schema |
+| Henderson (After-Action Reviews) | ✅ Post-implementation review (concept) | ❌ Process, not schema |
+| **adr-governance** | ✅ `review_cycle_months` + `next_review_date` | ✅ |
+
+**Rationale:** **No other template has structured review cadence.** Architectural decisions decay — context changes, technologies evolve, teams turn over. Without explicit review triggers, decisions become fossilized. The `review_cycle_months` field enables automated reminders; `next_review_date` captures the concrete date for the next review. Combined with `decision.confidence`, this enables risk-based review prioritization — low-confidence decisions get shorter review cycles.
+
+**Rejected alternatives:**
+- *Review-as-process-only (no schema field)* — without a machine-readable field, review scheduling depends on human memory. Automated CI reminders ("3 ADRs are past their review date") require structured data
+- *Single `next_review_date` without cycle* — loses the recurring nature of reviews. The cycle enables auto-computation of subsequent review dates
+- *Required field* — not all decisions need active review. Operational decisions with `confidence: high` may never need re-evaluation
 
 ### 11.2 `lifecycle.superseded_by` / `lifecycle.supersedes`
 
@@ -1202,11 +1509,23 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `string` or `null`, ADR ID pattern |
 | **Required?** | Optional |
 
-**Precedent:** Nygard (inline "Superseded by ADR-NNNN"), MADR (inline), smadr, EdgeX, NHS Wales. All handle supersession; structuring varies.
+**Precedent:**
 
-**Rationale:** Bidirectional cross-references (new ADR points to old via `supersedes`; old ADR points to new via `superseded_by`) create a navigable decision chain. Both fields are validated for symmetry by the validator script.
+| Template | Supersession mechanism | Bidirectional? | Structured? |
+|---|---|---|---|
+| Nygard | Inline "Superseded by ADR-NNNN" in status | ❌ One-way | ❌ Prose |
+| MADR 4.0 | Inline in status header | ❌ One-way | ❌ Prose |
+| smadr | Structured field | 🟡 | ✅ |
+| EdgeX | Change log entries | ❌ | 🟡 |
+| NHS Wales | Inline in status | ❌ One-way | ❌ |
+| **adr-governance** | `superseded_by` + `supersedes` | ✅ Bidirectional | ✅ |
 
-**Rejected alternative:** *`related_adrs` / `attachments` (original schema)* — removed during schema refinement. ADR relationships are captured through `lifecycle.superseded_by` / `lifecycle.supersedes` for the most important relationship type (replacement). Other cross-references use `references` or prose in `context.description`. Attachments are external references via `confirmation.artifact_ids` or `references`.
+**Rationale:** Bidirectional cross-references (new ADR points to old via `supersedes`; old ADR points to new via `superseded_by`) create a navigable decision chain. Both fields are validated for symmetry by the validator script. The ADR ID pattern constraint ensures references are valid ADR identifiers.
+
+**Rejected alternatives:**
+- *`related_adrs` / `attachments` (original schema)* — removed during schema refinement. ADR relationships are captured through `lifecycle.superseded_by` / `lifecycle.supersedes` for the most important relationship type (replacement). Other cross-references use `references` or prose in `context.description`. Attachments are external references via `confirmation.artifact_ids` or `references`.
+- *Unidirectional supersession (old → new only, Nygard style)* — navigating from new to old requires searching the entire corpus. Bidirectional references make the chain immediately traversable
+- *Free-text supersession reference* — prevents validation. The ADR ID pattern constraint ensures the reference actually points to a valid ADR identifier
 
 ### 11.3 `lifecycle.archival`
 
@@ -1216,9 +1535,19 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `string` or `null` |
 | **Required?** | Optional |
 
-**Precedent:** **No other template has archival as a structured concept.** Most templates treat superseded/deprecated as terminal.
+**Precedent:**
 
-**Rationale:** Long-lived ADR repositories accumulate hundreds of decisions. Archival removes decisions from active consideration without deleting them — preserving the historical record while reducing noise. The `archived_at` timestamp and `archive_reason` provide queryable metadata.
+| Template | Archival concept | Structured? |
+|---|---|---|
+| All surveyed templates | ❌ No archival concept | — |
+| **adr-governance** | ✅ `archival.archived_at` + `.archive_reason` | ✅ |
+
+**Rationale:** **No other template has archival as a structured concept.** Most templates treat superseded/deprecated as terminal. Long-lived ADR repositories accumulate hundreds of decisions. Archival removes decisions from active consideration without deleting them — preserving the historical record while reducing noise. The `archived_at` timestamp and `archive_reason` provide queryable metadata ("when was this archived?" "why?").
+
+**Rejected alternatives:**
+- *Delete archived ADRs* — violates the principle that decision history should be immutable. Future teams may need to understand why a decision was made even if the decision is no longer active
+- *Use `status: archived`* — considered adding an `archived` status to the status enum. Rejected because archival is orthogonal to status — a `superseded` ADR may or may not be archived (some superseded ADRs remain in active indexes for reference)
+- *Archive by moving files to an `archive/` folder* — filesystem-level archival loses metadata (when, why) and breaks cross-references
 
 ---
 
@@ -1249,13 +1578,29 @@ The `reviewed` event type (inspired by Cervantes & Woods' architectural retrospe
 | **Schema path** | Top-level `patternProperties: "^x-"` |
 | **Required?** | Optional |
 
-**Precedent:** smadr (pioneered `x-` prefix convention for ADRs, inspired by OpenAPI). HTTP headers use `X-` prefix convention.
+**Precedent:**
+
+| Standard/Template | Extension mechanism |
+|---|---|
+| OpenAPI 3.x | `x-` prefix for vendor extensions (the original inspiration) |
+| HTTP Headers | `X-` prefix convention (deprecated in RFC 6648, but widely understood) |
+| smadr | ✅ Pioneered `x-` prefix for ADR extensions |
+| **adr-governance** | ✅ `patternProperties: "^x-"` (schema-validated) |
 
 **Rationale:** Organizations have unique metadata needs (project codes, CMDB references, deployment regions, cost center IDs). Extension fields allow any `x-`-prefixed field without breaking schema validation — enabling customization without forking the schema.
+
+**Rejected alternatives:**
+- *`metadata` catch-all object* — creates an unstructured dumping ground. The `x-` prefix makes extensions visible and namespaced
+- *Fork the schema for custom fields* — creates divergence. Forked schemas can't be validated against the original, breaking tooling interoperability
+- *No extensions (strict schema only)* — too rigid for real-world adoption. Organizations will add custom fields regardless; better to provide a sanctioned mechanism
 
 ### 13.2 `additionalProperties: false`
 
 Every object in the schema sets `additionalProperties: false`. This is a deliberate strictness choice — typos and undocumented fields are caught at validation time rather than silently accepted. Extension fields use the `x-` escape hatch.
+
+**Rejected alternatives:**
+- *`additionalProperties: true` (permissive)* — silently accepts typos and undocumented fields. A field named `desciption` (typo) would pass validation and never be rendered. Strictness catches these at authoring time.
+- *Per-object `additionalProperties` (mixed)* — inconsistent developer experience. All-or-nothing strictness is easier to understand and maintain.
 
 ### 13.3 Conditional Requirements (`allOf/if/then`)
 
@@ -1263,6 +1608,11 @@ The schema uses JSON Schema 2020-12 conditional logic to enforce:
 - When `status` is `proposed` or `accepted`, `approvals` is required with at least one entry, and each approval must have an `identity` field.
 
 This enables a **progressive strictness** model — drafts are loose, proposed/accepted ADRs are strict.
+
+**Rejected alternatives:**
+- *Always-strict (require approvals for all statuses)* — blocks authors from creating drafts. The progressive model mirrors the natural ADR lifecycle: sketch → propose → approve.
+- *No conditional requirements (always-optional approvals)* — defeats the purpose of governance. Accepted ADRs without approvals have no accountability.
+- *Custom validation only (not schema-level)* — JSON Schema's `allOf/if/then` is the standard mechanism for conditional logic. Schema-level enforcement ensures any validator (AJV, Python jsonschema, IDE plugins) enforces the rule without custom code.
 
 ---
 
