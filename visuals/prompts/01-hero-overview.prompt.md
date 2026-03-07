@@ -102,7 +102,7 @@ Overall layout:
   - Center (~50% width): "The Framework" — what this system provides.
   - Right (~25% width): "The Outcome" — what you get.
 - Use a subtle gradient or tonal shift across the three regions to reinforce the left→right narrative: the left region should feel slightly darker or muted (representing the broken status quo), the center should be the most visually rich and vibrant (the framework), and the right should feel clean and resolved (the outcome).
-- Place a title at the top center of the canvas: "ADR Governance" in a large, bold heading. Underneath it, in smaller type: "Schema-Governed, AI-Native Architecture Decision Records".
+- Place a title at the top center of the canvas: "ADR Governance" in a large, bold heading.
 
 Left region — "The Problem":
 - Region heading: "Status quo" or "Without structured governance".

@@ -149,7 +149,7 @@ Visual connections and flow:
 - The overall left→right flow must be unmistakable: intent → AI dialogue → governed outcome.
 
 Contrast callout (optional, if space permits):
-- A small, muted "traditional approach" strip at the very top or bottom of the center region, showing the contrast:
+- A small, muted "traditional approach" strip placed only at the bottom of the center region, directly above the footer sentence, showing the contrast:
   - "Traditional: fill template manually → schedule meeting → discover gaps live → iterate in meetings"
   - "AI-native: Socratic dialogue resolves gaps before any human review"
 - Keep this very compact and visually subordinate — it's supporting context, not the main story.
