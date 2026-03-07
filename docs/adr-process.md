@@ -108,6 +108,21 @@ If **none** of these apply, the decision is likely not architecturally significa
 
 > **Source:** Adapted from Zimmermann's [Architectural Significance Test](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html) (7 criteria) with additions from Richards & Ford (*Fundamentals of Software Architecture*, irreversibility) and Henderson (documentation motivation). See also: *"An AD log with more than 100 entries will probably put your readers (and you) to sleep."*
 
+#### 3.0.1 How Much Detail? — Verbosity Guidance
+
+Not every ADR needs maximum detail. Calibrate documentation effort to match the decision's impact:
+
+| Priority | Decision Level | Verbosity | What to populate |
+|:--------:|:--------------:|:---------:|-----------------|
+| `low` | `operational` | **Minimal** | Required fields only. Brief descriptions. 2 alternatives sufficient. |
+| `medium` | `tactical` | **Medium** | Required fields + `business_drivers`, `technical_drivers`, `constraints`, `tradeoffs`, `y_statement`. Balanced pros/cons with 3+ items each. |
+| `high` | `strategic` | **Full** | All sections populated. Detailed ASRs. Mermaid diagrams encouraged. Comprehensive rationale referencing evidence. |
+| `critical` | `strategic` | **Full+** | Full + extensive audit trail, formal review cadence, multiple reviewers/approvers, `dependencies` cross-references. |
+
+> **Principle:** *"Do not spend more time on capturing than on making."* A 3-page ADR for a logging library choice is over-documentation. One well-reasoned paragraph in `rationale` beats five paragraphs of filler. Optional fields can be left empty — the schema makes them optional for a reason.
+>
+> **Source:** Adapted from DPR's three verbosity levels (`activities/DPR-ArchitecturalDecisionCapturing.md`, lines 31–35).
+
 ### 3.1 Draft Phase
 
 1. **Create a branch** from `main`:
