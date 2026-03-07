@@ -6,7 +6,7 @@
 > **Repository:** `adr-governance`  
 > **Related documents:**  
 > - [`adr-template-comparison.md`](adr-template-comparison.md) — template-level survey (horizontal scan)  
-> - [`dpr-enrichment-proposals.md`](dpr-enrichment-proposals.md) — DPR-inspired proposals (change-driven)  
+> - [`process-rationale.md`](process-rationale.md) — process-level design rationale  
 > - [`schemas/adr.schema.json`](../../schemas/adr.schema.json) — source of truth
 
 ---
@@ -14,7 +14,7 @@
 ## Purpose
 
 The [ADR Template Comparison](adr-template-comparison.md) answers: *"What do other templates look like?"*  
-The [DPR Enrichment Proposals](dpr-enrichment-proposals.md) answer: *"What should we adopt from DPR?"*
+The [Process Rationale](process-rationale.md) answers: *"For every process element, why does it exist?"*
 
 **This document answers: *"For every field in our schema, why does it exist?"***
 
@@ -121,7 +121,7 @@ The `adr` object contains identification and classification metadata. Its design
 **Key academic lineage:**
 - Zimmermann, "Making Architectural Knowledge Sustainable" (SATURN 2012)
 - Fairbanks, Architecture Haiku (WICSA 2011) — the "to achieve / accepting that" tradeoff structure
-- See [P2 deep research](dpr-enrichment-proposals.md#p2-add-y-statement-rendering-capability) for full literature review
+- See [Y-Statement process rationale](process-rationale.md#1-y-statement-rendering-capability--adry_statement) for full literature review
 
 ### 1.4 `adr.status`
 
@@ -259,7 +259,7 @@ Without `decision_level`, these three are indistinguishable when filtered by `de
 
 **Why these three terms?** `strategic`/`tactical`/`operational` are immediately understood across disciplines. Rejected: `conceptual`/`technology`/`asset` (Zimmermann SOA — too abstract), `penthouse`/`middle`/`engine-room` (Hohpe — metaphorical, not self-documenting).
 
-**Key academic lineage:** See [P1 deep research](dpr-enrichment-proposals.md#p1-add-decision_level-field) for the full 8-framework comparative analysis.
+**Key academic lineage:** Zimmermann DPR (2020), SOA Decision Models (2007), Kruchten Ontology (2004), TOGAF ADM, C4 Model (Brown), Hohpe Architect Elevator (2020), Ford & Richards (2021), Jansen & Bosch (2005). Full 8-framework comparative analysis preserved in Git history.
 
 ---
 
