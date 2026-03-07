@@ -234,14 +234,14 @@
                 "functional": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/requirement"
+                        "$ref": "#/$defs/architecturally_significant_requirement"
                     },
                     "description": "Functional ASRs addressed by this decision."
                 },
                 "non_functional": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/$defs/requirement"
+                        "$ref": "#/$defs/architecturally_significant_requirement"
                     },
                     "description": "Non-functional / quality attribute ASRs."
                 }
@@ -603,7 +603,7 @@
                 }
             }
         },
-        "requirement": {
+        "architecturally_significant_requirement": {
             "type": "object",
             "required": [
                 "id",
