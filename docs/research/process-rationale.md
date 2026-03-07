@@ -355,12 +355,4 @@ Our schema's required/optional field structure naturally supports all three leve
 
 ---
 
-## 6. Process Elements Evaluated and Rejected
-
-The following process elements were researched, evaluated, and deliberately not implemented.
-
-| Element | Source | Why Not Implemented |
-|---|---|---|
-| **QAS `measure` field** | SEI QAS (Bass/Clements/Kazman), DPR SMART NFR Elicitation | Three reasons: (1) Altitude mismatch — measures primarily fit operational ADRs, not strategic/tactical. (2) Measure volatility vs. ADR immutability — SLA thresholds change faster than decisions are superseded. (3) AI prose extraction — LLMs trivially extract thresholds from description text. Authors already embed measures naturally in ASR descriptions. |
-| **`scope`/`phase` metadata** | DPR YAML frontmatter (Scope, Phases, Abstraction Level) | Redundant with existing fields: `Scope` → `decision_level` + `adr.component`; `Phases` → waterfall-era concept, our `adr.status` lifecycle is more natural; `Abstraction Level` → subsumed by `decision_level`. |
-| **NFR Landing Zones** | Wirfs-Brock, "Agile Landing Zones" (2011); DPR SMART NFR line 122 | Depends on rejected `measure` field. Landing zone thresholds (minimal/target/outstanding) are volatile SLO targets belonging in operational dashboards, not immutable ADR records. The concept is valuable for education but doesn't warrant schema fields. Authors can express ranges naturally in ASR `description` prose. |
+> **Note:** Schema-level features that were evaluated and rejected (QAS `measure` field, `scope`/`phase` metadata, NFR Landing Zones) are documented inline in [`schema-field-rationale.md`](schema-field-rationale.md) alongside the adopted fields they relate to (§1.12, §4.2, §4.3).
