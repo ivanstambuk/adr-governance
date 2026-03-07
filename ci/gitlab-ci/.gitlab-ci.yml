@@ -18,6 +18,11 @@
 
 image: python:3.12-slim
 
+variables:
+  # verify-approvals.py compares the MR branch to the target branch and reads
+  # base-branch file content, so the checkout needs full history.
+  GIT_DEPTH: "0"
+
 stages:
   - validate
 

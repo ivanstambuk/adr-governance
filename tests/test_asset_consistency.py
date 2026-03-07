@@ -159,6 +159,15 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertIn("AWS CodeBuild and GCP Cloud Build templates run the verifier in dry-run mode by default", ci_setup)
         self.assertIn("curated inline documentation set", generator)
 
+    def test_ci_templates_fetch_history_for_base_branch_comparisons(self):
+        azure = read_text("ci/azure-devops/azure-pipelines.yml")
+        gitlab = read_text("ci/gitlab-ci/.gitlab-ci.yml")
+        examples = read_text("examples-reference/README.md")
+
+        self.assertIn("fetchDepth: 0", azure)
+        self.assertIn('GIT_DEPTH: "0"', gitlab)
+        self.assertIn("share the same ADR ID uniqueness namespace", examples)
+
 
 if __name__ == "__main__":
     unittest.main()
