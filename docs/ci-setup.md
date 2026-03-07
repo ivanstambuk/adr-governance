@@ -404,7 +404,7 @@ To add custom validation rules (e.g., enforcing naming conventions, checking for
 
 ### Removing Example Validation
 
-The shipped pipelines use [`scripts/run-validation.sh`](../scripts/run-validation.sh), which auto-discovers ADR directories. If you delete `examples-reference/`, no pipeline edits are required — the helper simply skips missing directories.
+The shipped pipelines use [`scripts/run-validation.sh`](../scripts/run-validation.sh), which auto-discovers ADR directories. By default it validates `architecture-decision-log/` and `examples-reference/` separately, so the fictional reference ADRs do not reserve IDs in the live ADR namespace. If you delete `examples-reference/`, no pipeline edits are required — the helper simply skips missing directories.
 
 ---
 ## Approval Identity Verification

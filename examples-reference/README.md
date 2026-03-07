@@ -13,7 +13,7 @@ The ADRs in this directory are from a fictional organisation called **NovaTrust 
 
 **Do not** treat these as your organization's decisions. When adopting this framework, you can keep this directory as a reference or delete it — your real ADRs go in `architecture-decision-log/`.
 
-> **Namespace note:** In this repository's default validation flow, these example ADRs share the same ADR ID uniqueness namespace as `architecture-decision-log/`. If you keep the reference set, your real ADR IDs must not collide with the example IDs until you delete it.
+> **Namespace note:** The shipped [`scripts/run-validation.sh`](../scripts/run-validation.sh) flow validates these examples separately from `architecture-decision-log/`, so keeping the reference set does **not** reserve live ADR IDs by default. If you explicitly validate both directories in a single [`scripts/validate-adr.py`](../scripts/validate-adr.py) invocation, they share a duplicate-ID and cross-reference namespace for that run.
 
 ## Example Decisions
 

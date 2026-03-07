@@ -340,6 +340,37 @@ class ValidateAdrTests(unittest.TestCase):
         self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
 
+    def test_single_file_validation_does_not_load_other_governed_directory_context(self):
+        current = load_example_adr()
+        current["adr"]["id"] = "ADR-9001-current-decision"
+        current["adr"]["title"] = "Current decision"
+
+        duplicate_in_examples = load_example_adr()
+        duplicate_in_examples["adr"]["id"] = current["adr"]["id"]
+        duplicate_in_examples["adr"]["title"] = "Duplicate ID in examples corpus"
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            repo_root = Path(tmp_dir)
+            governed_dir = repo_root / "architecture-decision-log"
+            examples_dir = repo_root / "examples-reference"
+            governed_dir.mkdir()
+            examples_dir.mkdir()
+
+            path_current = write_yaml(governed_dir / f"{current['adr']['id']}.yaml", current)
+            path_example = write_yaml(
+                examples_dir / f"{duplicate_in_examples['adr']['id']}.yaml",
+                duplicate_in_examples,
+            )
+
+            with mock.patch.object(self.module, "REPO_ROOT", repo_root):
+                all_data, primary_filepaths = self.module.build_cross_reference_corpus([path_current])
+                errors, warnings = self.module.validate_cross_references(all_data, primary_filepaths)
+
+        self.assertIn(str(path_current), all_data)
+        self.assertNotIn(str(path_example), all_data)
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+
     def test_missing_schema_version_remains_a_warning(self):
         data = load_example_adr()
         data["adr"].pop("schema_version", None)

@@ -181,7 +181,7 @@ The [`examples-reference/`](examples-reference/) directory contains 8 fictional 
   git add -A && git commit -m "chore: remove reference examples"
   ```
 
-While the directory exists, the default validation flow treats it as part of the same ADR ID namespace as `architecture-decision-log/`. In practice, that means your real ADR IDs must not collide with the example IDs until you delete the reference set.
+By default, the shipped validation flow validates `architecture-decision-log/` and `examples-reference/` separately, so keeping the reference set does **not** reserve ADR IDs in your live corpus. If you explicitly validate both directories in a single `python3 scripts/validate-adr.py ...` invocation, they share one duplicate-ID and cross-reference namespace for that run.
 
 #### 3. Customize ADR-0000
 

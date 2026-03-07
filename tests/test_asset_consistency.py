@@ -168,11 +168,23 @@ class AssetConsistencyTests(unittest.TestCase):
     def test_ci_templates_fetch_history_for_base_branch_comparisons(self):
         azure = read_text("ci/azure-devops/azure-pipelines.yml")
         gitlab = read_text("ci/gitlab-ci/.gitlab-ci.yml")
-        examples = read_text("examples-reference/README.md")
 
         self.assertIn("fetchDepth: 0", azure)
         self.assertIn('GIT_DEPTH: "0"', gitlab)
-        self.assertIn("share the same ADR ID uniqueness namespace", examples)
+
+    def test_examples_are_documented_and_validated_as_separate_default_corpus(self):
+        readme = read_text("README.md")
+        ci_setup = read_text("docs/ci-setup.md")
+        examples = read_text("examples-reference/README.md")
+        runner = read_text("scripts/run-validation.sh")
+
+        self.assertIn("validates `architecture-decision-log/` and `examples-reference/` separately", readme)
+        self.assertIn("validates `architecture-decision-log/` and `examples-reference/` separately", ci_setup)
+        self.assertIn("validates these examples separately", examples)
+        self.assertIn("single `python3 scripts/validate-adr.py ...` invocation", readme)
+        self.assertIn("single [`scripts/validate-adr.py`", examples)
+        self.assertIn("Validating governed ADR corpus", runner)
+        self.assertIn("Validating reference ADR examples", runner)
 
 
 if __name__ == "__main__":

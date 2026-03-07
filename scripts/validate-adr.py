@@ -93,25 +93,35 @@ def collect_input_files(targets: list[str]) -> list[Path]:
     return files
 
 
+def discover_repo_context_roots(primary_files: list[Path]) -> list[Path]:
+    """Resolve which governed ADR directories should supplement the validation corpus."""
+    governed_roots = [REPO_ROOT / name for name in GOVERNED_ADR_DIRECTORIES]
+    selected_roots = []
+
+    for filepath in primary_files:
+        for governed_root in governed_roots:
+            if governed_root in selected_roots:
+                continue
+            if is_within_directory(filepath, governed_root):
+                selected_roots.append(governed_root)
+
+    return selected_roots
+
+
 def should_load_repo_context(primary_files: list[Path]) -> bool:
     """Only auto-load repo context for repo-local governed ADR files."""
-    governed_roots = [REPO_ROOT / name for name in GOVERNED_ADR_DIRECTORIES]
-    return any(
-        is_within_directory(filepath, governed_root)
-        for filepath in primary_files
-        for governed_root in governed_roots
-    )
+    return bool(discover_repo_context_roots(primary_files))
 
 
 def discover_repo_context_files(primary_files: list[Path]) -> list[Path]:
     """Load the governed ADR corpus to resolve cross-file references."""
-    if not should_load_repo_context(primary_files):
+    repo_context_roots = discover_repo_context_roots(primary_files)
+    if not repo_context_roots:
         return []
 
     seen = {filepath.resolve(strict=False) for filepath in primary_files}
     supplemental = []
-    for directory_name in GOVERNED_ADR_DIRECTORIES:
-        directory = REPO_ROOT / directory_name
+    for directory in repo_context_roots:
         if not directory.is_dir():
             continue
         for pattern in ("*.yaml", "*.yml"):

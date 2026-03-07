@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-# Run ADR validation across all repository ADR directories in one invocation.
+# Run ADR validation across repository ADR directories.
 #
-# This keeps duplicate-ID and cross-reference checks consistent between local
-# usage and CI by validating all discovered ADR sources together.
+# By default, the governed ADR corpus and the fictional example corpus are
+# validated separately so example IDs do not reserve IDs in the live ADR
+# namespace. If explicit files/directories are passed, they are validated in a
+# single invocation so callers can opt into combined-corpus checks.
 
 set -euo pipefail
 
@@ -23,19 +25,42 @@ if [ "$#" -gt 0 ]; then
       targets+=("$candidate")
     fi
   done
-else
-  for candidate in architecture-decision-log examples-reference; do
-    if [ -d "$candidate" ] && (ls "$candidate"/*.yaml >/dev/null 2>&1 || ls "$candidate"/*.yml >/dev/null 2>&1); then
-      targets+=("$candidate")
-    fi
-  done
-fi
+  if [ "${#targets[@]}" -eq 0 ]; then
+    echo "No ADR files found — skipping validation"
+    exit 0
+  fi
 
-if [ "${#targets[@]}" -eq 0 ]; then
-  echo "No ADR files found — skipping validation"
+  echo "=== Validating ADR sources together ==="
+  printf '  • %s\n' "${targets[@]}"
+  python3 scripts/validate-adr.py "${targets[@]}"
   exit 0
 fi
 
-echo "=== Validating ADR sources ==="
-printf '  • %s\n' "${targets[@]}"
-python3 scripts/validate-adr.py "${targets[@]}"
+run_default_target() {
+  local label="$1"
+  local target="$2"
+
+  if [ -d "$target" ] && (ls "$target"/*.yaml >/dev/null 2>&1 || ls "$target"/*.yml >/dev/null 2>&1); then
+    echo "=== $label ==="
+    echo "  • $target"
+    python3 scripts/validate-adr.py "$target"
+    return 0
+  fi
+
+  return 1
+}
+
+found_default_targets=0
+
+if run_default_target "Validating governed ADR corpus" "architecture-decision-log"; then
+  found_default_targets=1
+fi
+
+if run_default_target "Validating reference ADR examples" "examples-reference"; then
+  found_default_targets=1
+fi
+
+if [ "$found_default_targets" -eq 0 ]; then
+  echo "No ADR files found — skipping validation"
+  exit 0
+fi
