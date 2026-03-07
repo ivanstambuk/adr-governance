@@ -13,7 +13,7 @@
 |---|----------|:----:|:-----:|:------:|:------:|
 | P1 | [`decision_level` field](#p1-add-decision_level-field) | Schema | **High** | Low | ✅ Done |
 | P2 | [Y-Statement rendering](#p2-add-y-statement-rendering-capability) | Capability | Medium | Low | ✅ Done |
-| P3 | [QAS `measure` field on ASRs](#p3-add-quality-attribute-scenario-qas-measure-field) | Schema | Medium | Low | ⬜ Not started |
+| P3 | [QAS `measure` field on ASRs](#p3-add-quality-attribute-scenario-qas-measure-field) | Schema | Medium | Low | ❌ Rejected |
 | P4 | [AD Definition of Done checklist](#p4-add-definition-of-done-for-architecture-decisions) | Docs | Medium | Low | ⬜ Not started |
 | P5 | [Architectural Significance Test guidance](#p5-add-architectural-significance-test-guidance) | Docs | Low–Medium | Very low | ⬜ Not started |
 | P6 | [`scope`/`phase` metadata](#p6-add-scope--phase-metadata) | Redundant | Low | Low | ⏭️ Skip |
@@ -21,7 +21,7 @@
 | P8 | [ADR Verbosity Levels guidance](#p8-adr-verbosity-levels-guidance) | Docs | Low–Medium | Very low | ⬜ Not started |
 | P9 | [NFR Landing Zones](#p9-nfr-landing-zones-for-quality-requirements) | Schema + Docs | Medium | Low | ⬜ Not started |
 
-> **Legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ⏭️ Skipped
+> **Legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ❌ Rejected · ⏭️ Skipped
 
 ---
 
@@ -879,6 +879,18 @@ The description now focuses on *what and why*; the measure captures the *verifia
 | Landing Zones | Wirfs-Brock, "Agile Landing Zones" (2011) |
 | ISO 25010:2023 | ISO/IEC 25010:2023 — Product quality model (9 characteristics) |
 | Planguage | Gilb, "Rich Requirement Specs" (2006) |
+
+### Rejection Rationale
+
+**Status: ❌ Rejected** — after deep research, the proposal was evaluated and rejected for three reasons:
+
+1. **Altitude mismatch.** The `measure` field is primarily useful for **operational** (low-altitude) ADRs where NFRs are naturally expressed as numeric thresholds (latency, throughput, error rates). For **tactical** ADRs, measures shift to pattern fitness and are less crisp. For **strategic** ADRs (org structure, bounded contexts, enterprise concerns), the quality attributes that matter — organizational agility, time-to-market, architectural flexibility — resist single-threshold quantification. A field that's only relevant for ~30% of ADRs doesn't justify the schema weight.
+
+2. **Measure volatility vs. ADR immutability.** Measurable thresholds are *volatile* — a p95 latency target of "< 200ms" today may become "< 100ms" next quarter as traffic grows. But accepted ADRs have an **immutable decision core**. Pinning a measure in a frozen field creates a stale contract that either gets ignored (defeating the purpose) or forces a supersession for a non-architectural change (the SLA shifted, not the architecture). Measures belong in living documents — SLO definitions, observability dashboards, capacity planning artifacts — not in immutable decision records.
+
+3. **AI-native prose extraction.** Our framework is designed for LLM consumption. Our example ADRs already embed measures naturally in the description text (e.g., "DPoP proof generation on mobile must complete in < 50ms"). Modern LLMs trivially extract quantitative thresholds from prose — the machine-extractability argument that motivated a structured field evaporates in an AI-native context. No separate field is needed when the AI can parse it from the description.
+
+> **Note:** The deep research above (SEI QAS, arc42, ISO 25010, Planguage, Landing Zones) remains valuable as reference material for understanding the academic lineage of measurable quality attributes. It may inform future proposals (e.g., P9: NFR Landing Zones) or process documentation.
 
 ---
 
