@@ -22,6 +22,8 @@ except ImportError:
     sys.exit(2)
 
 SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "adr.schema.json"
+REPO_ROOT = SCHEMA_PATH.parent.parent
+GOVERNED_ADR_DIRECTORIES = ("architecture-decision-log", "examples-reference")
 REQUIRED_SCHEMA_FORMATS = {"date-time", "date", "email", "uri"}
 
 
@@ -64,6 +66,80 @@ def parse_iso_datetime(ts_str: str) -> datetime | None:
         return dt
     except (ValueError, TypeError):
         return None
+
+
+def is_within_directory(path: Path, directory: Path) -> bool:
+    """Return True when path is inside directory (or equal to it)."""
+    try:
+        path.resolve(strict=False).relative_to(directory.resolve(strict=False))
+        return True
+    except ValueError:
+        return False
+
+
+def collect_input_files(targets: list[str]) -> list[Path]:
+    """Collect explicit YAML files from positional CLI targets."""
+    files = []
+    for arg in targets:
+        target = Path(arg)
+        if target.is_file():
+            files.append(target)
+        elif target.is_dir():
+            files.extend(sorted(target.glob("*.yaml")))
+            files.extend(sorted(target.glob("*.yml")))
+        else:
+            print(f"ERROR: {target} is not a file or directory")
+            sys.exit(2)
+    return files
+
+
+def should_load_repo_context(primary_files: list[Path]) -> bool:
+    """Only auto-load repo context for repo-local governed ADR files."""
+    governed_roots = [REPO_ROOT / name for name in GOVERNED_ADR_DIRECTORIES]
+    return any(
+        is_within_directory(filepath, governed_root)
+        for filepath in primary_files
+        for governed_root in governed_roots
+    )
+
+
+def discover_repo_context_files(primary_files: list[Path]) -> list[Path]:
+    """Load the governed ADR corpus to resolve cross-file references."""
+    if not should_load_repo_context(primary_files):
+        return []
+
+    seen = {filepath.resolve(strict=False) for filepath in primary_files}
+    supplemental = []
+    for directory_name in GOVERNED_ADR_DIRECTORIES:
+        directory = REPO_ROOT / directory_name
+        if not directory.is_dir():
+            continue
+        for pattern in ("*.yaml", "*.yml"):
+            for filepath in sorted(directory.glob(pattern)):
+                resolved = filepath.resolve(strict=False)
+                if resolved in seen:
+                    continue
+                supplemental.append(filepath)
+                seen.add(resolved)
+    return supplemental
+
+
+def load_yaml_documents(files: list[Path]) -> dict[str, dict]:
+    """Load parsed YAML documents for cross-reference validation."""
+    documents = {}
+    for filepath in files:
+        try:
+            with open(filepath, "r") as f:
+                documents[str(filepath)] = yaml.safe_load(f)
+        except yaml.YAMLError:
+            continue
+    return documents
+
+
+def build_cross_reference_corpus(primary_files: list[Path]) -> tuple[dict[str, dict], set[str]]:
+    """Build the YAML corpus used for duplicate-ID and lifecycle checks."""
+    corpus_files = list(primary_files) + discover_repo_context_files(primary_files)
+    return load_yaml_documents(corpus_files), {str(filepath) for filepath in primary_files}
 
 
 def validate_file(
@@ -241,6 +317,13 @@ def validate_file(
                     f"— archived ADRs should have a terminal status ({', '.join(sorted(terminal_statuses))})"
                 )
 
+        lifecycle = data.get("lifecycle", {})
+        superseded_by = lifecycle.get("superseded_by") if isinstance(lifecycle, dict) else None
+        if status == "superseded" and not superseded_by:
+            errors.append(
+                "  adr.status is 'superseded' but lifecycle.superseded_by is missing"
+            )
+
 
         # --- Check filename ↔ adr.id consistency ---
         adr_id = data.get("adr", {}).get("id", "")
@@ -254,7 +337,10 @@ def validate_file(
     return errors, warnings
 
 
-def validate_cross_references(all_data: dict[str, dict]):
+def validate_cross_references(
+    all_data: dict[str, dict],
+    primary_filepaths: set[str] | None = None,
+):
     """Check cross-file referential integrity.
 
     Checks:
@@ -263,26 +349,25 @@ def validate_cross_references(all_data: dict[str, dict]):
 
     Args:
         all_data: mapping of filepath → parsed YAML data
+        primary_filepaths: explicit validation targets; supplemental repo context
+            is only used to resolve references and duplicate collisions for these
+            files, not to report unrelated corpus issues.
     """
     warnings = []
     errors = []
-    # Collect all known ADR IDs and their lifecycle supersession fields
-    known_ids = set()
-    id_to_filepath = {}
-    id_to_supersedes = {}       # adr_id -> supersedes value
-    id_to_superseded_by = {}    # adr_id -> superseded_by value
+    primary_filepaths = set(all_data) if primary_filepaths is None else set(primary_filepaths)
+
+    # Collect all known ADR IDs and their lifecycle supersession fields.
+    id_to_filepaths: dict[str, list[str]] = {}
+    id_to_filepath: dict[str, str] = {}
+    id_to_supersedes: dict[str, str] = {}
+    id_to_superseded_by: dict[str, str] = {}
     for filepath, data in all_data.items():
         if isinstance(data, dict):
             adr_id = data.get("adr", {}).get("id", "")
             if adr_id:
-                # --- Check for duplicate ADR IDs ---
-                if adr_id in known_ids:
-                    errors.append(
-                        f"  duplicate ADR ID '{adr_id}': found in both "
-                        f"'{id_to_filepath[adr_id]}' and '{filepath}'"
-                    )
-                known_ids.add(adr_id)
-                id_to_filepath[adr_id] = filepath
+                id_to_filepaths.setdefault(adr_id, []).append(filepath)
+                id_to_filepath.setdefault(adr_id, filepath)
                 lifecycle = data.get("lifecycle", {})
                 sup = lifecycle.get("supersedes")
                 sup_by = lifecycle.get("superseded_by")
@@ -291,24 +376,54 @@ def validate_cross_references(all_data: dict[str, dict]):
                 if sup_by:
                     id_to_superseded_by[adr_id] = sup_by
 
-    # Check supersession symmetry: if A supersedes B, B should have superseded_by A
+    # Check for duplicate ADR IDs, but only fail the command if an explicit
+    # validation target participates in the collision.
+    for adr_id, filepaths in sorted(id_to_filepaths.items()):
+        if len(filepaths) <= 1 or not any(path in primary_filepaths for path in filepaths):
+            continue
+        first_path = filepaths[0]
+        for duplicate_path in filepaths[1:]:
+            errors.append(
+                f"  duplicate ADR ID '{adr_id}': found in both "
+                f"'{first_path}' and '{duplicate_path}'"
+            )
+
+    known_ids = set(id_to_filepaths)
+
+    # Check supersession symmetry: if A supersedes B, B should have superseded_by A.
     for adr_id, target_id in id_to_supersedes.items():
-        if target_id in known_ids:
-            if target_id not in id_to_superseded_by or id_to_superseded_by[target_id] != adr_id:
-                errors.append(
-                    f"  {id_to_filepath.get(adr_id, adr_id)}: '{adr_id}' declares "
-                    f"lifecycle.supersedes '{target_id}', but '{target_id}' does not have "
-                    f"lifecycle.superseded_by '{adr_id}'"
-                )
+        source_path = id_to_filepath.get(adr_id, adr_id)
+        if source_path not in primary_filepaths:
+            continue
+        if target_id not in known_ids:
+            errors.append(
+                f"  {source_path}: '{adr_id}' declares lifecycle.supersedes "
+                f"'{target_id}', but no ADR with id '{target_id}' was found in the validation corpus"
+            )
+            continue
+        if target_id not in id_to_superseded_by or id_to_superseded_by[target_id] != adr_id:
+            errors.append(
+                f"  {source_path}: '{adr_id}' declares "
+                f"lifecycle.supersedes '{target_id}', but '{target_id}' does not have "
+                f"lifecycle.superseded_by '{adr_id}'"
+            )
 
     for adr_id, target_id in id_to_superseded_by.items():
-        if target_id in known_ids:
-            if target_id not in id_to_supersedes or id_to_supersedes[target_id] != adr_id:
-                errors.append(
-                    f"  {id_to_filepath.get(adr_id, adr_id)}: '{adr_id}' declares "
-                    f"lifecycle.superseded_by '{target_id}', but '{target_id}' does not have "
-                    f"lifecycle.supersedes '{adr_id}'"
-                )
+        source_path = id_to_filepath.get(adr_id, adr_id)
+        if source_path not in primary_filepaths:
+            continue
+        if target_id not in known_ids:
+            errors.append(
+                f"  {source_path}: '{adr_id}' declares lifecycle.superseded_by "
+                f"'{target_id}', but no ADR with id '{target_id}' was found in the validation corpus"
+            )
+            continue
+        if target_id not in id_to_supersedes or id_to_supersedes[target_id] != adr_id:
+            errors.append(
+                f"  {source_path}: '{adr_id}' declares "
+                f"lifecycle.superseded_by '{target_id}', but '{target_id}' does not have "
+                f"lifecycle.supersedes '{adr_id}'"
+            )
 
     return errors, warnings
 
@@ -324,18 +439,7 @@ def main():
     schema = load_schema()
     validator = build_validator(schema)
 
-    # Collect files from all positional arguments
-    files = []
-    for arg in args:
-        target = Path(arg)
-        if target.is_file():
-            files.append(target)
-        elif target.is_dir():
-            files.extend(sorted(target.glob("*.yaml")))
-            files.extend(sorted(target.glob("*.yml")))
-        else:
-            print(f"ERROR: {target} is not a file or directory")
-            sys.exit(2)
+    files = collect_input_files(args)
 
     if not files:
         print(f"No YAML files found in: {', '.join(args)}")
@@ -343,17 +447,10 @@ def main():
 
     total_errors = 0
     total_warnings = 0
-    all_data = {}
+    all_data, primary_filepaths = build_cross_reference_corpus(files)
 
     for filepath in files:
         errors, warnings = validate_file(filepath, validator)
-
-        # Load data for cross-reference checks
-        try:
-            with open(filepath, "r") as f:
-                all_data[str(filepath)] = yaml.safe_load(f)
-        except yaml.YAMLError:
-            pass
 
         if errors:
             print(f"FAIL: {filepath}")
@@ -370,9 +467,10 @@ def main():
                 print(f"  WARN: {warn.strip()}")
             total_warnings += len(warnings)
 
-    # Cross-file reference checks (when more than 1 file loaded)
-    if len(all_data) > 1:
-        xref_errors, xref_warnings = validate_cross_references(all_data)
+    # Cross-file reference checks use the explicit input plus repo context when
+    # the validation target is part of the governed ADR corpus.
+    if all_data:
+        xref_errors, xref_warnings = validate_cross_references(all_data, primary_filepaths)
         if xref_errors:
             print("\nCross-reference errors:")
             for err in xref_errors:

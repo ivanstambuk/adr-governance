@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from _helpers import REPO_ROOT, load_example_adr, load_module, write_yaml
 
@@ -142,6 +143,25 @@ class ValidateAdrTests(unittest.TestCase):
             errors,
         )
 
+    def test_superseded_status_requires_superseded_by(self):
+        data = load_example_adr()
+        data["adr"]["status"] = "superseded"
+        data["approvals"] = []
+        data["lifecycle"]["superseded_by"] = None
+        data["audit_trail"] = [
+            {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+            {"event": "superseded", "by": "Architect", "at": "2026-03-06T10:00:00Z"},
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            errors, _warnings = self.module.validate_file(path, self.validator)
+
+        self.assertTrue(
+            any("adr.status is 'superseded' but lifecycle.superseded_by is missing" in error for error in errors),
+            errors,
+        )
+
     def test_supersession_symmetry_is_a_cross_reference_error(self):
         current = load_example_adr()
         current["adr"]["id"] = "ADR-9001-current-decision"
@@ -167,6 +187,89 @@ class ValidateAdrTests(unittest.TestCase):
             any("lifecycle.supersedes 'ADR-9000-old-decision'" in error for error in errors),
             errors,
         )
+        self.assertEqual(warnings, [])
+
+    def test_missing_supersedes_target_is_a_cross_reference_error(self):
+        current = load_example_adr()
+        current["adr"]["id"] = "ADR-9001-current-decision"
+        current["adr"]["title"] = "Current decision"
+        current["lifecycle"]["supersedes"] = "ADR-9999-missing-decision"
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path_current = write_yaml(Path(tmp_dir) / f"{current['adr']['id']}.yaml", current)
+            all_data = {str(path_current): current}
+
+            errors, warnings = self.module.validate_cross_references(
+                all_data,
+                {str(path_current)},
+            )
+
+        self.assertTrue(
+            any("no ADR with id 'ADR-9999-missing-decision' was found" in error for error in errors),
+            errors,
+        )
+        self.assertEqual(warnings, [])
+
+    def test_missing_superseded_by_target_is_a_cross_reference_error(self):
+        previous = load_example_adr()
+        previous["adr"]["id"] = "ADR-9000-old-decision"
+        previous["adr"]["title"] = "Old decision"
+        previous["adr"]["status"] = "superseded"
+        previous["approvals"] = []
+        previous["lifecycle"]["superseded_by"] = "ADR-9001-current-decision"
+        previous["audit_trail"] = [
+            {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+            {"event": "superseded", "by": "Architect", "at": "2026-03-06T10:00:00Z"},
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path_previous = write_yaml(Path(tmp_dir) / f"{previous['adr']['id']}.yaml", previous)
+            all_data = {str(path_previous): previous}
+
+            errors, warnings = self.module.validate_cross_references(
+                all_data,
+                {str(path_previous)},
+            )
+
+        self.assertTrue(
+            any("no ADR with id 'ADR-9001-current-decision' was found" in error for error in errors),
+            errors,
+        )
+        self.assertEqual(warnings, [])
+
+    def test_single_file_validation_loads_repo_context_for_supersession_targets(self):
+        current = load_example_adr()
+        current["adr"]["id"] = "ADR-9001-current-decision"
+        current["adr"]["title"] = "Current decision"
+        current["lifecycle"]["supersedes"] = "ADR-9000-old-decision"
+
+        previous = load_example_adr()
+        previous["adr"]["id"] = "ADR-9000-old-decision"
+        previous["adr"]["title"] = "Old decision"
+        previous["adr"]["status"] = "superseded"
+        previous["approvals"] = []
+        previous["lifecycle"]["superseded_by"] = "ADR-9001-current-decision"
+        previous["audit_trail"] = [
+            {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+            {"event": "superseded", "by": "Architect", "at": "2026-03-06T10:00:00Z"},
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            repo_root = Path(tmp_dir)
+            governed_dir = repo_root / "architecture-decision-log"
+            governed_dir.mkdir()
+            (repo_root / "examples-reference").mkdir()
+
+            path_current = write_yaml(governed_dir / f"{current['adr']['id']}.yaml", current)
+            path_previous = write_yaml(governed_dir / f"{previous['adr']['id']}.yaml", previous)
+
+            with mock.patch.object(self.module, "REPO_ROOT", repo_root):
+                all_data, primary_filepaths = self.module.build_cross_reference_corpus([path_current])
+                errors, warnings = self.module.validate_cross_references(all_data, primary_filepaths)
+
+        self.assertIn(str(path_current), primary_filepaths)
+        self.assertIn(str(path_previous), all_data)
+        self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
 
     def test_missing_schema_version_remains_a_warning(self):
