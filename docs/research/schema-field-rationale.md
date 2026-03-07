@@ -235,19 +235,6 @@ The `adr` object contains identification and classification metadata. Its design
 | **Type** | `enum`: `strategic`, `tactical`, `operational` |
 | **Required?** | Optional |
 
-**Precedent:**
-
-| Framework | Equivalent concept | Levels |
-|---|---|---|
-| DPR (Zimmermann 2020) | Strategic / Tactic / Stepwise | 3 |
-| SOA Decisions (Zimmermann 2007) | Conceptual / Technology / Asset | 3 |
-| Hohpe's Architect Elevator (2020) | Penthouse / Middle / Engine Room | 3 |
-| C4 Model (Brown ~2006) | System / Container / Component / (Code) | 4 → 3 effective |
-| Kruchten's Ontology (2004) | Existence / Property / Executive | 3 (but orthogonal — type, not altitude) |
-| TOGAF ADM | Business / Data / Application / Technology | 4 (domain-parallel, not altitude) |
-| Ford & Richards (2021) | Architectural Quantum (variable scope) | Continuous |
-| Management Science | Strategic / Tactical / Operational | 3 |
-
 **Rationale:** Our schema has `decision_type` (domain: *what* kind of decision) but lacked an **altitude** dimension (scope: *at what level* the decision operates). The same domain spans multiple altitudes:
 - **Security + Strategic:** "Adopt zero-trust network architecture"
 - **Security + Tactical:** "Use claim-based authorization in domain services"
@@ -255,11 +242,216 @@ The `adr` object contains identification and classification metadata. Its design
 
 Without `decision_level`, these three are indistinguishable when filtered by `decision_type: security`, but they have vastly different blast radii, stakeholder audiences, and reversal costs.
 
-**Why three levels?** Every prescriptive framework that classifies by scope uses exactly three. Four-level models either have a redundant bottom level (C4's "Code" is optional) or classify by domain (TOGAF). Standards bodies (ISO 42010, arc42) deliberately don't prescribe — confirming this is a design choice. Three maps to the universal Strategic/Tactical/Operational triad from management science.
+#### Literature Review: 8-Framework Comparative Analysis
 
-**Why these three terms?** `strategic`/`tactical`/`operational` are immediately understood across disciplines. Rejected: `conceptual`/`technology`/`asset` (Zimmermann SOA — too abstract), `penthouse`/`middle`/`engine-room` (Hohpe — metaphorical, not self-documenting).
+##### 1. DPR — Strategic / Tactic / Stepwise (Zimmermann, 2020–2024)
 
-**Key academic lineage:** Zimmermann DPR (2020), SOA Decision Models (2007), Kruchten Ontology (2004), TOGAF ADM, C4 Model (Brown), Hohpe Architect Elevator (2020), Ford & Richards (2021), Jansen & Bosch (2005). Full 8-framework comparative analysis preserved in Git history.
+DPR organizes design activities along three conceptual levels, derived from Domain-Driven Design and API design methodology:
+
+| DPR Level | Focus | Artifacts |
+|---|---|---|
+| **Strategic DDD** | System landscape, bounded contexts, team boundaries, context maps | Context maps, bounded context diagrams |
+| **Tactic DDD** | Domain model internals — aggregates, entities, value objects, domain events | Domain models, CRC cards |
+| **Stepwise Service Design** | API endpoint design, protocol choices, SLA, deployment tech | CEL/REL tables, API descriptions, SLAs |
+
+> **Clarification:** "Stepwise" is the name of a 7-step API design *methodology*, not a decision scope. The implicit hierarchy maps to: **Strategic → Tactical → Operational**.
+
+##### 2. Zimmermann's SOA Decision Model — Conceptual / Technology / Asset (2007–2012)
+
+**Primary source:** [soadecisions.org](https://soadecisions.org); "An architectural decision modeling framework for service oriented architecture design" (University of Stuttgart, 2011)
+
+| Level | MDA Mapping | Focus | Example |
+|---|---|---|---|
+| **Conceptual** | High-level PIM | Strategic patterns, platform-independent design | "Use orchestration for multi-step business processes" |
+| **Technology** | Hybrid PIM/PSM | Technology standards, protocol choices | "Use GraphQL for client queries" |
+| **Asset** | Low-level PSM | Vendor/product selection, library choices | "Use Spring Boot 3.x" |
+
+> **Key insight:** This three-level model separates *rapidly changing* platform-specific concerns (asset level) from *enduring* conceptual decisions. It is the direct academic ancestor of DPR's Strategic/Tactic/Stepwise distinction.
+
+**Assessment:** Very close to our `strategic`/`tactical`/`operational` but uses SOA-specific terminology ("asset" implies product selection, narrower than "operational").
+
+##### 3. Kruchten's Ontology — Existence / Property / Executive (2004)
+
+**Primary source:** "An Ontology of Architectural Design Decisions in Software-Intensive Systems," 2nd Groningen Workshop on Software Variability Management, 2004
+
+| Type | Focus | Examples |
+|---|---|---|
+| **Existence** | What structural/behavioral elements exist (or must NOT exist: "ban" decisions) | "The system has 3 layers"; "Communication uses RMI" |
+| **Property** | Quality traits, design rules, constraints | "All data at rest must be encrypted"; "Response time < 200ms" |
+| **Executive** | Business-environment-driven: process, personnel, organization, technology mandates | "All API changes require CCB approval" |
+
+> **Key insight:** Kruchten's taxonomy is **orthogonal** to scope/altitude. A "strategic" decision could be existence (creating a new bounded context), property (defining enterprise-wide SLA targets), or executive (mandating cloud-first). This confirms that `decision_type` and `decision_level` are **independent dimensions**.
+
+**Assessment:** Not suitable as a replacement for scope-based classification, but validates that type and level are two independent dimensions.
+
+##### 4. TOGAF ADM — Business / Data / Application / Technology (The Open Group)
+
+| Domain | Focus |
+|---|---|
+| **Business Architecture** | Business strategy, governance, organizational structure |
+| **Data Architecture** | Data structures, relationships, governance |
+| **Application Architecture** | Application systems, interactions, business process relationships |
+| **Technology Architecture** | Infrastructure — hardware, software, networks, platforms |
+
+TOGAF's ADM phases iterate across these domains with increasing specificity (Phase A: architecture vision → Phases B–D: domain-specific → Phases E–F: solution-level → Phase G: governance).
+
+> **Key insight:** TOGAF's four domains are **domain-parallel** (Business ↔ Data ↔ Application ↔ Technology), not a vertical altitude dimension. Our `decision_type` + `component` fields already cover this domain dimension.
+
+**Assessment:** Too enterprise-architecture-specific. Confirms the validity of the strategic → operational gradient but doesn't provide the right classification axis.
+
+##### 5. C4 Model — System / Container / Component / Code (Brown, ~2006)
+
+| Level | Scope | Audience |
+|---|---|---|
+| **System Context** (Level 1) | How the system relates to users and external systems | Non-technical stakeholders |
+| **Container** (Level 2) | Major runtime deployment units (services, databases) | Developers, architects |
+| **Component** (Level 3) | Internal structure within a container | Developers |
+| **Code** (Level 4) | Class/function detail | Developers (often optional) |
+
+> **Key insight:** C4's levels are for *visualization*, not decision classification. When mapped to decisions: System Context = strategic, Container = tactical, Component/Code = operational. Level 4 is "often optional" — confirming that 3 effective levels suffice.
+
+**Assessment:** Confirms the visualization community independently arrived at a similar 3–4 level hierarchy. For decisions, Component and Code collapse into "operational."
+
+##### 6. Hohpe's Architect Elevator (2020)
+
+**Primary source:** "The Software Architect Elevator" (O'Reilly, 2020)
+
+| Floor | Focus |
+|---|---|
+| **Penthouse** (Executive) | Business strategy, organizational design, "why are we building this?" |
+| **Middle floors** (Architecture) | Cross-cutting technical decisions, trade-off analysis, "-ilities" |
+| **Engine Room** (Implementation) | Specific technologies, frameworks, infrastructure details |
+
+> **Key insight:** Hohpe explicitly argues architects must *ride the elevator* — understanding decisions at all levels. He emphasizes **"rate of change"** as a distinguishing factor: penthouse decisions change slowly (years), engine room decisions change fast (sprints). This directly aligns with our "reversal cost" dimension.
+
+**Assessment:** Strongly validates the three-level approach. Maps perfectly to `strategic`/`tactical`/`operational`.
+
+##### 7. Ford & Richards — Architectural Quantum (2021)
+
+**Primary source:** "Software Architecture: The Hard Parts" (O'Reilly, 2021)
+
+Ford and Richards introduce the **architectural quantum** — the scope for a set of architecture characteristics. They emphasize: decision scope varies from system-wide to component-specific, trade-off analysis is the core of architectural work, and **fitness functions** provide measurable governance at each level.
+
+> **Key insight:** The architectural quantum validates that decisions have a natural *blast radius* and that this radius is a critical metadata dimension. Their approach doesn't prescribe fixed levels but supports the idea that decisions cluster into natural altitude bands.
+
+##### 8. Jansen & Bosch — Architecture as Decision Composition (2005)
+
+**Primary source:** "Software Architecture as a Set of Architectural Design Decisions" (University of Groningen, 2005)
+
+Jansen and Bosch proposed that architecture should be viewed not as components-and-connectors but as the **cumulative outcome of design decisions** over time. They introduced decisions as first-class entities with relationships (constrains, follows-from, conflicts-with) and grouping by shared topics and abstraction levels.
+
+This perspective reinforces that a `decision_level` field helps organize the decision log as a navigable knowledge base.
+
+#### Comparative Analysis
+
+| Framework | # Levels | Terms | Classification Type |
+|---|:---:|---|---|
+| DPR (Zimmermann 2020) | 3 | Strategic / Tactic / Stepwise | Scope/altitude |
+| SOA Decisions (Zimmermann 2007) | 3 | Conceptual / Technology / Asset | Abstraction/platform-independence |
+| Kruchten Ontology (2004) | 3 | Existence / Property / Executive | Decision **nature** (orthogonal) |
+| TOGAF | 4 | Business / Data / Application / Technology | Domain (parallel layers) |
+| C4 Model (Brown ~2006) | 4 (3 effective) | System / Container / Component / (Code) | Visualization zoom |
+| Hohpe's Elevator (2020) | 3 | Penthouse / Middle / Engine Room | Organizational altitude |
+| Ford/Richards (2021) | Continuous | Architectural quantum (variable scope) | Blast radius |
+| Jansen/Bosch (2005) | N/A (grouping) | Topics + abstraction levels | Decision relationships |
+| Management Science | 3 | Strategic / Tactical / Operational | Standard management theory |
+
+**Finding: Three levels is the consensus.** Every prescriptive framework that classifies by scope/altitude uses exactly three. Four-level models either have a redundant bottom level (C4's "Code") or classify by domain (TOGAF). Kruchten's three categories are orthogonal (type, not altitude). Standards bodies (ISO 42010, arc42) deliberately don't prescribe — confirming this is a design choice.
+
+#### The Two Independent Dimensions
+
+The research confirms that `decision_type` and `decision_level` capture **different, independent dimensions**:
+
+```
+                        decision_type (WHAT domain)
+                 ┌──────────┬──────────┬──────────┬──────────┐
+                 │technology│ security │ process  │  data    │
+  ┌──────────────┼──────────┼──────────┼──────────┼──────────┤
+  │  strategic   │ Cloud vs │ Zero-    │ Adopt    │ Event    │
+  │              │ on-prem  │ trust    │ ADR      │ sourcing │
+  │              │ strategy │ model    │ process  │ strategy │
+  ├──────────────┼──────────┼──────────┼──────────┼──────────┤
+d │  tactical    │ Use BFF  │ Claim-   │ Trunk-   │ CQRS for │
+e │              │ pattern  │ based    │ based    │ read     │
+c │              │ for SPA  │ authZ    │ develop  │ models   │
+i ├──────────────┼──────────┼──────────┼──────────┼──────────┤
+s │  operational │ Use      │ Ed25519  │ Use      │ Use      │
+i │              │ Spring   │ for JWT  │ GitHub   │ Postgres │
+o │              │ Boot 3.x │ signing  │ Actions  │ 16       │
+n │              │          │          │          │          │
+  │ _level       │          │          │          │          │
+  │ (WHAT        │          │          │          │          │
+  │  altitude)   │          │          │          │          │
+  └──────────────┴──────────┴──────────┴──────────┴──────────┘
+```
+
+#### Why Not Four or Five Levels?
+
+| Candidate | Assessment |
+|---|---|
+| **Split "operational" into "technology" + "implementation"** | Zimmermann himself moved away from this (Conceptual/Technology/Asset → Strategic/Tactic/Stepwise). Both are "operational" in practice. |
+| **Add "enterprise" above "strategic"** | Our framework targets a single product/system ADR repository, not enterprise-wide. Enterprise-wide decisions are strategic for our purposes. |
+| **Mirror C4 with four levels** | "Component" and "Code" level decisions cannot be meaningfully distinguished for ADR metadata purposes. |
+| **Use Kruchten's types as levels** | Orthogonal to scope — would conflate two independent dimensions. |
+
+#### Term Selection
+
+| Term | Chosen Because | Rejected Alternatives |
+|---|---|---|
+| `strategic` | Universal management term; used by DPR, Hohpe, management science | `enterprise` (too EA-specific), `conceptual` (SOA — too abstract), `penthouse` (Hohpe — not self-documenting) |
+| `tactical` | Universal management term; used by DPR, management science | `technology` (SOA — too narrow), `middle` (Hohpe — not descriptive), `application` (TOGAF — conflates domain with altitude) |
+| `operational` | Universal management term; used by management science, DPR (implied) | `asset` (SOA — implies vendor selection only), `engine-room` (Hohpe — metaphorical), `implementation` (too code-level) |
+
+#### Discriminating Heuristics
+
+| Heuristic Question | If YES → |
+|---|---|
+| Does this affect **organizational structure** or team boundaries? | `strategic` |
+| Does this constrain or enable **multiple future decisions**? | `strategic` |
+| Would reversing this require **re-architecting** major system boundaries? | `strategic` |
+| Does this define a **design pattern** used across multiple components? | `tactical` |
+| Does this affect a **subsystem or bounded context** but not the whole landscape? | `tactical` |
+| Would reversing this require **significant refactoring** but not re-architecture? | `tactical` |
+| Is this a **specific product, library, or protocol** choice? | `operational` |
+| Could a different team member **swap in an alternative** in one sprint? | `operational` |
+| Is this primarily about **how** rather than **what** or **why**? | `operational` |
+
+#### Glossary Reference
+
+| Level | Scope | Typical Stakeholders | Reversal Cost | Rate of Change | DPR Mapping | Hohpe Mapping |
+|-------|-------|---------------------|---------------|----------------|-------------|---------------|
+| `strategic` | Enterprise/landscape, bounded contexts, team boundaries | C-suite, Enterprise Architects, Product leadership | Very high — shapes roadmap | Years | Strategic DDD | Penthouse |
+| `tactical` | Domain model, component patterns, cross-cutting technical patterns | Software Architects, Tech Leads, Senior Engineers | Moderate — confined to subsystem | Quarters/months | Tactic DDD | Middle floors |
+| `operational` | Specific tech choices, API protocols, deployment configs | Engineers, DevOps, API designers | Lower — usually swappable | Sprints/weeks | Stepwise Service Design | Engine Room |
+
+#### Classification of Existing ADRs
+
+| ADR | `decision_type` | `decision_level` | Rationale |
+|---|---|---|---|
+| ADR-0000 Adopt Governed ADR Process | `process` | `strategic` | Enterprise-wide process shaping all future decisions |
+| ADR-0001 DPoP over mTLS | `technology` | `operational` | Specific protocol/library choice |
+| ADR-0002 Reference Tokens over JWT | `technology` | `tactical` | Token architecture pattern affecting multiple components |
+| ADR-0004 Ed25519 over RSA for JWT Signing | `technology` | `operational` | Specific algorithm choice, easily swappable |
+| ADR-0005 BFF Token Mediator for SPA | `security` | `tactical` | Architectural pattern (BFF) across frontend/backend |
+| ADR-0006 Session Enrichment for Step-Up | `technology` | `tactical` | Cross-cutting session management pattern |
+| ADR-0007 Centralized Secret Store | `technology` | `tactical` | Infrastructure pattern affecting all secret consumers |
+| ADR-0008 Defer OpenID Federation | `technology` | `strategic` | Enterprise trust establishment with multi-year implications |
+
+#### Sources
+
+| Source | Year | Contribution |
+|---|---|---|
+| Zimmermann, DPR | 2020–2024 | Strategic/Tactic/Stepwise — primary inspiration |
+| Zimmermann, SOA Decision Models | 2007–2012 | Conceptual/Technology/Asset — direct ancestor |
+| Kruchten, "Ontology of Architectural Design Decisions" | 2004 | Confirmed type ≠ level (orthogonal dimensions) |
+| Jansen & Bosch, "Architecture as Decision Composition" | 2005 | Decisions as first-class entities; grouping by abstraction |
+| TOGAF ADM | Ongoing | Domain-parallel layers; validates strategic→operational gradient |
+| Brown, C4 Model | ~2006 | 4 visualization levels collapse to 3 for decisions |
+| Hohpe, "The Software Architect Elevator" | 2020 | Penthouse/Middle/Engine Room; "rate of change" heuristic |
+| Ford & Richards, "Software Architecture: The Hard Parts" | 2021 | Architectural quantum; blast radius as metadata |
+| Bass, Clements, Kazman, "Software Architecture in Practice" | 2021 | Attribute-Driven Design iterates across abstraction levels |
+| ISO/IEC/IEEE 42010 | 2011 | No prescribed taxonomy — confirms design choice |
+| arc42 (Starke) | Ongoing | No prescribed categories — same confirmation |
 
 ---
 
@@ -408,7 +600,7 @@ The F/NF split mirrors the universal ISO 25010 distinction between functional su
 **Rejected alternatives:**
 - *Global requirement IDs (referencing an external backlog)* — creates an external dependency that most teams can't satisfy. ADRs should be self-contained.
 - *Unstructured prose (Nygard/MADR style)* — prevents machine extraction and traceability analysis
-- *Full QAS template per requirement (SEI style)* — overengineering for an ADR. P3 proposes adding a `measure` field as a lightweight compromise.
+- *Full QAS template per requirement (SEI style)* — overengineering for an ADR. A lightweight `measure` field was evaluated and rejected (see [Appendix A.1](#a1-qas-measure-field-on-asrs-dpr-p3--rejected)).
 
 ---
 
@@ -711,7 +903,9 @@ This enables a **progressive strictness** model — drafts are loose, proposed/a
 
 ## Appendix A: Features Evaluated and Excluded
 
-The following features were researched, evaluated, and deliberately excluded from the schema. Rationale for each exclusion is documented in the [template comparison §7.3](adr-template-comparison.md#73-features-evaluated-and-excluded).
+The following features were researched, evaluated, and deliberately excluded from the schema.
+
+### Quick Reference
 
 | Feature | Found in | Why excluded |
 |---|---|---|
@@ -726,6 +920,178 @@ The following features were researched, evaluated, and deliberately excluded fro
 | Standalone `risk_assessment` | — (no template has this) | Risk is already distributed across `alternatives[].risk`, `alternatives[].cons`, `consequences.negative`, `decision.tradeoffs`, and `context.constraints`. A formal risk register belongs in threat models / ISMS artifacts. |
 | `related_adrs` / `attachments` | — (original schema) | Removed during schema refinement. ADR relationships use `lifecycle.superseded_by` / `lifecycle.supersedes`. Attachments are external references. |
 | `adr.summary` | NHS Wales (elevator pitch) | Replaced by `adr.y_statement` — a strictly more informative summary format. |
+| `measure` field on ASRs | SEI QAS, DPR SMART NFR | See [A.1 deep research](#a1-qas-measure-field-on-asrs-dpr-p3--rejected) below. |
+| `scope` / `phase` metadata | DPR YAML frontmatter | See [A.2 rationale](#a2-scopephase-metadata-dpr-p6--skipped) below. |
+| NFR Landing Zones | Wirfs-Brock (2011), DPR | See [A.3 deep research](#a3-nfr-landing-zones-dpr-p9--rejected) below. |
+
+### A.1 QAS `measure` Field on ASRs (DPR-P3 — ❌ Rejected)
+
+**Proposal:** Add an optional `measure` field to `#/$defs/architecturally_significant_requirement` to capture quantitative acceptance criteria separately from the description.
+
+#### Academic and Industry Lineage
+
+##### SEI Quality Attribute Scenarios (Bass, Clements, Kazman)
+
+The **Software Engineering Institute (CMU/SEI)** established the QAS template in the late 1990s, codified in *Software Architecture in Practice* (4th ed., 2021). The SEI model defines six scenario components:
+
+| Component | Description | Example |
+|---|---|---|
+| **Source** | Entity that generates the stimulus | Authenticated user |
+| **Stimulus** | Condition arriving at the system | Submits a payment order |
+| **Artifact** | Part of the system stimulated | Payment processing service |
+| **Environment** | Conditions under which stimulus occurs | Peak load (1000 concurrent users) |
+| **Response** | System activity after stimulus | Process and confirm order |
+| **Response Measure** | Measurable determination of success | p95 response < 1 second |
+
+The Response Measure is the critical differentiator between a vague quality goal and a testable requirement. The SEI also introduced **Quality Utility Trees** for prioritizing QAS instances by (Business Value, Technical Risk).
+
+##### arc42 Section 10 — Quality Requirements
+
+arc42 places detailed quality requirements in **Section 10** with a simplified SEI QAS template (Context/Background, Source/Stimulus, Metric/Acceptance Criteria). Notably, arc42 distinguishes **usage scenarios** (runtime: performance, availability) from **change scenarios** (modification effort: maintainability, flexibility) — demonstrating that measurable criteria apply beyond runtime metrics. The **arc42 Quality Model (Q42)** catalogs 100+ quality characteristics across 9 system dimensions.
+
+##### ISO/IEC 25010:2023 (SQuaRE)
+
+ISO 25010:2023 defines 9 product quality characteristics (up from 8 in 2011):
+1. Functional Suitability — correctness, completeness, appropriateness
+2. Performance Efficiency — time behavior, resource utilization, capacity
+3. Compatibility — co-existence, interoperability
+4. Interaction Capability (formerly Usability) — inclusivity, self-descriptiveness
+5. Reliability — faultlessness, availability, fault tolerance, recoverability
+6. Security — confidentiality, integrity, non-repudiation, accountability
+7. Maintainability — modularity, reusability, analyzability, modifiability, testability
+8. Flexibility (formerly Portability) — adaptability, installability, replaceability
+9. Safety (new) — operational constraint, risk identification, fail-safe
+
+**All** can be made measurable — not just runtime performance. Maintainability: "new developer productive within N days." Security: "zero critical vulnerabilities per OWASP scan."
+
+##### Planguage (Tom Gilb)
+
+Gilb's Planguage takes measurability to its extreme: every quality requirement has mandatory **Scale** (unit), **Meter** (measurement method), and **Past/Must/Plan/Wish** values. The most rigorous approach but also the heaviest.
+
+#### How Other ADR Templates Handle Quality Requirements
+
+| Template | Quality requirement support | Measurability? |
+|---|---|---|
+| **Nygard** | None — implicit in "Context" prose | ❌ No |
+| **MADR 4.0** | "Decision Drivers" — bullet list of concerns | ❌ Free text, no measure |
+| **smadr** | 3D risk assessment per option | 🟡 Risk levels, not measures |
+| **Tyree-Akerman** | "Assumptions" + "Constraints" | ❌ Prose only |
+| **Planguage** | Full Scale/Meter/Must/Plan/Wish | ✅ Most rigorous |
+| **arc42** | Section 10 quality scenarios with metric | ✅ Scenario + metric |
+| **SEI/ATAM** | Full 6-part QAS with Response Measure | ✅ Most structured |
+| **adr-governance** | `architecturally_significant_requirements` with `id` + `description` | ❌ No dedicated measure field |
+
+**Finding:** No ADR template has a dedicated `measure` field on quality requirements. The SEI QAS and arc42 templates have measures, but they are *separate artifacts*, not embedded in decision records. **This would have been a novel addition.**
+
+#### Analysis of Our Current Examples
+
+Our example ADRs already embed measurable criteria within the description text:
+
+| ADR | NF-ID | Description (with embedded measure) |
+|---|---|---|
+| ADR-0001 (DPoP) | NF-001 | "DPoP proof generation on mobile must complete in **< 50ms** (including secure enclave signature)" |
+| ADR-0001 (DPoP) | NF-002 | "DPoP proof validation at the resource server must add **< 5ms** latency per request at **p99**" |
+| ADR-0002 (Reference Tokens) | NF-001 | "Token introspection latency must be **< 10ms at p99** with **< 0.01% error rate**" |
+| ADR-0004 (Ed25519) | NF-001 | "JWT signing must complete in **< 2ms** at p99" |
+
+Authors *naturally write measurable NFRs* by embedding quantities in the description.
+
+#### Rejection Rationale
+
+**Status: ❌ Rejected** for three reasons:
+
+1. **Altitude mismatch.** The `measure` field is primarily useful for **operational** ADRs where NFRs are naturally expressed as numeric thresholds (latency, throughput, error rates). For **strategic** ADRs, quality attributes that matter — organizational agility, time-to-market, architectural flexibility — resist single-threshold quantification. A field relevant to ~30% of ADRs doesn't justify the schema weight.
+
+2. **Measure volatility vs. ADR immutability.** Measurable thresholds are *volatile* — a p95 latency target of "< 200ms" today may become "< 100ms" next quarter as traffic grows. But accepted ADRs have an **immutable decision core**. Pinning a measure in a frozen field creates a stale contract that either gets ignored or forces supersession for a non-architectural change. Measures belong in living documents (SLO definitions, observability dashboards, capacity planning artifacts).
+
+3. **AI-native prose extraction.** Our framework is designed for LLM consumption. Modern LLMs trivially extract quantitative thresholds from prose — the machine-extractability argument that motivated a structured field evaporates in an AI-native context.
+
+#### Credits
+
+| Concept | Source |
+|---|---|
+| Quality Attribute Scenarios | SEI/CMU — Bass, Clements, Kazman, *Software Architecture in Practice* (4th ed., 2021) |
+| SMART NFR Elicitation | DPR — Zimmermann, `activities/DPR-SMART-NFR-Elicitation.md` |
+| QAS Template | DPR — `artifact-templates/DPR-QualityAttributeScenario.md` |
+| arc42 Quality Requirements | Starke, Hruschka, arc42 Section 10 |
+| ISO 25010:2023 | ISO/IEC 25010:2023 — Product quality model (9 characteristics) |
+| Planguage | Gilb, "Rich Requirement Specs" (2006) |
+
+### A.2 `scope`/`phase` Metadata (DPR-P6 — ⏭️ Skipped)
+
+**Proposal:** Add DPR-style YAML frontmatter fields (`Scope`, `Phases`, `Abstraction/Refinement Level`) to ADRs.
+
+**DPR source:** Every DPR method element includes YAML frontmatter:
+
+```yaml
+Scope: Entire system, component, connector, class, ...
+Phases: Design (all levels)
+Abstraction/Refinement Level: All
+```
+
+**Why skipped (redundant with existing fields):**
+
+| DPR Field | Our Equivalent | Assessment |
+|---|---|---|
+| `Scope` | `adr.decision_level` (P1) + `adr.component` | ✅ Covered — decision_level captures altitude, component captures specific scope |
+| `Phases` | `adr.status` lifecycle | ✅ Covered — our status lifecycle is more natural for GitOps than waterfall-style phase labels |
+| `Abstraction Level` | `adr.decision_level` (P1) | ✅ Subsumed — strategic/tactical/operational directly maps abstraction levels |
+
+Adding these would create **three fields duplicating information already in `decision_level` and `component`**.
+
+### A.3 NFR Landing Zones (DPR-P9 — ❌ Rejected)
+
+**Proposal:** Add structured landing zone fields (minimal/target/outstanding) to ASR entries, as an extension to the P3 `measure` field.
+
+#### Wirfs-Brock's Landing Zones Concept
+
+Rebecca Wirfs-Brock introduced "agile landing zones" (2011) as a framework for defining and tracking product releasability. Instead of a single pass/fail threshold, define three levels:
+
+| Level | Definition | Example (API latency) |
+|-------|-----------|----------------------|
+| **Minimal** | Lowest acceptable value — below this, not releasable | p95 < 500ms |
+| **Target** | Desired value the team aims for | p95 < 200ms |
+| **Outstanding** | Exceptional achievement, beyond expected | p95 < 50ms |
+
+**Why landing zones help:**
+1. **Negotiation tool** — stakeholders agree on a range rather than a single number
+2. **Progressive refinement** — "make it work at minimal first, then optimize toward target"
+3. **Trade-off visibility** — "if we invest 2 more sprints, we move from minimal to target"
+4. **Risk calibration** — "we're at minimal for latency but outstanding for availability — is that OK?"
+
+#### Relationship to QAS and SMART Criteria
+
+DPR's QAS template (from SEI's Bass, Clements, Kazman) structures quality requirements as scenarios with six components. The response measure is where landing zones apply — replacing a single threshold with a triplet. DPR also emphasizes SMART criteria for NFRs (**S**pecific, **M**easurable, **A**greed upon, **R**ealistic, **T**ime-bound). Landing zones make the "M" criterion easier because agreeing on a range is easier than agreeing on a point.
+
+#### Rejection Rationale
+
+**Status: ❌ Rejected** for three reasons:
+
+1. **Dependency on P3.** P9 was designed as an extension to P3's `measure` field. Without `measure`, adding `landing_zone` is even harder to justify.
+
+2. **Same volatility problem as P3.** Landing zone thresholds change as systems scale. An immutable ADR field is the wrong home for living SLO targets.
+
+3. **Prose is sufficient.** Authors can (and already do) embed threshold ranges in the `description` text:
+   ```yaml
+   non_functional:
+     - id: NF-001
+       description: >-
+         API response time under normal load.
+         Landing zone: minimal < 500ms, target < 200ms, outstanding < 100ms (p95).
+   ```
+
+4. **Right tool for the job.** Landing zones belong in SLO definitions, observability dashboards, and test suites — not in architectural decision records. The ADR captures *why we chose this architecture*; the SLO captures *how we measure it works*.
+
+The landing zone **concept** is valuable educational content referenced in our verbosity guidance (P8) for writing quantitative NFR descriptions.
+
+#### Credits
+
+| Concept | Source |
+|---|---|
+| Agile Landing Zones | Wirfs-Brock, R. (2011). [*"Agile Landing Zones"*](http://wirfs-brock.com/blog/2011/07/29/agile-landing-zones/) |
+| QAS template | SEI — Bass, Clements, Kazman: *Software Architecture in Practice* (3rd ed.) |
+| SMART NFR Elicitation | DPR `activities/DPR-SMART-NFR-Elicitation.md` (line 122) |
+| SLA template | DPR `artifact-templates/SDPR-ServiceLevelAgreement.md` |
 
 ---
 
