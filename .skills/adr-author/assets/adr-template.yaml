@@ -128,8 +128,8 @@ references:
 
 # --- Optional ---
 lifecycle:
-  review_cycle_months: 12
-  next_review_date: "" # ISO 8601 date
+  review_cycle_months: 12 # Optional advisory metadata; scheduling/reminders are external to this repo
+  next_review_date: "" # ISO 8601 date; tracked here, not automatically scheduled/enforced by this repo
   superseded_by: null
   supersedes: null
   archival:

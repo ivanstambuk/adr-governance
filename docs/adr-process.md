@@ -18,7 +18,7 @@ This document defines the process for proposing, reviewing, approving, and maint
 | Deprecate a decision | Set `status: deprecated` + audit event → merge |
 | Archive a decision | Set `lifecycle.archival` fields + `archived` audit event → merge |
 | Confirm implementation | Add `confirmation.description` + `confirmation.artifact_ids` in follow-up PR |
-| Periodic review | Check `lifecycle.next_review_date` → verify or supersede |
+| Periodic review | Track `lifecycle.next_review_date` via external process/tooling → verify or supersede |
 
 > See the full sections below for detailed workflows.
 
@@ -511,7 +511,7 @@ Archival is for decisions that are no longer active and should be removed from r
 
 ## 9. Periodic Review
 
-ADRs with `lifecycle.review_cycle_months` set will be flagged for periodic review.
+`lifecycle.review_cycle_months` and `lifecycle.next_review_date` capture the fact that a periodic review should happen. This repository does **not** schedule reminders, create tickets, open pull requests, or fail CI when a review date arrives. Teams that want proactive review management should integrate external process/tooling around these fields.
 
 1. When the `lifecycle.next_review_date` arrives, the decision owner should:
    - Verify the decision is still valid and the context hasn't changed
@@ -532,7 +532,7 @@ ADRs with `lifecycle.review_cycle_months` set will be flagged for periodic revie
 
    > These questions focus on improving the *decision-making process*, not just the architecture. Adapted from [Cervantes & Woods, "Architectural Retrospectives"](https://www.infoq.com/articles/architectural-retrospectives/).
 
-3. **Confidence-driven review frequency.** Use `decision.confidence` to set default review cadence:
+3. **Confidence-driven review frequency.** Use `decision.confidence` to set default review cadence metadata:
 
    | Confidence | Recommended `review_cycle_months` | Rationale |
    |------------|----------------------------------|----------|

@@ -111,6 +111,16 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertIn("schema-valid ADR that is complete enough to validate but not yet proposed", instruction)
         self.assertIn("`draft` means author-owned and not yet proposed", template)
 
+    def test_periodic_review_is_documented_as_external_process(self):
+        process = read_text("docs/adr-process.md")
+        template = read_text(".skills/adr-author/assets/adr-template.yaml")
+        schema_ref = read_text(".skills/adr-author/references/SCHEMA_REFERENCE.md")
+
+        self.assertNotIn("will be flagged for periodic review", process)
+        self.assertIn("does **not** schedule reminders, create tickets, open pull requests, or fail CI", process)
+        self.assertIn("scheduling/reminders are external to this repo", template)
+        self.assertIn("Review scheduling/reminders are outside this repo's scope", schema_ref)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -24,7 +24,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 | `architecturally_significant_requirements` | Architecturally Significant Requirements (ASRs) — functional and non-functional |
 | `dependencies` | Internal and external dependencies |
 | `references` | External links and evidence |
-| `lifecycle` | Review cadence, supersession chain, archival |
+| `lifecycle` | Review cadence metadata, supersession chain, archival. Review scheduling/reminders are outside this repo's scope |
 | `audit_trail` | Immutable event log (events: created, updated, reviewed, approved, rejected, deferred, superseded, deprecated, archived) |
 
 ## Key Validation Rules
