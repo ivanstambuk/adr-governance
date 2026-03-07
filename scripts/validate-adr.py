@@ -140,10 +140,10 @@ def validate_file(
                 f"  audit_trail: {len(approvals_with_timestamp)} approval(s) have timestamps but no 'approved' event in audit_trail"
             )
 
-        if status in status_to_expected_event and audit_trail:
+        if status in status_to_expected_event:
             expected = status_to_expected_event[status]
             if expected not in audit_events:
-                warnings.append(
+                errors.append(
                     f"  audit_trail: status is '{status}' but no '{expected}' event found in audit_trail"
                 )
 
@@ -160,7 +160,7 @@ def validate_file(
         if status in invalid_event_for_status and audit_trail:
             for bad_event in invalid_event_for_status[status]:
                 if bad_event in audit_events:
-                    warnings.append(
+                    errors.append(
                         f"  audit_trail: status is '{status}' but audit_trail contains "
                         f"'{bad_event}' event — invalid state transition"
                     )
@@ -236,7 +236,7 @@ def validate_file(
         if archived_at:
             terminal_statuses = {"superseded", "deprecated", "rejected"}
             if status and status not in terminal_statuses:
-                warnings.append(
+                errors.append(
                     f"  lifecycle.archival.archived_at is set but adr.status is '{status}' "
                     f"— archived ADRs should have a terminal status ({', '.join(sorted(terminal_statuses))})"
                 )
@@ -295,7 +295,7 @@ def validate_cross_references(all_data: dict[str, dict]):
     for adr_id, target_id in id_to_supersedes.items():
         if target_id in known_ids:
             if target_id not in id_to_superseded_by or id_to_superseded_by[target_id] != adr_id:
-                warnings.append(
+                errors.append(
                     f"  {id_to_filepath.get(adr_id, adr_id)}: '{adr_id}' declares "
                     f"lifecycle.supersedes '{target_id}', but '{target_id}' does not have "
                     f"lifecycle.superseded_by '{adr_id}'"
@@ -304,7 +304,7 @@ def validate_cross_references(all_data: dict[str, dict]):
     for adr_id, target_id in id_to_superseded_by.items():
         if target_id in known_ids:
             if target_id not in id_to_supersedes or id_to_supersedes[target_id] != adr_id:
-                warnings.append(
+                errors.append(
                     f"  {id_to_filepath.get(adr_id, adr_id)}: '{adr_id}' declares "
                     f"lifecycle.superseded_by '{target_id}', but '{target_id}' does not have "
                     f"lifecycle.supersedes '{adr_id}'"

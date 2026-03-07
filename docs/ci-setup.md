@@ -567,4 +567,4 @@ The default `yamllint` line-length limit is 80 characters. This repository sets 
 
 ### Validator warnings vs. errors
 
-Only **errors** block the merge. **Warnings** are advisory — they flag potential issues (e.g., missing `adr.summary` on proposed ADRs, audit trail gaps) but do not cause the pipeline to fail. To promote a warning to a hard error, modify the `validate_file()` function in [`scripts/validate-adr.py`](../scripts/validate-adr.py).
+Only **errors** block the merge. Governance invariants such as invalid status/audit-trail combinations, missing required terminal-status audit events, archival on non-terminal ADRs, and broken supersession symmetry now fail as hard errors. **Warnings** are advisory quality signals — for example missing `adr.summary`, missing `adr.schema_version`, premature confidence on drafts, or suspicious chronology. To change the boundary further, modify the `validate_file()` function in [`scripts/validate-adr.py`](../scripts/validate-adr.py).

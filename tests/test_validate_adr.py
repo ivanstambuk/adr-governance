@@ -90,6 +90,99 @@ class ValidateAdrTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("duplicate ADR ID", result.stdout)
 
+    def test_terminal_status_without_matching_audit_event_fails(self):
+        data = load_example_adr()
+        data["adr"]["status"] = "rejected"
+        data["audit_trail"] = [
+            {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+        ]
+        data["approvals"] = []
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            errors, _warnings = self.module.validate_file(path, self.validator)
+
+        self.assertTrue(
+            any("status is 'rejected' but no 'rejected' event" in error for error in errors),
+            errors,
+        )
+
+    def test_invalid_status_audit_event_combination_fails(self):
+        data = load_example_adr()
+        data["adr"]["status"] = "draft"
+        data["approvals"] = []
+        data["audit_trail"] = [
+            {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+            {"event": "approved", "by": "Architect", "at": "2026-03-02T10:00:00Z"},
+        ]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            errors, _warnings = self.module.validate_file(path, self.validator)
+
+        self.assertTrue(
+            any("invalid state transition" in error for error in errors),
+            errors,
+        )
+
+    def test_archival_on_non_terminal_status_fails(self):
+        data = load_example_adr()
+        data["adr"]["status"] = "accepted"
+        data["lifecycle"]["archival"] = {
+            "archived_at": "2026-03-06T10:00:00Z",
+            "archive_reason": "Testing invalid archival",
+        }
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            errors, _warnings = self.module.validate_file(path, self.validator)
+
+        self.assertTrue(
+            any("archived ADRs should have a terminal status" in error for error in errors),
+            errors,
+        )
+
+    def test_supersession_symmetry_is_a_cross_reference_error(self):
+        current = load_example_adr()
+        current["adr"]["id"] = "ADR-9001-current-decision"
+        current["adr"]["title"] = "Current decision"
+        current["lifecycle"]["supersedes"] = "ADR-9000-old-decision"
+
+        previous = load_example_adr()
+        previous["adr"]["id"] = "ADR-9000-old-decision"
+        previous["adr"]["title"] = "Old decision"
+        previous["lifecycle"]["superseded_by"] = None
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path_current = write_yaml(Path(tmp_dir) / f"{current['adr']['id']}.yaml", current)
+            path_previous = write_yaml(Path(tmp_dir) / f"{previous['adr']['id']}.yaml", previous)
+            all_data = {}
+            for path in [path_current, path_previous]:
+                with open(path, "r") as f:
+                    all_data[str(path)] = self.module.yaml.safe_load(f)
+
+            errors, warnings = self.module.validate_cross_references(all_data)
+
+        self.assertTrue(
+            any("lifecycle.supersedes 'ADR-9000-old-decision'" in error for error in errors),
+            errors,
+        )
+        self.assertEqual(warnings, [])
+
+    def test_missing_schema_version_remains_a_warning(self):
+        data = load_example_adr()
+        data["adr"].pop("schema_version", None)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            errors, warnings = self.module.validate_file(path, self.validator)
+
+        self.assertEqual(errors, [])
+        self.assertTrue(
+            any("adr.schema_version" in warning for warning in warnings),
+            warnings,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
