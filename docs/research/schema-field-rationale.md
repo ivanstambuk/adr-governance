@@ -1113,33 +1113,145 @@ Adding these would create **three fields duplicating information already in `dec
 | **Type** | `array` of objects: name, role, identity, approved_at, signature_id |
 | **Required?** | Conditionally — required when `status` is `proposed` or `accepted` |
 
-**Precedent:**
+#### Literature Review: Approval and Governance Models
 
-| Template | Approval mechanism | Structured? | CI-verifiable? |
-|---|---|---|---|
-| Nygard | ❌ None | — | ❌ |
-| MADR 4.0 | ❌ None (implicit via PR merge) | — | ❌ |
-| smadr | 🟡 Compliance table | Partially | ❌ |
-| Planguage | ❌ None | — | ❌ |
-| **adr-governance** | ✅ Structured array with identity + timestamps | ✅ | ✅ |
+Our structured approval model with CI-verifiable identities is **completely novel** in the ADR space. No other template has formal approvals as a structured, machine-readable section. This section analyzes why, how we designed our model, and what governance traditions informed it.
 
-**Rationale:** Enterprise and regulated environments require formal sign-off trails. **No other ADR template has formal approvals as a structured section** — this is unique to adr-governance.
+##### 1. ADR Template Approval Mechanisms
 
-**Sub-field rationale:**
+| Template | Approval mechanism | Structured? | CI-verifiable? | Audit trail? |
+|---|---|---|---|---|
+| Nygard | ❌ None — status implicitly signals acceptance | — | ❌ | ❌ |
+| MADR 4.0 | ❌ None (implicit via PR merge) | — | ❌ | ❌ |
+| smadr | 🟡 Compliance table (optional) | Partially | ❌ | 🟡 |
+| Tyree-Akerman | ❌ None (assumes ARB process) | — | ❌ | ❌ |
+| Planguage | ❌ None (Owner field only) | — | ❌ | ❌ |
+| Merson (SEI) | ❌ None | — | ❌ | ❌ |
+| EdgeX | ❌ None (implicit via PR) | — | ❌ | ❌ |
+| NHS Wales | 🟡 "More Information" mentions participants | Narrative | ❌ | ❌ |
+| DRF | ❌ None | — | ❌ | ❌ |
+| **adr-governance** | ✅ Structured array + CI verification | ✅ | ✅ | ✅ |
 
-| Sub-field | Why it exists |
+**Key finding:** Every existing ADR template relies on **out-of-band** approval mechanisms — either the Git platform's PR approval feature, an external Architecture Review Board (ARB) process, or informal consensus. None capture approvals *within* the ADR document as structured, verifiable data.
+
+##### 2. Why In-Document Approvals?
+
+The gap creates three practical problems:
+
+| Problem | Without in-document approvals | With in-document approvals |
+|---|---|---|
+| **Portability** | Export an ADR to a wiki, bundle, or compliance report → approval history is lost. Who approved this decision? Check the PR — if it still exists. | Approval data travels with the ADR. |
+| **Auditability** | SOC 2 / HIPAA auditors must cross-reference ADR files with PR histories across platforms. | Single source of truth: the ADR file is its own audit record. |
+| **Discoverability** | "Which decisions did the CISO approve?" requires querying the Git platform API, which varies per platform. | `grep -r '"role": "CISO"' architecture-decision-log/` |
+
+##### 3. Governance Model Comparison
+
+Our approval model bridges ADR documentation with enterprise governance practices:
+
+| Governance Model | Approval Pattern | What adr-governance Borrows |
+|---|---|---|
+| **Architecture Review Board (ARB)** | Standing committee reviews designs; formal approve/reject/defer with minutes | The three-outcome model (accepted/rejected/deferred) and the concept of named approvers with roles |
+| **TOGAF Architecture Governance** | Phase G: governance board monitors compliance with approved architecture | Audit trail events, periodic review mechanism |
+| **ISO/IEC/IEEE 42010:2022** | Architecture descriptions must document stakeholder concerns and decision rationale with traceability | Structured person types with roles; traceability from decision → approver → rationale |
+| **SOC 2 Type II** | Requires evidence that controls were designed, approved by authorized personnel, and maintained over time | `approved_at` timestamps, `identity` verification, append-only `audit_trail` |
+| **eIDAS/Qualified Electronic Signatures** | EU regulation requiring signature attribution for legal acts | `signature_id` field bridges to external e-signature services |
+| **Git platform PR approvals** | Built-in approve/reject on pull requests — cryptographically attributed to a user account | `identity` field + CI script verifying ADR approvals match PR approvals |
+
+##### 4. Per-Sub-Field Design Rationale
+
+###### `name` + `role` (inherited from `$defs/person`)
+
+| Aspect | Detail |
 |---|---|
-| `name` + `role` | Who approved and in what capacity (inherited from `person` type) |
-| `identity` | Platform-resolvable handle (GitHub `@username`, Azure DevOps email) enabling **CI verification** — the CI script checks that every listed identity actually approved the PR |
-| `approved_at` | ISO 8601 timestamp; nullable (`null` = pending approval). Enables tracking how long approval took |
-| `signature_id` | External signature reference (DocuSign ID, Jira ticket, e-signature reference). Nullable. Bridges ADRs to external compliance systems |
+| **Why structured?** | Prose like "Approved by Jane Doe, Lead Architect" is not machine-parseable. Structured fields enable queries: "which decisions did the Lead Architect approve?" |
+| **Why `role` matters** | An approval from the "CISO" carries different weight than one from "Junior Developer." Role context enables stakeholder routing and audit scoping. |
+| **Cross-reference** | Same `person` type used in `authors`, `decision_owner`, `reviewers` — consistent schema. See §2.0 for `$defs/person` rationale. |
 
-**Why conditional requirement?** Drafts don't need approvers; propositions and acceptances do. The JSON Schema `allOf/if/then` block enforces this — `proposed` and `accepted` ADRs *must* have at least one approval with an `identity` field.
+###### `identity` — Platform-resolvable handle
 
-**Rejected alternatives:**
-- *Git-only approvals (implicit via PR approval)* — no audit trail in the ADR itself. When ADRs are exported, bundled, or stored outside Git, the approval history is lost
-- *Simple boolean `approved: true/false`* — loses who, when, and in what capacity
+| Aspect | Detail |
+|---|---|
+| **What it is** | The platform-specific identifier that CI uses to verify the approval: GitHub `@username`, Azure DevOps email/UPN, GitLab `@username` |
+| **Why it exists** | Without this, anyone can write arbitrary names in `approvals[]` and merge with a different set of PR approvers. `identity` creates a **binding** between the ADR's formal approval record and the Git platform's cryptographic approval record. |
+| **How CI uses it** | (1) CI detects which ADR files changed in the PR → (2) extracts all `approvals[].identity` values → (3) queries the platform API for actual PR approvers → (4) verifies the sets match → (5) blocks merge if they don't |
+| **Platform compatibility** | Tested patterns: GitHub `GET /repos/{owner}/{repo}/pulls/{number}/reviews`, Azure DevOps `GET /_apis/git/pullRequests/{id}/reviewers`, GitLab `GET /projects/:id/merge_requests/:iid/approval_state` |
+
+**This is the most novel sub-field in the entire schema.** No other ADR template, and no other document-governance framework we surveyed, implements a CI-verified identity binding between a document-level approval record and a platform-level cryptographic approval.
+
+The closest analogy is **code signing** in CI/CD pipelines — where a build artifact's cryptographic signature is verified against an expected signing key. Our `identity` verification operates at a higher level: it verifies that the *humans* who conceptually approved the decision are the same *humans* who technically approved the PR.
+
+###### `approved_at` — ISO 8601 timestamp, nullable
+
+| Aspect | Detail |
+|---|---|
+| **Why nullable?** | When an ADR enters `proposed` status, the `approvals[]` array is populated with expected approvers (name, role, identity) but approval hasn't happened yet. `approved_at: null` signals "pending." Once the PR is approved, the author fills in the timestamp. |
+| **Why not omit until approved?** | Pre-populating the approvals list with `null` timestamps serves as a checklist: "these are the people who need to approve this." It makes the expected approval set discoverable before approval occurs. |
+| **Progressive strictness** | `proposed` ADRs: `approved_at` may be null. `accepted` ADRs: at least one `approved_at` must be non-null (schema conditional). |
+| **Why ISO 8601?** | Same rationale as `created_at` / `last_modified` — see §1.5. Unambiguous, timezone-aware, machine-parseable. |
+
+###### `signature_id` — External signature reference, nullable
+
+| Aspect | Detail |
+|---|---|
+| **What it is** | A reference to an external signing artifact: DocuSign envelope ID, Jira approval ticket, PGP signature hash, qualified electronic signature reference |
+| **Why nullable?** | Most teams don't use formal signing. The field exists for **regulated environments** (financial services, healthcare, EU public sector) where decisions require qualified electronic signatures under eIDAS or equivalent. |
+| **Why not a URL?** | Signature IDs are often opaque identifiers (DocuSign envelope GUIDs, PGP key fingerprints) that don't have stable URLs. A string field accommodates any format. |
+| **When to use** | Use when your organization's compliance framework requires that architectural decisions have a formal sign-off trail beyond Git platform approvals — typically SOC 2, HIPAA, eIDAS, or internal audit requirements |
+
+##### 5. Conditional Requirement Design
+
+The `approvals` field uses JSON Schema's `allOf/if/then` for progressive enforcement:
+
+| Status | `approvals[]` required? | `identity` required? | `approved_at` required? | `audit_trail` event? |
+|---|:---:|:---:|:---:|:---:|
+| `draft` | ❌ | ❌ | ❌ | ❌ |
+| `proposed` | ✅ ≥1 entry | ✅ on every entry | ❌ (may be null) | ❌ |
+| `accepted` | ✅ ≥1 entry | ✅ on every entry | ✅ ≥1 non-null | ✅ `approved` event |
+| `rejected` | ❌ | ❌ | ❌ | ✅ `rejected` event |
+| `deferred` | ❌ | ❌ | ❌ | ✅ `deferred` event |
+
+**Why not always required?** Requiring approvals on `draft` ADRs would block early-stage authoring. Requiring them on `rejected` and `deferred` ADRs would be semantically wrong — these outcomes don't represent approval. The conditional model ensures schema requirements match governance semantics.
+
+**Scope boundary for terminal states:** `rejected` and `deferred` ADRs don't use the `identity` verification model. Their authoritative disposition history lives in the PR/MR discussion plus the ADR's terminal `audit_trail` event, because Git platforms do not expose one portable cross-platform "rejected/deferred by these identities" signal equivalent to approval.
+
+##### 6. The Approval–Audit Trail Duality
+
+Our schema deliberately captures approval information in **two places**:
+
+| Concern | Where captured | Why |
+|---|---|---|
+| **Who approved, when, in what role** | `approvals[]` array | Structured, queryable, CI-verifiable |
+| **That approval happened as an event** | `audit_trail[]` with `event: "approved"` | Chronological event log, append-only |
+
+This is intentional redundancy. The `approvals[]` array is a **state snapshot** (who has approved right now?). The `audit_trail` is a **event log** (what happened, in order?). Both perspectives are needed:
+- **State perspective:** "Is this ADR fully approved?" → check `approvals[].approved_at`
+- **Event perspective:** "When was this ADR approved relative to when it was proposed?" → check `audit_trail` chronology
+
+#### Rejected Alternatives
+
+- *Git-only approvals (implicit via PR approval)* — no audit trail in the ADR itself. When ADRs are exported, bundled, or stored outside Git, the approval history is lost. SOC 2 auditors must cross-reference ADR files with PR histories — fragile and platform-dependent
+- *Simple boolean `approved: true/false`* — loses who, when, and in what capacity. Useless for regulated environments that need named approvers
+- *Free-text "Approved by" field* — not machine-parseable. Cannot drive CI verification. Cannot answer "which decisions did the CISO approve?" without NLP
 - *Always-required approvals* — drafts and deferred ADRs don't need approvals. Conditional requirement avoids blocking early-stage authoring
+- *Single approver (not an array)* — many decisions require multi-party approval (e.g., technology choice needs Lead Architect + CISO). An array accommodates any approval matrix
+- *RACI matrix as approvals model* — too heavyweight. RACI defines Responsible/Accountable/Consulted/Informed roles for every task. Our schema already captures the "A" (Accountable = `decision_owner`), "C" (Consulted = `reviewers`), and "R/A" (Responsible/Approving = `approvals`). A formal RACI matrix would over-structure a process that maps naturally to Git PR review/approve semantics
+- *Architecture Review Board minutes as separate document* — creates a separate artifact that may diverge from the ADR. Our model embeds approvals in the ADR document, ensuring the decision record is its own single source of truth
+- *Blockchain-based approval immutability* — technically interesting but adds deployment complexity far exceeding the value for ADR governance. Git's commit hash chain already provides cryptographic immutability. `audit_trail` append-only semantics + branch protection provide adequate tamper-evidence
+- *`approved_at` as required (never null)* — prevents pre-populating the approvals checklist before approval occurs. Nullable `approved_at` enables the "expected approvers" pattern where the list is set during `proposed` and timestamps filled during `accepted`
+
+#### Credits
+
+| Concept | Source |
+|---|---|
+| No-approvals baseline (implicit via PR merge) | Nygard (2011), MADR 4.0, smadr, EdgeX |
+| Optional compliance table | smadr (structured metadata) |
+| Architecture Review Board governance | TOGAF ADM Phase G; enterprise architecture practice |
+| Stakeholder concern traceability | ISO/IEC/IEEE 42010:2022 |
+| Evidence-based control approval | SOC 2 Type II audit requirements |
+| Qualified electronic signatures | eIDAS Regulation (EU) No 910/2014 |
+| CI-verified identity binding | adr-governance (novel) |
+| Approval–audit trail duality | adr-governance (novel) |
+| Progressive conditional requirements | adr-governance (novel) |
 
 ---
 
