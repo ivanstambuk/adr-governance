@@ -19,7 +19,7 @@
 | P6 | [`scope`/`phase` metadata](#p6-add-scope--phase-metadata) | Redundant | Low | Low | ⏭️ Skip |
 | P7 | [AD Definition of Ready](#p7-add-definition-of-ready-for-architecture-decisions) | Docs | Medium | Low | ✅ Done |
 | P8 | [ADR Verbosity Levels guidance](#p8-adr-verbosity-levels-guidance) | Docs | Low–Medium | Very low | ✅ Done |
-| P9 | [NFR Landing Zones](#p9-nfr-landing-zones-for-quality-requirements) | Schema + Docs | Medium | Low | ⬜ Not started |
+| P9 | [NFR Landing Zones](#p9-nfr-landing-zones-for-quality-requirements) | Schema + Docs | Medium | Low | ❌ Rejected |
 
 > **Legend:** ⬜ Not started · 🔄 In progress · ✅ Done · ❌ Rejected · ⏭️ Skipped
 
@@ -1406,14 +1406,7 @@ Key guidance:
 
 > *Define landing zones if single numbers are hard to come up with and agree upon. For instance, a triplet of "minimal", "target", and "outstanding" quality goals may define such landing zone.*
 
-This is directly applicable to our QAS `measure` field (P3). Instead of requiring a single threshold, allow teams to express a range:
-
-```yaml
-non_functional:
-  - id: NF-001
-    description: "API response time under normal load"
-    measure: "p95 latency < 500ms (minimal), < 200ms (target), < 100ms (outstanding)"
-```
+This was originally proposed as an enhancement to the P3 `measure` field.
 
 ### DPR Source Files
 
@@ -1423,17 +1416,101 @@ non_functional:
 | `artifact-templates/DPR-QualityAttributeScenario.md` | "Define the desired behavior in different environments such as steady state, high workload, and error cases" |
 | `artifact-templates/SDPR-ServiceLevelAgreement.md` | SLO pattern — analogous measurable quality commitment |
 
-### Proposed Implementation
+### Deep Research: Landing Zones
 
-**Documentation-only enhancement to P3.** Rather than adding schema fields for min/target/outstanding, document the landing zone pattern as a best practice in the `measure` field's guidance. The free-text `measure` field can accommodate this naturally.
+#### Wirfs-Brock's Concept
 
-### Implementation Checklist
+Rebecca Wirfs-Brock introduced "agile landing zones" (2011) as a framework for defining and tracking product releasability. The core idea: instead of a single pass/fail threshold for a quality attribute, define three levels:
 
-- [ ] Include landing zone guidance in the `measure` field documentation (P3)
-- [ ] Add landing zone examples to `docs/SCHEMA_REFERENCE.md`
-- [ ] Update AI bundle to prompt for landing zones during QAS capture
-- [ ] Credit Wirfs-Brock for the landing zone concept
-- [ ] Regenerate bundle
+| Level | Definition | Example (API latency) |
+|-------|-----------|----------------------|
+| **Minimal** | Lowest acceptable value — below this, the product is not releasable | p95 < 500ms |
+| **Target** | Desired value the team aims for | p95 < 200ms |
+| **Outstanding** | Exceptional achievement, beyond what's expected | p95 < 50ms |
+
+**Why landing zones help:**
+1. **Negotiation tool** — stakeholders can agree on a range rather than a single hard number, reducing conflict
+2. **Progressive refinement** — "make it work at minimal first, then optimize toward target"
+3. **Trade-off visibility** — "if we invest 2 more sprints, we move from minimal to target on this attribute"
+4. **Risk calibration** — "we're at minimal for latency but outstanding for availability — is that OK?"
+
+#### Relationship to QAS (Quality Attribute Scenarios)
+
+DPR's QAS template (from SEI's Bass, Clements, Kazman) structures quality requirements as scenarios with six components: *Source → Stimulus → Artifact → Environment → Response → Response Measure*. The response measure is where landing zones apply — they replace a single threshold with a triplet.
+
+The DPR also emphasizes SMART criteria for NFRs:
+- **S**pecific (scoped to a feature/component/environment)
+- **M**easurable (quantified — this is where the triplet goes)
+- **A**greed upon (stakeholder consensus)
+- **R**ealistic (technically feasible)
+- **T**ime-bound (growth path from sprint to sprint)
+
+Landing zones make the "M" criterion easier to achieve because agreeing on a range is easier than agreeing on a point.
+
+### Critical Dependency: P9 Depends on P3
+
+P9 was originally framed as *"an enhancement to P3's `measure` field"* — adding structured min/target/outstanding values instead of a free-text measure. But **P3 was rejected** for three reasons:
+
+1. **Altitude mismatch** — measures primarily fit operational ADRs, not strategic/tactical
+2. **Volatility vs. immutability** — SLA thresholds change faster than ADR decisions are superseded
+3. **AI prose extraction** — modern LLMs can extract quantitative thresholds from description text
+
+Since the `measure` field doesn't exist, P9 has no schema location to attach to.
+
+### Can Landing Zones Still Add Value Without P3?
+
+Two possible approaches:
+
+**Option A: Documentation guidance (no schema change)**
+Add landing zone guidance to the `SCHEMA_REFERENCE.md` or `adr-process.md` as a best practice for writing NFR descriptions:
+
+```yaml
+non_functional:
+  - id: NF-001
+    description: >-
+      API response time under normal load.
+      Landing zone: minimal < 500ms, target < 200ms, outstanding < 100ms (p95).
+```
+
+This is *exactly what our examples already do* — e.g., ADR-0001's `NF-001: "DPoP proof generation on mobile must complete in < 50ms"` embeds the threshold in the prose. Landing zones would just be a richer version of the same pattern.
+
+**Option B: Schema change (structured landing zone fields)**
+
+```yaml
+non_functional:
+  - id: NF-001
+    description: "API response time under normal load"
+    landing_zone:
+      minimal: "p95 < 500ms"
+      target: "p95 < 200ms"
+      outstanding: "p95 < 100ms"
+```
+
+This has the same problems that killed P3 — volatility, altitude mismatch, and AI can handle the prose version.
+
+### Recommendation: Reject
+
+P9 should be **rejected** for the same fundamental reasons as P3:
+
+1. **Dependency on P3** — P9 was designed as an extension to P3's `measure` field. Without `measure`, adding `landing_zone` is even harder to justify.
+2. **Same volatility problem** — landing zone thresholds change as systems scale. An immutable ADR field is the wrong home for living SLO targets.
+3. **Prose is sufficient** — authors can (and already do) embed threshold ranges in the `description` text. AI can extract them. No schema machinery needed.
+4. **Right tool for the job** — landing zones belong in SLO definitions, observability dashboards, and test suites — not in architectural decision records. The ADR captures *why we chose this architecture*; the SLO captures *how we measure it works*.
+
+However, the landing zone **concept** is valuable educational content. We can reference it in our verbosity guidance (P8) or ASR documentation as a best practice for writing quantitative NFR descriptions, without adding schema fields.
+
+### Credits
+
+| Concept | Source |
+|---|---|
+| Agile Landing Zones | Wirfs-Brock, R. (2011). [*"Agile Landing Zones"*](http://wirfs-brock.com/blog/2011/07/29/agile-landing-zones/) |
+| QAS template | SEI — Bass, Clements, Kazman: *Software Architecture in Practice* (3rd ed.) |
+| SMART NFR Elicitation | DPR `activities/DPR-SMART-NFR-Elicitation.md` (line 122) |
+| SLA template | DPR `artifact-templates/SDPR-ServiceLevelAgreement.md` |
+
+### Rejection Rationale
+
+**Status: ❌ Rejected** — P9 depends on P3 (rejected `measure` field). The landing zone concept is valuable for education but does not warrant schema changes. NFR thresholds can be expressed naturally in the `description` text of `architecturally_significant_requirements`, and landing zones belong in operational SLO definitions rather than immutable ADR records.
 
 ---
 
