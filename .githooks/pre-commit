@@ -16,8 +16,16 @@
 set -e
 
 # Only trigger if ADR YAML files are staged in either directory
-STAGED_ADL=$(git diff --cached --name-only -- "architecture-decision-log/*.yaml" 2>/dev/null || true)
-STAGED_EXAMPLES=$(git diff --cached --name-only -- "examples-reference/*.yaml" 2>/dev/null || true)
+STAGED_ADL=$(
+    git diff --cached --name-only -- \
+        "architecture-decision-log/*.yaml" \
+        "architecture-decision-log/*.yml" 2>/dev/null || true
+)
+STAGED_EXAMPLES=$(
+    git diff --cached --name-only -- \
+        "examples-reference/*.yaml" \
+        "examples-reference/*.yml" 2>/dev/null || true
+)
 
 if [ -z "$STAGED_ADL" ] && [ -z "$STAGED_EXAMPLES" ]; then
     exit 0
@@ -60,21 +68,16 @@ echo "✅ Rendered ADR Markdown staged for commit"
 # Auto-regenerate llms-full.txt if any source doc changed
 # =============================================================================
 
-LLMS_FULL_SOURCES=(
-    "README.md"
-    "docs/adr-process.md"
-    "docs/glossary.md"
-    ".skills/adr-author/references/SCHEMA_REFERENCE.md"
-    "docs/ci-setup.md"
-)
-
 STAGED_DOCS=""
-for src in "${LLMS_FULL_SOURCES[@]}"; do
-    if git diff --cached --name-only -- "$src" 2>/dev/null | grep -q .; then
-        STAGED_DOCS="yes"
-        break
-    fi
-done
+if [ -x "scripts/generate-llms-full.sh" ]; then
+    mapfile -t LLMS_FULL_SOURCES < <(scripts/generate-llms-full.sh --print-sources)
+    for src in "${LLMS_FULL_SOURCES[@]}"; do
+        if git diff --cached --name-only -- "$src" 2>/dev/null | grep -q .; then
+            STAGED_DOCS="yes"
+            break
+        fi
+    done
+fi
 
 if [ -n "$STAGED_DOCS" ]; then
     echo "🔄 Documentation changes detected — regenerating llms-full.txt..."

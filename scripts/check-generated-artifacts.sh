@@ -12,6 +12,10 @@ SNAPSHOT_ROOT="$TMP_DIR/snapshot"
 
 cd "$PROJECT_ROOT"
 
+list_adr_sources() {
+    find "$1" -maxdepth 1 -type f \( -name '*.yaml' -o -name '*.yml' \) | sort
+}
+
 check_directory() {
     local source_dir="$1"
     local actual_dir="$2"
@@ -24,8 +28,10 @@ check_directory() {
     rm -rf "$snapshot_source_dir" "$expected_dir"
     mkdir -p "$snapshot_source_dir" "$(dirname "$expected_dir")"
 
-    if [ -d "$source_dir" ] && ls "$source_dir"/*.yaml >/dev/null 2>&1; then
-        cp "$source_dir"/*.yaml "$snapshot_source_dir"/
+    if [ -d "$source_dir" ] && list_adr_sources "$source_dir" | grep -q .; then
+        while IFS= read -r source_file; do
+            cp "$source_file" "$snapshot_source_dir"/
+        done < <(list_adr_sources "$source_dir")
         python3 scripts/render-adr.py --output-dir "$expected_dir" --generate-index "$snapshot_source_dir/" >/dev/null
     fi
 

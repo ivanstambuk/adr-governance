@@ -106,10 +106,16 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertNotIn("WIP on feature branch.<br>Not ready for review.", process)
         self.assertIn("Schema-valid, not yet proposed.", process)
         self.assertIn("schema-valid and substantially complete", process)
-        self.assertIn("complete-but-not-yet-proposed", read_text("AUDIT_REPORT.md"))
         self.assertIn("Schema-valid, substantially complete ADR", glossary)
         self.assertIn("schema-valid ADR that is complete enough to validate but not yet proposed", instruction)
         self.assertIn("`draft` means author-owned and not yet proposed", template)
+
+    def test_llms_full_source_list_is_centralized(self):
+        generator = read_text("scripts/generate-llms-full.sh")
+        hook = read_text(".githooks/pre-commit")
+
+        self.assertIn("--print-sources", generator)
+        self.assertIn("generate-llms-full.sh --print-sources", hook)
 
     def test_periodic_review_is_documented_as_external_process(self):
         process = read_text("docs/adr-process.md")

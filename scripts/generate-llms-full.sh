@@ -16,6 +16,7 @@
 # Usage:
 #   ./scripts/generate-llms-full.sh
 #   ./scripts/generate-llms-full.sh --output /tmp/llms-full.txt
+#   ./scripts/generate-llms-full.sh --print-sources
 #
 # Called automatically by:
 #   - make llms-full
@@ -28,33 +29,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 OUTPUT="${PROJECT_ROOT}/llms-full.txt"
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -o|--output)
-            if [[ $# -lt 2 ]]; then
-                echo "Error: --output requires a path" >&2
-                exit 1
-            fi
-            OUTPUT="$2"
-            shift 2
-            ;;
-        -h|--help)
-            cat <<'EOF'
-Usage: ./scripts/generate-llms-full.sh [--output PATH]
-
-Options:
-  -o, --output PATH   Write llms-full output to PATH instead of llms-full.txt
-  -h, --help          Show this help text
-EOF
-            exit 0
-            ;;
-        *)
-            echo "Error: unknown argument: $1" >&2
-            exit 1
-            ;;
-    esac
-done
 
 # Source documents — order matters (most general → most specific)
 SOURCES=(
@@ -73,6 +47,38 @@ TITLES=(
     "Schema Reference"
     "CI/CD Setup Guide"
 )
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -o|--output)
+            if [[ $# -lt 2 ]]; then
+                echo "Error: --output requires a path" >&2
+                exit 1
+            fi
+            OUTPUT="$2"
+            shift 2
+            ;;
+        --print-sources)
+            printf '%s\n' "${SOURCES[@]}"
+            exit 0
+            ;;
+        -h|--help)
+            cat <<'EOF'
+Usage: ./scripts/generate-llms-full.sh [--output PATH] [--print-sources]
+
+Options:
+  -o, --output PATH   Write llms-full output to PATH instead of llms-full.txt
+      --print-sources Print the source file list and exit
+  -h, --help          Show this help text
+EOF
+            exit 0
+            ;;
+        *)
+            echo "Error: unknown argument: $1" >&2
+            exit 1
+            ;;
+    esac
+done
 
 cd "$PROJECT_ROOT"
 
