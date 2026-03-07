@@ -593,54 +593,31 @@ Merson's template explicitly includes reasoning for significant alternatives tha
 
 ## 7. Synthesis: Our Schema's Comparative Position
 
+> **📄 Detailed field-level rationale:** For a comprehensive justification of every field in our schema — including precedent tables, rejected alternatives, and academic sources — see **[Schema Field-Level Design Rationale](schema-field-rationale.md)**.
+
+This section provides a **high-level summary** of our schema's position. The field-level document provides the per-field evidence.
+
 ### 7.1 Where Our Schema Leads
 
-Our `adr-governance` schema is the most comprehensive ADR meta-model in the field. The following sections are **unique** — no other template provides them:
-
-1. **`confirmation`** — description + verification artifact IDs. Inspired by MADR 4.0 / NHS Wales but with structured artifact references.
-2. **`approvals`** with signature IDs — formal governance for regulated environments.
-3. **`audit_trail`** — append-only event log. Satisfies auditability requirements.
-4. **`lifecycle`** — review cadence, supersession chain, and archival. Prevents decision rot.
-5. **`schema_version`** — pins each ADR to a specific schema version. Future-proofs the format.
-6. **`architecturally_significant_requirements`** — embedded functional and non-functional ASRs with IDs.
-7. **`dependencies`** — internal and external dependency tracking.
-
-These are enterprise-grade extensions not found in any standard ADR template. They distinguish `adr-governance` from all other templates in the survey.
+Our `adr-governance` schema is the most comprehensive ADR meta-model in the survey. Seven sections are **unique** — no other template provides them: `confirmation` (with artifact IDs), `approvals` (with signature IDs), `audit_trail`, `lifecycle` (review cadence + archival), `schema_version`, `architecturally_significant_requirements` (with F/NF IDs), and `dependencies`. See [schema-field-rationale.md §8–§12](schema-field-rationale.md#section-8-confirmation--verification) for the full rationale behind each.
 
 ### 7.2 Features Inspired by Other Templates
 
-The survey identified several features from other templates that our schema incorporates:
+Key features adopted from other templates (with full rationale in the field-level document):
 
-| Feature | Inspired by | How our schema addresses it |
-|---------|-------------|----------------------------|
-| `adr.y_statement` | Y-Statements (§3.5) — Zimmermann/Fairbanks structured decision sentence | Long-form Y-Statement field replacing the earlier `adr.summary`. Mandatory on accepted ADRs. Contains all 7 structural clauses: context, concern, decision, neglected, benefits, tradeoffs, rationale. See `docs/glossary.md`. |
-| `extension_fields` (x-*) | smadr (§3.3) — custom metadata via `x-` prefixed fields | Supported via `patternProperties` at the top level. Any `x-` prefixed field is accepted, enabling organization-specific extensions without schema changes. |
-| `alternatives[].rejection_rationale` | Merson (§3.10) — rationale for rejected alternatives; DRF (§3.13) — rejection reasoning in `synthesis` | Optional free-text field on each alternative explaining why it was not chosen. Complements the existing pros/cons analysis with explicit rejection reasoning. |
-| `decision.confidence` | Azure Well-Architected Framework (§10.9) — confidence level per decision | Optional enum (`low`, `medium`, `high`) on the `decision` object. Low-confidence decisions signal the need for shorter review cycles and earlier re-evaluation. |
-| `audit_trail.event: reviewed` | Cervantes & Woods — architectural retrospectives (§10.8); Henderson — after-action reviews (§10.3) | Added to the `audit_trail` event enum. Closes the review lifecycle gap — `lifecycle.review_cycle_months` triggers reviews; the `reviewed` event records that one occurred and what the outcome was. |
+| Feature | Inspired by | Rationale doc section |
+|---------|-------------|----------------------|
+| `adr.y_statement` | Y-Statements / Zimmermann (SATURN 2012) | [§1.3](schema-field-rationale.md#13-adry_statement--dpr-adopted-p2) |
+| `adr.decision_level` | DPR / Zimmermann + Hohpe + management science | [§1.11](schema-field-rationale.md#111-adrdecision_level--dpr-adopted-p1) |
+| `extension_fields` (x-*) | smadr | [§13.1](schema-field-rationale.md#131-x--extension-fields) |
+| `alternatives[].rejection_rationale` | Merson / DRF | [§5.5](schema-field-rationale.md#55-alternativesrejection_rationale) |
+| `decision.confidence` | Azure Well-Architected Framework | [§6.5](schema-field-rationale.md#65-decisionconfidence) |
 
-Additionally, several insights from the survey were incorporated into the process documentation (`adr-process.md`) rather than the schema itself:
-
-- **Architectural Significance Test** — a 6-question checklist (from Zimmermann, §10.6) to prevent ADR inflation, added as §3.0 in `adr-process.md`.
-- **Retrospective questions** — 7 questions for periodic ADR reviews (from Cervantes & Woods, §10.8), guiding what to examine during `lifecycle.review_cycle_months` reviews.
-- **PoC/experiment artifact types** — recommended prefixes for `confirmation.artifact_ids` (from Cervantes & Woods and Zimmermann, §10.7/§10.6), encouraging empirical evidence (e.g., `POC-`, `BENCH-`, `archunit:`).
+Additionally, several insights were incorporated into **process documentation** rather than the schema: the Architectural Significance Test (Zimmermann §10.6 → `adr-process.md` §3.0), retrospective questions (Cervantes & Woods §10.8), and PoC/experiment artifact type prefixes for `confirmation.artifact_ids` (§10.7/§10.6).
 
 ### 7.3 Features Evaluated and Excluded
 
-The survey also surfaced features that our schema deliberately does not include, with rationale for each:
-
-| Feature | Found in | Why our schema excludes it |
-|---------|----------|---------------------------|
-| `related_principles` | Tyree–Akerman (§3.4) | Principles are already captured in `context.business_drivers`, `context.technical_drivers`, and `context.constraints`. A dedicated field assumes a formal principles registry exists — external infrastructure we don't provide. Teams with registries can use `references` or `x-related-principles` via extension fields. |
-| `governance_enforcement` | Gareth Morgan (§3.12) | ADRs capture decisions; enforcement is downstream. Architecture should not point to code — code should point to architecture. Teams enforce decisions through CODEOWNERS, PR templates, fitness functions, CI policies. See also §6.4. |
-| `impact_assessment` | EdgeX Foundry (§3.9) | Already captured across `dependencies.internal`, `consequences.negative`, and `decision.tradeoffs`. EdgeX targets change proposals for a specific codebase; our ADRs describe architectural patterns where impacted systems vary by adopter. See also §6.5. |
-| `risk_per_option` (3D) | smadr (§3.3) | smadr's Technical/Schedule/Ecosystem risk model is interesting but our per-option `risk` field combined with pros/cons provides equivalent coverage. |
-| `neutral_consequences` | MADR 4.0 (§3.2) | Neutral consequences are rarely informative. The positive/negative split is sufficient. |
-| `decision_drivers` (unified list) | MADR / smadr | Our `business_drivers` + `technical_drivers` split is more informative than a flat list. |
-| `swot_per_option` | Business Case / Henderson (§3.7) | Overlaps with pros/cons/cost/risk per alternative. SWOT is a management lens, not an engineering lens. |
-| `context_validation` | DRF (§3.13) | Architecturally novel but requires building a separate knowledge graph infrastructure (CRF). Worth revisiting when DRF matures past v0.1.0. |
-| Standalone `risk_assessment` | — (no template has this) | A formal risk register with likelihood × impact matrices belongs in threat models / ISMS artifacts, not ADRs. Risks are already captured in `alternatives[].risk`, `alternatives[].cons`, `consequences.negative`, `decision.tradeoffs`, and `context.constraints`. No template in the survey provides a standalone structured risk assessment section. |
-| Decision Guardian integration | [DecispherHQ](https://github.com/DecispherHQ/decision-guardian) | (1) Wrong direction — maps from decisions to code, inverting the correct dependency. (2) Enforcement is downstream, not upstream. (3) Maturity risk — 26 stars, single maintainer. |
+Features deliberately excluded, with rationale: `related_principles` (Tyree-Akerman), `governance_enforcement` (Morgan), `impact_assessment` (EdgeX), 3D `risk_per_option` (smadr), `neutral_consequences` (MADR), unified `decision_drivers` (MADR/smadr), `swot_per_option` (Henderson), `context_validation` (DRF), standalone `risk_assessment`, and Decision Guardian integration. See [schema-field-rationale.md Appendix A](schema-field-rationale.md#appendix-a-features-evaluated-and-excluded) for the full exclusion rationale for each.
 
 ---
 
@@ -681,17 +658,7 @@ The survey also surfaced features that our schema deliberately does not include,
 
 ## 9. Conclusion
 
-Having surveyed **14 templates** (13 external + our own), `adr-governance` sits at the **maximum comprehensiveness** end of the ADR template spectrum. It is the only template that combines:
-
-- MADR-style alternatives analysis with pros/cons
-- Tyree–Akerman-style enterprise governance (assumptions, constraints, related artifacts)
-- Confirmation with verification artifact IDs — inspired by MADR 4.0 / NHS Wales
-- Formal approval workflow — **unique to this schema**
-- Append-only audit trail — **unique to this schema**
-- Lifecycle management (review cadence, supersession, archival) — **unique to this schema**
-- Machine-readable YAML with JSON Schema validation
-
-The survey also informed the design of several features (see §7.2) and provided clear rationale for features deliberately excluded (see §7.3).
+Having surveyed **14 templates** (13 external + our own), `adr-governance` sits at the **maximum comprehensiveness** end of the ADR template spectrum (see §7.1 and the [Schema Field-Level Design Rationale](schema-field-rationale.md) for per-field justification).
 
 The tradeoff is **weight**: a full `adr-governance` ADR is significantly heavier than a Nygard or MADR record. This is acceptable for enterprise use cases (e.g., IAM decisions in regulated financial services) but would be overkill for a startup documenting database choices.
 
