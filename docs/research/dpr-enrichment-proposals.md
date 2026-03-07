@@ -1028,16 +1028,7 @@ Map Zimmermann's 5 criteria to our existing fields and processes, creating a che
 
 ### Motivation
 
-Not every decision needs to be an ADR. DPR has a stub activity `activities/futureWork/DPR-ASRTest.md` that currently links to Zimmermann's [Architectural Significance Test](https://medium.com/olzzio/architectural-significance-test-9ff17a9b4490) blog post. The key criteria (derived from the blog post and the Architecture Modeling activity):
-
-1. Does the decision affect the **system structure** (components, connectors)?
-2. Does it affect **non-functional characteristics** (performance, security, scalability)?
-3. Does it affect **external interfaces** (APIs, integrations)?
-4. Is it **cross-cutting** (affects multiple components/teams)?
-5. Is it **hard to reverse** (high reversal cost)?
-6. Does it **set a precedent** or constrain future decisions?
-7. Does it involve **risk or uncertainty**?
-8. Are **multiple stakeholders** affected?
+Not every decision needs to be an ADR. DPR has a stub activity `activities/futureWork/DPR-ASRTest.md` that currently links to Zimmermann's [Architectural Significance Test](https://medium.com/olzzio/architectural-significance-test-9ff17a9b4490) blog post.
 
 ### DPR Source Files
 
@@ -1047,15 +1038,89 @@ Not every decision needs to be an ADR. DPR has a stub activity `activities/futur
 | `activities/DPR-SMART-NFR-Elicitation.md` | Risk-based prioritization reference (Glinz 2006) |
 | `activities/DPR-ArchitectureModeling.md` | Line 31: traces design to "architecturally significant requirements" |
 
-### Proposed Implementation
+### Deep Research: Zimmermann's Seven Criteria
 
-**Documentation-only change.** Add "When to Write an ADR" section to `docs/adr-process.md`. Suggest: if ≥ 2 criteria are met, an ADR is warranted.
+Zimmermann's blog post [*"Architectural Significance Criteria and Some Core Decisions Required"*](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html) (2020) proposes seven criteria for determining whether a requirement (or decision) is architecturally significant:
+
+| # | Zimmermann's Criterion | Nature |
+|---|------------------------|--------|
+| 1 | Directly associated with **high business value/risk** | Objective |
+| 2 | Concern of a **particularly important stakeholder** (sponsor, auditor) | Objective |
+| 3 | Involves **runtime QoS** characteristics deviating substantially from current architecture | Objective |
+| 4 | Creates or deals with **external dependencies** that are uncontrollable/unpredictable | Objective |
+| 5 | **Cross-cutting** nature — affects multiple parts of the system, possibly system-wide | Objective |
+| 6 | **First-of-a-Kind (FOAK)** — team has never built something like this before | Context-specific |
+| 7 | **Bad experience/trouble** in the past with similar decisions in similar contexts | Context-specific |
+
+Zimmermann notes criteria 1–5 are "somewhat more objective and easier to agree upon" while 6–7 are "highly context-specific." He also emphasizes that the test is **qualitative, not quantitative** — it's a triage heuristic, not a scoring calculator. His advice: *"Do not spend more time on assessing relevance than on tackling and solving issues!"*
+
+He additionally proposes a structured **ASR scoring table** (Y/N/?/H/M/L/n/a per criterion per issue) for teams that want to make the assessment explicit and comparable.
+
+### Coverage Analysis: Zimmermann's 7 vs. Our §3.0
+
+Our `adr-process.md` §3.0 already has an Architectural Significance Test, attributed to Zimmermann. Here's how it maps:
+
+| Our §3.0 Criterion | Zimmermann # | Coverage |
+|---|:---:|:---:|
+| 1. Affects **multiple components, teams, or services** | #5 (cross-cutting) | ✅ Direct match |
+| 2. **Difficult or expensive to reverse** | — | ✅ Unique to ours (derived from Keeling/Richards "irreversibility" heuristic). Zimmermann addresses this implicitly but doesn't list it as a standalone criterion. |
+| 3. **Security, compliance, or regulatory** implications | #2 (key stakeholder concern) | ✅ Specialization of #2 — our framing is more actionable for engineering teams |
+| 4. **Establishes a pattern** that others will follow | #6 (FOAK) | ⚠️ Partial overlap — our "sets a precedent" is about downstream impact; Zimmermann's "FOAK" is about novelty/unfamiliarity |
+| 5. **Tradeoff between quality attributes** | #3 (QoS deviation) | ✅ Generalization of #3 — our version is broader (any quality tradeoff, not just deviations from current architecture) |
+| 6. **"Why did we do this?" in 6 months** | — | ✅ Unique to ours (pragmatic heuristic from Henderson/Spotify). Zimmermann doesn't include this, but it captures the core *documentation* motivation. |
+| — | #1 (business value/risk) | ⚠️ **Not in ours** — partially captured via §3.0 criterion 3 (compliance) and 2 (irreversibility) but not as a standalone business value/risk criterion |
+| — | #4 (external dependencies) | ⚠️ **Not in ours** — external dependencies that are uncontrollable/unpredictable |
+| — | #7 (bad past experience) | ❌ **Not in ours** — deliberately excluded; too context-specific for a general template |
+
+### Gap Assessment
+
+Our §3.0 is a **well-adapted simplification** of Zimmermann's 7 criteria, not a gap. The analysis:
+
+1. **Business value/risk (#1)** — partially covered by our criteria 2 (expensive to reverse) and 3 (security/compliance). Adding an explicit "high business value or risk" criterion would improve completeness but risks being too vague ("Is this important? Yes, everything is important."). Worth adding, but as a refinement.
+
+2. **External dependencies (#4)** — genuinely useful. Decisions about unreliable/uncontrollable external dependencies (third-party APIs, vendor lock-in, cloud services) are textbook ADR material. This is a small gap worth filling.
+
+3. **Bad past experience (#7)** — correctly excluded. This is highly context-specific and doesn't work as a template checklist item. Teams that have been burned will naturally gravitate to ADRs for similar decisions without a checklist telling them to.
+
+4. **FOAK (#6) vs. "sets a precedent" (#4)** — these are complementary, not equivalent. FOAK is "we've never done this before" (inward-facing risk); "sets a precedent" is "others will follow this" (outward-facing impact). Both are valid but our framing is more relevant for a governance framework.
+
+### Recommendation: Enhance §3.0 with Two Additional Criteria
+
+Add the two missing criteria that are genuinely useful, bringing our test to 8 items:
+
+| # | New Criterion | Maps to Zimmermann |
+|---|---|---|
+| 7 | The decision involves **high business value or business risk** | #1 |
+| 8 | The decision involves **external dependencies** that are uncontrollable, unpredictable, or create vendor lock-in | #4 |
+
+This is a **minor refinement**, not a new feature. The existing §3.0 was already "from Zimmermann" — we're just making it more complete.
+
+### Implementation Plan
+
+| Step | Description | Effort |
+|---|---|---|
+| 1 | Add 2 criteria to §3.0 table in `docs/adr-process.md` | 5 min |
+| 2 | (Optional) Update AI bundle Socratic interview to reference the expanded test | 5 min |
+| 3 | Regenerate bundle | 2 min |
+
+**Total estimated effort:** ~12 minutes
+
+### Credits
+
+| Concept | Source |
+|---|---|
+| Architectural Significance Test (7 criteria) | Zimmermann, O. (2020). [*"Architectural Significance Criteria and Some Core Decisions Required"*](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html) |
+| ASR Test (Medium version) | Zimmermann, O. [*"Architectural Significance Test"*](https://medium.com/olzzio/architectural-significance-test-9ff17a9b4490) |
+| ASR scoring table | Zimmermann — miro template ([link](https://miro.com/app/board/o9J_kl49CmA=/)) |
+| Irreversibility heuristic | Richards, M. & Ford, N. (2020). *Fundamentals of Software Architecture*. O'Reilly. |
+| "Six months" heuristic | Henderson, J.P. [*Architecture Decision Record*](https://github.com/joelparkerhenderson/architecture-decision-record) |
+| DPR stub | `activities/futureWork/DPR-ASRTest.md` |
+| ECSA 2020 working session notes | Zimmermann's blog post (core decisions discussion) |
 
 ### Implementation Checklist
 
-- [ ] Add "When to Write an ADR" section to `docs/adr-process.md`
-- [ ] Credit Zimmermann/Fairbanks
-- [ ] (Optional) Add significance test guidance to AI bundle Socratic interview
+- [ ] Add 2 new criteria to §3.0 table in `docs/adr-process.md`
+- [ ] (Optional) Update AI bundle significance test guidance
 - [ ] Regenerate bundle
 
 ---
