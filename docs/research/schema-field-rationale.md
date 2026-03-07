@@ -86,7 +86,7 @@ The `adr` object contains identification and classification metadata. Its design
 
 **Rationale:** Self-evident. The `minLength: 10` constraint prevents placeholder titles; `maxLength: 200` prevents prose paragraphs masquerading as titles. These bounds were chosen empirically from our example ADRs (shortest: 36 chars, longest: 67 chars).
 
-### 1.3 `adr.y_statement` ⭐ *DPR-adopted (P2)*
+### 1.3 `adr.y_statement`
 
 | Attribute | Value |
 |---|---|
@@ -227,7 +227,7 @@ The `adr` object contains identification and classification metadata. Its design
 - *Unlimited free-text category* — prevents programmatic filtering and dashboard aggregation
 - *DDD-aligned categories (Domain/Infrastructure/Integration)* — too narrow for organizations not practicing DDD
 
-### 1.11 `adr.decision_level` ⭐ *DPR-adopted (P1)*
+### 1.11 `adr.decision_level`
 
 | Attribute | Value |
 |---|---|
@@ -453,7 +453,7 @@ n │              │          │          │          │          │
 | ISO/IEC/IEEE 42010 | 2011 | No prescribed taxonomy — confirms design choice |
 | arc42 (Starke) | Ongoing | No prescribed categories — same confirmation |
 
-### 1.12 `scope` / `phase` Metadata ⏭️ *Evaluated — Redundant (P6)*
+### 1.12 `scope` / `phase` Metadata ⏭️ *Evaluated — Redundant*
 
 **Proposal:** Add DPR-style YAML frontmatter fields (`Scope`, `Phases`, `Abstraction/Refinement Level`) to ADRs.
 
@@ -630,7 +630,7 @@ The F/NF split mirrors the universal ISO 25010 distinction between functional su
 - *Unstructured prose (Nygard/MADR style)* — prevents machine extraction and traceability analysis
 - *Full QAS template per requirement (SEI style)* — overengineering for an ADR. A lightweight `measure` field was evaluated and rejected (see §4.2 below).
 
-### 4.2 QAS `measure` Field ❌ *Rejected (P3)*
+### 4.2 QAS `measure` Field ❌ *Rejected*
 
 **Proposal:** Add an optional `measure` field to `#/$defs/architecturally_significant_requirement` to capture quantitative acceptance criteria separately from the description.
 
@@ -723,7 +723,7 @@ Authors *naturally write measurable NFRs* by embedding quantities in the descrip
 | ISO 25010:2023 | ISO/IEC 25010:2023 — Product quality model (9 characteristics) |
 | Planguage | Gilb, "Rich Requirement Specs" (2006) |
 
-### 4.3 NFR Landing Zones ❌ *Rejected (P9)*
+### 4.3 NFR Landing Zones ❌ *Rejected*
 
 **Proposal:** Add structured landing zone fields (minimal/target/outstanding) to ASR entries, as an extension to the §4.2 `measure` field.
 

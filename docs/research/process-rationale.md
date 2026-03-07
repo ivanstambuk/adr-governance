@@ -20,8 +20,6 @@ The [Schema Field Rationale](schema-field-rationale.md) answers: *"For every fie
 
 It provides the design rationale for each process section — justifying its inclusion against the academic literature, DPR (Design Practice Repository) method elements, and industry standards. It also records what was explicitly considered and rejected.
 
-**Origin:** These decisions were originally researched as proposals P2, P4, P5, P7, and P8 in the now-archived `dpr-enrichment-proposals.md`. The deep research, analysis, and conclusions have been preserved here as a permanent record.
-
 ---
 
 ## Reading Guide
@@ -45,7 +43,6 @@ Each process element entry follows this structure:
 |---|---|
 | **Process location** | Authoring guidance in `.skills/adr-author/SKILL.md`; rendered output via `render-adr.py` |
 | **Schema field** | `adr.y_statement` — schema-optional; validator-enforced as mandatory when `status: accepted` |
-| **Proposal origin** | DPR-P2 |
 
 ### What It Does
 
@@ -102,7 +99,6 @@ The Y-Statement was introduced by Olaf Zimmermann at SATURN 2012, building on Ge
 | Attribute | Value |
 |---|---|
 | **Process location** | `adr-process.md` §3.3.1 — gates the `proposed` → `accepted` transition |
-| **Proposal origin** | DPR-P4 |
 
 ### What It Does
 
@@ -176,7 +172,6 @@ No ADR template in our survey includes a formal Definition of Done. Most templat
 | Attribute | Value |
 |---|---|
 | **Process location** | `adr-process.md` §3.0 "Should You Write an ADR?" |
-| **Proposal origin** | DPR-P5 |
 
 ### What It Does
 
@@ -237,7 +232,6 @@ Our §3.0 originally had 6 criteria. Analysis against Zimmermann's 7 revealed:
 | Attribute | Value |
 |---|---|
 | **Process location** | `adr-process.md` §3.1.1 — gates the `draft` → `proposed` transition |
-| **Proposal origin** | DPR-P7 |
 
 ### What It Does
 
@@ -307,7 +301,6 @@ Zimmermann's [*"A Definition of Ready for Architectural Decisions"*](https://med
 | Attribute | Value |
 |---|---|
 | **Process location** | `adr-process.md` §3.0.1 "How Much Detail?" |
-| **Proposal origin** | DPR-P8 |
 
 ### What It Does
 
@@ -364,10 +357,10 @@ Our schema's required/optional field structure naturally supports all three leve
 
 ## 6. Process Elements Evaluated and Rejected
 
-The following process elements were researched, evaluated, and deliberately not implemented. The full research for each is preserved in the Git history of the archived `dpr-enrichment-proposals.md`.
+The following process elements were researched, evaluated, and deliberately not implemented.
 
 | Element | Source | Why Not Implemented |
 |---|---|---|
-| **QAS `measure` field** (P3) | SEI QAS (Bass/Clements/Kazman), DPR SMART NFR Elicitation | Three reasons: (1) Altitude mismatch — measures primarily fit operational ADRs, not strategic/tactical. (2) Measure volatility vs. ADR immutability — SLA thresholds change faster than decisions are superseded. (3) AI prose extraction — LLMs trivially extract thresholds from description text. Authors already embed measures naturally in ASR descriptions. |
-| **`scope`/`phase` metadata** (P6) | DPR YAML frontmatter (Scope, Phases, Abstraction Level) | Redundant with existing fields: `Scope` → `decision_level` + `adr.component`; `Phases` → waterfall-era concept, our `adr.status` lifecycle is more natural; `Abstraction Level` → subsumed by `decision_level`. |
-| **NFR Landing Zones** (P9) | Wirfs-Brock, "Agile Landing Zones" (2011); DPR SMART NFR line 122 | Depends on P3 (rejected `measure` field). Landing zone thresholds (minimal/target/outstanding) are volatile SLO targets belonging in operational dashboards, not immutable ADR records. The concept is valuable for education but doesn't warrant schema fields. Authors can express ranges naturally in ASR `description` prose. |
+| **QAS `measure` field** | SEI QAS (Bass/Clements/Kazman), DPR SMART NFR Elicitation | Three reasons: (1) Altitude mismatch — measures primarily fit operational ADRs, not strategic/tactical. (2) Measure volatility vs. ADR immutability — SLA thresholds change faster than decisions are superseded. (3) AI prose extraction — LLMs trivially extract thresholds from description text. Authors already embed measures naturally in ASR descriptions. |
+| **`scope`/`phase` metadata** | DPR YAML frontmatter (Scope, Phases, Abstraction Level) | Redundant with existing fields: `Scope` → `decision_level` + `adr.component`; `Phases` → waterfall-era concept, our `adr.status` lifecycle is more natural; `Abstraction Level` → subsumed by `decision_level`. |
+| **NFR Landing Zones** | Wirfs-Brock, "Agile Landing Zones" (2011); DPR SMART NFR line 122 | Depends on rejected `measure` field. Landing zone thresholds (minimal/target/outstanding) are volatile SLO targets belonging in operational dashboards, not immutable ADR records. The concept is valuable for education but doesn't warrant schema fields. Authors can express ranges naturally in ASR `description` prose. |
