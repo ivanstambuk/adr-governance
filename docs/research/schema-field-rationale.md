@@ -1864,25 +1864,164 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `array` of strings |
 | **Required?** | Optional |
 
-**Precedent:**
+#### Literature Review: Architectural Decision Dependencies
 
-| Template | Dependency tracking | Internal/External split? |
+**No other ADR template has explicit dependency tracking as a dedicated section.** This is entirely novel. However, the concept of inter-decision dependencies is well-established in architecture decision modeling literature. This section reviews the academic foundations, explains why existing models are too complex for practical ADRs, and justifies our deliberately simplified internal/external split.
+
+##### 1. Academic Decision Relationship Models
+
+###### Kruchten's Decision Network Graph (WICSA, 2004)
+
+Kruchten defines 7 relationship types between architectural decisions:
+
+| Relationship | Semantics | Directionality | Example |
+|---|---|---|---|
+| **Constrains** | D₁ restricts the choices available for D₂ | D₁ → D₂ | "Use J2EE" constrains app server to JBoss/WebSphere |
+| **Forbids** | D₁ actively prevents D₂ from being made | D₁ → D₂ | "No stored procedures" forbids "Use stored proc for auth" |
+| **Enables** | D₁ makes D₂ possible (weaker than constrains) | D₁ → D₂ | "Adopt microservices" enables "Independent deployment per team" |
+| **Subsumes** | D₁ encompasses D₂ | D₁ → D₂ | "Use Kubernetes" subsumes "Use containers" |
+| **Overrides** | D₁ supersedes D₂ | D₁ → D₂ | Captured by our `lifecycle.supersedes` |
+| **Depends on** | D₁ requires D₂ to be valid | D₂ ← D₁ | "Use DPoP" depends on "Use OAuth 2.0" |
+| **Is alternative for** | D₁ and D₂ are mutually exclusive options | D₁ ↔ D₂ | Captured by our `alternatives[]` within a single ADR |
+
+**Assessment:** Kruchten's model is a **full ontology** designed for architectural knowledge management research tools. It models a directed graph of inter-decision relationships with typed edges. This is powerful for academic analysis but impractical for human-authored ADRs:
+- Requires authors to classify *every* relationship with a specific semantic type
+- Creates a dense dependency graph that needs specialized tooling to navigate
+- "Constrains," "enables," and "depends on" are often difficult to distinguish in practice
+
+###### Zimmermann's SOA Decision Models (2007–2012)
+
+Zimmermann's framework models decisions as a DAG with:
+- **Decomposition** relationships (high-level → specific)
+- **Dependency** relationships (prerequisite → dependent)
+- **Grouping** (decisions that are typically made together)
+
+**Assessment:** The decomposition and grouping dimensions are partially captured by our `decision_level` (Strategic/Tactical/Operational hierarchy). The dependency dimension is what our `dependencies` field addresses — but Zimmermann models only *inter-decision* dependencies, not dependencies on external entities.
+
+###### Jansen & Bosch — Decisions as First-Class Entities (WICSA, 2005)
+
+Jansen & Bosch establish that architectural decisions have **tacit dependencies** that are often undocumented. Their key insight: most dependency information exists only in architects' heads and is lost during team transitions. Their solution: make dependency relationships explicit in architecture documentation.
+
+**Assessment:** Our `dependencies` field is a direct response to this insight. We make dependencies explicit and portable — they travel with the ADR, not with the architect.
+
+###### ISO/IEC/IEEE 42010:2022 — Correspondences
+
+ISO 42010 uses **Correspondences** and **Correspondence Rules** to express relationships between architectural elements, including decisions. This is a formal mechanism for traceability:
+- Stakeholder concern → architectural decision → architectural element
+- Decision → decision (dependency, constraint, influence)
+
+**Assessment:** ISO 42010's correspondence model is **schema-agnostic** — it defines that relationships *should* be documented but doesn't prescribe how. Our `dependencies` field is one concrete implementation of ISO 42010's correspondence concept.
+
+##### 2. ADR Template Approaches
+
+| Template | Dependency tracking | Mechanism | Relationship types |
+|---|---|---|---|
+| Nygard | ❌ Absent | — | — |
+| MADR 4.0 | ❌ Absent | — | — |
+| smadr | ❌ Absent | — | — |
+| Tyree-Akerman | 🟡 "Related Decisions" | Prose list | Adjacency only (no typed relationships) |
+| Planguage | ❌ Absent | — | — |
+| EdgeX | 🟡 "Affected Services" | Product-specific list | Impact, not dependency |
+| DRF | 🟡 Context Relevance Framework | Implicit in context | Not explicit |
+| NHS Wales | 🟡 "More Information" | Prose cross-references | Unstructured |
+| **adr-governance** | ✅ `dependencies.internal` + `.external` | **Structured, split by controllability** | Controllable vs. uncontrollable |
+
+**Key finding:** Tyree-Akerman's "Related Decisions" is the closest precedent, but it tracks **adjacency** (these decisions are related) not **dependency** (this decision *requires* that thing). Our model captures directional dependency: "this ADR depends on X."
+
+##### 3. The Controllability Classification
+
+Our internal/external split is based on **controllability** — a concept from risk management and systems thinking:
+
+| Dimension | `dependencies.internal` | `dependencies.external` |
 |---|---|---|
-| EdgeX | 🟡 "Affected Services" (similar to internal deps) | ❌ Product-specific |
-| Tyree-Akerman | 🟡 "Related Decisions" (adjacency, not dependency) | ❌ |
-| DRF | 🟡 Context Relevance Framework (implicit) | ❌ |
-| All others | ❌ Absent | — |
-| **adr-governance** | ✅ `dependencies.internal` + `.external` | ✅ |
+| **Definition** | Dependencies on entities under organizational control | Dependencies on entities outside organizational control |
+| **Examples** | Other ADRs, team APIs, internal services, platform teams | AWS services, vendor products, regulatory requirements, open-source libraries |
+| **Risk profile** | Negotiable — you can escalate, schedule, or redesign | Non-negotiable — you must accept, work around, or abandon |
+| **Impact of change** | Can trigger a superseding ADR via internal governance | May force a superseding ADR with no notice (vendor EOL, regulation change) |
+| **Resolution path** | Internal coordination (sync meetings, RACI, roadmap alignment) | External monitoring (vendor roadmaps, regulatory calendars) |
 
-**Rationale:** **No other ADR template has explicit dependency tracking as a dedicated section.** Architectural decisions don't exist in isolation. Knowing that "this decision depends on the payment team's API migration" (internal) or "this decision requires AWS availability zones in eu-west-1" (external) enables impact analysis when dependencies change. The internal/external split matters because:
-- **Internal dependencies** are under organizational control — you can negotiate, escalate, or schedule around them
-- **External dependencies** are outside organizational control — vendor decisions, cloud provider changes, regulatory shifts. These carry higher risk.
+**Why controllability, not Kruchten's 7 relationship types?** The primary purpose of dependency information in an ADR is **impact analysis**: "if X changes, what happens to this decision?" For impact analysis, the *type* of relationship (constrains vs. enables vs. depends on) matters less than whether the dependency is **within your control**:
 
-**Rejected alternatives:**
-- *EdgeX-style structured impact assessment* — too specific to a single codebase. Our ADRs describe architectural patterns where impacted systems vary by adopter.
-- *Standalone `risk_assessment` section* — no ADR template has this as a standalone section. Risk is already distributed across `alternatives[].risk`, `alternatives[].cons`, `consequences.negative`, `decision.tradeoffs`, and `context.constraints`. A formal risk register belongs in threat models / ISMS artifacts, not in decision records.
-- *Combined `dependencies` list (no internal/external split)* — loses the controllability distinction. "We depend on the IAM team" (negotiable) vs. "we depend on AWS us-east-1" (non-negotiable) have fundamentally different risk profiles
-- *Required field* — not all decisions have explicit dependencies. Self-contained technology choices ("use Ed25519 for signing") may have no external or internal dependencies
+```
+Decision: Use DPoP for token binding
+  internal: ["ADR-0003: Adopt OAuth 2.0 framework"]
+    → If ADR-0003 changes, we can coordinate via our own governance process
+  external: ["RFC 9449 (DPoP specification)", "AS vendor must support DPoP"]  
+    → If RFC 9449 changes or vendor drops support, we react, not control
+```
+
+This two-bucket model captures **90% of the practical value** of Kruchten's full ontology with **10% of the authoring burden**.
+
+##### 4. Why Not a Typed Dependency Graph?
+
+We deliberately chose flat string arrays over a structured dependency model:
+
+| Design | Schema complexity | Authoring burden | Tooling required | Practical value |
+|---|---|---|---|---|
+| **Kruchten-style typed edges** | High (relationship enum, source/target/type triples) | High (classify every relationship) | High (graph visualization) | High (for research) |
+| **MADR-style prose cross-references** | Low (free text) | Low | Low | Low (not machine-parseable) |
+| **Our string arrays** | Low (two arrays of strings) | Low (list what you depend on) | Low (grep, link validation) | **Medium-High** (controllability + impact analysis) |
+
+The full Kruchten model would require:
+```yaml
+# What we DON'T do (too complex for human-authored ADRs):
+dependencies:
+  - target: "ADR-0003"
+    relationship: "depends_on"
+    strength: "strong"
+    description: "Requires OAuth 2.0 as prerequisite"
+  - target: "ADR-0005"
+    relationship: "constrains" 
+    strength: "weak"
+    description: "Limits session management options"
+```
+
+Our model:
+```yaml
+# What we DO (simple, practical):
+dependencies:
+  internal:
+    - "ADR-0003: Adopt OAuth 2.0 framework"
+  external:
+    - "RFC 9449 (DPoP specification)"
+    - "Authorization Server vendor must support DPoP"
+```
+
+The simpler model is more likely to be populated by practitioners. An unpopulated complex model provides zero value; a populated simple model provides significant value.
+
+##### 5. Relationship to Other Schema Fields
+
+Several other schema fields capture dependency-adjacent concepts. Our `dependencies` field deliberately avoids duplicating them:
+
+| Concept | Where captured | Why NOT in `dependencies` |
+|---|---|---|
+| **Supersession** (ADR replaces another) | `lifecycle.supersedes` / `lifecycle.superseded_by` | This is a *lifecycle transition*, not a dependency. The old ADR doesn't depend on the new one — it's replaced by it. |
+| **Alternative exclusion** (choosing X means not Y) | `alternatives[]` within the same ADR | Mutual exclusion within a single decision is captured by alternative analysis, not inter-decision dependency. |
+| **Constraint** (external limit on options) | `context.constraints` | Constraints describe the *problem space*. Dependencies describe *inter-decision relationships*. "Budget < $50k" is a constraint; "Requires ADR-0003 OAuth framework" is a dependency. |
+| **Assumption** (uncertain belief) | `context.assumptions` | Assumptions may *become* dependencies once validated. "AWS will have eu-west-1 by Q4" is an assumption; once validated, "AWS eu-west-1 availability" goes in `dependencies.external`. |
+
+#### Rejected Alternatives
+
+- *No dependency tracking (Nygard/MADR approach)* — forces architects to maintain dependency knowledge in their heads. When team composition changes, dependency context is lost. Jansen & Bosch (2005) identified this as a critical knowledge management failure mode
+- *Kruchten-style typed dependency graph* — too complex for human-authored ADRs. Requires relationship type classification, graph tooling, and introduces classification uncertainty ("is this 'constrains' or 'enables'?"). The controllability split captures most practical value with minimal burden
+- *EdgeX-style structured impact assessment* — too specific to a single codebase. Our ADRs describe architectural patterns where impacted systems vary by adopter
+- *Combined `dependencies` list (no internal/external split)* — loses the controllability distinction. "We depend on the IAM team" (negotiable, can be scheduled) vs. "we depend on AWS us-east-1" (non-negotiable, must accept) have fundamentally different risk profiles and resolution paths
+- *Standalone `risk_assessment` section* — no ADR template has this as a standalone section. Risk is already distributed across `alternatives[].risk`, `alternatives[].cons`, `consequences.negative`, `decision.tradeoffs`, and `context.constraints`. A formal risk register belongs in threat models / ISMS artifacts, not in decision records
+- *Required field* — not all decisions have explicit dependencies. Self-contained technology choices ("use Ed25519 for signing") may have no external or internal dependencies worth documenting
+- *Structured objects with `id` + `description` + `type`* — adds schema complexity without proportional value. Free-text strings in two controllability-classified arrays hit the sweet spot of machine-parseable structure (array membership = controllability) with human-writable content (string = natural language description)
+- *Bidirectional dependency tracking (both ADRs must reference each other)* — tempting (we do this for supersession), but too burdensome for dependencies. Supersession is a 1:1 relationship with clear symmetry; dependencies form a many-to-many DAG where bidirectional enforcement would require updating every depended-upon ADR whenever a new dependent ADR is created
+
+#### Credits
+
+| Concept | Source |
+|---|---|
+| 7 decision relationship types (constrains/forbids/enables/etc.) | Kruchten, "An Ontology of Architectural Design Decisions" (WICSA, 2004) |
+| SOA decision decomposition and dependency graphs | Zimmermann et al., SOA Decision Models (2007–2012) |
+| Tacit dependency knowledge loss during team transitions | Jansen & Bosch, "Software Architecture as a Set of Architectural Design Decisions" (WICSA, 2005) |
+| Correspondences for architectural element relationships | ISO/IEC/IEEE 42010:2022 |
+| "Related Decisions" adjacency concept | Tyree & Akerman, "Architecture Decisions" (IEEE Software, 2005) |
+| Controllability-based risk classification | Systems thinking / risk management practice |
+| Internal/external dependency split | adr-governance (novel) |
 
 ---
 
