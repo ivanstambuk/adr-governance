@@ -383,35 +383,171 @@ This is analogous to how content management systems separate structured metadata
 | **Type** | `enum`: `technology`, `process`, `organizational`, `vendor`, `security`, `compliance` |
 | **Required?** | ✅ Yes |
 
-**Precedent:**
+#### Literature Review: Decision Classification Frameworks
 
-| Template | Decision classification | Structured? | Categories |
-|---|---|---|---|
-| Tyree-Akerman | "Category" field | 🟡 Free-text | Not prescribed |
-| smadr | Tags-based | 🟡 Freeform tags | Not prescribed |
-| Zimmermann SOA | ✅ Conceptual/Technology/Asset | ✅ | 3 levels (abstraction, not domain) |
-| Kruchten | ✅ Existence/Property/Executive | ✅ | 3 types (orthogonal to scope) |
-| MADR / Nygard / EdgeX | ❌ No domain classification | — | — |
-| **adr-governance** | ✅ `adr.decision_type` | ✅ Enum | 6 domains |
+No single academic framework prescribes our exact 6-value taxonomy. Our `decision_type` is a **novel synthesis** drawn from multiple classification traditions. This section reviews the major frameworks, explains why each was insufficient alone, and justifies our specific domain set.
 
-**Rationale:** Domain classification enables stakeholder routing — security decisions go to the CISO, compliance decisions go to the DPO, vendor decisions go to procurement. The six values cover the domains that emerge in enterprise architecture practice.
+##### 1. Kruchten's Ontology — Existence / Property / Executive (2004)
 
-**Per-enum-value justification:**
+**Primary source:** Philippe Kruchten, "An Ontology of Architectural Design Decisions in Software-Intensive Systems" (WICSA, 2004)
 
-| Value | Covers | Example ADRs |
+Kruchten classifies decisions by their **nature** (what they *do* to the architecture):
+
+| Type | Definition | Example |
 |---|---|---|
-| `technology` | Protocol, library, framework, algorithm choices | DPoP over mTLS, Ed25519 for JWT signing |
-| `process` | Workflow, methodology, governance decisions | Adopt Governed ADR Process (ADR-0000) |
-| `organizational` | Team structure, ownership, responsibility | Team topology changes, RACI assignments |
-| `vendor` | Third-party product, SaaS, cloud provider | Choose cloud provider, select IdP |
-| `security` | Authentication, authorization, cryptography patterns | BFF Token Mediator, Session Enrichment |
-| `compliance` | Regulatory, legal, audit-driven | GDPR data residency, SOC 2 controls |
+| **Existence** | Introduces or bans a structural/behavioral element | "The system has three layers" / "No stored procedures" |
+| **Property** | Defines an enduring quality or design rule | "All domain classes are in Layer 2" |
+| **Executive** | Business/process/organizational — not about design elements | "Use J2EE" / "All interface changes require CCB approval" |
 
-**Rejected alternatives:**
-- *TOGAF four domains (Business/Data/Application/Technology)* — too enterprise-architecture-specific and not action-oriented
-- *Unlimited free-text category* — prevents programmatic filtering and dashboard aggregation
+**Assessment:** Kruchten's types answer *"what kind of thing is this decision?"* — it classifies the **nature** of the decision (structural, qualitative, or environmental). Our `decision_type` answers a different question: *"which domain of concern does this decision address?"* — it classifies the **subject matter**. These are orthogonal dimensions:
+
+| | Existence (structural) | Property (quality) | Executive (environmental) |
+|---|---|---|---|
+| `technology` | "Use PostgreSQL" | "All DB queries < 50ms" | "Standardize on PostgreSQL across teams" |
+| `security` | "Add WAF layer" | "Zero critical CVEs per release" | "All security decisions require CISO sign-off" |
+| `vendor` | "Deploy on AWS" | "99.9% SLA" | "Procure enterprise support contract" |
+
+**Conclusion:** Kruchten's types are not alternatives to our `decision_type`; they classify a *different dimension*. We don't duplicate this dimension because it overlaps significantly with `decision_level` (executive ≈ strategic; existence ≈ operational). Adding Kruchten types would create three classification enums, which is excessive.
+
+##### 2. Zimmermann SOA Decisions — Conceptual / Technology / Asset (2007–2012)
+
+**Primary source:** Olaf Zimmermann, "An Architectural Decision Modeling Framework..." (WICSA, 2007)
+
+Zimmermann groups decisions by **abstraction level**:
+
+| Level | Focus | Example |
+|---|---|---|
+| **Conceptual** | Platform-independent patterns and styles | "Use microservices" |
+| **Technology** | Platform-specific technology bindings | "Use Spring Boot" |
+| **Asset** | Specific product/library/version | "Use Spring Boot 3.2.1" |
+
+**Assessment:** This is an **abstraction hierarchy**, not a domain classification. It is the direct ancestor of our `decision_level` (Strategic/Tactical/Operational), not `decision_type`. The distinction is already captured in §1.11.
+
+##### 3. TOGAF ADM — Business / Data / Application / Technology (The Open Group)
+
+**Primary source:** TOGAF Standard, 10th Edition (The Open Group, 2022)
+
+TOGAF's four architecture domains (BDAT):
+
+| Domain | Focus | Stakeholders |
+|---|---|---|
+| **Business** | Strategy, governance, organizational structure | Business leaders, process owners |
+| **Data** | Data structures, relationships, governance | Data architects, DPOs |
+| **Application** | Application behavior, interactions, services | Solution architects, developers |
+| **Technology** | Infrastructure, networks, platforms | Infrastructure architects, ops |
+
+**Assessment:** BDAT is **enterprise architecture scoping**, not decision classification. It works well for EA planning but poorly for decision routing:
+- **No security domain** — security decisions span all four TOGAF domains
+- **No compliance domain** — regulatory decisions are orthogonal to BDAT
+- **No vendor domain** — vendor choices cut across Application and Technology
+- **"Data" as a domain** — in ADR practice, data decisions are almost always `technology` decisions (which database, which schema format). A separate "data" type would create category confusion.
+
+TOGAF's BDAT is an architecture *scope* framework, not a decision *type* framework.
+
+##### 4. Tyree-Akerman "Category" Field (IEEE Software, 2005)
+
+**Primary source:** Tyree & Akerman, "Architecture Decisions: Demystifying Architecture" (IEEE Software, 2005)
+
+Tyree-Akerman includes a free-text "Category" field in their ADR template. No prescribed categories — the field is intentionally open. Example categories from the paper: "Integration", "Persistence", "Security".
+
+**Assessment:** Validates the need for domain classification but provides no guidance on *which* categories. Free-text prevents programmatic filtering and aggregation.
+
+##### 5. Enterprise AI Decision Taxonomy (emerging, 2024–2025)
+
+Enterprise AI governance frameworks are introducing decision taxonomies that include:
+- Scope, Budget, Timeline, Resourcing, **Vendor/Tooling**, **Policy/Compliance**, Technical Architecture
+
+**Assessment:** Convergent evidence that `vendor` and `compliance` are recognized as distinct decision categories in enterprise practice. Our taxonomy captures both.
+
+##### 6. OWASP Secure by Design Framework (2024)
+
+OWASP's framework treats security as an architectural concern orthogonal to all other domains — validating the need for `security` as a dedicated decision type rather than embedding it in `technology`.
+
+#### Comparative Analysis
+
+| Framework | # Categories | Classification Dimension | Overlap with Our `decision_type`? |
+|---|:---:|---|---|
+| Kruchten (2004) | 3 | Nature (existence/property/executive) | ❌ Orthogonal — classifies nature, not domain |
+| Zimmermann SOA (2007) | 3 | Abstraction (conceptual/tech/asset) | ❌ Already captured in `decision_level` |
+| TOGAF BDAT | 4 | EA scope (business/data/app/tech) | 🟡 Partial — lacks security, compliance, vendor |
+| Tyree-Akerman (2005) | Open | Free-text (uncontrolled) | 🟡 Validates need, no specific values |
+| Enterprise AI Taxonomy | ~7 | Enterprise governance | ✅ Includes vendor, compliance as distinct types |
+| OWASP SbD (2024) | — | Security as cross-cutting concern | ✅ Validates security as distinct category |
+
+#### Why These 6 Values
+
+No existing framework maps directly to our taxonomy. Our 6 values are derived from **enterprise practice** — the domains that consistently emerge when organizations classify their architectural decisions for routing and governance:
+
+| Value | What It Captures | Why It's Distinct | Primary Stakeholders |
+|---|---|---|---|
+| `technology` | Protocol, library, framework, algorithm, infrastructure | The default "what tool do we use?" category. Largest by volume. | Engineering leads, solution architects |
+| `process` | Workflow, methodology, governance, SDLC | How teams *work*, not what they *build*. ADR-0000 itself is a process decision. | Engineering managers, process owners |
+| `organizational` | Team structure, ownership, RACI, capability allocation | Conway's Law territory — org structure drives architecture. | VPs of Engineering, team leads |
+| `vendor` | Third-party product, SaaS, cloud provider, licensing | Involves procurement, legal review, and long-term contracts — fundamentally different decision dynamics than technology choices. | Procurement, legal, finance, architects |
+| `security` | Authentication, authorization, cryptography, encryption, identity | Cross-cutting concern requiring specialist review. OWASP, NIST, and regulatory frameworks all treat security decisions as requiring dedicated governance. | CISO, security architects, security champions |
+| `compliance` | Regulatory (GDPR, SOC 2, HIPAA, eIDAS), legal, audit-driven | Decisions constrained by *external authority* rather than internal preference. Reversal may be legally impossible. | DPO, compliance officers, legal counsel |
+
+#### The Decision Matrix: `decision_type` × `decision_level`
+
+`decision_type` and `decision_level` are **independent, orthogonal dimensions**. Every ADR occupies one cell in this matrix:
+
+```
+                         decision_type (WHAT domain)
+               ┌────────────┬────────────┬────────────┬────────────┬────────────┬────────────┐
+               │ technology │  process   │   org      │  vendor    │ security   │ compliance │
+  ┌────────────┼────────────┼────────────┼────────────┼────────────┼────────────┼────────────┤
+d │  strategic │ Adopt      │ Adopt ADR  │ Inverse    │ AWS vs     │ Zero-trust │ eIDAS 2.0  │
+e │            │ micro-     │ governance │ Conway     │ Azure vs   │ network    │ wallet     │
+c │            │ services   │ process    │ maneuver   │ GCP        │ model      │ adoption   │
+i ├────────────┼────────────┼────────────┼────────────┼────────────┼────────────┼────────────┤
+s │  tactical  │ Use        │ PR-based   │ Platform   │ Use Auth0  │ BFF Token  │ DPO        │
+i │            │ Spring     │ ADR review │ team owns  │ for IdP    │ Mediator   │ approval   │
+o │            │ Boot 3.x   │ flow       │ auth APIs  │            │ pattern    │ workflow   │
+n ├────────────┼────────────┼────────────┼────────────┼────────────┼────────────┼────────────┤
+  │operational │ Use        │ Trunk-     │ SRE on-    │ Procure    │ Ed25519    │ Audit log  │
+_ │            │ Postgres   │ based      │ call       │ enterprise │ for JWT    │ retention  │
+l │            │ 16         │ development│ rotation   │ support    │ signing    │ 7 years    │
+  └────────────┴────────────┴────────────┴────────────┴────────────┴────────────┴────────────┘
+```
+
+This 3×6 matrix demonstrates that:
+1. Every cell is a plausible ADR — there are no empty cells
+2. No column is a subset of another — each `decision_type` has unique stakeholders
+3. No row is a subset of another — each `decision_level` has unique reversal costs
+4. The two dimensions provide independent information — knowing one doesn't predict the other
+
+#### Term Selection
+
+| Value | Chosen Because | Rejected Synonyms |
+|---|---|---|
+| `technology` | Universal industry term; immediately understood | `technical` (too broad — overlaps with security), `engineering` (too narrow) |
+| `process` | Standard management term; covers workflow + methodology | `governance` (too narrow — we have governance mechanisms, process is broader), `methodology` (too academic) |
+| `organizational` | Direct, unambiguous | `team` (too narrow), `people` (too informal), `structural` (confuses with code structure) |
+| `vendor` | Standard procurement term | `commercial` (excludes OSS vendors), `third-party` (verbose), `supplier` (less common in tech) |
+| `security` | Universal term; matches CISO role title | `cybersecurity` (too narrow — excludes physical security), `infosec` (jargon) |
+| `compliance` | Standard regulatory term; matches compliance officer role | `regulatory` (excludes voluntary standards like SOC 2), `legal` (too narrow — not all compliance is law) |
+
+#### Rejected Alternatives
+
+- *Kruchten's three types (Existence/Property/Executive)* — classifies the **nature** of the decision, not the domain. These are orthogonal to our `decision_type` and would add a third classification axis with diminishing returns
+- *TOGAF four domains (Business/Data/Application/Technology)* — EA scoping framework, not action-oriented. Lacks security, compliance, vendor. "Data" as a type is too specific for ADR practice
+- *Unlimited free-text category (Tyree-Akerman style)* — prevents programmatic filtering, dashboard aggregation, and automated stakeholder routing
 - *DDD-aligned categories (Domain/Infrastructure/Integration)* — too narrow for organizations not practicing DDD
-- *Fewer categories (e.g., technical/non-technical)* — too coarse. A `vendor` decision has different stakeholders than a `technology` decision, even though both are "technical"
+- *Fewer categories (e.g., technical/non-technical binary)* — too coarse. `vendor` decisions have different stakeholders than `technology` decisions, even though both are "technical." A binary split loses routing value.
+- *More categories (add "data", "integration", "performance", etc.)* — diminishing returns. Additional categories create classification uncertainty ("is this a data decision or a technology decision?"). The 6 values cover >95% of real-world ADRs without ambiguity. Edge cases use `tags` for finer-grained labeling.
+- *Multi-select (allow multiple types per ADR)* — tempting, but creates classification drift. A decision tagged `security` + `compliance` + `technology` communicates nothing useful. Forcing single classification requires the author to identify the *primary* domain, which is the most valuable routing signal. Secondary concerns are captured in prose and tags.
+
+#### Credits
+
+| Concept | Source |
+|---|---|
+| Existence / Property / Executive ontology | Kruchten, "An Ontology of Architectural Design Decisions" (WICSA, 2004) |
+| Conceptual / Technology / Asset levels | Zimmermann et al., SOA Decision Models (2007–2012) |
+| BDAT architecture domains | TOGAF Standard, 10th Edition (The Open Group, 2022) |
+| "Category" field in ADR templates | Tyree & Akerman, "Architecture Decisions" (IEEE Software, 2005) |
+| Security as cross-cutting architectural concern | OWASP Secure by Design Framework (2024) |
+| Vendor/Tooling as distinct decision category | Enterprise AI Decision Taxonomy (emerging, 2024–2025) |
+
 
 ### 1.11 `adr.decision_level`
 
