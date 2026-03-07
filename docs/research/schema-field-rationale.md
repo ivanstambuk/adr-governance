@@ -158,9 +158,37 @@ The `adr` object contains identification and classification metadata. Its design
 | **Type** | `string`, format: `date-time` (ISO 8601) |
 | **Required?** | `created_at`: ✅ Yes; `last_modified`: Optional |
 
-**Precedent:** Present in MADR (as `date`), smadr, EdgeX, Planguage, DRF. Absent in Nygard (which relies on Git history).
+**Precedent:**
 
-**Rationale:** Explicit timestamps survive non-Git contexts (wikis, databases, bundled documents). `created_at` is required because every ADR has a creation moment; `last_modified` is optional because Git itself tracks modifications and the audit trail provides event-level timestamps.
+| Template | Timestamp field(s) | Format | Required? |
+|---|---|---|---|
+| Nygard | None — relies on Git history | — | ❌ |
+| MADR 4.0 | `date` (single field in frontmatter) | ISO 8601 date | Optional |
+| smadr | `created`, `updated` | ISO 8601 date-time | ✅ Both |
+| Tyree-Akerman | None | — | ❌ |
+| Planguage | `Date` (most recent revision) | Free-text | ✅ |
+| EdgeX | Change Log dates | ISO 8601 date | ✅ |
+| DRF | `meta.created_at`, `meta.updated_at` | ISO 8601 date-time | ✅ Both |
+| NHS Wales | `Updated` (single date) | ISO 8601 date | ✅ |
+| **adr-governance** | `created_at` + `last_modified` | ISO 8601 date-time | `created_at`: ✅; `last_modified`: Optional |
+
+**Why ISO 8601?** Three reasons:
+1. **Unambiguous sorting** — `2026-03-07T14:30:00Z` sorts lexicographically, unlike `March 7, 2026` or `07/03/2026` (which is ambiguous between DD/MM and MM/DD)
+2. **Timezone-aware** — the `Z` suffix or `+HH:MM` offset prevents teams in different timezones from disagreeing on "when was this created?" JSON Schema's `date-time` format validates this automatically
+3. **Machine-parseable** — every programming language, database, and CI tool can parse ISO 8601 natively. Free-text dates (Planguage's approach) require locale-specific parsing
+
+**Why two fields, not one?** MADR and NHS Wales use a single `date` field. smadr and DRF use two. The distinction matters:
+- **`created_at` is immutable** — set once when the ADR file is created; never changes even through supersession. This is the canonical "birth date" of the decision proposal
+- **`last_modified` is mutable** — updated whenever the ADR file changes (draft iterations, post-acceptance updates to `confirmation`, `audit_trail` events). It answers: "when was this file last touched?"
+- Together they answer different questions: `created_at` → "how old is this decision?" (useful for staleness analysis); `last_modified` → "is this file current?" (useful for review scheduling)
+
+**Why `last_modified` is optional:** Git itself is a modification tracker — `git log --follow <file>` provides a definitive modification history. The `audit_trail` section captures event-level timestamps with semantic meaning ("reviewed on X", "approved on Y"). A top-level `last_modified` field is therefore *redundant* but not *useless* — it's convenient for non-Git consumers (databases, bundled documents, wiki exports) that lack Git history. Making it optional avoids mandatory bookkeeping while supporting use cases that need it.
+
+**Rejected alternatives:**
+- *Git-only timestamps (Nygard style)* — breaks when ADRs are stored outside Git repositories (wikis, databases, compliance systems, bundled documents shared via email). Our framework is Git-native but not Git-exclusive
+- *Single `date` field (MADR/NHS Wales style)* — ambiguous: does it mean creation date, decision date, or last modification? Our schema separates these concerns: `created_at` (file birth), `decision.decision_date` (when the decision was made), and `last_modified` (last file change)
+- *Free-text date format (Planguage style)* — prevents programmatic sorting, filtering, and validation. The `minLength: 10` pattern on Planguage's `Date` keyword accepts "March 2026" but not "2026-03-07T14:30:00Z"
+- *Mandatory `last_modified`* — would force authors to update a field on every commit, creating merge conflicts and CI noise for a field that Git tracks natively
 
 ### 1.6 `adr.version` / `adr.schema_version`
 
@@ -170,9 +198,39 @@ The `adr` object contains identification and classification metadata. Its design
 | **Type** | `string` with semver-like patterns |
 | **Required?** | `version`: ✅ Yes; `schema_version`: Optional |
 
-**Precedent:** Only smadr and DRF have a schema version field. No other template has a document version.
+**Precedent:**
 
-**Rationale:** `version` tracks the ADR document's own evolution (useful for review communications: "I reviewed v1.2, but you've since published v1.3"). `schema_version` pins each ADR to a specific schema release, enabling forward/backward compatibility as the schema evolves.
+| Template | Document version? | Schema version? | Version format |
+|---|---|---|---|
+| Nygard | ❌ | ❌ | — |
+| MADR 4.0 | ❌ | ❌ | — |
+| smadr | ❌ | ✅ (implicit via JSON Schema `$id`) | URI-based |
+| Tyree-Akerman | ❌ | ❌ | — |
+| Planguage | ✅ (`Revision` keyword) | ❌ | Free-text increment |
+| EdgeX | 🟡 (implicit via Change Log) | ❌ | — |
+| DRF | ❌ | ✅ (`meta.schema_version`) | Semver |
+| **adr-governance** | ✅ `adr.version` | ✅ `adr.schema_version` | MAJOR.MINOR / MAJOR.MINOR.PATCH |
+
+**Why dual versioning?** The two version fields track different things:
+
+1. **`adr.version` (document version)** — tracks the ADR document's own evolution during the draft and review cycle. When a reviewer says "I reviewed v1.2, but you've since published v1.3," the version field makes this unambiguous. Version bumps occur during the mutable phase (draft → proposed → review iterations). After acceptance, the version freezes along with the decision core — only post-acceptance updates to `confirmation`, `audit_trail`, or `lifecycle` would warrant a minor bump.
+   - **MAJOR** increments represent substantive decision changes (during mutable phases only)
+   - **MINOR** increments represent non-substantive updates (typos, added confirmation artifacts, review events)
+
+2. **`adr.schema_version` (schema compatibility pin)** — pins the ADR to a specific version of `adr.schema.json`. As the schema evolves (new optional fields, changed constraints), this field enables:
+   - **Forward compatibility** — a validator knows which rules to apply when checking an older ADR
+   - **Migration tooling** — automated scripts can identify ADRs authored against schema v1.0 and upgrade them to v2.0
+   - **Audit clarity** — a compliance reviewer knows which schema version's rules governed the ADR's creation
+
+**Interaction with supersession:** When ADR-0002 supersedes ADR-0001, the *new* ADR starts at `version: "1.0"` — it's a new document. The old ADR's version freezes at whatever it reached before being superseded. Version continuity is *per-document*, not *per-decision-lineage*. The `lifecycle.supersedes` / `lifecycle.superseded_by` fields provide the lineage chain; version provides the document iteration count.
+
+**Why `schema_version` is optional:** Most teams use a single schema version across all ADRs. The field becomes valuable only when the schema undergoes breaking changes and the ADR log contains documents authored against different schema generations. Making it optional avoids unnecessary bookkeeping for single-version deployments.
+
+**Rejected alternatives:**
+- *No document version (MADR/Nygard style)* — Git provides file history, but not a human-friendly "version 1.3" label. Review communications ("I approved v1.2") become ambiguous without an explicit version. Planguage recognized this need with its `Revision` keyword.
+- *Single unified version field* — conflates document iterations with schema compatibility. A typo fix (document v1.1 → v1.2) should not be confused with a schema migration (schema v1.0 → v2.0)
+- *Full semver (MAJOR.MINOR.PATCH) for document version* — PATCH is meaningless for a document that's either substantively changed (MAJOR) or cosmetically tweaked (MINOR). Two levels suffice for ADR documents. Schema version uses three levels because schema changes have a well-defined breaking/non-breaking/fix taxonomy
+- *Auto-incrementing version from Git commits* — ties version identity to the VCS, breaking in non-Git contexts. Also produces noisy version numbers (v47 after 47 commits, most of which were whitespace fixes)
 
 ### 1.7 `adr.project` / `adr.component`
 
@@ -182,9 +240,41 @@ The `adr` object contains identification and classification metadata. Its design
 | **Type** | `string` |
 | **Required?** | `project`: ✅ Yes; `component`: Optional |
 
-**Precedent:** Partially in EdgeX (which requires affected services). No other template has explicit project scoping.
+**Precedent:**
 
-**Rationale:** `project` scopes the ADR to a programme or product — essential when a single ADR repository serves multiple projects (enterprise pattern). `component` narrows further to a specific module/subsystem. Together they enable filtering: "show me all ADRs for Project X, Component Y."
+| Template | Project scoping? | Component scoping? | Format |
+|---|---|---|---|
+| Nygard | ❌ | ❌ | — |
+| MADR 4.0 | ❌ | ❌ | — |
+| smadr | ✅ `project` (frontmatter) | ❌ | Free-text |
+| Tyree-Akerman | ❌ | ❌ | — |
+| Planguage | ❌ | ❌ | — |
+| EdgeX | ❌ | ✅ (implicit — "Affected Services") | Enumerated service names |
+| DRF | ❌ | ❌ (context via CRF entities) | — |
+| **adr-governance** | ✅ `adr.project` | ✅ `adr.component` | Free-text strings |
+
+**Why two-level scoping?** Architectural decisions operate at different organizational scopes:
+- **`project`** scopes the ADR to a programme, product, or organizational unit — essential when a single ADR repository serves multiple projects (the enterprise monorepo pattern). Without this, filtering "show me all ADRs for the IAM platform" requires text search through context descriptions
+- **`component`** narrows further to a specific module, service, or subsystem — e.g., "token-service" within the "IAM platform" project. This enables drill-down: `project: "iam-platform"` → `component: "token-service"` → all decisions affecting that component
+
+Together they create a two-level hierarchy: `project` → `component` → individual ADR. This maps to how most organizations structure their code: organisation → repository/product → module/service.
+
+**Why free-text, not enum?** This is the central design question. Three arguments for free-text:
+
+1. **Organization-specific vocabularies.** Project and component names vary wildly across organizations — "IAM Platform," "Project Phoenix," "team-payments-core." No enum can anticipate these. A controlled vocabulary would require schema customization per deploying organization, defeating the goal of a portable, adopt-as-is schema.
+
+2. **Evolution without schema changes.** Projects are born and retired; components are split, merged, and renamed. An enum requires a schema update (and potentially a schema version bump) for each organizational change. Free-text absorbs these changes without schema modification.
+
+3. **Convention over enforcement.** Teams establish naming conventions through documentation and review, not schema constraints. Our example ADRs demonstrate the pattern: `project: "NovaTrust IAM"`, `component: "token-service"`. Validators can enforce naming patterns (e.g., kebab-case, maximum length) without hardcoding a vocabulary.
+
+**Why `component` is optional:** Not all decisions are component-scoped. Strategic decisions (`decision_level: strategic`) typically affect the entire project or multiple components — forcing a component value would be misleading. The `decision_level` heuristics (§1.11) make this explicit: strategic decisions affect team boundaries and organizational structure, not individual components.
+
+**Rejected alternatives:**
+- *Enum-based project/component (EdgeX style)* — EdgeX can enumerate its services because it's a single, well-defined product. Our framework targets arbitrary organizations where the set of projects and components is unknown at schema design time. An enum-based approach would require every adopting organization to fork and customize the schema.
+- *Single `scope` field combining project and component* — loses the hierarchical filtering capability. "IAM Platform / token-service" as a single string prevents querying "all ADRs for IAM Platform regardless of component"
+- *CRF entity references (DRF style)* — DRF's Context Reasoning Format provides organizational entity references via a separate knowledge graph. This is architecturally elegant but requires CRF infrastructure that doesn't exist yet (DRF is at v0.1.0). A simple string field provides 80% of the value with 0% of the infrastructure overhead
+- *No project scoping (Nygard/MADR style)* — works when one repository = one project. Breaks in enterprise environments where a central ADR log serves multiple products, or when ADRs are aggregated into cross-project dashboards
+- *`tags`-based scoping (using tags like `project:iam`)* — conflates organizational scoping with freeform discovery. Tags are for cross-cutting concerns ("security," "performance"); project/component is a structural hierarchy. Mixing them prevents clean hierarchical queries
 
 ### 1.8 `adr.tags`
 
@@ -194,9 +284,52 @@ The `adr` object contains identification and classification metadata. Its design
 | **Type** | `array` of unique strings |
 | **Required?** | Optional |
 
-**Precedent:** Present in smadr (as `tags` in frontmatter), Tyree-Akerman (via "Categories"). Absent in most templates.
+**Precedent:**
 
-**Rationale:** Tags enable freeform discovery and filtering beyond the fixed `decision_type`/`decision_level` taxonomy. Organizational jargon, technology names, and project-specific labels all belong here.
+| Template | Tagging mechanism | Format | Controlled vocabulary? |
+|---|---|---|---|
+| Nygard | ❌ None | — | — |
+| MADR 4.0 | ❌ None | — | — |
+| smadr | ✅ `tags` (frontmatter array) | Free-text | ❌ |
+| Tyree-Akerman | ✅ "Categories" (informal) | Prose | ❌ |
+| Planguage | ❌ None | — | — |
+| EdgeX | ❌ None | — | — |
+| DRF | ❌ (uses CRF entity relationships) | — | — |
+| **adr-governance** | ✅ `adr.tags` | Array of unique strings | ❌ |
+
+**Why free-text array?** Tags serve a fundamentally different purpose from `decision_type` and `decision_level` (which are controlled enums). Tags enable **freeform, ad-hoc discovery** — organizational jargon, technology names, and project-specific labels that are impossible to anticipate at schema design time:
+- Technology tags: `oauth2`, `kubernetes`, `graphql`, `event-sourcing`
+- Organizational tags: `q3-initiative`, `platform-migration`, `compliance-2026`
+- Cross-cutting concern tags: `performance`, `developer-experience`, `cost-optimization`
+
+The `uniqueItems: true` constraint prevents duplicate tags. No other validation is applied — deliberately.
+
+**Why not a controlled vocabulary (taxonomy)?** Four reasons:
+
+1. **Vocabulary maintenance burden.** A controlled vocabulary requires governance — someone must own the taxonomy, approve new terms, merge synonyms, and retire stale tags. This creates process overhead disproportionate to the value. Tags are metadata, not the core decision record.
+
+2. **Organization-specific terminology.** "DPoP," "BFF," "Step-Up Auth" are meaningful tags in an IAM team but meaningless in a payments team. No universal vocabulary can anticipate domain-specific terminology across all adopting organizations.
+
+3. **Evolution rate mismatch.** Technology names and organizational initiatives change faster than schema releases. A controlled vocabulary frozen in the schema would be perpetually outdated. Free-text tags absorb change immediately.
+
+4. **The enum fields cover the structured cases.** `decision_type` (technology/process/organizational/vendor/security/compliance) and `decision_level` (strategic/tactical/operational) provide the structured classification axes. Tags are the escape valve for everything else — making them controlled would eliminate the flexibility that justifies their existence.
+
+**Relationship to `decision_type` and `decision_level`:** These three fields form a classification triad:
+
+| Field | Purpose | Governance | Cardinality |
+|---|---|---|---|
+| `decision_type` | Domain classification (what kind) | Controlled enum | Single value |
+| `decision_level` | Altitude classification (what scope) | Controlled enum | Single value |
+| `tags` | Freeform discovery labels | Uncontrolled | Multiple values |
+
+This is analogous to how content management systems separate structured metadata (categories, types) from freeform metadata (tags, keywords).
+
+**Rejected alternatives:**
+- *Controlled vocabulary (enum array)* — requires schema changes for every new tag category. The maintenance burden exceeds the benefit. Teams needing controlled vocabularies can enforce them via CI validation rules or linting without modifying the schema
+- *Hierarchical tags (e.g., `security/authentication/oauth2`)* — introduces taxonomy design complexity (what's the hierarchy? who maintains it?). Flat tags with convention-based grouping (prefix patterns like `sec-oauth2`) provide similar discoverability without structural constraints
+- *smadr-style `technologies` as separate field* — smadr separates `tags` from `technologies` in frontmatter. Our tags field intentionally subsumes technology labels because the distinction between a "tag" and a "technology" is fuzzy (is `event-sourcing` a technology or a pattern?). A single unstructured field avoids this classification debate
+- *No tags field (Nygard/MADR style)* — forces all discovery through full-text search of context descriptions. Structured tags enable exact-match filtering: "show me all ADRs tagged `oauth2`" is faster and more precise than searching for "oauth2" across all prose fields
+- *Tag validation via `pattern` constraint* — considered adding a regex pattern like `^[a-z0-9-]+$` to enforce kebab-case tags. Rejected because it prevents multi-word tags ("developer experience"), proper nouns ("OAuth2"), and version-specific tags ("spring-boot-3.x"). Convention guides in process documentation are sufficient
 
 ### 1.9 `adr.priority`
 
