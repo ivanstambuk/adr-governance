@@ -20,7 +20,7 @@
 
 **Authors:** Priya Sharma (API Platform Lead), Kai Lindström (Mobile Platform Lead)  
 **Reviewers:** Elena Vasquez (IAM Architect), Jonas Eriksen (CISO), Frontend Development Lead (Engineering)  
-**Approvals:** Marcus Chen (2026-02-18T10:00:00Z), Jonas Eriksen (2026-02-20T09:00:00Z)
+**Approvals:** Marcus Chen (Head of IAM) [@marcuschen] — approved 2026-02-18T10:00:00Z; Jonas Eriksen (CISO) [@jonaseriksen] — approved 2026-02-20T09:00:00Z
 
 ---
 

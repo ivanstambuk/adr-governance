@@ -33,6 +33,13 @@ After this, any commit that touches `architecture-decision-log/*.yaml` will auto
 
 The hook also regenerates `llms-full.txt` when any source documentation file changes (README, adr-process, glossary, schema reference, or ci-setup).
 
+The hook is a local convenience, not the trust boundary. CI also regenerates and verifies the committed artifacts below without mutating the worktree:
+- `rendered/`
+- `examples-reference/rendered/`
+- `llms-full.txt`
+
+The Repomix web-chat bundle (`adr-governance-bundle.md`) is intentionally different: it is an on-demand export artifact generated when needed, not a freshness-checked committed deliverable in this repository.
+
 ---
 
 ## Manual rendering
@@ -52,6 +59,8 @@ Or use the Makefile:
 
 ```bash
 make render
+make llms-full
+make generated
 ```
 
 ---

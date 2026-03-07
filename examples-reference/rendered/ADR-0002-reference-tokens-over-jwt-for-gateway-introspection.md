@@ -20,7 +20,7 @@
 
 **Authors:** Priya Sharma (API Platform Lead), Elena Vasquez (IAM Architect)  
 **Reviewers:** Tomasz Kowalski (Network Security Architect), Jonas Eriksen (CISO)  
-**Approvals:** Marcus Chen (2026-01-30T11:00:00Z), Jonas Eriksen (2026-02-01T09:00:00Z)
+**Approvals:** Marcus Chen (Head of IAM) [@marcuschen] — approved 2026-01-30T11:00:00Z; Jonas Eriksen (CISO) [@jonaseriksen] — approved 2026-02-01T09:00:00Z
 
 ---
 

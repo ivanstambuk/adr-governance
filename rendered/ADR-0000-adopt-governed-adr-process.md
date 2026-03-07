@@ -19,7 +19,7 @@
 ---
 
 **Authors:** Ivan Stambuk (Principal Architect)  
-**Approvals:** Ivan Stambuk (2026-03-05T18:00:00Z)
+**Approvals:** Ivan Stambuk (Principal Architect) [@ivanstambuk] — approved 2026-03-05T18:00:00Z
 
 ---
 

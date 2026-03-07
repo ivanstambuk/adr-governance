@@ -3,7 +3,7 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install validate lint test integrity render bundle llms-full review summarize all
+.PHONY: help install validate lint test integrity generated render bundle llms-full review summarize all
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -23,6 +23,9 @@ test: ## Run the automated regression test suite
 
 integrity: ## Run repository integrity checks and smoke tests
 	bash scripts/check-repo-integrity.sh
+
+generated: ## Verify committed generated artifacts are current
+	bash scripts/check-generated-artifacts.sh
 
 render: ## Render all ADRs to Markdown
 	python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/

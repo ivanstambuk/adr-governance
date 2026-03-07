@@ -313,14 +313,14 @@ Automated validation is the enforcement mechanism that makes the governance proc
 
 ## Rendered Markdown (Human-Friendly Views)
 
-ADRs are authored and stored as **structured YAML** — optimised for machine consumption, validation, and AI-assisted workflows. But humans need a readable format too. Every ADR YAML file has a corresponding **Markdown rendering** in [`rendered/`](rendered/), auto-generated via a Git pre-commit hook. Both the YAML source and its Markdown rendering are committed together — reviewers approve both in the same PR.
+ADRs are authored and stored as **structured YAML** — optimised for machine consumption, validation, and AI-assisted workflows. But humans need a readable format too. Every ADR YAML file has a corresponding **Markdown rendering** in [`rendered/`](rendered/), auto-generated via a Git pre-commit hook. Both the YAML source and its Markdown rendering are committed together — reviewers approve both in the same PR, and CI verifies that committed renderings and `llms-full.txt` stay current.
 
 - **[`rendered/architecture-decision-log.md`](rendered/architecture-decision-log.md)** — the decision log index with status, dates, and clickable links
 - **`rendered/ADR-NNNN-*.md`** — individual ADR renderings with a provenance disclaimer
 
 > **⚠️ Do not edit files in `rendered/` directly.** They are auto-generated from the YAML source.
 
-See **[`docs/rendering.md`](docs/rendering.md)** for pre-commit hook setup, manual rendering commands, and the rationale behind the dual-format model.
+See **[`docs/rendering.md`](docs/rendering.md)** for pre-commit hook setup, manual rendering commands, CI freshness checks, and the rationale behind the dual-format model.
 
 
 ## Example ADRs

@@ -96,6 +96,8 @@ This generates `adr-governance-bundle.md` — a portable ADR authoring/query bun
 
 Repository-side CI setup, approval verification, and PR enforcement internals are intentionally excluded. For CI pipelines and enforcement integration, use the repository itself and scripts such as `extract-decisions.py` directly rather than the chat bundle.
 
+In this repository, the bundle is treated as an on-demand export artifact for chat interfaces, not as a freshness-checked committed deliverable.
+
 **Usage options:**
 - **Upload** to any AI web chat (ChatGPT, Claude, Gemini, Copilot) — see [`docs/web-chat-quickstart.md`](web-chat-quickstart.md)
 - **Paste** into any LLM context window for instant AKM context

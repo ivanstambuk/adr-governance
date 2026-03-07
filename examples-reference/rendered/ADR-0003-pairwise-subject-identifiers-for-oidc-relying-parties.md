@@ -20,7 +20,7 @@
 
 **Authors:** Elena Vasquez (IAM Architect), Aisha Mbeki (Privacy Engineer)  
 **Reviewers:** Jonas Eriksen (CISO), DPO (Data Protection Officer), Priya Sharma (API Platform Lead)  
-**Approvals:** Marcus Chen (2025-12-10T09:00:00Z), DPO (2025-12-14T11:00:00Z)
+**Approvals:** Marcus Chen (Head of IAM) [@marcuschen] — approved 2025-12-10T09:00:00Z; DPO (Data Protection Officer) [@dpo-novatrust] — approved 2025-12-14T11:00:00Z
 
 ---
 

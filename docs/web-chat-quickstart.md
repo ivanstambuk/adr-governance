@@ -30,7 +30,7 @@ Upload it to any AI chat, and the AI will be able to:
 ./scripts/bundle.sh
 ```
 
-This creates `adr-governance-bundle.md`. The bundle file size varies as the ADL grows. Run `wc -c adr-governance-bundle.md` to check the size. Most AI platforms can handle it within their context windows:
+This creates `adr-governance-bundle.md`. The bundle file size varies as the ADL grows. Run `wc -c adr-governance-bundle.md` to check the size. In this repository the bundle is treated as an on-demand export artifact for chat usage, not as a freshness-checked committed deliverable. Most AI platforms can handle it within their context windows:
 
 ## Step 2: Upload and Prompt
 

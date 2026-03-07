@@ -32,6 +32,9 @@ The validation pipeline runs four checks:
 - Runtime smoke tests for `render-adr.py`, `extract-decisions.py`, `review-adr.py`, and `summarize-adr.py`
 - The `tests/` regression suite via `python3 -m unittest discover`
 - `repomix.config.json` JSON syntax when present
+- Freshness checks for committed generated artifacts: `rendered/`, `examples-reference/rendered/`, and `llms-full.txt`
+
+The Repomix web-chat bundle (`adr-governance-bundle.md`) is intentionally out of scope for freshness enforcement. It is treated as an on-demand export artifact, not a required committed deliverable.
 
 ## Prerequisites
 

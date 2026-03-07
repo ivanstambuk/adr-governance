@@ -20,7 +20,7 @@
 
 **Authors:** Tomasz Kowalski (Network Security Architect), Elena Vasquez (IAM Architect)  
 **Reviewers:** Marcus Chen (Head of IAM), Kai Lindström (Mobile Platform Lead)  
-**Approvals:** Jonas Eriksen (2025-12-18T14:00:00Z), Marcus Chen (2025-12-19T10:00:00Z)
+**Approvals:** Jonas Eriksen (CISO) [@jonaseriksen] — approved 2025-12-18T14:00:00Z; Marcus Chen (Head of IAM) [@marcuschen] — approved 2025-12-19T10:00:00Z
 
 ---
 

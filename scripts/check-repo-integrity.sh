@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# Lightweight repository integrity checks for governance-critical tooling.
-#
-# This intentionally avoids heavyweight/generated-artifact validation. It
-# focuses on catching breakage in shipped scripts and config that the main ADR
-# validation flow would otherwise miss.
+# Repository integrity checks for governance-critical tooling and committed
+# generated artifacts that the main ADR validation flow would otherwise miss.
 
 set -euo pipefail
 
@@ -59,5 +56,7 @@ if [ -f "repomix.config.json" ]; then
   echo "=== repomix config syntax ==="
   python3 -m json.tool repomix.config.json >/dev/null
 fi
+
+bash scripts/check-generated-artifacts.sh
 
 echo "Repository integrity checks passed."

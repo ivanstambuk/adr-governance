@@ -121,6 +121,20 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertIn("scheduling/reminders are external to this repo", template)
         self.assertIn("Review scheduling/reminders are outside this repo's scope", schema_ref)
 
+    def test_committed_generated_artifacts_boundary_is_documented(self):
+        readme = read_text("README.md")
+        rendering = read_text("docs/rendering.md")
+        ci_setup = read_text("docs/ci-setup.md")
+        decision_enforcement = read_text("docs/decision-enforcement.md")
+        web_chat = read_text("docs/web-chat-quickstart.md")
+
+        self.assertIn("CI verifies that committed renderings and `llms-full.txt` stay current", readme)
+        self.assertIn("CI also regenerates and verifies the committed artifacts", rendering)
+        self.assertIn("`adr-governance-bundle.md`) is intentionally different", rendering)
+        self.assertIn("Freshness checks for committed generated artifacts", ci_setup)
+        self.assertIn("bundle is treated as an on-demand export artifact", decision_enforcement)
+        self.assertIn("not as a freshness-checked committed deliverable", web_chat)
+
 
 if __name__ == "__main__":
     unittest.main()
