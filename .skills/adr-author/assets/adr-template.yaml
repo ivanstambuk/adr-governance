@@ -19,6 +19,7 @@ adr:
   tags: [] # Categorization tags
   priority: "medium" # low | medium | high | critical
   decision_type: "technology" # technology | process | organizational | vendor | security | compliance
+  decision_level: "" # Optional: strategic | tactical | operational — architectural altitude (see glossary)
 
 # --- REQUIRED ---
 authors:

@@ -10,6 +10,7 @@
 > **Status:** `deferred`  
 > **Priority:** `medium`  
 > **Type:** `technology`  
+> **Level:** `strategic`  
 > **Confidence:** `low`  
 > **Decision Owner:** Marcus Chen (Head of IAM)  
 > **Decision Date:** 2026-02-15

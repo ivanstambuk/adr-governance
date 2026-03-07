@@ -20,6 +20,7 @@ adr:
     - pseudonymization
   priority: high
   decision_type: security
+  decision_level: tactical
 authors:
   - name: Elena Vasquez
     role: IAM Architect

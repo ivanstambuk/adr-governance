@@ -58,6 +58,9 @@ def render_adr(data: dict) -> str:
     lines.append(f"> **Status:** `{status}`  ")
     lines.append(f"> **Priority:** `{priority}`  ")
     lines.append(f"> **Type:** `{decision_type}`  ")
+    decision_level = adr.get("decision_level")
+    if decision_level:
+        lines.append(f"> **Level:** `{decision_level}`  ")
     lines.append(f"> **Confidence:** `{confidence}`  ")
     lines.append(f"> **Decision Owner:** {owner_str}  ")
     lines.append(f"> **Decision Date:** {decision_date}")

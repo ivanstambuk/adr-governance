@@ -10,6 +10,7 @@
 > **Status:** `accepted`  
 > **Priority:** `critical`  
 > **Type:** `process`  
+> **Level:** `strategic`  
 > **Confidence:** `high`  
 > **Decision Owner:** Ivan Stambuk (Principal Architect)  
 > **Decision Date:** 2026-03-05

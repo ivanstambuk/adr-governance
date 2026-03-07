@@ -55,19 +55,20 @@ Check existing ADR files in the `architecture-decision-log/` directory (or `exam
 Ask the user for:
 1. **Title**: What decision is being made? (10-200 characters)
 2. **Decision type**: `technology` | `process` | `organizational` | `vendor` | `security` | `compliance`
-3. **Priority**: `low` | `medium` | `high` | `critical`
-4. **Context**: What problem are we solving? What are the business and technical drivers?
-5. **Constraints**: What are the non-negotiable boundaries?
-6. **Alternatives**: At least 2 options — for each, a **thorough architectural description** (multi-paragraph, with Mermaid diagrams showing data flows/integration points), pros, cons, estimated cost, and risk level
-7. **Recommendation**: Which alternative and why?
-8. **Summary** (`adr.summary`): 2-4 sentence elevator pitch for stakeholder triage (max 500 chars). This is distinct from `context.summary`, which is the full narrative problem statement.
-9. **Confidence**: `low` | `medium` | `high` — how confident are we in this decision?
+3. **Decision level** (optional): `strategic` | `tactical` | `operational` — the architectural altitude of the decision (see glossary for heuristics)
+4. **Priority**: `low` | `medium` | `high` | `critical`
+5. **Context**: What problem are we solving? What are the business and technical drivers?
+6. **Constraints**: What are the non-negotiable boundaries?
+7. **Alternatives**: At least 2 options — for each, a **thorough architectural description** (multi-paragraph, with Mermaid diagrams showing data flows/integration points), pros, cons, estimated cost, and risk level
+8. **Recommendation**: Which alternative and why?
+9. **Summary** (`adr.summary`): 2-4 sentence elevator pitch for stakeholder triage (max 500 chars). This is distinct from `context.summary`, which is the full narrative problem statement.
+10. **Confidence**: `low` | `medium` | `high` — how confident are we in this decision?
 
 #### Step 3: Generate the ADR YAML
 
 Use the template at `assets/adr-template.yaml` as the starting point. Fill in all required sections:
 
-- `adr` — metadata (id, title, status: `draft` for a complete author-owned ADR not yet proposed, or `proposed` when the user explicitly wants a review-ready artifact, timestamps, tags, priority, decision_type)
+- `adr` — metadata (id, title, status: `draft` for a complete author-owned ADR not yet proposed, or `proposed` when the user explicitly wants a review-ready artifact, timestamps, tags, priority, decision_type, decision_level)
 - `authors` — who is writing this
 - `decision_owner` — who is accountable
 - `context` — summary, business_drivers, technical_drivers, constraints, assumptions

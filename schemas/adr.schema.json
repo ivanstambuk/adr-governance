@@ -123,6 +123,15 @@
                         "compliance"
                     ],
                     "description": "Classification of the decision domain."
+                },
+                "decision_level": {
+                    "type": "string",
+                    "enum": [
+                        "strategic",
+                        "tactical",
+                        "operational"
+                    ],
+                    "description": "Architectural scope/altitude. 'strategic' = system landscape, bounded contexts, team/org boundaries, cross-cutting enterprise concerns, multi-year impact. 'tactical' = domain model, component design patterns, cross-cutting technical patterns, subsystem-scoped. 'operational' = specific technology/library/protocol/product choices, API design decisions, deployment configuration, usually swappable."
                 }
             }
         },

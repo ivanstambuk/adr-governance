@@ -22,6 +22,7 @@ adr:
     - performance
   priority: high
   decision_type: technology
+  decision_level: operational
 authors:
   - name: Tomasz Kowalski
     role: Network Security Architect

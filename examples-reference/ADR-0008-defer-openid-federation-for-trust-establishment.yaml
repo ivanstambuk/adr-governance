@@ -20,6 +20,7 @@ adr:
     - identity-provider
   priority: medium
   decision_type: technology
+  decision_level: strategic
 authors:
   - name: Elena Vasquez
     role: IAM Architect

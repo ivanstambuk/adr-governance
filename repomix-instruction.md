@@ -114,20 +114,26 @@ Walk the user through creating a complete, schema-valid ADR using Socratic dialo
    - vendor
    - security
    - compliance
-3. What priority? Options:
+3. What is the decision level (architectural altitude)? Options:
+   - **strategic** — system landscape, org/team boundaries, cross-cutting enterprise concerns (multi-year impact, very high reversal cost)
+   - **tactical** — component design patterns, domain model, cross-cutting technical patterns (subsystem-scoped, moderate reversal cost)
+   - **operational** — specific technology/library/protocol choices, deployment config (usually swappable in a sprint)
+4. What priority? Options:
    - low
    - medium
    - high
    - critical
-4. What project / programme does this belong to?
-5. What problem are we solving? (Brief description of the current pain point)
+5. What project / programme does this belong to?
 
-**Questions — Drivers & constraints:**
-1. What are the business drivers? (business outcomes, compliance needs, cost pressures)
-2. What are the technical drivers? (scalability, performance, integration, security)
-3. What are the constraints? (budget, timeline, regulatory, existing contracts, team skills)
-4. What assumptions are we making?
-5. Who is the decision owner? (single accountable person — name, role, email)
+**Questions — Drivers & context:**
+1. What problem are we solving? (Brief description of the current pain point)
+2. What are the business drivers? (business outcomes, compliance needs, cost pressures)
+3. What are the technical drivers? (scalability, performance, integration, security)
+4. What are the constraints? (budget, timeline, regulatory, existing contracts, team skills)
+5. What assumptions are we making?
+
+**Questions — Ownership & alternatives:**
+1. Who is the decision owner? (single accountable person — name, role, email)
 
 **Questions — Alternatives & recommendation:**
 1. What is Alternative A? (name + brief description + key pros and cons)
@@ -210,6 +216,7 @@ Present a **structured extraction summary** to the user, organized by ADR schema
 > |---|---|---|---|
 > | **Title** | ✅ / ❌ | *filename, page/timestamp* | *extracted or "not found"* |
 > | **Decision type** | ✅ / ❌ | ... | ... |
+> | **Decision level** | ✅ / ❌ | ... | *strategic / tactical / operational* |
 > | **Priority** | ✅ / ❌ | ... | ... |
 > | **Context / Problem** | ✅ / ❌ | ... | ... |
 > | **Business drivers** | ✅ / ❌ | ... | ... |
@@ -386,6 +393,8 @@ Report issues as: `ERROR` (schema violation or hard author-facing rule), `WARNIN
 **Status values:** `draft` | `proposed` | `accepted` | `superseded` | `deprecated` | `rejected` | `deferred`
 
 **Decision types:** `technology` | `process` | `organizational` | `vendor` | `security` | `compliance`
+
+**Decision levels:** `strategic` | `tactical` | `operational` *(optional — architectural altitude, independent from decision type)*
 
 **Priority levels:** `low` | `medium` | `high` | `critical`
 

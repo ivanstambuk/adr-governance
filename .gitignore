@@ -22,5 +22,8 @@ __pycache__/
 *.tmp
 *.bak
 
+# Research (cloned external repos for analysis)
+.research/
+
 # Generated bundle (regenerate with ./scripts/bundle.sh)
 adr-governance-bundle.md

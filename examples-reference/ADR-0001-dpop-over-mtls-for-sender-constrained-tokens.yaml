@@ -18,6 +18,7 @@ adr:
     - rfc9449
   priority: high
   decision_type: technology
+  decision_level: operational
 authors:
   - name: Elena Vasquez
     role: IAM Architect

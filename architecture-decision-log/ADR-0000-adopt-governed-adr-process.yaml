@@ -18,6 +18,7 @@ adr:
     - meta
   priority: critical
   decision_type: process
+  decision_level: strategic
 authors:
   - name: Ivan Stambuk
     role: Principal Architect

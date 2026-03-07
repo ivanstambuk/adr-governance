@@ -10,6 +10,7 @@
 > **Status:** `accepted`  
 > **Priority:** `high`  
 > **Type:** `technology`  
+> **Level:** `tactical`  
 > **Confidence:** `high`  
 > **Decision Owner:** Jonas Eriksen (CISO)  
 > **Decision Date:** 2026-02-27

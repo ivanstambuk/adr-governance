@@ -43,6 +43,30 @@
 | `security` | Security controls, authentication/authorization mechanisms, key management. |
 | `compliance` | Regulatory compliance, data residency, audit, and reporting decisions. |
 
+## Decision Level Classification
+
+The `decision_level` field captures the **architectural altitude** of a decision — how high up the abstraction stack it sits. This is an independent dimension from `decision_type` (which captures the domain). The same decision domain (e.g., `security`) spans all three levels.
+
+| Level | Scope | Typical Stakeholders | Reversal Cost | Rate of Change |
+|-------|-------|---------------------|---------------|----------------|
+| `strategic` | System landscape, bounded contexts, team boundaries, cross-cutting enterprise concerns | C-suite, Enterprise Architects, Product leadership | Very high — shapes roadmap and org design | Years |
+| `tactical` | Domain model, component patterns, cross-cutting technical patterns (caching, messaging, auth) | Software Architects, Tech Leads, Senior Engineers | Moderate — confined to subsystem boundaries | Quarters/months |
+| `operational` | Specific tech choices, API protocols, deployment configs, libraries, framework versions | Engineers, DevOps, API designers | Lower — usually swappable without architectural redesign | Sprints/weeks |
+
+**Discriminating heuristics** — if in doubt, ask yourself:
+
+| Question | If YES → |
+|----------|----------|
+| Does this affect **organizational structure** or team boundaries? | `strategic` |
+| Does this constrain or enable **multiple future decisions**? | `strategic` |
+| Would reversing this require **re-architecting** major system boundaries? | `strategic` |
+| Does this define a **design pattern** used across multiple components? | `tactical` |
+| Does this affect a **subsystem or bounded context** but not the whole landscape? | `tactical` |
+| Would reversing this require **significant refactoring** but not re-architecture? | `tactical` |
+| Is this a **specific product, library, or protocol** choice? | `operational` |
+| Could a different team member **swap in an alternative** in one sprint? | `operational` |
+| Is this primarily about **how** rather than **what** or **why**? | `operational` |
+
 ## Priority Levels
 
 | Level | Guidance |

@@ -10,6 +10,7 @@
 > **Status:** `rejected`  
 > **Priority:** `high`  
 > **Type:** `technology`  
+> **Level:** `tactical`  
 > **Confidence:** `high`  
 > **Decision Owner:** Marcus Chen (Head of IAM)  
 > **Decision Date:** 2026-03-05

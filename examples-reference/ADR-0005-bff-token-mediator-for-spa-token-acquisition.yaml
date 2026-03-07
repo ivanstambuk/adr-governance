@@ -21,6 +21,7 @@ adr:
     - public-client
   priority: high
   decision_type: security
+  decision_level: tactical
 authors:
   - name: Priya Sharma
     role: API Platform Lead

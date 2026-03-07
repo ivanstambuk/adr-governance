@@ -10,6 +10,7 @@
 > **Status:** `accepted`  
 > **Priority:** `high`  
 > **Type:** `security`  
+> **Level:** `tactical`  
 > **Confidence:** `high`  
 > **Decision Owner:** Marcus Chen (Head of Identity and Access Management)  
 > **Decision Date:** 2025-12-10
