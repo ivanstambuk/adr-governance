@@ -779,11 +779,18 @@ def verify_approvals(
         return exit_code
 
     if pr_approvers is None:
+        platform_label = {
+            "github": "GitHub",
+            "azure-devops": "Azure DevOps",
+            "gitlab": "GitLab",
+        }.get(platform, "the configured platform")
         print(
-            "⚠️  WARNING: Could not retrieve PR approvers from platform API. "
-            "Skipping approval identity verification.",
+            "❌ FAILED — approval identity verification was required, but "
+            f"PR/MR approver data could not be retrieved from {platform_label}. "
+            "Use --dry-run for advisory mode, or fix the CI/PR metadata wiring.",
             file=sys.stderr,
         )
+        exit_code = 1
         return exit_code
 
     # ── Verify identities ───────────────────────────────────────────────
