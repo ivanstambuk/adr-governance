@@ -607,8 +607,8 @@ Key features adopted from other templates (with full rationale in the field-leve
 
 | Feature | Inspired by | Rationale doc section |
 |---------|-------------|----------------------|
-| `adr.y_statement` | Y-Statements / Zimmermann (SATURN 2012) | [§1.3](schema-field-rationale.md#13-adry_statement--dpr-adopted-p2) |
-| `adr.decision_level` | DPR / Zimmermann + Hohpe + management science | [§1.11](schema-field-rationale.md#111-adrdecision_level--dpr-adopted-p1) |
+| `adr.y_statement` | Y-Statements / Zimmermann (SATURN 2012) | [§1.3](schema-field-rationale.md#13-adry_statement) |
+| `adr.decision_level` | DPR / Zimmermann + Hohpe + management science | [§1.11](schema-field-rationale.md#111-adrdecision_level) |
 | `extension_fields` (x-*) | smadr | [§13.1](schema-field-rationale.md#131-x--extension-fields) |
 | `alternatives[].rejection_rationale` | Merson / DRF | [§5.5](schema-field-rationale.md#55-alternativesrejection_rationale) |
 | `decision.confidence` | Azure Well-Architected Framework | [§6.5](schema-field-rationale.md#65-decisionconfidence) |
@@ -617,7 +617,7 @@ Additionally, several insights were incorporated into **process documentation** 
 
 ### 7.3 Features Evaluated and Excluded
 
-Features deliberately excluded, with rationale: `related_principles` (Tyree-Akerman), `governance_enforcement` (Morgan), `impact_assessment` (EdgeX), 3D `risk_per_option` (smadr), `neutral_consequences` (MADR), unified `decision_drivers` (MADR/smadr), `swot_per_option` (Henderson), `context_validation` (DRF), standalone `risk_assessment`, and Decision Guardian integration. See [schema-field-rationale.md Appendix A](schema-field-rationale.md#appendix-a-features-evaluated-and-excluded) for the full exclusion rationale for each.
+Features deliberately excluded, with rationale: `related_principles` (Tyree-Akerman), `governance_enforcement` (Morgan), `impact_assessment` (EdgeX), 3D `risk_per_option` (smadr), `neutral_consequences` (MADR), unified `decision_drivers` (MADR/smadr), `swot_per_option` (Henderson), `context_validation` (DRF), standalone `risk_assessment`, and Decision Guardian integration. Exclusion rationale is documented inline alongside related adopted fields — see §6.1 (no structured implications), §6.4 (no governance enforcement), and §6.5 (no structured impact assessment) in the [template comparison](adr-template-comparison.md#6-analysis-where-standard-templates-fall-short), as well as per-field rejected alternatives in [schema-field-rationale.md](schema-field-rationale.md).
 
 ---
 
