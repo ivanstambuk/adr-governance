@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unittest
 
 from _helpers import REPO_ROOT
@@ -49,6 +50,52 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertNotIn("alternatives with summary", readme.lower())
         self.assertIn(".yamllint.yml", ci_setup)
         self.assertNotIn("edit the `yamllint` configuration in the pipeline file", ci_setup)
+
+    def test_bundle_scope_matches_portable_authoring_query_boundary(self):
+        config = json.loads(read_text("repomix.config.json"))
+
+        self.assertEqual(
+            config["include"],
+            [
+                "schemas/**",
+                "architecture-decision-log/**",
+                "examples-reference/**",
+                ".skills/**",
+                "docs/adr-process.md",
+                "docs/glossary.md",
+                "docs/ai-authoring.md",
+                "scripts/validate-adr.py",
+                "README.md",
+            ],
+        )
+
+        ignored = set(config["ignore"]["customPatterns"])
+        for pattern in [
+            "docs/web-chat-quickstart.md",
+            "docs/ci-setup.md",
+            "scripts/verify-approvals.py",
+            "scripts/render-adr.py",
+            "scripts/extract-decisions.py",
+            "scripts/bundle.sh",
+            "docs/research/**",
+            ".github/**",
+        ]:
+            self.assertIn(pattern, ignored)
+
+        header_text = config["output"]["headerText"]
+        self.assertIn("Repository-side CI setup and PR enforcement internals are intentionally not bundled.", header_text)
+        self.assertIn("the repository's local validation and CI checks remain the final authority", header_text)
+
+    def test_bundle_instruction_stays_within_bundle_boundary(self):
+        text = read_text("repomix-instruction.md")
+
+        self.assertNotIn("search for `review-adr.py`", text)
+        self.assertNotIn("search for `verify-approvals.py`", text)
+        self.assertNotIn("search for `extract-decisions.py`", text)
+        self.assertNotIn("Branch protection and CODEOWNERS configuration", text)
+        self.assertIn("repository-side concerns outside this bundle", text)
+        self.assertIn("filename exactly matches `adr.id`", text)
+        self.assertIn("PR approval identity binding is confirmed in-repo", text)
 
 
 if __name__ == "__main__":

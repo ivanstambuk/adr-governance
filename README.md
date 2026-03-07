@@ -61,7 +61,7 @@ Most teams make **Architecture Decisions (ADs)** every week. Few document them w
 - [`llms.txt`](llms.txt) + [`llms-full.txt`](llms-full.txt) — Machine-readable project summaries for AI assistants ([llms.txt convention](https://llmstxt.org/)). `llms.txt` provides a concise overview with links; `llms-full.txt` embeds the complete documentation inline for context injection
 - **Agent Skill** ([agentskills.io](https://agentskills.io) spec) for AI-assisted ADR authoring and review — works with Google Antigravity, Claude Code, VS Code Copilot, and any conforming agent. The skill knows the schema and the governance process, and will guide you through every field interactively
 - **Decision enforcement** — the ADL can serve as a single source of truth for Spec-Driven Development (SDD): AI coding agents can search the bundled ADL to align code with architectural decisions, and CI pipelines can validate compliance before merge
-- **Repomix bundling** — the entire ADL is concatenated into a single Markdown file that agents can search with standard tools, enabling cross-repository decision enforcement
+- **Repomix bundling** — the schema, ADR corpus, core authoring docs, skill assets, and validator guidance are concatenated into a single Markdown file that chat-based and coding agents can search with standard tools
 - **Example ADRs** from a fictional IAM department (NovaTrust Financial Services) in [`examples-reference/`](examples-reference/) — real-world contended decisions with sizable pros and cons on each side, not strawman examples. Kept as a reference for quality and style; not real decisions
 
 </details>
@@ -94,7 +94,7 @@ This is a fundamental shift: instead of the proposer writing a draft in isolatio
 The framework provides two paths to both modes:
 
 - **Agent Skill** ([`.skills/adr-author/`](.skills/adr-author/)) — works with Google Antigravity, Claude Code, VS Code Copilot, and any [agentskills.io](https://agentskills.io)-conforming agent. The skill knows the full meta-model and governance lifecycle, and supports both interactive and artifact-driven authoring.
-- **Web Chat** — upload the Repomix bundle (`adr-governance-bundle.md`) to any web-based AI chat (ChatGPT, Claude.ai, Gemini, Copilot). For artifact-driven mode, upload the bundle plus your documents together. See [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md).
+- **Web Chat** — upload the Repomix bundle (`adr-governance-bundle.md`) to any web-based AI chat (ChatGPT, Claude.ai, Gemini, Copilot). The bundle carries the schema, ADR corpus, core authoring docs, skill assets, and validator guidance; local validation and CI remain the final authority after you paste the YAML into your repo. For artifact-driven mode, upload the bundle plus your documents together. See [`docs/web-chat-quickstart.md`](docs/web-chat-quickstart.md).
 
 A **pre-review quality gate** ([`scripts/review-adr.py`](scripts/review-adr.py)) generates a structured AI review prompt that covers semantic clarity, completeness, logical consistency, assumption risks, and cross-reference consistency. The result: human reviewers receive ADRs that are already coherent — review meetings become strategic discussions about the *decision*, not debugging sessions about what the proposer meant.
 

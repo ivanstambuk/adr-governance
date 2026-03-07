@@ -4,15 +4,16 @@
 
 ## How It Works
 
-The `adr-governance-bundle.md` file contains the **entire ADR governance framework** in a single file:
+The `adr-governance-bundle.md` file is a **portable ADR authoring and query bundle** for chat interfaces. It contains:
 
 - The JSON Schema (all fields, enums, and constraints)
-- The AI skill instructions (how to walk you through ADR creation)
-- The governance process, glossary, and documentation
+- The ADR skill assets and embedded AI instructions
+- Core governance docs (`adr-process`, glossary, AI authoring guide)
 - All existing ADRs (decision log + reference examples)
-- Validation logic and review scripts (as reference)
-- A YAML template for new ADRs
-- **Embedded instructions** that tell the AI how to act as your ADR authoring assistant
+- Validator guidance from `scripts/validate-adr.py`
+- A YAML template and schema reference for new ADRs
+
+> Repository-side CI setup, approval verification, and PR-time enforcement internals are intentionally not bundled. After you paste the generated ADR into your repository, local validation and CI remain the final authority.
 
 Upload it to any AI chat, and the AI will be able to:
 
@@ -21,7 +22,7 @@ Upload it to any AI chat, and the AI will be able to:
 3. **Review ADRs** — structured completeness and quality audit
 4. **Summarize ADRs** — email or chat format for stakeholder communication
 5. **Explain the governance process** — lifecycle, status transitions, review rules
-6. **Validate ADR YAML** — check against the schema and flag issues
+6. **Validate ADR YAML** — check against the schema and surface author-facing issues before repo import
 
 ## Step 1: Generate the Bundle
 
@@ -46,8 +47,8 @@ If your organization's decision log has additional ADRs beyond the examples, mak
 #### ChatGPT
 
 ```
-I've uploaded the adr-governance bundle. This file contains a complete ADR governance
-framework with embedded instructions at the end under "# Instruction".
+I've uploaded the adr-governance bundle. This file contains a portable ADR authoring
+and query bundle with embedded instructions at the end under "# Instruction".
 
 Please read those instructions, then guide me through creating a new Architecture
 Decision Record using Socratic dialogue — ask me questions one at a time, challenge
@@ -85,7 +86,7 @@ I need to decide: [describe your decision]
 #### Microsoft Copilot
 
 ```
-This file contains an ADR (Architecture Decision Record) governance framework. At the
+This file contains an ADR (Architecture Decision Record) authoring and query bundle. At the
 end of the file there are instructions under "# Instruction" — please read them.
 
 Then help me create a new ADR by asking me questions about my architectural decision,
@@ -106,7 +107,7 @@ Upload the `adr-governance-bundle.md` **plus** your artifact files, then paste o
 
 ```
 I've uploaded the adr-governance bundle and several additional documents.
-The bundle contains the ADR governance framework with instructions under "# Instruction".
+The bundle contains the ADR schema, ADR corpus, and authoring instructions under "# Instruction".
 
 Please read those instructions (specifically the "Artifact-driven mode" section), then:
 1. Read and analyze ALL the other uploaded files
@@ -155,7 +156,7 @@ The documents I uploaded are: [briefly describe what you uploaded]
 #### Microsoft Copilot
 
 ```
-I've uploaded an ADR governance framework file and additional documents. The framework
+I've uploaded an ADR governance bundle and additional documents. The bundle
 file has instructions under "# Instruction" at the end — please read the
 "Artifact-driven mode" section.
 
@@ -210,14 +211,16 @@ a numbered list of issues.
 
 The AI will output complete ADR YAML. To finalize:
 
-1. **Copy the YAML** and save it as `architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml`
+1. **Copy the YAML** and save it as `architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml` so the filename exactly matches `adr.id`
 2. **Validate locally** (recommended):
    ```bash
    pip install "jsonschema[format]" pyyaml yamllint
-   python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-title.yaml
+   python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml
    ```
 3. **Open a pull request** on a branch named `adr/ADR-NNNN-short-title`
 4. **CI validates automatically** — the PR becomes the decision forum
+
+Rules that depend on repository history or PR context, such as approval-identity binding, append-only audit trail checks, and accepted-ADR immutability, are confirmed in-repo after you paste the file into your repository.
 
 ## Re-bundling After Changes
 
@@ -227,4 +230,4 @@ Whenever you add, modify, or supersede an ADR, re-run the bundle script to keep 
 ./scripts/bundle.sh
 ```
 
-The bundle always reflects the latest state of your decision log.
+The bundle always reflects the latest state of your decision log and authoring guidance.

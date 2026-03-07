@@ -14,7 +14,7 @@ AI coding agents (Copilot, Claude Code, Antigravity, Cursor, etc.) can use the b
    ```bash
    ./scripts/bundle.sh
    ```
-   This generates `adr-governance-bundle.md` — the entire governance framework, schema, and all accepted decisions in one searchable file.
+   This generates `adr-governance-bundle.md` — a portable ADR context bundle containing the schema, ADR corpus, core authoring docs, skill assets, and validator guidance in one searchable file.
 
 2. **Point your agent to it.** Paste the bundle into an LLM context window, add it to your agent's project knowledge, or reference it as a file. The agent can then use standard text search (grep, semantic search, `Ctrl+F`) to find relevant decisions.
 
@@ -92,11 +92,12 @@ To create the single-file bundle:
 ./scripts/bundle.sh
 ```
 
-This generates `adr-governance-bundle.md` — the entire ADR governance framework in one file. The bundle includes the schema, process documentation, glossary, skill instructions, YAML template, all ADRs in `architecture-decision-log/`, example ADRs from `examples-reference/`, validation scripts, and **embedded AI instructions** that enable web-based AI chats to emulate the full authoring skill.
+This generates `adr-governance-bundle.md` — a portable ADR authoring/query bundle. It includes the schema, core authoring docs, glossary, skill instructions, YAML template, all ADRs in `architecture-decision-log/`, example ADRs from `examples-reference/`, validator guidance from `scripts/validate-adr.py`, and **embedded AI instructions** that enable web-based AI chats to emulate the portable authoring/query skill.
+
+Repository-side CI setup, approval verification, and PR enforcement internals are intentionally excluded. For CI pipelines and enforcement integration, use the repository itself and scripts such as `extract-decisions.py` directly rather than the chat bundle.
 
 **Usage options:**
 - **Upload** to any AI web chat (ChatGPT, Claude, Gemini, Copilot) — see [`docs/web-chat-quickstart.md`](web-chat-quickstart.md)
 - **Paste** into any LLM context window for instant AKM context
 - **Add** to your coding agent's project knowledge base
-- **Fetch** from CI pipelines in other repositories (as shown above)
 - **Commit** to other repositories as a versioned reference artifact

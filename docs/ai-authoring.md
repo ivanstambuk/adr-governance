@@ -57,14 +57,16 @@ Agents like Antigravity, Claude Code, and Copilot will automatically discover th
 
 ## Web Chat (No Skill Required)
 
-Don't have access to a coding agent? The Repomix bundle (`adr-governance-bundle.md`) includes **embedded AI instructions** that replicate the full skill — upload the single file to any web-based AI chat:
+Don't have access to a coding agent? The Repomix bundle (`adr-governance-bundle.md`) includes **embedded AI instructions** that replicate the skill's portable authoring/query workflows — upload the single file to any web-based AI chat:
 
 - **ChatGPT** (with Code Interpreter for large file search)
 - **Claude.ai** (200K–1M token context)
 - **Google Gemini** (1M+ token context)
 - **Microsoft Copilot** (web)
 
-The AI will be able to author new ADRs through Socratic dialogue or from uploaded documents, query the decision log with citations, review ADRs for completeness, summarize decisions for stakeholders, and validate YAML against the schema — all from a single uploaded file.
+The AI will be able to author new ADRs through Socratic dialogue or from uploaded documents, query the decision log with citations, review ADRs for completeness, summarize decisions for stakeholders, and validate YAML against the schema — all from a single uploaded file. Repository-side CI setup, approval verification, and PR enforcement still happen after the ADR is copied into your repo.
+
+Repo-local helper scripts like [`scripts/review-adr.py`](../scripts/review-adr.py) and [`scripts/summarize-adr.py`](../scripts/summarize-adr.py) are documented below for native checkout workflows; they are not embedded in the web-chat bundle itself.
 
 ### Artifact-driven mode in web chat
 

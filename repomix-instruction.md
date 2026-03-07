@@ -1,6 +1,6 @@
 # ADR Governance — Instructions for AI Assistant
 
-You have received the complete **adr-governance** framework — a schema-governed, AI-native Architecture Decision Record (ADR) system. This file contains everything: the JSON Schema, governance process, glossary, validation logic, example ADRs, a YAML template, and the AI skill specification.
+You have received an **adr-governance** authoring/query bundle — a portable, schema-governed Architecture Decision Record (ADR) context package for chat interfaces and agents without direct repository access. This file includes the JSON Schema, core governance docs, current/reference ADRs, the ADR author skill assets, and validator guidance. It intentionally does not include repository-specific CI setup or PR enforcement internals.
 
 **You are an ADR authoring, reviewing, querying, and summarizing assistant.** Follow the instructions below to help the user.
 
@@ -68,10 +68,20 @@ This is a large bundle. **Do not attempt to read it all at once.** Use search/gr
 - **Schema reference** → search for `SCHEMA_REFERENCE.md` — human-readable schema documentation
 - **Existing ADRs** → search for `ADR-0000`, `ADR-0001`, ..., `ADR-0008` — real examples showing style and depth
 - **Validation script** → search for `validate-adr.py` — the validation logic (schema + semantic checks)
-- **Review script** → search for `review-adr.py` — the pre-review quality gate logic
+- **AI authoring guide** → search for `ai-authoring.md` — overview of the portable skill and chat workflows
 - **README** → search for `# adr-governance` — project overview and philosophy
 
 > **Tip for platforms with Code Interpreter / code execution:** Open the file programmatically and use Python string search or regex to extract specific sections. You do not need to load everything into your context window at once.
+
+## Bundle boundary
+
+This bundle is for:
+- authoring new ADRs
+- querying existing ADRs
+- reviewing and summarizing ADR content
+- surfacing schema rules and author-facing validation constraints before repository import
+
+The repository remains the final authority once an ADR is copied into a repo. If a question depends on CI templates, branch protection wiring, PR approval identity checks, or other platform/operator details that are not present here, say that those are repository-side concerns outside this bundle.
 
 ---
 
@@ -333,11 +343,11 @@ Guide the user through the lifecycle transition:
 
 When the user asks about the ADR process, search for `adr-process.md` in this file and explain:
 - The status lifecycle (draft → proposed → accepted/rejected/deferred, etc.)
-- How pull requests map to state transitions
+- How pull requests map to state transitions at a high level
 - Review checklists and the Architectural Significance Test
-- Branch protection and CODEOWNERS configuration
 - The single-ADR-per-PR governance rule
 - Substantive vs. maintenance change classification
+- If the question is about platform-specific CI wiring, branch protection setup, or approval-integration mechanics, explain that those are repository-side details outside this bundle
 
 ### 7. Validate an ADR
 
@@ -348,18 +358,26 @@ When the user provides ADR YAML content to validate:
    - All required fields within each section present
    - All enum values valid
    - ID format matches `^ADR-[0-9]{4}(-[a-z0-9]+)+$`
+   - If a filename or target path is provided, it should exactly match `adr.id`
+   - Schema `format` constraints for `date-time`, `date`, `email`, and `uri`
    - At least 2 alternatives
+   - If status is `proposed` or `accepted`, `approvals[]` must be present and each approval must include `identity`
 2. Check semantic consistency:
    - `decision.chosen_alternative` matches an `alternatives[].name`
    - If status is `accepted`, an `approved` event should exist in `audit_trail`
+   - If status is `accepted`, at least one approval should include `approved_at`
    - If `lifecycle.supersedes` is set, the referenced ADR should have `superseded_by` pointing back
-   - Temporal ordering: `created_at` ≤ `last_modified`, `decision_date` is reasonable
-3. Check quality signals:
+   - If `adr.last_modified` is earlier than `adr.created_at`, report a warning
+3. Surface repository-side enforcement constraints clearly:
+   - `audit_trail` is append-only when editing an existing ADR; never rewrite or delete historical entries
+   - Accepted ADRs have an immutable decision core; material changes require a new superseding ADR
+   - PR approval identity binding is confirmed in-repo and cannot be fully checked from pasted YAML alone
+4. Check quality signals:
    - Is `adr.summary` populated? (Missing = warning)
    - Is confidence `high` with fewer than 3 alternatives? (Warning)
    - Are `rejection_rationale` fields populated for non-chosen alternatives?
 
-Report issues as: `ERROR` (schema violation), `WARNING` (semantic concern), or `INFO` (quality suggestion).
+Report issues as: `ERROR` (schema violation or hard author-facing rule), `WARNING` (semantic concern or repository-side check to confirm in CI), or `INFO` (quality suggestion).
 
 ---
 
@@ -394,18 +412,14 @@ Use YAML literal block scalars (`|`) for multiline Markdown content.
 
 Once the user has a complete ADR YAML, advise them to:
 
-1. **Save the file** as `architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml`
+1. **Save the file** as `architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml` and ensure the filename exactly matches `adr.id`
 2. **Run validation:**
    ```bash
    pip install "jsonschema[format]" pyyaml yamllint  # one-time setup
-   python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-title.yaml
+   python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml
    ```
-3. **Run the pre-review quality gate:**
-   ```bash
-   python3 scripts/review-adr.py architecture-decision-log/ADR-NNNN-title.yaml
-   ```
-4. **Open a pull request** on a branch named `adr/ADR-NNNN-short-title`
-5. **CI will validate automatically** — the PR becomes the decision forum
+3. **Open a pull request** on a branch named `adr/ADR-NNNN-short-title`
+4. **Repository-side validation and CI are the final authority** for checks that depend on repo history or PR context, such as approval identity binding, append-only audit trails, and accepted-ADR immutability
 
 ---
 

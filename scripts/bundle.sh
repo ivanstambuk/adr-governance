@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Bundle the ADR governance project into a single markdown file using repomix.
-# The bundle includes: schema, docs, glossary, skill, template, example ADRs,
-# validation scripts, and embedded AI instructions (via instructionFilePath).
+# The bundle includes: schema, ADR corpus, core authoring docs, skill assets,
+# validator guidance, and embedded AI instructions (via instructionFilePath).
 #
-# This single file is all an AI chat (ChatGPT, Copilot, Claude, Gemini) needs
-# to author, review, query, and validate ADRs — see docs/web-chat-quickstart.md.
+# This single file is optimized for AI chats and agents that need ADR authoring,
+# querying, summarization, and schema-aware validation without direct repo access.
+# Repository-side CI setup and PR enforcement remain outside the bundle.
 #
 # Usage:
 #   ./scripts/bundle.sh
@@ -27,11 +28,10 @@ BUNDLE_KB=$((BUNDLE_SIZE / 1024))
 
 echo ""
 echo "==> Bundle created: ${PROJECT_ROOT}/adr-governance-bundle.md (${BUNDLE_KB} KB)"
-echo "    Includes: schema, docs, skill, examples, scripts, and embedded AI instructions."
+echo "    Includes: schema, ADR corpus, core authoring docs, skill assets, validator guidance, and embedded AI instructions."
 echo ""
 echo "    Usage:"
 echo "    • Upload to any AI web chat (ChatGPT, Copilot, Claude, Gemini)"
 echo "    • Paste into an LLM context window"
 echo "    • Add to your coding agent's project knowledge"
 echo "    • See docs/web-chat-quickstart.md for platform-specific prompts"
-
