@@ -86,6 +86,10 @@ The `adr` object contains identification and classification metadata. Its design
 
 **Rationale:** Self-evident. The `minLength: 10` constraint prevents placeholder titles; `maxLength: 200` prevents prose paragraphs masquerading as titles. These bounds were chosen empirically from our example ADRs (shortest: 36 chars, longest: 67 chars).
 
+**Rejected alternatives:**
+- *No length constraints* — allows empty or single-word titles ("Auth") and paragraph-length titles that belong in `context.description`
+- *Pattern-enforced format (e.g., "Use X over Y")* — considered enforcing a Nygard-style "verb phrase" pattern. Rejected because not all decisions fit this format (e.g., "Defer OpenID Federation" is a valid title that doesn't follow "Use X over Y")
+
 ### 1.3 `adr.y_statement`
 
 | Attribute | Value |
@@ -117,6 +121,12 @@ The `adr` object contains identification and classification metadata. Its design
 **Why long form only (with "because" clause)?** The short form omits the rationale — the most important part of any decision record. The "because" clause maps to `decision.rationale`, which is the core "why."
 
 **What it replaced:** The earlier `adr.summary` field (a free-text elevator pitch) was removed because the Y-Statement is a strictly more informative summary. No established template uses both.
+
+**Rejected alternatives:**
+- *Dynamic generation from schema fields (render script)* — cannot summarize multi-paragraph Markdown fields into a single sentence; summarization requires authorial judgment
+- *AI-generated on-the-fly (bundle capability)* — non-deterministic; hallucination risk; breaks reproducibility of the ADR record
+- *Short form only (parts 1–4, omitting "because" clause)* — omits the rationale, which is the most important part of any decision record
+- *Retained `adr.summary` alongside Y-Statement* — redundant; the Y-Statement is a strictly more informative summary
 
 **Key academic lineage:**
 - Zimmermann, "Making Architectural Knowledge Sustainable" (SATURN 2012)
@@ -339,9 +349,14 @@ This is analogous to how content management systems separate structured metadata
 | **Type** | `enum`: `low`, `medium`, `high`, `critical` |
 | **Required?** | Optional |
 
-**Precedent:** Only Planguage has a structured priority field. DRF has a `priority` in context objectives.
+**Precedent:** Only Planguage has a structured priority field. DRF has a `priority` in context objectives. No other template in our survey (Nygard, MADR, smadr, Tyree-Akerman, EdgeX, Merson, NHS Wales, Gareth Morgan) has a structured priority field.
 
 **Rationale:** Priority signals review urgency and implementation ordering. A `critical` decision demands immediate attention; a `low` decision can wait for a convenient sprint. The four-level enum aligns with standard risk/priority scales used in ITSM and project management.
+
+**Rejected alternatives:**
+- *Three-level priority (low/medium/high)* — omits the "critical" tier needed for urgent decisions requiring immediate escalation (e.g., security incidents, compliance deadlines). Four levels match ITIL and most project management frameworks
+- *Numeric priority (1–10)* — creates false precision; the difference between priority 6 and priority 7 is subjective. Categorical labels are easier to reason about
+- *Required field* — not all decisions have inherent urgency differences. Making priority optional avoids forcing authors to guess a priority for routine operational decisions
 
 ### 1.10 `adr.decision_type`
 
@@ -624,6 +639,10 @@ Adding these would create **three fields duplicating information already in `dec
 
 **Rationale:** Every decision has an author who can be consulted for context. The structured `person` type (name + role) enables organizational context — knowing the author is a "Security Architect" vs. "Junior Developer" informs how to weight the decision.
 
+**Rejected alternatives:**
+- *Plain string author name (MADR/smadr style)* — loses the role context. The same person may author ADRs in different capacities across projects
+- *Git author only (no schema field)* — Git tracks the committer, not the decision author. Decisions are often authored collaboratively or by someone different from the committer
+
 ### 2.2 `decision_owner`
 
 | Attribute | Value |
@@ -635,6 +654,10 @@ Adding these would create **three fields duplicating information already in `dec
 **Precedent:** Only Planguage (as "Owner" vs. "Author") explicitly separates ownership from authorship. MADR conflates them in `decision-makers`.
 
 **Rationale:** The author writes the ADR; the **decision owner** is accountable for the outcome. These are often different people — a senior architect may delegate authoring to a team member while retaining accountability. Enterprise governance requires knowing who holds the decision, not just who typed it.
+
+**Rejected alternatives:**
+- *Combined author/owner field (MADR `decision-makers` style)* — conflates who typed it with who is accountable. In enterprise governance, this distinction matters for escalation and compliance
+- *Optional decision owner* — every decision must have someone accountable. An ownerless decision is an orphaned decision that nobody maintains
 
 ### 2.3 `reviewers`
 
@@ -935,6 +958,10 @@ The landing zone **concept** is valuable educational content referenced in our v
 
 **Rationale:** The `minItems: 2` constraint is the most controversial design decision in the schema. It enforces the principle that **every architectural decision is a choice between alternatives** — if there was only one option, no architectural decision was made. This prevents "decision" records that are actually implementation notifications.
 
+**Rejected alternatives:**
+- *No minimum (MADR/smadr style)* — allows single-option ADRs that are effectively fait accompli notifications rather than decision records
+- *`minItems: 3` (force three options)* — overly prescriptive; for some decisions, two genuine alternatives is the reality. Forcing a third often produces a strawman option that wastes reviewer time
+
 ### 5.2 `alternatives[].description` (Markdown-native)
 
 | Attribute | Value |
@@ -943,7 +970,13 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `string`, minLength: 20 (Markdown-native) |
 | **Required?** | ✅ Yes |
 
+**Precedent:** All templates that support alternatives have some form of description. MADR uses free-text per option; smadr has structured characteristics; Tyree-Akerman uses prose in "Positions." None explicitly require multi-paragraph architectural depth.
+
 **Rationale:** Descriptions require **thorough** architectural explanation — not a one-liner, but multiple paragraphs with data flows, integration points, and ideally Mermaid diagrams. The `minLength: 20` prevents stubs. This field is explicitly documented as requiring the same depth as the ADR's context, ensuring rejected alternatives are described well enough for future teams to understand *what* was rejected and *could revisit it*.
+
+**Rejected alternatives:**
+- *Short description only (MADR "option title" style)* — a one-line description prevents future teams from understanding *what* was actually considered. The whole point of documenting alternatives is that someone might revisit them
+- *Separate `description` and `architecture_diagram` fields* — over-structures the content. Markdown-native descriptions naturally support embedded Mermaid diagrams without a dedicated field
 
 ### 5.3 `alternatives[].pros` / `alternatives[].cons`
 
@@ -1002,6 +1035,11 @@ The landing zone **concept** is valuable educational content referenced in our v
 
 **Rationale:** The chosen alternative must be explicitly and unambiguously stated. The name-matching requirement (enforced by tooling, not schema — due to JSON Schema limitations) creates traceability between the alternatives analysis and the decision.
 
+**Rejected alternatives:**
+- *Index-based reference ("alternative #2")* — fragile; reordering the alternatives array breaks the reference
+- *Prose-embedded choice (Nygard style)* — buries the decision in a paragraph; prevents programmatic extraction for dashboards and indexes
+- *Schema-level cross-reference (`$ref` to alternatives array)* — JSON Schema 2020-12 cannot express "this string must match an `alternatives[].name` value." Tooling-level enforcement is the practical solution
+
 ### 6.2 `decision.rationale`
 
 | Attribute | Value |
@@ -1034,7 +1072,13 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `string`, format: `date` |
 | **Required?** | ✅ Yes |
 
+**Precedent:** MADR has `date` in frontmatter. smadr, EdgeX change logs, and DRF `meta.created_at` all have dates. However, none distinguish *decision date* from *document creation date*.
+
 **Rationale:** Distinct from `adr.created_at` — an ADR may be drafted on January 1 but the decision made on January 15. The decision date is the authoritative timestamp for "when was this decided?" which matters for compliance and lifecycle reviews.
+
+**Rejected alternatives:**
+- *Derive from `adr.created_at` or `adr.last_modified`* — conflates document lifecycle with decision lifecycle. An ADR may go through multiple draft iterations before the decision is actually made
+- *ISO 8601 date-time (not just date)* — the exact time of a decision is rarely meaningful; decisions emerge from review processes, not at a precise moment. Date precision is sufficient and simpler for authors
 
 ### 6.5 `decision.confidence`
 
@@ -1125,9 +1169,14 @@ The landing zone **concept** is valuable educational content referenced in our v
 | **Type** | `array` of objects: `title` + `url` |
 | **Required?** | Optional |
 
-**Precedent:** Present informally in most templates ("More Information" in MADR, "Related Artifacts" in Tyree-Akerman, "Notes" in Nygard).
+**Precedent:** Present informally in most templates ("More Information" in MADR, "Related Artifacts" in Tyree-Akerman, "Notes" in Nygard). None have structured title+URL references.
 
 **Rationale:** Structured references (title + URL) enable link validation and bibliography generation. RFCs, standards documents, vendor documentation, and research papers referenced in the decision rationale should be formally captured.
+
+**Rejected alternatives:**
+- *Unstructured prose links (MADR "More Information" style)* — prevents automated link checking and bibliography extraction
+- *BibTeX-style citation format* — overly academic; architects are not researchers. Simple title + URL is sufficient for ADR contexts
+- *Required field* — not all decisions reference external documents. Operational decisions ("use Ed25519 for signing") may be entirely self-contained
 
 ---
 
