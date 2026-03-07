@@ -249,6 +249,16 @@ Zimmermann's blog post [*"A Definition of Done for Architectural Decision Making
 
 No ADR template in our survey includes a formal Definition of Done. Most templates are document formats, not process frameworks. The closest equivalents: MADR 4.0 has a `Confirmation` section (partial R-criterion), arc42 has quality target/actual comparison (partial E-criterion).
 
+### Rejected Alternatives
+
+- *Formal CI gate instead of a checklist.* Considered making all 10 DoD criteria hard CI checks (schema-enforced or script-checked) that gate the `proposed` → `accepted` transition. Rejected because 7 of the 15 sub-criteria (§2 coverage analysis) require human judgment — "does the rationale reference specific evidence?" and "is the review proportional to reach?" cannot be automated without AI review, which would introduce non-determinism into the CI pipeline. The hybrid hard/soft model gives CI what it can check and leaves judgment to reviewers.
+
+- *Lighter 5-item checklist (Zimmermann's original ecADR).* Considered using Zimmermann's five high-level criteria (E, C, A, D, R) directly as the DoD. Rejected because each criterion contains 2–4 sub-criteria that are independently checkable — e.g., the E-criterion covers quality requirements satisfaction, consistency with previous ADs, *and* actionability. A 5-item checklist at the meta-level is too abstract for reviewers to action; the decomposed 10-item version maps each check to a specific schema field or review activity.
+
+- *Scoring matrix (weighted criteria).* Considered a weighted scoring system where each DoD criterion has a numeric weight and the ADR must exceed a threshold score. Rejected because: (a) weight assignment is arbitrary and creates false precision, (b) a "good enough" total score could mask critical failures in individual criteria (e.g., scoring 9/10 overall but failing the "alternatives compared" criterion), and (c) binary pass/fail per criterion is clearer for reviewers.
+
+- *Per-priority DoD variants.* Considered separate DoD checklists for low/medium/high priority ADRs (e.g., operational decisions get 5 items, strategic get all 10). Rejected in favor of the proportionality principle stated in Design Decision #4 — it's simpler to have one checklist with explicit guidance that not all items need full satisfaction for every priority level, than to maintain multiple checklist variants that would inevitably drift.
+
 ### Sources
 
 | Source | Year | Contribution |
@@ -307,6 +317,16 @@ Our §3.0 originally had 6 criteria. Analysis against Zimmermann's 7 revealed:
 2. **Two additions, not wholesale replacement.** Our original 6 criteria were already well-adapted from Zimmermann. Adding business value/risk and external dependencies filled the genuine gaps while preserving our existing language.
 
 3. **Multi-source attribution.** The test draws from three sources — Zimmermann (7 criteria), Richards & Ford (irreversibility heuristic), and Henderson (documentation motivation) — not just Zimmermann alone.
+
+### Rejected Alternatives
+
+- *Scoring matrix instead of yes/no checklist.* Considered assigning weights to each criterion and requiring a threshold score (e.g., "if total weight ≥ 5, write an ADR"). Rejected because: (a) weight assignment is inherently arbitrary — is "high business value" worth 3 points or 5? (b) a single "yes" to criterion #1 ("affects multiple components, teams, or services") is independently sufficient to warrant an ADR, regardless of what other criteria score. The yes/no model correctly captures this: any single "yes" triggers the recommendation.
+
+- *Decision tree instead of flat checklist.* Considered a branching flowchart: "Is it irreversible? → Yes → Write ADR. No → Does it cross team boundaries? → Yes → Write ADR. No → ..." Rejected because: (a) the ordering of criteria in a decision tree implies a priority hierarchy that doesn't exist — all 8 criteria are independently sufficient, (b) flowcharts are harder to maintain in Markdown documentation, and (c) a flat checklist is faster to scan during the "should I write an ADR?" moment.
+
+- *Mandatory scoring with team calibration.* Considered requiring teams to calibrate the test against their first 10 ADRs ("did the test correctly identify which decisions needed ADRs?") with a formal calibration session. Rejected as over-engineering for a lightweight gate — the test is a heuristic aid, not a formal classification system. Teams will naturally calibrate through experience.
+
+- *No significance test (write ADRs for everything).* Some teams advocate recording all decisions, not just architecturally significant ones. Zimmermann explicitly warns against this: "An AD log with more than 100 entries will probably put your readers (and you) to sleep." The significance test prevents ADR inflation and preserves the signal-to-noise ratio of the decision log.
 
 ### Sources
 
@@ -379,6 +399,16 @@ Zimmermann's [*"A Definition of Ready for Architectural Decisions"*](https://med
 
 3. **Template criterion (T) → schema validity.** In multi-template environments, template choice is a real precondition. Our framework standardizes on one template, so we repurpose this criterion as "is the ADR schema-valid and substantially complete?"
 
+### Rejected Alternatives
+
+- *Skip DoR entirely and let schema enforce completeness.* Considered relying solely on JSON Schema validation (`required` fields, `minItems` constraints) as the implicit DoR — if the YAML validates, it's ready for review. Rejected because schema validation checks *structural* completeness, not *semantic* readiness. A schema-valid ADR can have a `context.description` that says "TODO: fill in context" — it passes `minLength: 20` but isn't ready for review. The DoR checklist adds semantic checks that schema cannot enforce: "are stakeholders identified?" and "is now the right time to decide?"
+
+- *Automated DoR via CI script.* Considered writing a pre-PR script that checks all 5 START criteria automatically. Rejected because 2 of 5 criteria are inherently subjective: **T** (MRM — "is it the right time?") and **S** ("have affected stakeholders been *notified*?"). These require human judgment. The remaining 3 (Alternatives, Requirements, Template/schema) are already schema-enforced, making a dedicated DoR script redundant for the automatable portion.
+
+- *More granular DoR (10+ items, matching DoD granularity).* Considered decomposing START into 10+ sub-criteria to mirror the DoD's granularity. Rejected because the DoR gates the draft → proposed transition (lower stakes than proposed → accepted), and Zimmermann's START is already comprehensive at 5 items. Over-granularity at the drafting stage creates friction that discourages ADR authoring — the opposite of the framework's goal.
+
+- *Combined DoR/DoD as a single checklist.* Considered merging START and ecADR into one comprehensive checklist applied at a single gate (before acceptance). Rejected because the two checklists serve different lifecycle moments: DoR asks "should we start reviewing this?" and DoD asks "should we accept this?" Combining them would force authors to satisfy output-quality criteria ("does the rationale reference evidence?") before the review process has even begun — which is where that evidence typically surfaces.
+
 ### Sources
 
 | Source | Year | Contribution |
@@ -436,6 +466,16 @@ Our schema's required/optional field structure naturally supports all three leve
 3. **Explicit anti-pattern warning.** AI-assisted authoring makes it easy to generate voluminous but shallow content. The guidance explicitly warns: "One well-reasoned paragraph in `rationale` beats five paragraphs of filler."
 
 4. **Placed at §3.0.1** (after "Should You Write an ADR?", before "Draft Phase"). This calibrates effort *before* the author starts writing.
+
+### Rejected Alternatives
+
+- *Schema-level enforcement (conditional required fields by priority).* Considered using JSON Schema `if/then` blocks to make additional fields required based on `adr.priority` — e.g., `priority: high` → `architecturally_significant_requirements` becomes required; `priority: low` → only core fields required. Rejected for three reasons: (a) JSON Schema 2020-12 conditional logic becomes exponentially complex with multiple trigger fields (`priority` × `decision_level` = 12 combinations), (b) it conflates "recommended" with "required" — a high-priority ADR *should* have ASRs but may have legitimate reasons not to, and (c) it removes authorial discretion, turning a guidance tool into a bureaucratic enforcement mechanism.
+
+- *Separate lightweight template for low-priority decisions.* Considered maintaining two YAML templates: a full template and a "lite" template with fewer fields. Rejected because: (a) two templates double the maintenance burden (schema changes must be applied to both), (b) upgrading a decision from "lite" to "full" requires migrating between templates, and (c) DPR explicitly advises "stick to one template" (line 67) — multiple templates create confusion about which to use.
+
+- *Automated verbosity scoring.* Considered a CI script that calculates a "verbosity score" based on field population and description lengths, then warns if the score is disproportionate to the priority/level. Rejected because verbosity is qualitative, not quantitative — a 200-word rationale may be more thorough than a 500-word rationale if it's well-reasoned vs. padded. Automated scoring would incentivize length over quality.
+
+- *No verbosity guidance (let authors decide).* Considered omitting verbosity guidance entirely, trusting authors to calibrate naturally. Rejected because: (a) without guidance, the AI-assisted authoring workflow tends to maximize verbosity (LLMs generate more content when unconstrained), and (b) new framework adopters benefit from explicit expectations before writing their first ADR. Zimmermann's warning — "do not spend more time on capturing than on making" — deserves prominent placement.
 
 ### Sources
 
