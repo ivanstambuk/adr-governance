@@ -1273,17 +1273,12 @@ The DoR should be a **§3.1.1** subsection at the end of the Draft Phase, parall
 **New proposal** from deep scan. DPR explicitly defines three verbosity levels for decision capturing (`activities/DPR-ArchitecturalDecisionCapturing.md`, lines 31–35):
 
 | Level | What to capture | When appropriate |
-|-------|----------------|------------------|
+|-------|----------------|-----------------|
 | **Minimal** | Decision outcome + "because" rationale | Low-impact, easily reversible, team-internal decisions |
 | **Medium** | Lean ADR template (Y-Statement, MADR, Nygard) | Most architectural decisions |
 | **Full** | Full-fledged decision model with comprehensive analysis | High-impact, regulatory, cross-org decisions |
 
 Our schema is inherently "full" — it supports extensive detail. But not every decision needs all fields populated. This proposal adds *guidance* on when it's OK to be concise vs. when full rigor is expected.
-
-This maps naturally to our existing `priority` field:
-- `low` priority → minimal verbosity acceptable
-- `medium` priority → medium verbosity expected
-- `high`/`critical` priority → full verbosity expected
 
 ### DPR Source Files
 
@@ -1291,15 +1286,113 @@ This maps naturally to our existing `priority` field:
 |------|-----------------|
 | `activities/DPR-ArchitecturalDecisionCapturing.md` | Lines 31–35: verbosity levels; Line 67: "stick to one template"; Line 70: "do not spend more time on capturing than on making" |
 
+### Deep Research: Verbosity in Our Framework
+
+#### DPR's Core Insight
+
+DPR's verbosity model is pragmatic advice: *"Do not spend more time on decision capturing than on decision making."* (line 70). This is the same philosophy behind Zimmermann's warning in the ecADR post: *"It is not cost-effective to establish and evaluate 20+ criteria for 5+ alternatives per AD thoroughly."*
+
+The three levels map to a fundamental question: **how much documentation effort is proportional to this decision's impact?**
+
+#### Our Schema's Required vs. Optional Structure
+
+Our schema already has a natural verbosity split built into its required/optional field structure:
+
+**Always required** (schema-enforced baseline = "medium" verbosity):
+
+| Section | Required Fields |
+|---|---|
+| `adr` | `id`, `title`, `status`, `created_at`, `version`, `project`, `decision_type` |
+| `authors` | At least 1 author with `name` |
+| `decision_owner` | `name`, `role` |
+| `context` | `description` |
+| `alternatives` | At least 2 alternatives, each with `name`, `description`, `pros`, `cons` |
+| `decision` | `chosen_alternative`, `rationale` |
+| `consequences` | `positive` (≥1), `negative` (≥1 for accepted ADRs) |
+| `confirmation` | `description` |
+
+**Optional** (upgrade to "full" verbosity):
+
+| Section/Field | What It Adds |
+|---|---|
+| `adr.y_statement` | Elevator-pitch summary (required for `accepted`, optional for `draft`/`proposed`) |
+| `adr.priority`, `adr.decision_level` | Classification metadata |
+| `adr.tags`, `adr.component` | Organizational metadata |
+| `context.business_drivers`, `.technical_drivers`, `.constraints`, `.assumptions` | Structured context breakdown |
+| `architecturally_significant_requirements` | Formal ASR traceability |
+| `alternatives[].risk`, `.estimated_cost`, `.rejection_rationale` | Deeper alternative analysis |
+| `decision.tradeoffs`, `.confidence` | Explicit tradeoff documentation |
+| `reviewers`, `approvals` (required for `proposed`/`accepted`) | Governance metadata |
+| `dependencies` | Cross-ADR relationships |
+| `lifecycle` | Review cadence, supersession chain, archival |
+| `audit_trail` | Formal event history |
+| `references` | External resources |
+
+This means our schema **already supports** DPR's three verbosity levels without any structural changes:
+- **Minimal:** Populate only required fields with concise content (our schema's baseline)
+- **Medium:** Required fields + `y_statement` + key optional fields (`drivers`, `constraints`, `tradeoffs`)
+- **Full:** All sections populated with comprehensive content, Mermaid diagrams, detailed ASRs
+
+#### Mapping to Priority and Decision Level
+
+Two existing fields can drive verbosity expectations:
+
+| Priority | Decision Level | DPR Verbosity | Expected Completeness |
+|:--------:|:--------------:|:-------------:|----------------------|
+| `low` | `operational` | Minimal | Required fields only. Brief descriptions. 2 alternatives sufficient. |
+| `medium` | `tactical` | Medium | Required + drivers, constraints, tradeoffs, Y-statement. Balanced pros/cons. |
+| `high` | `strategic` | Full | All sections populated. Detailed ASRs. Mermaid diagrams encouraged. Comprehensive rationale. |
+| `critical` | `strategic` | Full+ | Full + extensive audit trail, formal review cadence, multiple reviewers/approvers. |
+
+Note: `priority` and `decision_level` are independent axes — a `high` priority `operational` decision (e.g., a critical library choice) needs full *technical analysis* but not necessarily full *governance ceremony*. The table shows the typical diagonal, not a hard rule.
+
+#### The "Don't Over-Document" Principle
+
+DPR's line 70 is a crucial counterpoint to our comprehensive schema: *"do not spend more time on capturing than on making."* This principle needs to be explicitly stated in our process docs, especially since our schema is "full" by default and AI-assisted authoring makes it easy to generate voluminous but shallow content.
+
+Key guidance:
+1. **Low-priority decisions should be concise.** A 3-page ADR for a logging library choice is over-documentation.
+2. **Optional fields can be left empty.** The schema makes them optional for a reason.
+3. **Quality over quantity.** One well-reasoned paragraph in `rationale` beats five paragraphs of AI-generated filler.
+4. **The DoR and DoD checklists (§3.1.1, §3.3.1) already scale by context** — they're guidance, not mandatory gates for every item.
+
+#### Relationship to Other Proposals
+
+- **P4 (DoD/ecADR):** Already notes: *"Not all 10 items must be fully satisfied for every ADR. Low-priority operational decisions require less rigor than high-priority strategic ones."*
+- **P7 (DoR/START):** MRM heuristics inherently calibrate effort — a low-urgency decision gets less analysis.
+- **P1 (decision_level):** Provides the altitude axis that maps to verbosity expectations.
+
 ### Proposed Implementation
 
-**Documentation-only change.** Add "ADR Verbosity Guidance" section to `docs/adr-process.md` mapping priority levels to expected completeness.
+**Documentation-only change.** Add a brief "Verbosity Guidance" section to `docs/adr-process.md` (likely after §3.0 or as a note in §3.1) with:
+1. A table mapping priority × decision_level to expected verbosity
+2. The "don't over-document" principle with DPR attribution
+3. A reference to which optional fields are most valuable at each level
+
+### Implementation Plan
+
+| Step | Description | Effort |
+|---|---|---|
+| 1 | Add verbosity guidance section to `docs/adr-process.md` | 10 min |
+| 2 | Map priority levels to expected field completeness | 5 min |
+| 3 | Credit DPR's three-level model | 2 min |
+| 4 | Regenerate bundle | 2 min |
+
+**Total estimated effort:** ~20 minutes
+
+### Credits
+
+| Concept | Source |
+|---|---|
+| Three verbosity levels | DPR `activities/DPR-ArchitecturalDecisionCapturing.md` (lines 31–35) |
+| "Don't over-document" | DPR (line 70): *"do not spend more time on capturing than on making"* |
+| "Stick to one template" | DPR (line 67) |
+| ecADR proportionality | Zimmermann ecADR blog: *"not cost-effective to establish 20+ criteria for 5+ alternatives"* |
 
 ### Implementation Checklist
 
 - [ ] Add verbosity guidance section to `docs/adr-process.md`
 - [ ] Map priority levels to expected field completeness
-- [ ] Update AI bundle Socratic interview to calibrate depth based on stated priority
 - [ ] Credit DPR's three-level verbosity model
 - [ ] Regenerate bundle
 
