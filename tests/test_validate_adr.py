@@ -133,6 +133,9 @@ class ValidateAdrTests(unittest.TestCase):
             "archived_at": "2026-03-06T10:00:00Z",
             "archive_reason": "Testing invalid archival",
         }
+        data["audit_trail"].append(
+            {"event": "archived", "by": "Architect", "at": "2026-03-06T10:00:00Z"}
+        )
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
@@ -142,6 +145,71 @@ class ValidateAdrTests(unittest.TestCase):
             any("archived ADRs should have a terminal status" in error for error in errors),
             errors,
         )
+
+    def test_archival_metadata_requires_archived_event(self):
+        data = load_example_adr()
+        data["adr"]["status"] = "rejected"
+        data["approvals"] = []
+        data["audit_trail"] = [
+            {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+            {"event": "rejected", "by": "Architect", "at": "2026-03-05T10:00:00Z"},
+        ]
+        data["lifecycle"]["archival"] = {
+            "archived_at": "2026-03-06T10:00:00Z",
+            "archive_reason": "No longer relevant",
+        }
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            errors, _warnings = self.module.validate_file(path, self.validator)
+
+        self.assertTrue(
+            any("no 'archived' event found in audit_trail" in error for error in errors),
+            errors,
+        )
+
+    def test_archived_event_requires_archival_metadata(self):
+        data = load_example_adr()
+        data["adr"]["status"] = "rejected"
+        data["approvals"] = []
+        data["audit_trail"] = [
+            {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+            {"event": "rejected", "by": "Architect", "at": "2026-03-05T10:00:00Z"},
+            {"event": "archived", "by": "Architect", "at": "2026-03-06T10:00:00Z"},
+        ]
+        data["lifecycle"]["archival"] = {
+            "archived_at": None,
+            "archive_reason": None,
+        }
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            errors, _warnings = self.module.validate_file(path, self.validator)
+
+        self.assertTrue(
+            any("audit_trail contains 'archived' event but lifecycle.archival.archived_at is missing" in error for error in errors),
+            errors,
+        )
+
+    def test_valid_archival_requires_metadata_and_event(self):
+        data = load_example_adr()
+        data["adr"]["status"] = "rejected"
+        data["approvals"] = []
+        data["audit_trail"] = [
+            {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+            {"event": "rejected", "by": "Architect", "at": "2026-03-05T10:00:00Z"},
+            {"event": "archived", "by": "Architect", "at": "2026-03-06T10:00:00Z"},
+        ]
+        data["lifecycle"]["archival"] = {
+            "archived_at": "2026-03-06T10:00:00Z",
+            "archive_reason": "No longer relevant",
+        }
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            errors, _warnings = self.module.validate_file(path, self.validator)
+
+        self.assertEqual(errors, [])
 
     def test_superseded_status_requires_superseded_by(self):
         data = load_example_adr()

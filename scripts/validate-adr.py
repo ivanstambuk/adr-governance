@@ -309,13 +309,25 @@ def validate_file(
         # --- Check archival consistency ---
         archival = data.get("lifecycle", {}).get("archival", {})
         archived_at = archival.get("archived_at") if archival else None
-        if archived_at:
-            terminal_statuses = {"superseded", "deprecated", "rejected"}
+        archived_events = [
+            entry for entry in audit_trail
+            if isinstance(entry, dict) and entry.get("event") == "archived"
+        ]
+        terminal_statuses = {"superseded", "deprecated", "rejected"}
+        if archived_at or archived_events:
             if status and status not in terminal_statuses:
                 errors.append(
-                    f"  lifecycle.archival.archived_at is set but adr.status is '{status}' "
+                    f"  archival is recorded but adr.status is '{status}' "
                     f"— archived ADRs should have a terminal status ({', '.join(sorted(terminal_statuses))})"
                 )
+        if archived_at and not archived_events:
+            errors.append(
+                "  lifecycle.archival.archived_at is set but no 'archived' event found in audit_trail"
+            )
+        if archived_events and not archived_at:
+            errors.append(
+                "  audit_trail contains 'archived' event but lifecycle.archival.archived_at is missing"
+            )
 
         lifecycle = data.get("lifecycle", {})
         superseded_by = lifecycle.get("superseded_by") if isinstance(lifecycle, dict) else None
