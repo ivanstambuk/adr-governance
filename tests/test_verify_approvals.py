@@ -56,6 +56,17 @@ def make_proposed_adr() -> dict:
     return data
 
 
+def make_superseded_adr(replacement_id: str = "ADR-9999-replacement") -> dict:
+    data = make_accepted_adr()
+    data["adr"]["status"] = "superseded"
+    data["approvals"] = []
+    data["lifecycle"]["superseded_by"] = replacement_id
+    data["audit_trail"].append(
+        {"event": "superseded", "by": "Architect", "at": "2026-03-03T10:00:00Z"}
+    )
+    return data
+
+
 class VerifyApprovalsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -164,6 +175,112 @@ class VerifyApprovalsTests(unittest.TestCase):
         )
         self.assertFalse(ok)
         self.assertIn("may only remain 'accepted' or transition", message)
+
+    def test_single_adr_rule_rejects_two_brand_new_mutually_pointing_files(self):
+        new_adr = make_proposed_adr()
+        new_adr["adr"]["id"] = "ADR-2000-new-decision"
+        new_adr["lifecycle"]["supersedes"] = "ADR-1999-old-decision"
+
+        fake_old = make_superseded_adr("ADR-2000-new-decision")
+        fake_old["adr"]["id"] = "ADR-1999-old-decision"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            new_path = self.write_temp_adr(new_adr, tmpdir)
+            old_path = self.write_temp_adr(fake_old, tmpdir)
+
+            with mock.patch.object(self.module, "get_file_at_base", return_value=None):
+                passed, message = self.module.check_single_adr_per_pr([new_path, old_path])
+
+        self.assertFalse(passed)
+        self.assertIn("single_adr_per_pr", message)
+
+    def test_single_adr_rule_allows_real_supersession_pair(self):
+        new_adr = make_proposed_adr()
+        new_adr["adr"]["id"] = "ADR-2000-new-decision"
+        new_adr["lifecycle"]["supersedes"] = "ADR-1999-old-decision"
+
+        old_base = make_accepted_adr()
+        old_base["adr"]["id"] = "ADR-1999-old-decision"
+        old_base["adr"]["title"] = "Legacy decision"
+
+        old_current = copy.deepcopy(old_base)
+        old_current["adr"]["status"] = "superseded"
+        old_current["approvals"] = []
+        old_current["lifecycle"]["superseded_by"] = "ADR-2000-new-decision"
+        old_current["audit_trail"].append(
+            {"event": "superseded", "by": "Architect", "at": "2026-03-03T10:00:00Z"}
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            new_path = self.write_temp_adr(new_adr, tmpdir)
+            old_path = self.write_temp_adr(old_current, tmpdir)
+
+            def base_lookup(filepath: str) -> dict | None:
+                if filepath == old_path:
+                    return old_base
+                return None
+
+            with mock.patch.object(self.module, "get_file_at_base", side_effect=base_lookup):
+                passed, message = self.module.check_single_adr_per_pr([new_path, old_path])
+
+        self.assertTrue(passed, message)
+        self.assertIn("ADR-2000-new-decision", message)
+        self.assertIn("ADR-1999-old-decision", message)
+
+    def test_single_adr_rule_rejects_pair_when_both_files_already_existed(self):
+        new_current = make_proposed_adr()
+        new_current["adr"]["id"] = "ADR-2000-new-decision"
+        new_current["lifecycle"]["supersedes"] = "ADR-1999-old-decision"
+
+        new_base = copy.deepcopy(new_current)
+
+        old_current = make_superseded_adr("ADR-2000-new-decision")
+        old_current["adr"]["id"] = "ADR-1999-old-decision"
+        old_base = make_accepted_adr()
+        old_base["adr"]["id"] = "ADR-1999-old-decision"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            new_path = self.write_temp_adr(new_current, tmpdir)
+            old_path = self.write_temp_adr(old_current, tmpdir)
+
+            def base_lookup(filepath: str) -> dict | None:
+                if filepath == new_path:
+                    return new_base
+                if filepath == old_path:
+                    return old_base
+                return None
+
+            with mock.patch.object(self.module, "get_file_at_base", side_effect=base_lookup):
+                passed, message = self.module.check_single_adr_per_pr([new_path, old_path])
+
+        self.assertFalse(passed)
+        self.assertIn("single_adr_per_pr", message)
+
+    def test_single_adr_rule_rejects_pair_when_existing_file_is_not_superseded(self):
+        new_adr = make_proposed_adr()
+        new_adr["adr"]["id"] = "ADR-2000-new-decision"
+        new_adr["lifecycle"]["supersedes"] = "ADR-1999-old-decision"
+
+        old_base = make_accepted_adr()
+        old_base["adr"]["id"] = "ADR-1999-old-decision"
+
+        old_current = copy.deepcopy(old_base)
+        old_current["lifecycle"]["superseded_by"] = "ADR-2000-new-decision"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            new_path = self.write_temp_adr(new_adr, tmpdir)
+            old_path = self.write_temp_adr(old_current, tmpdir)
+
+            def base_lookup(filepath: str) -> dict | None:
+                if filepath == old_path:
+                    return old_base
+                return None
+
+            with mock.patch.object(self.module, "get_file_at_base", side_effect=base_lookup):
+                passed, message = self.module.check_single_adr_per_pr([new_path, old_path])
+
+        self.assertFalse(passed)
+        self.assertIn("single_adr_per_pr", message)
 
     def test_verify_approvals_fails_closed_when_approver_data_is_unavailable(self):
         with tempfile.TemporaryDirectory() as tmpdir:

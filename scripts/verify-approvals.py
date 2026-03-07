@@ -408,28 +408,46 @@ def check_single_adr_per_pr(changed_files: list[str]) -> tuple[bool, str]:
     if len(changed_files) == 2:
         # Check for supersession pair
         try:
-            data_a = yaml.safe_load(open(changed_files[0]))
-            data_b = yaml.safe_load(open(changed_files[1]))
+            changed_adrs = []
+            for filepath in changed_files:
+                with open(filepath) as f:
+                    current_data = yaml.safe_load(f)
+                if not isinstance(current_data, dict):
+                    raise ValueError(f"{filepath} did not contain an ADR object")
+                changed_adrs.append(
+                    {
+                        "filepath": filepath,
+                        "current": current_data,
+                        "base": get_file_at_base(filepath),
+                    }
+                )
 
-            id_a = data_a.get("adr", {}).get("id", "")
-            id_b = data_b.get("adr", {}).get("id", "")
+            existing = [entry for entry in changed_adrs if entry["base"] is not None]
+            new = [entry for entry in changed_adrs if entry["base"] is None]
 
-            lifecycle_a = data_a.get("lifecycle", {})
-            lifecycle_b = data_b.get("lifecycle", {})
+            if len(existing) == 1 and len(new) == 1:
+                existing_entry = existing[0]
+                new_entry = new[0]
 
-            # Check if A supersedes B
-            a_supersedes_b = (
-                lifecycle_a.get("supersedes") == id_b
-                and lifecycle_b.get("superseded_by") == id_a
-            )
-            # Check if B supersedes A
-            b_supersedes_a = (
-                lifecycle_b.get("supersedes") == id_a
-                and lifecycle_a.get("superseded_by") == id_b
-            )
+                existing_current = existing_entry["current"]
+                new_current = new_entry["current"]
 
-            if a_supersedes_b or b_supersedes_a:
-                return True, f"Supersession pair detected: {id_a} ↔ {id_b}"
+                existing_id = existing_current.get("adr", {}).get("id", "")
+                new_id = new_current.get("adr", {}).get("id", "")
+
+                existing_lifecycle = existing_current.get("lifecycle", {})
+                new_lifecycle = new_current.get("lifecycle", {})
+                existing_status = existing_current.get("adr", {}).get("status", "")
+
+                if (
+                    new_lifecycle.get("supersedes") == existing_id
+                    and existing_lifecycle.get("superseded_by") == new_id
+                    and existing_status == "superseded"
+                ):
+                    return (
+                        True,
+                        f"Supersession pair detected: new {new_id} supersedes existing {existing_id}",
+                    )
 
         except Exception:
             pass
