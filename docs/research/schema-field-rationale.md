@@ -453,6 +453,28 @@ n │              │          │          │          │          │
 | ISO/IEC/IEEE 42010 | 2011 | No prescribed taxonomy — confirms design choice |
 | arc42 (Starke) | Ongoing | No prescribed categories — same confirmation |
 
+### 1.12 `scope` / `phase` Metadata ⏭️ *Evaluated — Redundant (P6)*
+
+**Proposal:** Add DPR-style YAML frontmatter fields (`Scope`, `Phases`, `Abstraction/Refinement Level`) to ADRs.
+
+**DPR source:** Every DPR method element includes:
+
+```yaml
+Scope: Entire system, component, connector, class, ...
+Phases: Design (all levels)
+Abstraction/Refinement Level: All
+```
+
+**Why skipped (redundant with existing fields):**
+
+| DPR Field | Our Equivalent | Assessment |
+|---|---|---|
+| `Scope` | `adr.decision_level` (§1.11) + `adr.component` (§1.7) | ✅ Covered — decision_level captures altitude, component captures specific scope |
+| `Phases` | `adr.status` lifecycle (§1.4) | ✅ Covered — our status lifecycle is more natural for GitOps than waterfall-style phase labels |
+| `Abstraction Level` | `adr.decision_level` (§1.11) | ✅ Subsumed — strategic/tactical/operational directly maps abstraction levels |
+
+Adding these would create **three fields duplicating information already in `decision_level` and `component`**.
+
 ---
 
 ## Section 2: People & Governance
@@ -492,6 +514,8 @@ n │              │          │          │          │          │
 **Precedent:** MADR (as `consulted` + `informed` in RACI-style frontmatter), NHS Wales (informal reference). No other template separates reviewers from approvers.
 
 **Rationale:** Records who reviewed the ADR without necessarily approving it. Important for auditability — "who looked at this?" is a different question from "who approved it?"
+
+**Rejected alternative:** *RACI matrix (MADR style)* — MADR 4.0 uses `consulted` + `informed` in a RACI model. Our simpler `reviewers` + `approvals` split covers the same ground without RACI overhead.
 
 ### 2.4 `approvals`
 
@@ -546,7 +570,9 @@ n │              │          │          │          │          │
 1. **Stakeholder routing** — business stakeholders read business drivers; engineers read technical drivers
 2. **Y-Statement composition** — the "facing [concern]" clause in the Y-Statement draws from both, but the split makes it clear which concern dominates
 
-**Rejected alternative:** *Unified `decision_drivers` list (MADR style)* — simpler but loses the business/technical distinction that matters for enterprise governance.
+**Rejected alternatives:**
+- *Unified `decision_drivers` list (MADR style)* — simpler but loses the business/technical distinction that matters for enterprise governance
+- *`related_principles` field (Tyree-Akerman)* — Tyree-Akerman has a dedicated "Related Principles" section. We excluded this because it assumes an external principles registry that most teams don't maintain. Use `references` or `x-related-principles` extension field instead.
 
 ### 3.3 `context.constraints`
 
@@ -571,6 +597,8 @@ n │              │          │          │          │          │
 **Precedent:** Tyree-Akerman (dedicated "Assumptions" section), Planguage (as "Assumptions"), DRF (explicit field). Absent in Nygard, MADR.
 
 **Rationale:** Assumptions are the most dangerous hidden dependencies in any decision. "We assume the API gateway handles TLS termination" — if that assumption is wrong, the entire decision may be invalid. Explicit assumptions enable review ("is this assumption still true?") and serve as triggers for re-evaluation during lifecycle reviews.
+
+**Rejected alternative:** *Context Validation / CRF (DRF style)* — DRF proposes a Context Relevance Framework for validating assumptions against organizational knowledge graphs. Requires knowledge graph infrastructure that doesn't exist yet. Worth revisiting when DRF matures past v0.1.0.
 
 ---
 
@@ -600,7 +628,154 @@ The F/NF split mirrors the universal ISO 25010 distinction between functional su
 **Rejected alternatives:**
 - *Global requirement IDs (referencing an external backlog)* — creates an external dependency that most teams can't satisfy. ADRs should be self-contained.
 - *Unstructured prose (Nygard/MADR style)* — prevents machine extraction and traceability analysis
-- *Full QAS template per requirement (SEI style)* — overengineering for an ADR. A lightweight `measure` field was evaluated and rejected (see [Appendix A.1](#a1-qas-measure-field-on-asrs-dpr-p3--rejected)).
+- *Full QAS template per requirement (SEI style)* — overengineering for an ADR. A lightweight `measure` field was evaluated and rejected (see §4.2 below).
+
+### 4.2 QAS `measure` Field ❌ *Rejected (P3)*
+
+**Proposal:** Add an optional `measure` field to `#/$defs/architecturally_significant_requirement` to capture quantitative acceptance criteria separately from the description.
+
+#### Academic and Industry Lineage
+
+##### SEI Quality Attribute Scenarios (Bass, Clements, Kazman)
+
+The **Software Engineering Institute (CMU/SEI)** established the QAS template in the late 1990s, codified in *Software Architecture in Practice* (4th ed., 2021). The SEI model defines six scenario components:
+
+| Component | Description | Example |
+|---|---|---|
+| **Source** | Entity that generates the stimulus | Authenticated user |
+| **Stimulus** | Condition arriving at the system | Submits a payment order |
+| **Artifact** | Part of the system stimulated | Payment processing service |
+| **Environment** | Conditions under which stimulus occurs | Peak load (1000 concurrent users) |
+| **Response** | System activity after stimulus | Process and confirm order |
+| **Response Measure** | Measurable determination of success | p95 response < 1 second |
+
+The Response Measure is the critical differentiator between a vague quality goal and a testable requirement. The SEI also introduced **Quality Utility Trees** for prioritizing QAS instances by (Business Value, Technical Risk).
+
+##### arc42 Section 10 — Quality Requirements
+
+arc42 places detailed quality requirements in **Section 10** with a simplified SEI QAS template (Context/Background, Source/Stimulus, Metric/Acceptance Criteria). Notably, arc42 distinguishes **usage scenarios** (runtime: performance, availability) from **change scenarios** (modification effort: maintainability, flexibility) — demonstrating that measurable criteria apply beyond runtime metrics. The **arc42 Quality Model (Q42)** catalogs 100+ quality characteristics across 9 system dimensions.
+
+##### ISO/IEC 25010:2023 (SQuaRE)
+
+ISO 25010:2023 defines 9 product quality characteristics (up from 8 in 2011):
+1. Functional Suitability — correctness, completeness, appropriateness
+2. Performance Efficiency — time behavior, resource utilization, capacity
+3. Compatibility — co-existence, interoperability
+4. Interaction Capability (formerly Usability) — inclusivity, self-descriptiveness
+5. Reliability — faultlessness, availability, fault tolerance, recoverability
+6. Security — confidentiality, integrity, non-repudiation, accountability
+7. Maintainability — modularity, reusability, analyzability, modifiability, testability
+8. Flexibility (formerly Portability) — adaptability, installability, replaceability
+9. Safety (new) — operational constraint, risk identification, fail-safe
+
+**All** can be made measurable — not just runtime performance. Maintainability: "new developer productive within N days." Security: "zero critical vulnerabilities per OWASP scan."
+
+##### Planguage (Tom Gilb)
+
+Gilb's Planguage takes measurability to its extreme: every quality requirement has mandatory **Scale** (unit), **Meter** (measurement method), and **Past/Must/Plan/Wish** values. The most rigorous approach but also the heaviest.
+
+#### How Other ADR Templates Handle Quality Requirements
+
+| Template | Quality requirement support | Measurability? |
+|---|---|---|
+| **Nygard** | None — implicit in "Context" prose | ❌ No |
+| **MADR 4.0** | "Decision Drivers" — bullet list of concerns | ❌ Free text, no measure |
+| **smadr** | 3D risk assessment per option | 🟡 Risk levels, not measures |
+| **Tyree-Akerman** | "Assumptions" + "Constraints" | ❌ Prose only |
+| **Planguage** | Full Scale/Meter/Must/Plan/Wish | ✅ Most rigorous |
+| **arc42** | Section 10 quality scenarios with metric | ✅ Scenario + metric |
+| **SEI/ATAM** | Full 6-part QAS with Response Measure | ✅ Most structured |
+| **adr-governance** | `architecturally_significant_requirements` with `id` + `description` | ❌ No dedicated measure field |
+
+**Finding:** No ADR template has a dedicated `measure` field on quality requirements. The SEI QAS and arc42 templates have measures, but they are *separate artifacts*, not embedded in decision records. **This would have been a novel addition.**
+
+#### Analysis of Our Current Examples
+
+Our example ADRs already embed measurable criteria within the description text:
+
+| ADR | NF-ID | Description (with embedded measure) |
+|---|---|---|
+| ADR-0001 (DPoP) | NF-001 | "DPoP proof generation on mobile must complete in **< 50ms** (including secure enclave signature)" |
+| ADR-0001 (DPoP) | NF-002 | "DPoP proof validation at the resource server must add **< 5ms** latency per request at **p99**" |
+| ADR-0002 (Reference Tokens) | NF-001 | "Token introspection latency must be **< 10ms at p99** with **< 0.01% error rate**" |
+| ADR-0004 (Ed25519) | NF-001 | "JWT signing must complete in **< 2ms** at p99" |
+
+Authors *naturally write measurable NFRs* by embedding quantities in the description.
+
+#### Rejection Rationale
+
+**Status: ❌ Rejected** for three reasons:
+
+1. **Altitude mismatch.** The `measure` field is primarily useful for **operational** ADRs where NFRs are naturally expressed as numeric thresholds (latency, throughput, error rates). For **strategic** ADRs, quality attributes that matter — organizational agility, time-to-market, architectural flexibility — resist single-threshold quantification. A field relevant to ~30% of ADRs doesn't justify the schema weight.
+
+2. **Measure volatility vs. ADR immutability.** Measurable thresholds are *volatile* — a p95 latency target of "< 200ms" today may become "< 100ms" next quarter as traffic grows. But accepted ADRs have an **immutable decision core**. Pinning a measure in a frozen field creates a stale contract that either gets ignored or forces supersession for a non-architectural change. Measures belong in living documents (SLO definitions, observability dashboards, capacity planning artifacts).
+
+3. **AI-native prose extraction.** Our framework is designed for LLM consumption. Modern LLMs trivially extract quantitative thresholds from prose — the machine-extractability argument that motivated a structured field evaporates in an AI-native context.
+
+#### Credits
+
+| Concept | Source |
+|---|---|
+| Quality Attribute Scenarios | SEI/CMU — Bass, Clements, Kazman, *Software Architecture in Practice* (4th ed., 2021) |
+| SMART NFR Elicitation | DPR — Zimmermann, `activities/DPR-SMART-NFR-Elicitation.md` |
+| QAS Template | DPR — `artifact-templates/DPR-QualityAttributeScenario.md` |
+| arc42 Quality Requirements | Starke, Hruschka, arc42 Section 10 |
+| ISO 25010:2023 | ISO/IEC 25010:2023 — Product quality model (9 characteristics) |
+| Planguage | Gilb, "Rich Requirement Specs" (2006) |
+
+### 4.3 NFR Landing Zones ❌ *Rejected (P9)*
+
+**Proposal:** Add structured landing zone fields (minimal/target/outstanding) to ASR entries, as an extension to the §4.2 `measure` field.
+
+#### Wirfs-Brock's Landing Zones Concept
+
+Rebecca Wirfs-Brock introduced "agile landing zones" (2011) as a framework for defining and tracking product releasability. Instead of a single pass/fail threshold, define three levels:
+
+| Level | Definition | Example (API latency) |
+|-------|-----------|----------------------|
+| **Minimal** | Lowest acceptable value — below this, not releasable | p95 < 500ms |
+| **Target** | Desired value the team aims for | p95 < 200ms |
+| **Outstanding** | Exceptional achievement, beyond expected | p95 < 50ms |
+
+**Why landing zones help:**
+1. **Negotiation tool** — stakeholders agree on a range rather than a single number
+2. **Progressive refinement** — "make it work at minimal first, then optimize toward target"
+3. **Trade-off visibility** — "if we invest 2 more sprints, we move from minimal to target"
+4. **Risk calibration** — "we're at minimal for latency but outstanding for availability — is that OK?"
+
+#### Relationship to QAS and SMART Criteria
+
+DPR's QAS template (from SEI's Bass, Clements, Kazman) structures quality requirements as scenarios with six components. The response measure is where landing zones apply — replacing a single threshold with a triplet. DPR also emphasizes SMART criteria for NFRs (**S**pecific, **M**easurable, **A**greed upon, **R**ealistic, **T**ime-bound). Landing zones make the "M" criterion easier because agreeing on a range is easier than agreeing on a point.
+
+#### Rejection Rationale
+
+**Status: ❌ Rejected** for four reasons:
+
+1. **Dependency on §4.2.** P9 was designed as an extension to P3's `measure` field. Without `measure`, adding `landing_zone` is even harder to justify.
+
+2. **Same volatility problem as §4.2.** Landing zone thresholds change as systems scale. An immutable ADR field is the wrong home for living SLO targets.
+
+3. **Prose is sufficient.** Authors can (and already do) embed threshold ranges in the `description` text:
+   ```yaml
+   non_functional:
+     - id: NF-001
+       description: >-
+         API response time under normal load.
+         Landing zone: minimal < 500ms, target < 200ms, outstanding < 100ms (p95).
+   ```
+
+4. **Right tool for the job.** Landing zones belong in SLO definitions, observability dashboards, and test suites — not in architectural decision records. The ADR captures *why we chose this architecture*; the SLO captures *how we measure it works*.
+
+The landing zone **concept** is valuable educational content referenced in our verbosity guidance for writing quantitative NFR descriptions.
+
+#### Credits
+
+| Concept | Source |
+|---|---|
+| Agile Landing Zones | Wirfs-Brock, R. (2011). [*"Agile Landing Zones"*](http://wirfs-brock.com/blog/2011/07/29/agile-landing-zones/) |
+| QAS template | SEI — Bass, Clements, Kazman: *Software Architecture in Practice* (3rd ed.) |
+| SMART NFR Elicitation | DPR `activities/DPR-SMART-NFR-Elicitation.md` (line 122) |
+| SLA template | DPR `artifact-templates/SDPR-ServiceLevelAgreement.md` |
 
 ---
 
@@ -662,7 +837,9 @@ The F/NF split mirrors the universal ISO 25010 distinction between functional su
 
 **Rationale:** Relative cost and risk enums provide machine-filterable decision metadata without requiring detailed financial analysis. An alternative with `estimated_cost: high` and `risk: critical` creates a very different decision context than `cost: low`, `risk: low`.
 
-**Rejected alternative:** *smadr's 3D risk model (Technical/Schedule/Ecosystem)* — interesting but our per-option `risk` field combined with pros/cons provides equivalent coverage with less schema complexity.
+**Rejected alternatives:**
+- *smadr's 3D risk model (Technical/Schedule/Ecosystem)* — interesting but our per-option `risk` field combined with pros/cons provides equivalent coverage with less schema complexity
+- *SWOT per option (Business Case / Henderson)* — overlaps with pros/cons/cost/risk. SWOT is a management lens, not an engineering lens.
 
 ### 5.5 `alternatives[].rejection_rationale`
 
@@ -781,6 +958,8 @@ The F/NF split mirrors the universal ISO 25010 distinction between functional su
 
 **Rationale:** MADR introduced the crucial question: "How will we verify this decision was implemented correctly?" Our schema extends this with `artifact_ids` — concrete references (Jira tickets, PR URLs, ArchUnit test IDs, benchmark reports) that serve as **evidence** the decision was followed. This bridges the gap between "we decided" and "we did."
 
+**Rejected alternative:** *Governance enforcement field (Gareth Morgan)* — Morgan's template has a dedicated "Governance" section for compliance enforcement mechanisms. We excluded this because enforcement is downstream of the ADR — it belongs in CODEOWNERS, fitness functions, and CI pipelines. ADRs capture decisions, not enforcement mechanisms.
+
 ---
 
 ## Section 9: `dependencies` — Impact Scope
@@ -797,7 +976,9 @@ The F/NF split mirrors the universal ISO 25010 distinction between functional su
 
 **Rationale:** Architectural decisions don't exist in isolation. Knowing that "this decision depends on the payment team's API migration" (internal) or "this decision requires AWS availability zones in eu-west-1" (external) enables impact analysis when dependencies change.
 
-**Rejected alternative:** *EdgeX-style structured impact assessment* — too specific to a single codebase. Our ADRs describe architectural patterns where impacted systems vary by adopter.
+**Rejected alternatives:**
+- *EdgeX-style structured impact assessment* — too specific to a single codebase. Our ADRs describe architectural patterns where impacted systems vary by adopter.
+- *Standalone `risk_assessment` section* — no ADR template has this as a standalone section. Risk is already distributed across `alternatives[].risk`, `alternatives[].cons`, `consequences.negative`, `decision.tradeoffs`, and `context.constraints`. A formal risk register belongs in threat models / ISMS artifacts, not in decision records.
 
 ---
 
@@ -842,6 +1023,8 @@ The F/NF split mirrors the universal ISO 25010 distinction between functional su
 **Precedent:** Nygard (inline "Superseded by ADR-NNNN"), MADR (inline), smadr, EdgeX, NHS Wales. All handle supersession; structuring varies.
 
 **Rationale:** Bidirectional cross-references (new ADR points to old via `supersedes`; old ADR points to new via `superseded_by`) create a navigable decision chain. Both fields are validated for symmetry by the validator script.
+
+**Rejected alternative:** *`related_adrs` / `attachments` (original schema)* — removed during schema refinement. ADR relationships are captured through `lifecycle.superseded_by` / `lifecycle.supersedes` for the most important relationship type (replacement). Other cross-references use `references` or prose in `context.description`. Attachments are external references via `confirmation.artifact_ids` or `references`.
 
 ### 11.3 `lifecycle.archival`
 
@@ -901,201 +1084,7 @@ This enables a **progressive strictness** model — drafts are loose, proposed/a
 
 ---
 
-## Appendix A: Features Evaluated and Excluded
-
-The following features were researched, evaluated, and deliberately excluded from the schema.
-
-### Quick Reference
-
-| Feature | Found in | Why excluded |
-|---|---|---|
-| `related_principles` | Tyree-Akerman | Assumes external principles registry. Use `references` or `x-related-principles`. |
-| `governance_enforcement` | Gareth Morgan | Enforcement is downstream (CODEOWNERS, fitness functions, CI). ADRs capture decisions, not enforcement mechanisms. |
-| `impact_assessment` (structured) | EdgeX | Already covered across `dependencies`, `consequences`, `decision.tradeoffs`. EdgeX targets a specific codebase; our ADRs are pattern-level. |
-| `risk_per_option` (3D) | smadr | Our per-option `risk` + pros/cons provides equivalent coverage, less complexity. |
-| `neutral_consequences` | MADR | Rarely informative. Binary positive/negative is sufficient. |
-| Unified `decision_drivers` | MADR/smadr | Our business/technical split is more informative. |
-| `swot_per_option` | Business Case (Henderson) | Overlaps with pros/cons/cost/risk. SWOT is a management lens, not an engineering lens. |
-| `context_validation` (CRF) | DRF | Requires knowledge graph infrastructure. Worth revisiting when DRF matures past v0.1.0. |
-| Standalone `risk_assessment` | — (no template has this) | Risk is already distributed across `alternatives[].risk`, `alternatives[].cons`, `consequences.negative`, `decision.tradeoffs`, and `context.constraints`. A formal risk register belongs in threat models / ISMS artifacts. |
-| `related_adrs` / `attachments` | — (original schema) | Removed during schema refinement. ADR relationships use `lifecycle.superseded_by` / `lifecycle.supersedes`. Attachments are external references. |
-| `adr.summary` | NHS Wales (elevator pitch) | Replaced by `adr.y_statement` — a strictly more informative summary format. |
-| `measure` field on ASRs | SEI QAS, DPR SMART NFR | See [A.1 deep research](#a1-qas-measure-field-on-asrs-dpr-p3--rejected) below. |
-| `scope` / `phase` metadata | DPR YAML frontmatter | See [A.2 rationale](#a2-scopephase-metadata-dpr-p6--skipped) below. |
-| NFR Landing Zones | Wirfs-Brock (2011), DPR | See [A.3 deep research](#a3-nfr-landing-zones-dpr-p9--rejected) below. |
-
-### A.1 QAS `measure` Field on ASRs (DPR-P3 — ❌ Rejected)
-
-**Proposal:** Add an optional `measure` field to `#/$defs/architecturally_significant_requirement` to capture quantitative acceptance criteria separately from the description.
-
-#### Academic and Industry Lineage
-
-##### SEI Quality Attribute Scenarios (Bass, Clements, Kazman)
-
-The **Software Engineering Institute (CMU/SEI)** established the QAS template in the late 1990s, codified in *Software Architecture in Practice* (4th ed., 2021). The SEI model defines six scenario components:
-
-| Component | Description | Example |
-|---|---|---|
-| **Source** | Entity that generates the stimulus | Authenticated user |
-| **Stimulus** | Condition arriving at the system | Submits a payment order |
-| **Artifact** | Part of the system stimulated | Payment processing service |
-| **Environment** | Conditions under which stimulus occurs | Peak load (1000 concurrent users) |
-| **Response** | System activity after stimulus | Process and confirm order |
-| **Response Measure** | Measurable determination of success | p95 response < 1 second |
-
-The Response Measure is the critical differentiator between a vague quality goal and a testable requirement. The SEI also introduced **Quality Utility Trees** for prioritizing QAS instances by (Business Value, Technical Risk).
-
-##### arc42 Section 10 — Quality Requirements
-
-arc42 places detailed quality requirements in **Section 10** with a simplified SEI QAS template (Context/Background, Source/Stimulus, Metric/Acceptance Criteria). Notably, arc42 distinguishes **usage scenarios** (runtime: performance, availability) from **change scenarios** (modification effort: maintainability, flexibility) — demonstrating that measurable criteria apply beyond runtime metrics. The **arc42 Quality Model (Q42)** catalogs 100+ quality characteristics across 9 system dimensions.
-
-##### ISO/IEC 25010:2023 (SQuaRE)
-
-ISO 25010:2023 defines 9 product quality characteristics (up from 8 in 2011):
-1. Functional Suitability — correctness, completeness, appropriateness
-2. Performance Efficiency — time behavior, resource utilization, capacity
-3. Compatibility — co-existence, interoperability
-4. Interaction Capability (formerly Usability) — inclusivity, self-descriptiveness
-5. Reliability — faultlessness, availability, fault tolerance, recoverability
-6. Security — confidentiality, integrity, non-repudiation, accountability
-7. Maintainability — modularity, reusability, analyzability, modifiability, testability
-8. Flexibility (formerly Portability) — adaptability, installability, replaceability
-9. Safety (new) — operational constraint, risk identification, fail-safe
-
-**All** can be made measurable — not just runtime performance. Maintainability: "new developer productive within N days." Security: "zero critical vulnerabilities per OWASP scan."
-
-##### Planguage (Tom Gilb)
-
-Gilb's Planguage takes measurability to its extreme: every quality requirement has mandatory **Scale** (unit), **Meter** (measurement method), and **Past/Must/Plan/Wish** values. The most rigorous approach but also the heaviest.
-
-#### How Other ADR Templates Handle Quality Requirements
-
-| Template | Quality requirement support | Measurability? |
-|---|---|---|
-| **Nygard** | None — implicit in "Context" prose | ❌ No |
-| **MADR 4.0** | "Decision Drivers" — bullet list of concerns | ❌ Free text, no measure |
-| **smadr** | 3D risk assessment per option | 🟡 Risk levels, not measures |
-| **Tyree-Akerman** | "Assumptions" + "Constraints" | ❌ Prose only |
-| **Planguage** | Full Scale/Meter/Must/Plan/Wish | ✅ Most rigorous |
-| **arc42** | Section 10 quality scenarios with metric | ✅ Scenario + metric |
-| **SEI/ATAM** | Full 6-part QAS with Response Measure | ✅ Most structured |
-| **adr-governance** | `architecturally_significant_requirements` with `id` + `description` | ❌ No dedicated measure field |
-
-**Finding:** No ADR template has a dedicated `measure` field on quality requirements. The SEI QAS and arc42 templates have measures, but they are *separate artifacts*, not embedded in decision records. **This would have been a novel addition.**
-
-#### Analysis of Our Current Examples
-
-Our example ADRs already embed measurable criteria within the description text:
-
-| ADR | NF-ID | Description (with embedded measure) |
-|---|---|---|
-| ADR-0001 (DPoP) | NF-001 | "DPoP proof generation on mobile must complete in **< 50ms** (including secure enclave signature)" |
-| ADR-0001 (DPoP) | NF-002 | "DPoP proof validation at the resource server must add **< 5ms** latency per request at **p99**" |
-| ADR-0002 (Reference Tokens) | NF-001 | "Token introspection latency must be **< 10ms at p99** with **< 0.01% error rate**" |
-| ADR-0004 (Ed25519) | NF-001 | "JWT signing must complete in **< 2ms** at p99" |
-
-Authors *naturally write measurable NFRs* by embedding quantities in the description.
-
-#### Rejection Rationale
-
-**Status: ❌ Rejected** for three reasons:
-
-1. **Altitude mismatch.** The `measure` field is primarily useful for **operational** ADRs where NFRs are naturally expressed as numeric thresholds (latency, throughput, error rates). For **strategic** ADRs, quality attributes that matter — organizational agility, time-to-market, architectural flexibility — resist single-threshold quantification. A field relevant to ~30% of ADRs doesn't justify the schema weight.
-
-2. **Measure volatility vs. ADR immutability.** Measurable thresholds are *volatile* — a p95 latency target of "< 200ms" today may become "< 100ms" next quarter as traffic grows. But accepted ADRs have an **immutable decision core**. Pinning a measure in a frozen field creates a stale contract that either gets ignored or forces supersession for a non-architectural change. Measures belong in living documents (SLO definitions, observability dashboards, capacity planning artifacts).
-
-3. **AI-native prose extraction.** Our framework is designed for LLM consumption. Modern LLMs trivially extract quantitative thresholds from prose — the machine-extractability argument that motivated a structured field evaporates in an AI-native context.
-
-#### Credits
-
-| Concept | Source |
-|---|---|
-| Quality Attribute Scenarios | SEI/CMU — Bass, Clements, Kazman, *Software Architecture in Practice* (4th ed., 2021) |
-| SMART NFR Elicitation | DPR — Zimmermann, `activities/DPR-SMART-NFR-Elicitation.md` |
-| QAS Template | DPR — `artifact-templates/DPR-QualityAttributeScenario.md` |
-| arc42 Quality Requirements | Starke, Hruschka, arc42 Section 10 |
-| ISO 25010:2023 | ISO/IEC 25010:2023 — Product quality model (9 characteristics) |
-| Planguage | Gilb, "Rich Requirement Specs" (2006) |
-
-### A.2 `scope`/`phase` Metadata (DPR-P6 — ⏭️ Skipped)
-
-**Proposal:** Add DPR-style YAML frontmatter fields (`Scope`, `Phases`, `Abstraction/Refinement Level`) to ADRs.
-
-**DPR source:** Every DPR method element includes YAML frontmatter:
-
-```yaml
-Scope: Entire system, component, connector, class, ...
-Phases: Design (all levels)
-Abstraction/Refinement Level: All
-```
-
-**Why skipped (redundant with existing fields):**
-
-| DPR Field | Our Equivalent | Assessment |
-|---|---|---|
-| `Scope` | `adr.decision_level` (P1) + `adr.component` | ✅ Covered — decision_level captures altitude, component captures specific scope |
-| `Phases` | `adr.status` lifecycle | ✅ Covered — our status lifecycle is more natural for GitOps than waterfall-style phase labels |
-| `Abstraction Level` | `adr.decision_level` (P1) | ✅ Subsumed — strategic/tactical/operational directly maps abstraction levels |
-
-Adding these would create **three fields duplicating information already in `decision_level` and `component`**.
-
-### A.3 NFR Landing Zones (DPR-P9 — ❌ Rejected)
-
-**Proposal:** Add structured landing zone fields (minimal/target/outstanding) to ASR entries, as an extension to the P3 `measure` field.
-
-#### Wirfs-Brock's Landing Zones Concept
-
-Rebecca Wirfs-Brock introduced "agile landing zones" (2011) as a framework for defining and tracking product releasability. Instead of a single pass/fail threshold, define three levels:
-
-| Level | Definition | Example (API latency) |
-|-------|-----------|----------------------|
-| **Minimal** | Lowest acceptable value — below this, not releasable | p95 < 500ms |
-| **Target** | Desired value the team aims for | p95 < 200ms |
-| **Outstanding** | Exceptional achievement, beyond expected | p95 < 50ms |
-
-**Why landing zones help:**
-1. **Negotiation tool** — stakeholders agree on a range rather than a single number
-2. **Progressive refinement** — "make it work at minimal first, then optimize toward target"
-3. **Trade-off visibility** — "if we invest 2 more sprints, we move from minimal to target"
-4. **Risk calibration** — "we're at minimal for latency but outstanding for availability — is that OK?"
-
-#### Relationship to QAS and SMART Criteria
-
-DPR's QAS template (from SEI's Bass, Clements, Kazman) structures quality requirements as scenarios with six components. The response measure is where landing zones apply — replacing a single threshold with a triplet. DPR also emphasizes SMART criteria for NFRs (**S**pecific, **M**easurable, **A**greed upon, **R**ealistic, **T**ime-bound). Landing zones make the "M" criterion easier because agreeing on a range is easier than agreeing on a point.
-
-#### Rejection Rationale
-
-**Status: ❌ Rejected** for three reasons:
-
-1. **Dependency on P3.** P9 was designed as an extension to P3's `measure` field. Without `measure`, adding `landing_zone` is even harder to justify.
-
-2. **Same volatility problem as P3.** Landing zone thresholds change as systems scale. An immutable ADR field is the wrong home for living SLO targets.
-
-3. **Prose is sufficient.** Authors can (and already do) embed threshold ranges in the `description` text:
-   ```yaml
-   non_functional:
-     - id: NF-001
-       description: >-
-         API response time under normal load.
-         Landing zone: minimal < 500ms, target < 200ms, outstanding < 100ms (p95).
-   ```
-
-4. **Right tool for the job.** Landing zones belong in SLO definitions, observability dashboards, and test suites — not in architectural decision records. The ADR captures *why we chose this architecture*; the SLO captures *how we measure it works*.
-
-The landing zone **concept** is valuable educational content referenced in our verbosity guidance (P8) for writing quantitative NFR descriptions.
-
-#### Credits
-
-| Concept | Source |
-|---|---|
-| Agile Landing Zones | Wirfs-Brock, R. (2011). [*"Agile Landing Zones"*](http://wirfs-brock.com/blog/2011/07/29/agile-landing-zones/) |
-| QAS template | SEI — Bass, Clements, Kazman: *Software Architecture in Practice* (3rd ed.) |
-| SMART NFR Elicitation | DPR `activities/DPR-SMART-NFR-Elicitation.md` (line 122) |
-| SLA template | DPR `artifact-templates/SDPR-ServiceLevelAgreement.md` |
-
----
-
-## Appendix B: Key Academic and Industry Sources
+## Sources
 
 | Source | Year | Contribution to schema design |
 |---|---|---|

@@ -362,7 +362,7 @@ Our schema's required/optional field structure naturally supports all three leve
 
 ---
 
-## Appendix: Process Elements Evaluated and Rejected
+## 6. Process Elements Evaluated and Rejected
 
 The following process elements were researched, evaluated, and deliberately not implemented. The full research for each is preserved in the Git history of the archived `dpr-enrichment-proposals.md`.
 
