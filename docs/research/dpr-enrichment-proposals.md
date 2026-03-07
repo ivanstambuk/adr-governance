@@ -1150,15 +1150,7 @@ Abstraction/Refinement Level: All
 
 This is a **new proposal** discovered during the local deep scan. DPR's `activities/DPR-ArchitecturalDecisionCapturing.md` (line 131) links to Zimmermann's ["A Definition of Ready for Architectural Decisions (ADs)"](https://medium.com/olzzio/a-definition-of-ready-for-architectural-decisions-ads-2814e399b09b).
 
-While the DoD (P4) answers "Is this ADR complete enough?", the **DoR answers "Is there enough context to *start* making this decision?"** — a precondition check that's useful for our `draft` → `proposed` transition.
-
-A Definition of Ready could include:
-1. Is the **problem statement** clear? (Do we know *why* a decision is needed?)
-2. Are the **driving quality attributes** identified (even if not fully specified)?
-3. Are there at least **two candidate alternatives** identified?
-4. Is the **decision owner** identified?
-5. Are the **affected stakeholders** identified?
-6. Is there sufficient **information to evaluate** alternatives? (PoC results, benchmarks, prior art)
+While the DoD (P4) answers "Is this ADR complete enough to *accept*?", the **DoR answers "Is there enough context to *start* the formal review?"** — a precondition check for our `draft` → `proposed` transition.
 
 ### DPR Source Files
 
@@ -1167,15 +1159,108 @@ A Definition of Ready could include:
 | `activities/DPR-ArchitecturalDecisionCapturing.md` | Line 131: DoR blog post link |
 | `activities/DPR-SMART-NFR-Elicitation.md` | Lines 51–55: SMART criteria provide readiness indicators |
 
-### Proposed Implementation
+### Deep Research: Zimmermann's START Framework
 
-**Documentation-only change.** Add a "Definition of Ready" section to `docs/adr-process.md`, complementing the DoD (P4). This guides teams on when an ADR is ready to move from `draft` to `proposed`.
+Zimmermann proposes a **Definition of Ready for ADs** using the acronym **START** — five preconditions that should be met before committing to an architectural decision:
+
+| # | Criterion | Zimmermann's Definition | What It Asks |
+|---|-----------|------------------------|-------------|
+| **S** | **Stakeholders** | All relevant stakeholders have been identified and contacted. They are aware a decision is coming and have been given time to prepare input. | *"Do we know who is affected by and should be involved in this decision?"* |
+| **T** | **Time** | The Most Responsible Moment (MRM) has arrived — not too early (insufficient information), not too late (costly to reverse or apply). Waiting too long risks compromised conceptual integrity and technical debt. | *"Is it the right time to make this decision?"* |
+| **A** | **Alternatives** | At least two viable options have been identified for addressing the issue. Having a single option is a failure of the decision process. | *"Do we have genuine options to compare?"* |
+| **R** | **Requirements** | The problem context, architecturally significant requirements, and decision drivers are clearly defined. The team understands *why* a decision is needed. | *"Do we understand the problem well enough?"* |
+| **T** | **Template** | An ADR template has been chosen and validated for the project/organization. The team knows where and how to document the decision. | *"Do we know how to capture this decision?"* |
+
+**Key insight:** START is the *input gate* to the decision process, complementing ecADR (P4) which is the *output gate*. Together they form a complete lifecycle: START → (decision-making work) → ecADR.
+
+**The MRM concept** (Most Responsible Moment, from Rebecca Wirfs-Brock) is particularly valuable: it warns against both premature decisions (insufficient data, premature optimization) and delayed decisions (analysis paralysis, technical debt accumulation).
+
+### Coverage Analysis: START vs. Our Framework
+
+| START Criterion | Our Coverage | Mechanism | Gap? |
+|---|:---:|---|:---:|
+| **S: Stakeholders** | ✅ | `decision_owner` (required), `reviewers` (schema field), `approvals` (required with identity). §3.2 step 7: "Assign reviewers." | None |
+| **T: Time (MRM)** | ⚠️ | Not explicitly addressed. We have no guidance on *when* to start making a decision — only on how to capture one. | **Yes — process gap** |
+| **A: Alternatives** | ✅ | Schema-enforced (`alternatives` required, `minItems: 2`). Authors can't propose without alternatives. | None |
+| **R: Requirements** | ✅ | `context.description` (required), `context.business_drivers`, `context.technical_drivers`, `context.constraints`, `context.assumptions` (all optional but prompted in template). §3.0 Architectural Significance Test provides requirement triage. | None |
+| **T: Template** | ✅ | Fixed by design — our framework *is* the template. `adr-template.yaml` + schema validation. No template choice needed. | None (N/A) |
+
+**Summary:** We already satisfy **4 of 5** START criteria through schema and process. The only genuine gap is **Timing/MRM** — we don't help teams decide *when* the right moment to make a decision is.
+
+### Gap Assessment
+
+1. **Timing (MRM)** — the one real gap. Our process implicitly assumes an ADR is started when someone decides to write one. But there are two failure modes:
+   - **Too early:** "We need to choose a database" on day 1 when the data model isn't clear yet → premature optimization
+   - **Too late:** "We've been using SQLite for 6 months and now it can't handle the load" → expensive reversal
+
+   Adding a brief MRM guidance note would be helpful, but it's inherently context-specific — the "right moment" depends on risk, reversibility, and information availability. A few heuristic questions would suffice.
+
+2. **Stakeholders (S)** — already satisfied, but our current §3.2 only says "Assign reviewers." A DoR checklist could add: *"Have all affected parties been notified that this decision is coming?"* — early stakeholder engagement, not just reviewer assignment.
+
+3. **Template (T)** — N/A for us. In multi-template environments (some teams use MADR, some use Nygard, some use Y-Statements), template choice is a real precondition. Our framework standardizes on one template, making this criterion automatically satisfied.
+
+### Where to Place the DoR in Our Process
+
+The DoR gates the `draft` → `proposed` transition. In our process:
+- §3.1 (Draft Phase): Author creates and iterates locally
+- §3.2 (Proposal Phase): Author sets status to `proposed` and opens PR
+
+The DoR should be a **§3.1.1** subsection at the end of the Draft Phase, parallel to how the DoD (§3.3.1) sits at the end of the Review Phase:
+
+```
+§3.0  Architectural Significance Test    → "Should we write an ADR?"
+§3.1  Draft Phase                         → Author writes the ADR
+  §3.1.1  Definition of Ready (START)    → "Is this ready for formal review?"  ← NEW
+§3.2  Proposal Phase                      → Author opens PR
+§3.3  Review Phase                        → Reviewers evaluate
+  §3.3.1  Definition of Done (ecADR)     → "Is this ready to accept?"
+§3.4  Approval Phase                      → Approvers approve
+```
+
+### Proposed START Checklist for Our Framework
+
+| # | START | Question | Enforcement |
+|---|:-----:|----------|-------------|
+| 1 | **S** | Are the **decision owner** and **reviewers/approvers** identified and listed? Have affected stakeholders been notified? | Hard — `decision_owner` required; `reviewers` and `approvals` prompted in template |
+| 2 | **T** | Is now the **Most Responsible Moment**? Do we have enough information to decide, and is delay riskier than deciding now? | Soft — guidance + heuristic questions (see below) |
+| 3 | **A** | Have at least **2 genuine alternatives** been identified? (Not just "do X" and "do nothing.") | Hard — schema `minItems: 2` on `alternatives` |
+| 4 | **R** | Is the **problem context** clear? Are driving requirements, constraints, and assumptions documented? | Hard — `context.description` required; others prompted |
+| 5 | **T** | Is the ADR **schema-valid** and substantially complete? | Hard — `validate-adr.py` must pass |
+
+**MRM heuristic questions** (for criterion 2):
+- Is there enough information to meaningfully compare alternatives? If not, what's blocking?
+- What is the cost of delaying this decision by one more sprint/month?
+- What is the cost of making a wrong decision now vs. waiting?
+- Are there upcoming events (deadline, release, dependency change) that create urgency?
+
+### Implementation Plan
+
+| Step | Description | Effort |
+|---|---|---|
+| 1 | Add §3.1.1 "Definition of Ready — START Checklist" to `docs/adr-process.md` | 10 min |
+| 2 | Include the 5-item checklist with MRM heuristic questions | 5 min |
+| 3 | Update §3.1 Draft Phase narrative to reference the DoR | 3 min |
+| 4 | Add glossary entry for DoR/START | 2 min |
+| 5 | Credit Zimmermann's START blog post | 2 min |
+| 6 | Regenerate bundle | 2 min |
+
+**Total estimated effort:** ~25 minutes
+
+### Credits
+
+| Concept | Source |
+|---|---|
+| START (Definition of Ready for ADs) | Zimmermann, O. (2023). [*"A Definition of Ready for Architectural Decisions"*](https://medium.com/olzzio/a-definition-of-ready-for-architectural-decisions-ads-2814e399b09b) |
+| Most Responsible Moment (MRM) | Wirfs-Brock, R. (2011). [*"Agile Architecture Myths #2"*](http://wirfs-brock.com/blog/2011/01/18/agile-architecture-myths-2-architecture-decisions-should-be-made-at-the-last-responsible-moment/) |
+| DPR reference | `activities/DPR-ArchitecturalDecisionCapturing.md` (line 131) |
 
 ### Implementation Checklist
 
-- [ ] Add "Definition of Ready for ADRs" section to `docs/adr-process.md`
-- [ ] Map DoR criteria to schema fields that should be populated before status = `proposed`
-- [ ] Credit Zimmermann's DoR blog post
+- [ ] Add §3.1.1 "Definition of Ready — START Checklist" to `docs/adr-process.md`
+- [ ] Add MRM heuristic questions
+- [ ] Update §3.1 narrative to reference DoR
+- [ ] Add glossary entry for Definition of Ready (START)
+- [ ] Credit Zimmermann's START blog post
 - [ ] (Optional) Add DoR check to validator as soft warning when status = `proposed`
 - [ ] Regenerate bundle
 
