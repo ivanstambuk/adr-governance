@@ -20,7 +20,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 | Section | Description |
 |---------|-------------|
 | `reviewers` | People who reviewed the ADR |
-| `approvals` | Formal approvals with timestamps, platform identities, and signature IDs. Required when `adr.status` is `proposed` or `accepted` |
+| `approvals` | Formal approvals with timestamps, platform identities, and signature IDs. Required when `adr.status` is `proposed` or `accepted`; `rejected` / `deferred` outcomes rely on terminal audit events plus PR/MR history instead |
 | `architecturally_significant_requirements` | Architecturally Significant Requirements (ASRs) — functional and non-functional |
 | `dependencies` | Internal and external dependencies |
 | `references` | External links and evidence |
@@ -36,10 +36,11 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 5. `decision.chosen_alternative` should match a name in `alternatives`
 6. Requirement IDs: `^(F|NF)-[0-9]{3}$`
 7. `proposed` and `accepted` ADRs must include `approvals` with at least one entry, and every approval entry must include `identity`
-8. Existing `audit_trail` history is append-only across PRs: prior entries may not be edited, deleted, or reordered; new entries may only be appended
-9. If an ADR is already `accepted`, its decision core is immutable in place; material changes require a new superseding ADR
-10. Extension fields: any key starting with `x-` is allowed at the top level
-11. `draft` still means a schema-valid, substantially complete ADR; the distinction from `proposed` is governance state, not missing core sections
+8. `rejected` and `deferred` ADRs do not require `approvals`, but they do require the matching terminal audit event and should preserve the disposition rationale in PR/MR history
+9. Existing `audit_trail` history is append-only across PRs: prior entries may not be edited, deleted, or reordered; new entries may only be appended
+10. If an ADR is already `accepted`, its decision core is immutable in place; material changes require a new superseding ADR
+11. Extension fields: any key starting with `x-` is allowed at the top level
+12. `draft` still means a schema-valid, substantially complete ADR; the distinction from `proposed` is governance state, not missing core sections
 
 ## Enum Values
 
@@ -93,5 +94,5 @@ Used for `authors[]`, `decision_owner`, `reviewers[]`:
 | `name` | string | ✅ |
 | `role` | string | ✅ |
 | `identity` | string | ❌ globally; ✅ when `adr.status` is `proposed` or `accepted` |
-| `approved_at` | string (date-time) or null | ❌ |
+| `approved_at` | string (date-time) or null | ❌; semantically required only once an ADR becomes `accepted` |
 | `signature_id` | string or null | ❌ |

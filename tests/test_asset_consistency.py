@@ -154,8 +154,11 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertIn("portable projection", llms)
         self.assertIn("extract-decisions.py", llms)
         self.assertIn("repository scripts do not currently add a second independent self-approval check", process)
+        self.assertIn("This identity-binding rule applies to the proposal/acceptance path only", process)
+        self.assertIn("Deferred ADRs likewise do not use approval-identity verification", process)
         self.assertIn("mainly improves auditability and CI messaging", process)
         self.assertIn("mainly affects auditability / CI messaging", glossary)
+        self.assertIn("Rejected/deferred outcomes rely on terminal audit events plus PR/MR history", glossary)
         self.assertIn("custom PR metadata and base-ref wiring", readme)
         self.assertIn("AWS CodeBuild and GCP Cloud Build templates run the verifier in dry-run mode by default", ci_setup)
         self.assertIn("--base-ref <branch>", ci_setup)
@@ -163,6 +166,8 @@ class AssetConsistencyTests(unittest.TestCase):
             "must provide resolvable PR metadata and a base ref or the verifier fails closed",
             ci_setup,
         )
+        self.assertIn("identity-bound through `approvals[]`", ci_setup)
+        self.assertIn("terminal audit events plus PR/MR history instead", read_text(".skills/adr-author/references/SCHEMA_REFERENCE.md"))
         self.assertIn("curated inline documentation set", generator)
 
     def test_ci_templates_fetch_history_for_base_branch_comparisons(self):

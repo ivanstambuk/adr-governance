@@ -126,6 +126,37 @@ class ValidateAdrTests(unittest.TestCase):
             errors,
         )
 
+    def test_rejected_and_deferred_do_not_require_approval_metadata(self):
+        cases = [
+            (
+                "rejected",
+                [
+                    {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+                    {"event": "rejected", "by": "Architect", "at": "2026-03-05T10:00:00Z"},
+                ],
+            ),
+            (
+                "deferred",
+                [
+                    {"event": "created", "by": "Author", "at": "2026-03-01T10:00:00Z"},
+                    {"event": "deferred", "by": "Architect", "at": "2026-03-05T10:00:00Z"},
+                ],
+            ),
+        ]
+
+        for status, audit_trail in cases:
+            with self.subTest(status=status):
+                data = load_example_adr()
+                data["adr"]["status"] = status
+                data["approvals"] = []
+                data["audit_trail"] = audit_trail
+
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+                    errors, _warnings = self.module.validate_file(path, self.validator)
+
+                self.assertEqual(errors, [])
+
     def test_archival_on_non_terminal_status_fails(self):
         data = load_example_adr()
         data["adr"]["status"] = "accepted"

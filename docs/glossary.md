@@ -6,7 +6,7 @@
 |------|-----------|
 | **ADR** | Architecture Decision Record. A structured document capturing a significant architectural decision, its context, alternatives considered, and consequences. |
 | **ADR Administrator** | A person listed in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) as a named maintainer for ADR metadata and process hygiene. In the current implementation this role mainly affects auditability / CI messaging for maintenance changes; it does not grant extra powers for substantive changes. See [`adr-process.md` §3.4.4](adr-process.md#344-adr-administrators). |
-| **Approval Identity Rule** | Governance rule stating that every person listed in an ADR's `approvals[]` must have actually approved the associated pull request. Enforced via the `identity` field and CI validation. See [`adr-process.md` §3.4.1](adr-process.md#341-approval-identity-rule). |
+| **Approval Identity Rule** | Governance rule stating that every person listed in an ADR's `approvals[]` must have actually approved the associated pull request. Enforced via the `identity` field and CI validation for `proposed` / `accepted` ADRs. Rejected/deferred outcomes rely on terminal audit events plus PR/MR history instead of the same identity-bound YAML model. See [`adr-process.md` §3.4.1](adr-process.md#341-approval-identity-rule). |
 | **ASR** | Architecturally Significant Requirement. A requirement (functional or non-functional) that directly shapes or constrains the architecture. |
 | **Change Classification** | The categorisation of ADR changes as either *substantive* (Tier 1 — requires original approver re-approval while the ADR is still mutable) or *maintenance* (Tier 2 — no ADR re-approval required). Accepted ADRs also have an immutable decision core that may not be edited in place. See [`adr-process.md` §3.4.3](adr-process.md#343-change-classification). |
 | **Decision Owner** | The single accountable individual responsible for the final decision. Not necessarily the author. |
@@ -27,8 +27,8 @@
 | `accepted` | Decision has been formally approved and is in effect. The decision core is frozen; later material changes require a new superseding ADR. |
 | `superseded` | Replaced by a newer ADR (see `lifecycle.superseded_by`). |
 | `deprecated` | Still technically active but no longer recommended. Will be superseded or rejected. |
-| `rejected` | Explicitly rejected after evaluation. Preserved for historical record. |
-| `deferred` | Decision postponed. Context or drivers are insufficient to decide now. |
+| `rejected` | Explicitly rejected after evaluation. Preserved for historical record. Requires a `rejected` audit event, but not the same approval-identity binding used for accepted ADRs. |
+| `deferred` | Decision postponed. Context or drivers are insufficient to decide now. Requires a `deferred` audit event, but not the same approval-identity binding used for accepted ADRs. |
 
 > **Note:** `archived` is **not a status value** — it is a metadata overlay tracked via `lifecycle.archival` fields (`archived_at`, `archive_reason`) and the `archived` event in `audit_trail`. Archived ADRs retain their pre-archival status (`superseded`, `deprecated`, or `rejected`).
 

@@ -230,6 +230,8 @@ The `identity` field on each approval entry is the **platform-resolvable handle*
 4. **`status: proposed` and `status: accepted` ADRs must include `approvals[]` with `identity` on every entry**. This is enforced by schema validation before the approval-identity check runs.
 5. **`status: accepted` ADRs must also include at least one non-null `approved_at` timestamp and an `approved` event in `audit_trail`**. This is enforced by semantic validation.
 
+> **Scope boundary:** This identity-binding rule applies to the proposal/acceptance path only. `rejected` and `deferred` ADRs still require their matching terminal `audit_trail` event, but they do **not** use the same `approvals[].identity` verification model. Their authoritative disposition history lives in the PR/MR discussion plus the ADR's terminal audit event, because Git platforms do not expose one portable cross-platform "rejected/deferred by these identities" signal equivalent to approval.
+
 > **Why this matters:** Without this rule, anyone can write arbitrary names in `approvals[]` and merge with a different set of PR approvers. The identity binding ensures that the ADR's formal approval record matches the Git platform's cryptographic approval record.
 
 > **When to populate `identity`:** Add the `identity` field when the ADR enters `proposed` status and approvers are known. The field uses whatever format your Git platform identifies reviewers by — typically a username prefixed with `@`.
@@ -387,6 +389,8 @@ governance:
     - Rejection reason is documented in the PR and in the ADR's `audit_trail`
     - PR is **merged** (not closed) — rejected ADRs are preserved for historical record
 
+> **Auditability note:** Rejected ADRs are historical decision-log entries, but they are not identity-bound through `approvals[].identity` the way accepted ADRs are. The repo requires the `rejected` audit event in YAML; the reviewer identities and reasoning remain primarily in the merged PR discussion/history.
+
 > **What does `chosen_alternative` mean for rejected ADRs?** When the *proposal* is rejected but the team selects a different approach (e.g., ADR-0007: Vault was proposed but native cloud stores were chosen), `chosen_alternative` records the alternative the team will actually pursue. The `status: rejected` signals that the *proposed approach* was rejected, not the ADR itself. The ADR serves as a record of both the rejection and the actual path forward.
 
 ---
@@ -394,6 +398,8 @@ governance:
 ## 4. Workflow: Re-proposing a Deferred ADR
 
 A deferred ADR can be re-proposed when the blocking condition is resolved.
+
+> **Auditability note:** Deferred ADRs likewise do not use approval-identity verification. The authoritative record is the `deferred` audit event plus the PR/MR history explaining why the decision was postponed.
 
 1. **Determine what changed.** The author or decision owner identifies why the ADR is now ready — new information, resolved dependency, changed priority, or elapsed time.
 2. **Open a new PR** (preferred) or reopen the original PR:

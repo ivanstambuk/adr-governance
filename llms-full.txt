@@ -594,6 +594,8 @@ The `identity` field on each approval entry is the **platform-resolvable handle*
 4. **`status: proposed` and `status: accepted` ADRs must include `approvals[]` with `identity` on every entry**. This is enforced by schema validation before the approval-identity check runs.
 5. **`status: accepted` ADRs must also include at least one non-null `approved_at` timestamp and an `approved` event in `audit_trail`**. This is enforced by semantic validation.
 
+> **Scope boundary:** This identity-binding rule applies to the proposal/acceptance path only. `rejected` and `deferred` ADRs still require their matching terminal `audit_trail` event, but they do **not** use the same `approvals[].identity` verification model. Their authoritative disposition history lives in the PR/MR discussion plus the ADR's terminal audit event, because Git platforms do not expose one portable cross-platform "rejected/deferred by these identities" signal equivalent to approval.
+
 > **Why this matters:** Without this rule, anyone can write arbitrary names in `approvals[]` and merge with a different set of PR approvers. The identity binding ensures that the ADR's formal approval record matches the Git platform's cryptographic approval record.
 
 > **When to populate `identity`:** Add the `identity` field when the ADR enters `proposed` status and approvers are known. The field uses whatever format your Git platform identifies reviewers by — typically a username prefixed with `@`.
@@ -751,6 +753,8 @@ governance:
     - Rejection reason is documented in the PR and in the ADR's `audit_trail`
     - PR is **merged** (not closed) — rejected ADRs are preserved for historical record
 
+> **Auditability note:** Rejected ADRs are historical decision-log entries, but they are not identity-bound through `approvals[].identity` the way accepted ADRs are. The repo requires the `rejected` audit event in YAML; the reviewer identities and reasoning remain primarily in the merged PR discussion/history.
+
 > **What does `chosen_alternative` mean for rejected ADRs?** When the *proposal* is rejected but the team selects a different approach (e.g., ADR-0007: Vault was proposed but native cloud stores were chosen), `chosen_alternative` records the alternative the team will actually pursue. The `status: rejected` signals that the *proposed approach* was rejected, not the ADR itself. The ADR serves as a record of both the rejection and the actual path forward.
 
 ---
@@ -758,6 +762,8 @@ governance:
 ## 4. Workflow: Re-proposing a Deferred ADR
 
 A deferred ADR can be re-proposed when the blocking condition is resolved.
+
+> **Auditability note:** Deferred ADRs likewise do not use approval-identity verification. The authoritative record is the `deferred` audit event plus the PR/MR history explaining why the decision was postponed.
 
 1. **Determine what changed.** The author or decision owner identifies why the ADR is now ready — new information, resolved dependency, changed priority, or elapsed time.
 2. **Open a new PR** (preferred) or reopen the original PR:
@@ -978,7 +984,7 @@ architecture-decision-log/ADR-*compliance*  @org/compliance-team
 |------|-----------|
 | **ADR** | Architecture Decision Record. A structured document capturing a significant architectural decision, its context, alternatives considered, and consequences. |
 | **ADR Administrator** | A person listed in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml) as a named maintainer for ADR metadata and process hygiene. In the current implementation this role mainly affects auditability / CI messaging for maintenance changes; it does not grant extra powers for substantive changes. See [`adr-process.md` §3.4.4](adr-process.md#344-adr-administrators). |
-| **Approval Identity Rule** | Governance rule stating that every person listed in an ADR's `approvals[]` must have actually approved the associated pull request. Enforced via the `identity` field and CI validation. See [`adr-process.md` §3.4.1](adr-process.md#341-approval-identity-rule). |
+| **Approval Identity Rule** | Governance rule stating that every person listed in an ADR's `approvals[]` must have actually approved the associated pull request. Enforced via the `identity` field and CI validation for `proposed` / `accepted` ADRs. Rejected/deferred outcomes rely on terminal audit events plus PR/MR history instead of the same identity-bound YAML model. See [`adr-process.md` §3.4.1](adr-process.md#341-approval-identity-rule). |
 | **ASR** | Architecturally Significant Requirement. A requirement (functional or non-functional) that directly shapes or constrains the architecture. |
 | **Change Classification** | The categorisation of ADR changes as either *substantive* (Tier 1 — requires original approver re-approval while the ADR is still mutable) or *maintenance* (Tier 2 — no ADR re-approval required). Accepted ADRs also have an immutable decision core that may not be edited in place. See [`adr-process.md` §3.4.3](adr-process.md#343-change-classification). |
 | **Decision Owner** | The single accountable individual responsible for the final decision. Not necessarily the author. |
@@ -999,8 +1005,8 @@ architecture-decision-log/ADR-*compliance*  @org/compliance-team
 | `accepted` | Decision has been formally approved and is in effect. The decision core is frozen; later material changes require a new superseding ADR. |
 | `superseded` | Replaced by a newer ADR (see `lifecycle.superseded_by`). |
 | `deprecated` | Still technically active but no longer recommended. Will be superseded or rejected. |
-| `rejected` | Explicitly rejected after evaluation. Preserved for historical record. |
-| `deferred` | Decision postponed. Context or drivers are insufficient to decide now. |
+| `rejected` | Explicitly rejected after evaluation. Preserved for historical record. Requires a `rejected` audit event, but not the same approval-identity binding used for accepted ADRs. |
+| `deferred` | Decision postponed. Context or drivers are insufficient to decide now. Requires a `deferred` audit event, but not the same approval-identity binding used for accepted ADRs. |
 
 > **Note:** `archived` is **not a status value** — it is a metadata overlay tracked via `lifecycle.archival` fields (`archived_at`, `archive_reason`) and the `archived` event in `audit_trail`. Archived ADRs retain their pre-archival status (`superseded`, `deprecated`, or `rejected`).
 
@@ -1133,7 +1139,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 | Section | Description |
 |---------|-------------|
 | `reviewers` | People who reviewed the ADR |
-| `approvals` | Formal approvals with timestamps, platform identities, and signature IDs. Required when `adr.status` is `proposed` or `accepted` |
+| `approvals` | Formal approvals with timestamps, platform identities, and signature IDs. Required when `adr.status` is `proposed` or `accepted`; `rejected` / `deferred` outcomes rely on terminal audit events plus PR/MR history instead |
 | `architecturally_significant_requirements` | Architecturally Significant Requirements (ASRs) — functional and non-functional |
 | `dependencies` | Internal and external dependencies |
 | `references` | External links and evidence |
@@ -1149,10 +1155,11 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 5. `decision.chosen_alternative` should match a name in `alternatives`
 6. Requirement IDs: `^(F|NF)-[0-9]{3}$`
 7. `proposed` and `accepted` ADRs must include `approvals` with at least one entry, and every approval entry must include `identity`
-8. Existing `audit_trail` history is append-only across PRs: prior entries may not be edited, deleted, or reordered; new entries may only be appended
-9. If an ADR is already `accepted`, its decision core is immutable in place; material changes require a new superseding ADR
-10. Extension fields: any key starting with `x-` is allowed at the top level
-11. `draft` still means a schema-valid, substantially complete ADR; the distinction from `proposed` is governance state, not missing core sections
+8. `rejected` and `deferred` ADRs do not require `approvals`, but they do require the matching terminal audit event and should preserve the disposition rationale in PR/MR history
+9. Existing `audit_trail` history is append-only across PRs: prior entries may not be edited, deleted, or reordered; new entries may only be appended
+10. If an ADR is already `accepted`, its decision core is immutable in place; material changes require a new superseding ADR
+11. Extension fields: any key starting with `x-` is allowed at the top level
+12. `draft` still means a schema-valid, substantially complete ADR; the distinction from `proposed` is governance state, not missing core sections
 
 ## Enum Values
 
@@ -1206,7 +1213,7 @@ Used for `authors[]`, `decision_owner`, `reviewers[]`:
 | `name` | string | ✅ |
 | `role` | string | ✅ |
 | `identity` | string | ❌ globally; ✅ when `adr.status` is `proposed` or `accepted` |
-| `approved_at` | string (date-time) or null | ❌ |
+| `approved_at` | string (date-time) or null | ❌; semantically required only once an ADR becomes `accepted` |
 | `signature_id` | string or null | ❌ |
 
 ---
@@ -1706,6 +1713,7 @@ For the approval identity check to be meaningful, configure your platform to req
 
 - ADRs in `proposed` or `accepted` status must include `approvals[]` with `identity` on every approval entry; otherwise schema validation fails
 - ADRs in `accepted` status must also include at least one non-null `approved_at` timestamp and an `approved` audit-trail event; otherwise semantic validation fails
+- ADRs in `rejected` or `deferred` status are **not** identity-bound through `approvals[]`. They must carry the matching terminal audit event (`rejected` / `deferred`), and the detailed reviewer identities and rationale remain in the PR/MR history
 - Existing `audit_trail` history is append-only. CI blocks PRs that edit, delete, or reorder historical audit-trail entries
 - If an ADR was already `accepted` on the base branch, its decision core is immutable in place. CI only allows it to remain `accepted` or transition to `superseded` / `deprecated`, and blocks edits to frozen fields such as `context`, `decision`, `alternatives`, `consequences`, and `approvals`
 - ADRs in `draft`, `rejected`, `deferred`, `superseded`, or `deprecated` status are **skipped for approval identity verification** after the base-vs-head governance checks run

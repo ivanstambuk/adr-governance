@@ -491,6 +491,7 @@ For the approval identity check to be meaningful, configure your platform to req
 
 - ADRs in `proposed` or `accepted` status must include `approvals[]` with `identity` on every approval entry; otherwise schema validation fails
 - ADRs in `accepted` status must also include at least one non-null `approved_at` timestamp and an `approved` audit-trail event; otherwise semantic validation fails
+- ADRs in `rejected` or `deferred` status are **not** identity-bound through `approvals[]`. They must carry the matching terminal audit event (`rejected` / `deferred`), and the detailed reviewer identities and rationale remain in the PR/MR history
 - Existing `audit_trail` history is append-only. CI blocks PRs that edit, delete, or reorder historical audit-trail entries
 - If an ADR was already `accepted` on the base branch, its decision core is immutable in place. CI only allows it to remain `accepted` or transition to `superseded` / `deprecated`, and blocks edits to frozen fields such as `context`, `decision`, `alternatives`, `consequences`, and `approvals`
 - ADRs in `draft`, `rejected`, `deferred`, `superseded`, or `deprecated` status are **skipped for approval identity verification** after the base-vs-head governance checks run
