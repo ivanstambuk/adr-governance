@@ -150,24 +150,218 @@ The `adr` object contains identification and classification metadata. Its design
 | **Type** | `enum`: `draft`, `proposed`, `accepted`, `superseded`, `deprecated`, `rejected`, `deferred` |
 | **Required?** | ✅ Yes |
 
-**Precedent:**
+#### Literature Review: ADR Status Lifecycles
 
-| Template | Status values |
+Our 7-status set is a **novel synthesis** — no template in our survey uses exactly this set. This section reviews the status values used across templates, analyzes the design of our state machine, and justifies each addition to and omission from the Nygard baseline.
+
+##### 1. Multi-Template Status Comparison
+
+| Template | Status values | Count | Unique additions |
+|---|---|:---:|---|
+| Nygard (2011) | proposed, accepted, deprecated, superseded | 4 | — (baseline) |
+| MADR 4.0 | proposed, accepted, deprecated, superseded (+ custom) | 4+ | Allows custom statuses |
+| smadr | proposed, accepted, deprecated, superseded | 4 | — |
+| EdgeX | proposed, accepted, deprecated, superseded | 4 | — |
+| Tyree-Akerman | — (no explicit status field) | 0 | — |
+| Planguage | — (no explicit status field) | 0 | — |
+| Merson (SEI) | proposed, accepted, deprecated, superseded | 4 | — |
+| NHS Wales | proposed, under review, accepted, rejected, superseded, deprecated | 6 | `under review`, `rejected` |
+| Gareth Morgan | *(unstructured)* | — | — |
+| DRF | *(meta.status — details vary)* | — | — |
+| UK GDS | draft, proposed, accepted, superseded | 4 | `draft` |
+| **adr-governance** | **draft, proposed, accepted, superseded, deprecated, rejected, deferred** | **7** | **`draft`, `rejected`, `deferred`** |
+
+**Key observations:**
+- The **Nygard 4-status set** (proposed/accepted/deprecated/superseded) is the de facto standard — adopted by 5+ templates without modification
+- Only **NHS Wales** and **UK GDS** extend beyond the Nygard baseline with structured additions
+- **No template** includes `deferred` — this is entirely novel
+- `rejected` appears only in **NHS Wales** (and MADR via custom extension)
+- `draft` appears only in **UK GDS** and our schema
+
+##### 2. Status Classification: Lifecycle Phases
+
+Our 7 statuses decompose into three lifecycle phases, each with distinct semantics:
+
+| Phase | Statuses | Mutability | PR State | Governance |
+|---|---|---|---|---|
+| **Pre-decision** | `draft`, `proposed`, `deferred` | ✅ Fully mutable | Open or closed | Author-owned → reviewer-owned |
+| **Active** | `accepted` | 🟡 Decision core frozen; metadata mutable | Merged | Binding; changes require supersession |
+| **Terminal** | `superseded`, `deprecated`, `rejected` | ❌ Frozen (except `lifecycle` overlay) | Merged | Historical record; queryable |
+
+This three-phase model is novel. Most templates have only two phases: pre-decision (proposed) and post-decision (accepted + terminal). Our model explicitly separates **active** from **terminal**, enabling different governance rules for each.
+
+##### 3. Per-Status Semantic Analysis
+
+###### `draft` — Author-owned, pre-review
+
+| Aspect | Detail |
 |---|---|
-| Nygard | proposed, accepted, deprecated, superseded |
-| MADR 4.0 | proposed, accepted, deprecated, superseded (+ any custom) |
-| smadr | proposed, accepted, deprecated, superseded |
-| EdgeX | proposed, accepted, deprecated, superseded |
-| NHS Wales | proposed, accepted, deprecated, superseded, **under review** |
-| **adr-governance** | draft, proposed, accepted, superseded, deprecated, rejected, **deferred** |
+| **Added by** | adr-governance (also UK GDS) |
+| **Why needed** | Without `draft`, a half-written ADR must be either `proposed` (triggering premature review) or kept outside Git (losing version control). `draft` enables schema-valid work-in-progress on feature branches. |
+| **Transition in** | `[*] → draft` (initial creation) |
+| **Transition out** | `draft → proposed` (author opens PR) |
+| **PR state** | No PR yet — ADR lives on a feature branch |
+| **Schema behavior** | Fewest conditional requirements. `y_statement`, `approvals[].approved_at`, and `audit_trail` `approved` event are not required. |
 
-**Rationale:** Our status set extends the Nygard baseline with three additions and one subtraction:
-- **`draft`** — added because ADRs under active authoring should not appear as `proposed` before they're ready for review. Prevents premature review cycles.
-- **`rejected`** — added because decisions that were formally evaluated and refused are valuable historical records. Without this status, rejected proposals are either deleted (losing knowledge) or left in `proposed` limbo.
-- **`deferred`** — added because not every decision can be made now. Context may be insufficient, dependencies unresolved, or timing wrong. `deferred` explicitly communicates "we know about this but can't decide yet" — preventing repeated re-analysis.
-- **`under review` (NHS Wales)** — excluded because it's a transient process state, not a durable decision state. Our `audit_trail` captures review events without polluting the status machine.
+**Why other templates omit it:** Most templates assume ADRs are created directly as "proposed" Markdown files. In a JSON Schema + CI validation pipeline, an ADR must be schema-valid even before review — `draft` provides the valid-but-not-yet-proposed state that makes this possible.
 
-**The `archived` non-status:** `archived` is deliberately **not** a status value. Archival is an administrative overlay tracked via `lifecycle.archival` — archived ADRs retain their terminal status (`superseded`, `deprecated`, `rejected`) while becoming invisible in active listings.
+###### `proposed` — Under active review
+
+| Aspect | Detail |
+|---|---|
+| **Present in** | Every template with a status field (universal) |
+| **Semantics** | The ADR is submitted for formal review. The PR is open. Reviewers are evaluating it. |
+| **Transition in** | `draft → proposed`, `deferred → proposed` (re-proposal) |
+| **Transition out** | `proposed → accepted`, `proposed → rejected`, `proposed → deferred` |
+| **PR state** | Open, under review |
+| **Schema behavior** | `approvals[].identity` must be populated (CI verifies against PR approvers). |
+
+**Key design choice:** `proposed → proposed` is a **self-transition** (reviewer requests changes, author reworks, pushes new commits). This avoids needing an intermediate "in review" or "rework" status.
+
+> **Why not `under review` (NHS Wales)?** `under review` is a transient process state that duplicates the PR's "changes requested" mechanism. Our `audit_trail` captures review events without adding a status that would need back-and-forth transitions (`proposed ↔ under_review`), complicating the state machine.
+
+###### `accepted` — Binding, decision core frozen
+
+| Aspect | Detail |
+|---|---|
+| **Present in** | Every template with a status field (universal) |
+| **Semantics** | The decision is binding. The decision core is immutable — changes require a new superseding ADR. |
+| **Transition in** | `proposed → accepted` |
+| **Transition out** | `accepted → superseded`, `accepted → deprecated` |
+| **PR state** | Merged |
+| **Schema behavior** | Maximum conditional requirements: `y_statement` required, `approvals[].approved_at` must have ≥1 non-null, `audit_trail` must contain `approved` event. |
+
+**Immutability semantics:** Once accepted, the following fields are frozen:
+- `adr.title`, `adr.y_statement`, `adr.project`, `adr.component`, `adr.priority`, `adr.decision_type`
+- `authors`, `decision_owner`, `reviewers`, `approvals`
+- `context`, `architecturally_significant_requirements`, `alternatives`, `decision`, `consequences`, `dependencies`
+
+This is more rigorous than any template in our survey. Nygard recommends "accepted ADRs should not be changed" but doesn't enforce it. Our CI enforces it via diff-based change classification.
+
+###### `rejected` — Formally evaluated and refused
+
+| Aspect | Detail |
+|---|---|
+| **Added by** | adr-governance (also NHS Wales, MADR custom) |
+| **Why needed** | Without `rejected`, formally evaluated proposals that didn't pass review are either deleted (losing knowledge) or left in `proposed` limbo (misleading). `rejected` explicitly records "we considered this and said no." |
+| **Transition in** | `proposed → rejected` |
+| **Transition out** | Terminal — `rejected → [*]` (may be archived via `lifecycle.archival`) |
+| **PR state** | **Merged** (not closed) — rejected ADRs are merged to `main` to preserve the decision record |
+
+**Why merge rejected ADRs?** This is our most counterintuitive process decision. Closing the PR without merging loses the ADR from `main`, making it invisible to future decision-makers who might re-propose the same rejected idea. Merging preserves the complete evaluation and rejection rationale.
+
+**`chosen_alternative` on rejected ADRs:** When a proposal is rejected but the team selects a different approach (e.g., Vault was proposed but native cloud stores were chosen), `chosen_alternative` records the path forward. `status: rejected` signals that the *proposed approach* (not the ADR itself) was rejected.
+
+###### `deferred` — Explicitly postponed
+
+| Aspect | Detail |
+|---|---|
+| **Added by** | adr-governance only — **completely novel** |
+| **Why needed** | Not every decision can be made now. Context may be insufficient, dependencies unresolved, or timing wrong. Without `deferred`, these decisions are either rejected (wrong — they weren't evaluated negatively) or left in `proposed` (misleading — nobody is reviewing them). |
+| **Transition in** | `proposed → deferred` |
+| **Transition out** | `deferred → proposed` (re-proposal when ready), or terminal `deferred → [*]` (archived if never revisited) |
+| **PR state** | **Closed** with label (not merged and not deleted) |
+
+**Academic support:** The concept of deferring architectural decisions is well-established in architecture literature:
+- **Robert C. Martin ("Uncle Bob"):** "Good architecture allows major architectural decisions to be deferred" — the "Last Responsible Moment" principle
+- **Jansen & Bosch (2005):** "Software architecture as a set of architectural design decisions" — decisions exist in states of uncertainty before commitment
+- **Wirfs-Brock (2011):** "Agile Architecture Myths #2" — the "Most Responsible Moment" (MRM) concept, adapted in our START checklist
+
+`deferred` is the schema-level manifestation of the MRM principle: if the Most Responsible Moment hasn't arrived, the decision should be explicitly parked, not prematurely forced.
+
+###### `superseded` — Replaced by a newer decision
+
+| Aspect | Detail |
+|---|---|
+| **Present in** | Every template with a status field (universal) |
+| **Semantics** | This decision has been replaced by a newer ADR. The new decision is now binding. |
+| **Transition in** | `accepted → superseded` |
+| **Transition out** | Terminal — `superseded → [*]` (may be archived) |
+| **Schema behavior** | `lifecycle.superseded_by` must be populated. Bidirectional: the new ADR's `lifecycle.supersedes` must match. CI validates symmetry. |
+
+**Bidirectional enforcement** is unique to our schema. Other templates recommend linking to the successor but don't enforce it structurally or via CI.
+
+###### `deprecated` — No longer recommended, not yet replaced
+
+| Aspect | Detail |
+|---|---|
+| **Present in** | Most templates (Nygard baseline) |
+| **Semantics** | The decision is outdated but no replacement has been decided yet. The decision remains technically in effect but is "on notice." |
+| **Transition in** | `accepted → deprecated` |
+| **Transition out** | Terminal — should eventually be superseded or left as historical record |
+
+**Distinction from `superseded`:** `deprecated` = "we've outgrown this but haven't decided what's next." `superseded` = "we've decided what's next and it's ADR-MMMM."
+
+**Timestamp note:** Deprecation has no dedicated timestamp field. The deprecation time is recorded via the `deprecated` event in `audit_trail`. This is intentional — deprecation is a transitional state that should eventually resolve to `superseded`, so it doesn't merit the same structural permanence as archival.
+
+##### 4. State Machine Topology
+
+Our state machine has deliberate topological constraints:
+
+```
+Design properties:
+  - Directed acyclic graph (no cycles through terminal states)
+  - Single entry point: [*] → draft
+  - 4 terminal states: rejected, deferred (if never reopened), superseded, deprecated
+  - 1 reversible transition: deferred → proposed (only non-terminal re-entry)
+  - 1 self-loop: proposed → proposed (rework cycle)
+  - Maximum path length: 5 (draft → proposed → accepted → superseded → [archived])
+```
+
+**Why no `rejected → proposed` transition?** If a rejected decision needs reconsideration, a **new ADR** should be created. This preserves the original rejection rationale and forces the author to re-evaluate with fresh context. The rejected ADR remains as evidence of what and why.
+
+**Why no `deprecated → accepted` recovery?** If a deprecated decision is found to still be valid, reverting to `accepted` would create an unauditable state change. Instead, either (a) the deprecation was premature and should be reverted via PR discussion, or (b) a new ADR should confirm the original decision with updated context.
+
+##### 5. The `archived` Non-Status
+
+`archived` is deliberately **not** a status value. Archival is an administrative overlay tracked via `lifecycle.archival` fields. This is a key design decision:
+
+| Design | How `archived` works | Consequence |
+|---|---|---|
+| **As a status** (rejected approach) | `superseded → archived` | Loses the terminal status information. A query for "all superseded ADRs" misses archived ones. |
+| **As a metadata overlay** (our approach) | Archived ADRs retain their terminal status + have `lifecycle.archival.archived_at` | Queries work on both dimensions: "all superseded" and "all archived" are independent filters. |
+
+This design was influenced by the observation that archival is an **administrative action** (removing from active consideration) while status represents a **decision lifecycle state** (what happened to this decision). Conflating the two would force a choice between querying by lifecycle outcome vs. querying by visibility.
+
+##### 6. Schema Conditional Requirements by Status
+
+Our schema uses `allOf/if/then` blocks to enforce progressive strictness as ADRs advance:
+
+| Status | `y_statement` | `approvals[].identity` | `approvals[].approved_at` | `audit_trail` `approved` event |
+|---|:---:|:---:|:---:|:---:|
+| `draft` | ❌ Optional | ❌ Optional | ❌ Optional | ❌ Not required |
+| `proposed` | ❌ Optional | ✅ Required | ❌ Optional | ❌ Not required |
+| `accepted` | ✅ Required | ✅ Required | ✅ ≥1 non-null | ✅ Required |
+| `rejected` | ❌ Optional | ❌ Optional | ❌ Optional | `rejected` event required |
+| `deferred` | ❌ Optional | ❌ Optional | ❌ Optional | `deferred` event required |
+| `superseded` | ✅ (frozen) | ✅ (frozen) | ✅ (frozen) | `superseded` event required |
+| `deprecated` | ✅ (frozen) | ✅ (frozen) | ✅ (frozen) | `deprecated` event required |
+
+This **progressive strictness** model is unique to our schema. Other templates apply the same validation regardless of status, which either over-constrains drafts or under-constrains accepted decisions.
+
+#### Rejected Alternatives
+
+- *Nygard 4-status baseline only (proposed/accepted/deprecated/superseded)* — insufficient for CI-driven governance. Lacks `draft` (needed for schema-valid work-in-progress), `rejected` (needed to preserve evaluation history), and `deferred` (needed for the Last Responsible Moment principle)
+- *NHS Wales 6-status set (adding `under review`)* — `under review` is a transient process state that duplicates PR review mechanisms. Our `proposed → proposed` self-transition and `audit_trail` events cover this without a dedicated status
+- *MADR custom statuses (open-ended)* — prevents programmatic lifecycle management. CI cannot enforce transition rules if the status set is unbounded. Schema validation cannot express conditional requirements for unknown statuses
+- *Separate `in_review` / `rework` / `voting` process substates* — creates a state explosion. A 7-status machine that maps to Git PR states is already at the upper bound of useful complexity. Adding intermediate process states would require transitions like `in_review → rework → in_review → voting → accepted`, making the state machine harder to reason about than the Git PR flow it mirrors
+- *`archived` as a status value (8th status)* — conflates lifecycle outcome with visibility. See §5 above for detailed analysis
+- *Fewer terminal states (merge `deprecated` into `superseded`)* — semantically different. `deprecated` means "no replacement decided yet"; `superseded` means "replacement exists." The distinction matters for planning: deprecated ADRs need new decisions, superseded ones don't
+- *`amended` status for in-place edits to accepted ADRs* — contradicts the immutability principle. Accepted ADRs are frozen; material changes require supersession. An `amended` status would create undiscoverable decision rewrites that bypass the full proposal/review cycle
+
+#### Credits
+
+| Concept | Source |
+|---|---|
+| 4-status baseline (proposed/accepted/deprecated/superseded) | Nygard, "Documenting Architecture Decisions" (2011) |
+| `under review` status | NHS Wales ADR Template |
+| `draft` status in ADRs | UK GDS Architecture Decision Records |
+| Last Responsible Moment / decision deferral | Martin, *Clean Architecture* (2017); Wirfs-Brock, "Agile Architecture Myths #2" (2011) |
+| Architectural decisions as first-class entities with lifecycle states | Jansen & Bosch, "Software Architecture as a Set of Architectural Design Decisions" (WICSA, 2005) |
+| Progressive strictness via JSON Schema conditionals | adr-governance (novel) |
+| `archived` as metadata overlay vs. status | adr-governance (novel) |
+
+
 
 ### 1.5 `adr.created_at` / `adr.last_modified`
 
