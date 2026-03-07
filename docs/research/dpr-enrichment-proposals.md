@@ -12,7 +12,7 @@
 | # | Proposal | Type | Value | Effort | Status |
 |---|----------|:----:|:-----:|:------:|:------:|
 | P1 | [`decision_level` field](#p1-add-decision_level-field) | Schema | **High** | Low | ✅ Done |
-| P2 | [Y-Statement rendering](#p2-add-y-statement-rendering-capability) | Capability | Medium | Low | ⬜ Not started |
+| P2 | [Y-Statement rendering](#p2-add-y-statement-rendering-capability) | Capability | Medium | Low | ✅ Done |
 | P3 | [QAS `measure` field on ASRs](#p3-add-quality-attribute-scenario-qas-measure-field) | Schema | Medium | Low | ⬜ Not started |
 | P4 | [AD Definition of Done checklist](#p4-add-definition-of-done-for-architecture-decisions) | Docs | Medium | Low | ⬜ Not started |
 | P5 | [Architectural Significance Test guidance](#p5-add-architectural-significance-test-guidance) | Docs | Low–Medium | Very low | ⬜ Not started |
@@ -705,6 +705,124 @@ Instead of:
 | `artifact-templates/DPR-QualityAttributeScenario.md` | Full QAS template with annotated diagram and example |
 | `activities/DPR-SMART-NFR-Elicitation.md` | 3-step NFR elicitation approach; SMART criteria definitions; assessment table template |
 
+### Deep Research: Academic and Industry Lineage
+
+#### 1. SEI Quality Attribute Scenarios (Bass, Clements, Kazman)
+
+The **Software Engineering Institute (CMU/SEI)** established the QAS template in the late 1990s, codified in *Software Architecture in Practice* (Bass, Clements, Kazman — now in 4th edition, 2021). The SEI model defines **six** scenario components:
+
+| Component | Description | Example |
+|---|---|---|
+| **Source** | Entity that generates the stimulus | Authenticated user |
+| **Stimulus** | Condition arriving at the system | Submits a payment order |
+| **Artifact** | Part of the system stimulated | Payment processing service |
+| **Environment** | Conditions under which stimulus occurs | Peak load (1000 concurrent users) |
+| **Response** | System activity after stimulus | Process and confirm order |
+| **Response Measure** | Measurable determination of success | p95 response < 1 second |
+
+The SEI model treats the **Response Measure** as the critical differentiator between a vague quality goal and a testable requirement. Without a measure, a quality attribute is an aspiration, not a requirement.
+
+The SEI also introduced **Quality Utility Trees** for prioritizing QAS instances by (Business Value, Technical Risk) — only high/high scenarios warrant full architectural attention. This aligns with our schema's architectural significance test philosophy.
+
+#### 2. arc42 Section 10 — Quality Requirements
+
+arc42 (Gernot Starke, Peter Hruschka) places detailed quality requirements in **Section 10**, with top 3–5 quality goals summarized in Section 1.2. arc42's quality scenario template is a simplified SEI QAS:
+
+| Field | Content |
+|---|---|
+| **Context/Background** | System, component, situation |
+| **Source/Stimulus** | Who/what initiates the behavior |
+| **Metric/Acceptance Criteria** | Measurable response with specific measure |
+
+arc42 distinguishes two scenario types:
+- **Usage scenarios** — runtime behavior (performance, availability)
+- **Change scenarios** — modification effort (maintainability, flexibility). *Example:* "Integration of a new payment provider is possible within 2 person-weeks"
+
+This is noteworthy because **change scenarios** demonstrate that measurable criteria apply beyond runtime metrics — they include development effort, time-to-market, and learning curves.
+
+The **arc42 Quality Model (Q42)** catalogs 100+ quality characteristics across 9 system dimensions, providing a taxonomy teams can reference when specifying measures.
+
+#### 3. ISO/IEC 25010:2023 (SQuaRE)
+
+The updated ISO 25010:2023 defines **9 product quality characteristics** (up from 8 in 2011):
+
+1. **Functional Suitability** — correctness, completeness, appropriateness
+2. **Performance Efficiency** — time behavior, resource utilization, capacity
+3. **Compatibility** — co-existence, interoperability
+4. **Interaction Capability** (formerly Usability) — inclusivity, self-descriptiveness, user engagement
+5. **Reliability** — faultlessness (formerly maturity), availability, fault tolerance, recoverability
+6. **Security** — confidentiality, integrity, non-repudiation, accountability, authenticity, resistance
+7. **Maintainability** — modularity, reusability, analyzability, modifiability, testability
+8. **Flexibility** (formerly Portability) — adaptability, installability, replaceability
+9. **Safety** (new) — operational constraint, risk identification, fail-safe, hazard warning
+
+The key insight is that **all** of these can be made measurable — not just runtime performance. Maintainability can be measured as "new developer productive within N days," Security as "zero critical vulnerabilities per OWASP scan," Flexibility as "new cloud provider integration within N person-weeks."
+
+#### 4. Planguage (Tom Gilb)
+
+Tom Gilb's Planguage (referenced by DPR) takes measurability to its extreme: every quality requirement has mandatory **Scale** (unit of measurement), **Meter** (measurement method), and **Past/Must/Plan/Wish** values defining a progression from current baseline to minimum acceptable to target to aspirational. This is the most rigorous approach but also the heaviest — our schema should take inspiration without the full ceremony.
+
+#### 5. Agile Landing Zones (Rebecca Wirfs-Brock)
+
+Rebecca Wirfs-Brock's [Landing Zones](https://wirfs-brock.com/blog/2011/07/21/introducing-landing-zones/) concept (also referenced by DPR) addresses the difficulty of committing to single numbers by defining **three levels**:
+
+| Level | Meaning |
+|---|---|
+| **Minimal** | Lowest acceptable quality (ship-blocking threshold) |
+| **Target** | Expected quality for release |
+| **Outstanding** | Aspirational — investing here is a differentiator |
+
+This is particularly useful for ADRs because architectural decisions often trade between quality attributes — you might accept "minimal" on one dimension to achieve "outstanding" on another.
+
+### How Other ADR Templates Handle Quality Requirements
+
+| Template | Quality requirement support | Measurability? |
+|---|---|---|
+| **Nygard** | None — forces implicit in "Context" prose | ❌ No |
+| **MADR 4.0** | "Decision Drivers" — bullet list of concerns | ❌ Free text, no measure |
+| **smadr** | 3D risk assessment (Technical/Schedule/Ecosystem) per option | 🟡 Risk levels, not measures |
+| **Tyree-Akerman** | "Assumptions" + "Constraints" | ❌ Prose only |
+| **DRF** | `context.objectives` with `priority` field | 🟡 Priority, not measure |
+| **Planguage** | Full Scale/Meter/Must/Plan/Wish | ✅ Most rigorous |
+| **arc42** | Section 10 quality scenarios with metric | ✅ Scenario + metric |
+| **SEI/ATAM** | Full 6-part QAS with Response Measure | ✅ Most structured |
+| **adr-governance** | `architecturally_significant_requirements` with `id` + `description` | ❌ No dedicated measure field |
+
+**Finding:** No ADR template (including ours) currently has a dedicated `measure` field on quality requirements. The SEI QAS and arc42 templates have measures, but they are *separate artifacts*, not embedded in decision records. Planguage embeds measures but isn't an ADR format. **This would be a novel addition.**
+
+### Analysis of Our Current Examples
+
+Our example ADRs already embed measurable criteria **within the description text** of non-functional ASRs:
+
+| ADR | NF-ID | Description (contains embedded measure) |
+|---|---|---|
+| ADR-0001 (DPoP) | NF-001 | "DPoP proof generation on mobile must complete in **< 50ms** (including secure enclave signature)" |
+| ADR-0001 (DPoP) | NF-002 | "DPoP proof validation at the resource server must add **< 5ms** latency per request at **p99**" |
+| ADR-0002 (Reference tokens) | NF-001 | "Token introspection latency must be **< 10ms at p99** with **< 0.01% error rate**" |
+| ADR-0004 (Ed25519) | NF-001 | "JWT signing must complete in **< 2ms** at p99" |
+
+**Observation:** The examples demonstrate that our authors *naturally write measurable NFRs* by embedding quantities in the description. A separate `measure` field would:
+1. **Make the pattern explicit and required** — nudging vague authors toward quantification
+2. **Enable machine extraction** — a script or AI can programmatically extract measures without NLP parsing of free text
+3. **Support confirmation/validation workflows** — `confirmation.artifact_ids` could reference test results that directly verify the `measure`
+
+### Revised Recommendation
+
+**Add an optional `measure` field to `#/$defs/architecturally_significant_requirement`.** The field should:
+
+1. **Not duplicate the QAS template** — an ADR is not a requirements document. We take only the "Response Measure" column, not the full 6-part scenario structure. The Stimulus/Environment context is already captured in the ASR's `description`.
+2. **Accept any measurable criterion** — not just runtime metrics. Change scenarios ("integration within 2 person-weeks"), design-time qualities ("onboarding within 1 day"), and compliance measures ("zero critical CVEs") are all valid.
+3. **Be optional** — functional ASRs (F-NNN) rarely need a separate measure; the description is typically sufficient. Non-functional ASRs (NF-NNN) strongly benefit from an explicit measure, but it's not always possible to quantify at draft stage.
+4. **Complement, not replace, the description** — the description states *what* the requirement is; the measure states *how you know it's met*.
+
+**Why not a more structured approach (full QAS with stimulus/environment/response)?**
+
+The full SEI QAS structure (6 parts) is powerful for dedicated quality workshops (ATAM, QAW) but would be overengineering for an ADR's ASR section. ADRs document the *decision*, not the full requirements analysis. The measure alone provides 80% of the value — it transforms a vague statement into a testable contract.
+
+**Why not Landing Zones (minimal/target/outstanding)?**
+
+Landing Zones are valuable for requirement negotiation but add 3x the field count. We may revisit this as P9 if teams request it. The single `measure` field naturally supports ranges if authors write them: "p95 latency < 200ms (target), < 500ms (acceptable)."
+
 ### Proposed Schema Change
 
 Add an optional `measure` field to `#/$defs/architecturally_significant_requirement`:
@@ -712,19 +830,55 @@ Add an optional `measure` field to `#/$defs/architecturally_significant_requirem
 ```json
 "measure": {
     "type": "string",
-    "description": "Measurable acceptance criterion (SMART 'M'). For non-functional requirements, express as a quantitative threshold under specific conditions (QAS-style). Examples: 'p95 latency < 200ms under 1000 concurrent users', 'Recovery time < 15 minutes from single-node failure', '≥ 95% of API consumers can integrate within 1 sprint'."
+    "description": "Measurable acceptance criterion — how you know this requirement is met. For non-functional requirements, express as a quantitative threshold with conditions (QAS-style Response Measure). Examples: 'p95 latency < 200ms under 1000 concurrent users', 'Recovery time < 15 minutes from single-node failure', '≥ 95% of API consumers can integrate within 1 sprint'. Inspired by SEI Quality Attribute Scenarios (Bass, Clements, Kazman) and DPR SMART NFR Elicitation (Zimmermann)."
 }
 ```
 
-### Implementation Checklist
+#### Before/After Example
 
-- [ ] Add `measure` field to `#/$defs/architecturally_significant_requirement` in schema
-- [ ] Update `docs/SCHEMA_REFERENCE.md` with new field and QAS/SMART guidance
-- [ ] Add QAS and SMART NFR to glossary
-- [ ] Add AI bundle Socratic prompting for measures during ASR capture
-- [ ] Update 2–3 example ADRs with `measure` values on non-functional ASRs
-- [ ] Credit SEI/CMU (Bass, Clements, Kazman) and DPR
-- [ ] Regenerate bundle
+**Before (current — measure buried in description):**
+```yaml
+non_functional:
+  - id: NF-001
+    description: DPoP proof generation on mobile must complete in < 50ms (including secure enclave signature)
+```
+
+**After (measure extracted to dedicated field):**
+```yaml
+non_functional:
+  - id: NF-001
+    description: DPoP proof generation on mobile must be fast enough for seamless UX, including secure enclave key access
+    measure: "p95 < 50ms on iOS 16+ devices with Secure Enclave, measured via client-side SDK telemetry"
+```
+
+The description now focuses on *what and why*; the measure captures the *verifiable threshold*.
+
+### Implementation Plan
+
+| Step | Description | Effort |
+|---|---|---|
+| 1 | Add `measure` field to `#/$defs/architecturally_significant_requirement` in `schemas/adr.schema.json` | 5 min |
+| 2 | Update `docs/glossary.md` — add "Quality Attribute Scenario (QAS)" and "SMART NFR" entries | 10 min |
+| 3 | Update SKILL.md — add Socratic interview question for measures during ASR capture | 5 min |
+| 4 | Update `repomix-instruction.md` — mention `measure` field in Markdown-native fields section | 5 min |
+| 5 | Update 3–4 example ADRs — extract measures from descriptions to the new field on NF-* ASRs | 15 min |
+| 6 | Update template (`adr-template.yaml`) — add `measure` field with guidance comment | 5 min |
+| 7 | Re-render, validate, run tests | 5 min |
+| 8 | Regenerate bundle | 2 min |
+
+**Total estimated effort:** ~50 minutes
+
+### Credits
+
+| Concept | Source |
+|---|---|
+| Quality Attribute Scenarios | SEI/CMU — Bass, Clements, Kazman, *Software Architecture in Practice* (4th ed., 2021) |
+| SMART NFR Elicitation | DPR — Zimmermann, `activities/DPR-SMART-NFR-Elicitation.md` |
+| QAS Template | DPR — Zimmermann, `artifact-templates/DPR-QualityAttributeScenario.md` |
+| arc42 Quality Requirements | Starke, Hruschka, arc42 Section 10 |
+| Landing Zones | Wirfs-Brock, "Agile Landing Zones" (2011) |
+| ISO 25010:2023 | ISO/IEC 25010:2023 — Product quality model (9 characteristics) |
+| Planguage | Gilb, "Rich Requirement Specs" (2006) |
 
 ---
 
