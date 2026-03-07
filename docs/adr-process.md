@@ -164,6 +164,7 @@ If **none** of these apply, the decision is likely not architecturally significa
     - [ ] Risks are addressed (per-alternative `risk` level, cons, and `consequences.negative`)
     - [ ] No conflict with existing `accepted` ADRs (search `architecture-decision-log/` for related decisions)
     - [ ] `approvals[].identity` is populated with the platform handle for each required approver (§3.4.1)
+    - [ ] **Definition of Done** criteria are met (see §3.3.1 below)
 
 11. **Reviewers comment on the PR.** Discussions happen in PR comments.
 
@@ -185,6 +186,30 @@ Async PR review is the default. However, some decisions benefit from real-time d
 > **Format tip:** A 30-minute session works well: 5 min context recap → 15 min trade-off discussion → 10 min decision + action items. For lengthy ADRs, start with a silent reading slot (10–15 min) so everyone engages with the full document before discussion. Record the outcome in PR comments for traceability.
 
 > **Note on `reviewed` audit events:** The initial proposal review happens through the PR process. Do **not** add a `reviewed` event to `audit_trail` during the initial review — the `approved` or `rejected` event records the outcome. The `reviewed` event is reserved for **periodic reviews** (§9) of already-accepted ADRs.
+
+#### 3.3.1 Definition of Done — ecADR Checklist
+
+Before an ADR moves from `proposed` to `accepted`, verify these criteria are met. The checklist adapts Zimmermann's **ecADR** framework (Evidence, Criteria, Agreement, Documentation, Realization/Review) to our schema and process:
+
+| # | ecADR | Question | Enforcement |
+|---|:-----:|----------|-------------|
+| 1 | **E** | Is there evidence the chosen alternative will meet requirements? (PoC results, benchmarks, prior art, team experience) | Soft — reviewer judgement; reference in `decision.rationale` |
+| 2 | **E** | Does this decision conflict with any existing accepted ADR? | Soft — `review-adr.py` cross-reference; reviewer checklist item 7 |
+| 3 | **C** | Are at least 2 alternatives genuinely considered (not strawmen)? | Hard — schema `minItems: 2` + reviewer judgement |
+| 4 | **C** | Does each alternative have balanced, honest pros and cons? | Soft — `review-adr.py` balance heuristic; reviewer checklist |
+| 5 | **A** | Have all required reviewers and approvers been assigned? | Hard — `approvals[].identity` + CI verification (§3.4.1) |
+| 6 | **A** | Is the level of review proportional to the decision's reach? | Soft — escalation guidance (§3.3 sync meeting criteria) |
+| 7 | **D** | Is the Y-Statement populated? | Hard — schema conditional requirement (mandatory on `accepted`) |
+| 8 | **D** | Does the rationale reference specific evidence, not just opinion? | Soft — reviewer judgement |
+| 9 | **R** | Is there a verification plan? (`confirmation.description`) | Hard — schema-required field |
+| 10 | **R** | Is a review cycle set? (`lifecycle.review_cycle_months`) | Soft — recommended, not required |
+
+**Hard** = schema validation or CI will catch it automatically.
+**Soft** = reviewer responsibility; may also be flagged by AI-assisted review (`review-adr.py`).
+
+Not all 10 items must be fully satisfied for every ADR. Low-priority operational decisions require less rigor than high-priority strategic ones. Use judgement — but if a criterion is intentionally skipped, note why in the PR discussion.
+
+> **Source:** Adapted from Zimmermann, O. (2020). [*"A Definition of Done for Architectural Decision Making"*](https://ozimmer.ch/practices/2020/05/22/ADDefinitionOfDone.html). See also: DPR `activities/DPR-ArchitecturalDecisionCapturing.md` (line 71).
 
 ### 3.4 Approval Phase
 

@@ -171,6 +171,19 @@ into the following categories:
 - Does it create new dependencies that should be tracked?
 - If it supersedes an existing decision, is the migration path clear?
 
+### 7. Definition of Done (ecADR)
+Check these criteria before recommending acceptance:
+- **Evidence (E):** Is there concrete evidence the chosen alternative will work?
+  (PoC, benchmarks, prior art, team experience — not just "we think it's good")
+- **Criteria (C):** Are alternatives genuinely compared, not strawmen?
+  Are there rejection rationales for unchosen options?
+- **Agreement (A):** Is the level of review proportional to the decision's reach?
+  (Strategic decisions need broader stakeholder buy-in than operational ones)
+- **Documentation (D):** Does the rationale reference specific evidence from
+  the analysis, or is it just opinion? Is the Y-Statement a compelling summary?
+- **Realization (R):** Is the verification plan (`confirmation.description`)
+  actionable? Is review cadence (`lifecycle.review_cycle_months`) set?
+
 ## Output Format
 
 Structure your review as:
