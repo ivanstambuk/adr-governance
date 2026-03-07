@@ -61,14 +61,22 @@ Ask the user for:
 6. **Constraints**: What are the non-negotiable boundaries?
 7. **Alternatives**: At least 2 options — for each, a **thorough architectural description** (multi-paragraph, with Mermaid diagrams showing data flows/integration points), pros, cons, estimated cost, and risk level
 8. **Recommendation**: Which alternative and why?
-9. **Summary** (`adr.summary`): 2-4 sentence elevator pitch for stakeholder triage (max 500 chars). This is distinct from `context.summary`, which is the full narrative problem statement.
-10. **Confidence**: `low` | `medium` | `high` — how confident are we in this decision?
+9. **Confidence**: `low` | `medium` | `high` — how confident are we in this decision?
 
 #### Step 3: Generate the ADR YAML
 
 Use the template at `assets/adr-template.yaml` as the starting point. Fill in all required sections:
 
-- `adr` — metadata (id, title, status: `draft` for a complete author-owned ADR not yet proposed, or `proposed` when the user explicitly wants a review-ready artifact, timestamps, tags, priority, decision_type, decision_level)
+- `adr` — metadata (id, title, status, timestamps, tags, priority, decision_type, decision_level, y_statement)
+- `adr.y_statement` — **auto-generate** from the collected interview answers. Do NOT ask the user to write this. The Y-Statement **must** contain all 7 structural clauses in this exact order (see `docs/glossary.md` → "Y-Statement" for the canonical template mapping):
+  1. "In the context of [context.summary],"
+  2. "facing [key driver],"
+  3. "we decided for [decision.chosen_alternative]"
+  4. "and neglected [rejected alternatives],"
+  5. "to achieve [positive consequences],"
+  6. "accepting [tradeoffs],"
+  7. "because [decision.rationale]."
+  If any clause is missing, rewrite until all 7 are present. Present to the user for confirmation.
 - `authors` — who is writing this
 - `decision_owner` — who is accountable
 - `context` — summary, business_drivers, technical_drivers, constraints, assumptions

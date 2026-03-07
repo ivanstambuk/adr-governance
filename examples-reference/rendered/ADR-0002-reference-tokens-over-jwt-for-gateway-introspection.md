@@ -15,7 +15,7 @@
 > **Decision Owner:** Marcus Chen (Head of Identity and Access Management)  
 > **Decision Date:** 2026-01-30
 
-*Issue opaque reference tokens instead of self-contained JWTs, enabling instant revocation via introspection while keeping PII out of access logs.*
+> *In the context of the API gateway authorization layer, facing the need for immediate token revocation capability and minimal gateway-side cryptographic complexity, we decided for opaque reference tokens with OAuth 2.0 Token Introspection (RFC 7662) and neglected self-contained JWTs with short lifetimes and JWTs with a distributed Redis deny-list, to achieve sub-second revocation, zero JWKS key management at the gateway, and simplified PII handling by keeping claims server-side, accepting the per-request introspection latency overhead and the authorization server becoming a critical-path dependency, because reference tokens provide the strongest revocation guarantees with the simplest gateway implementation while keeping PII out of network-traversing tokens.*
 
 ---
 

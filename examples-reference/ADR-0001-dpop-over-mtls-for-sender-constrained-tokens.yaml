@@ -1,7 +1,14 @@
 adr:
   id: ADR-0001-dpop-over-mtls-for-sender-constrained-tokens
   title: Use DPoP over mTLS as the sender-constraining mechanism for OAuth 2.1 access tokens
-  summary: Adopt DPoP (RFC 9449) as the sole sender-constraining mechanism for all OAuth 2.1 client types, avoiding mTLS certificate provisioning and CDN passthrough costs.
+  y_statement: >-
+    In the context of the OIDC-based IAM platform, facing the need for sender-constrained tokens that work across public
+    (SPA/mobile), confidential (backend), and partner client types without infrastructure changes, we decided for DPoP
+    (RFC 9449) and neglected mTLS certificate-bound tokens (RFC 8705) and a hybrid DPoP/mTLS approach, to achieve a
+    single sender-constraining mechanism that survives CDN/reverse-proxy TLS termination and requires no client
+    certificate provisioning, accepting per-request proof generation overhead and the need for server-side nonce/jti
+    replay protection, because DPoP is the only mechanism that works for all three client types without infrastructure
+    modifications and eliminates the $50K/year CDN mTLS passthrough cost.
   status: accepted
   created_at: "2026-01-10T09:00:00Z"
   last_modified: "2026-01-25T14:30:00Z"

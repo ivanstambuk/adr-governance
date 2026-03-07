@@ -160,6 +160,7 @@ After all question sets are complete, review ALL collected answers for **high-le
 - Are the business/technical drivers reflected in the alternatives' evaluation criteria?
 - Are there obvious risks or consequences not mentioned?
 - Does the decision interact with or contradict any existing ADRs in the bundle?
+- **Y-Statement structural check:** Does the auto-generated `adr.y_statement` contain all 7 required clauses (context, concern, decision, neglected, benefits, tradeoffs, rationale)? If any clause is missing or generic, regenerate the Y-Statement before presenting the YAML.
 
 If you find high or medium issues, present up to 5 numbered follow-up questions to resolve them before proceeding.
 
@@ -177,6 +178,15 @@ The context section can be arbitrarily large — diagrams, extended narratives, 
 **After all questions and the coherence check pass:** Generate the complete ADR YAML:
 - Search for `adr-template.yaml` in this file to get the skeleton
 - Fill in all required sections from the interview answers
+- **Auto-generate `adr.y_statement`** — synthesize the long-form Y-Statement from the collected answers. Do NOT ask the user to write this. The Y-Statement **must** contain all 7 structural clauses in this exact order (see `glossary.md` → "Y-Statement" for the full template mapping):
+  1. "In the context of **[context.summary]**,"
+  2. "facing **[key business/technical driver]**,"
+  3. "we decided for **[decision.chosen_alternative]**"
+  4. "and neglected **[rejected alternatives]**,"
+  5. "to achieve **[key positive consequences]**,"
+  6. "accepting **[key tradeoffs/negative consequences]**,"
+  7. "because **[decision.rationale — the core 'why']**."
+  If any clause is missing or empty, the Y-Statement is structurally invalid — rewrite it until all 7 clauses are present. Present the generated Y-Statement to the user for confirmation before finalizing.
 - Set status to `draft` for a schema-valid ADR that is complete enough to validate but not yet proposed, or `proposed` when the user explicitly wants a formal review-ready artifact
 - Add an initial `audit_trail` entry: `event: "created"`
 - Use YAML literal block scalars (`|`) for Markdown fields
@@ -232,6 +242,7 @@ Present a **structured extraction summary** to the user, organized by ADR schema
 > | **Verification** | ✅ / ❌ | ... | ... |
 > | **Authors** | ✅ / ❌ | ... | ... |
 > | **Tags** | ✅ / ❌ | ... | ... |
+> | **Y-Statement** | ✅ / ❌ | ... | *long-form: "In the context of..., facing..., we decided for... and neglected..., to achieve..., accepting..., because..."* |
 >
 > **Gaps identified:** [list sections marked ❌]
 
@@ -283,7 +294,7 @@ When the user asks a question about architectural decisions, **search the ADR fi
 
 **How to search:**
 - Search for keywords in the file content (e.g., "DPoP", "mTLS", "token", "signing", "session")
-- Look at `adr.title`, `adr.status`, `context.summary`, `decision.chosen_alternative`, and `decision.rationale` fields
+- Look at `adr.title`, `adr.status`, `adr.y_statement`, `context.summary`, `decision.chosen_alternative`, and `decision.rationale` fields
 - Match by tags in `adr.tags`
 
 **How to respond:** Follow the **mandatory response template** defined at the top of this document. Every query response must include the governance metadata table, summary, alternatives, and tradeoffs — in that exact order.
@@ -380,9 +391,13 @@ When the user provides ADR YAML content to validate:
    - Accepted ADRs have an immutable decision core; material changes require a new superseding ADR
    - PR approval identity binding is confirmed in-repo and cannot be fully checked from pasted YAML alone
 4. Check quality signals:
-   - Is `adr.summary` populated? (Missing = warning)
    - Is confidence `high` with fewer than 3 alternatives? (Warning)
    - Are `rejection_rationale` fields populated for non-chosen alternatives?
+5. Check Y-Statement (`adr.y_statement`):
+   - **ERROR** if missing on `accepted`/`superseded`/`deprecated` ADRs
+   - **ERROR** if it does not contain all 7 structural clauses: "In the context of...", "facing...", "we decided for...", "and neglected...", "to achieve...", "accepting...", "because..."
+   - **WARNING** if missing on `proposed` ADRs
+   - If the Y-Statement is present but structurally non-conformant, **auto-reformat** it to match the canonical template (see `glossary.md` → "Y-Statement") and present the corrected version to the user
 
 Report issues as: `ERROR` (schema violation or hard author-facing rule), `WARNING` (semantic concern or repository-side check to confirm in CI), or `INFO` (quality suggestion).
 
@@ -405,6 +420,8 @@ Report issues as: `ERROR` (schema violation or hard author-facing rule), `WARNIN
 **ID format:** `ADR-NNNN-slug` — slug is mandatory (e.g., `ADR-0001-dpop-over-mtls`)
 
 **Draft semantics:** `draft` still means a schema-valid, substantially complete ADR. It is not a partial scratch document; it simply has not yet been proposed for formal review.
+
+**Y-Statement:** Long-form Zimmermann/Fairbanks sentence — "In the context of..., facing..., we decided for... and neglected..., to achieve..., accepting..., because..." Optional for `draft`/`proposed`; **mandatory** for `accepted` ADRs.
 
 **Audit trail events:** `created` | `updated` | `reviewed` | `approved` | `rejected` | `deferred` | `superseded` | `deprecated` | `archived`
 

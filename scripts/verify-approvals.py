@@ -68,7 +68,7 @@ DEFAULT_SUBSTANTIVE_FIELDS = [
 DEFAULT_IMMUTABLE_AFTER_ACCEPTANCE_FIELDS = [
     "adr.id",
     "adr.title",
-    "adr.summary",
+    "adr.y_statement",
     "adr.project",
     "adr.component",
     "adr.priority",

@@ -15,7 +15,7 @@
 > **Decision Owner:** Marcus Chen (Head of IAM)  
 > **Decision Date:** 2026-02-15
 
-*Deferred proposal to adopt OpenID Federation 1.0 for automated trust establishment between NovaTrust and partner identity providers. Specification is not yet final and PingFederate support is roadmapped but not GA.*
+> *In the context of multi-organization OIDC trust establishment for the federated identity platform, facing the need for automated and scalable relying party onboarding, we decided for deferring OpenID Federation 1.0 adoption and neglected immediate automated metadata exchange via well-known endpoints, to achieve a stable trust foundation using proven bilateral metadata exchange while the OpenID Federation specification matures toward final standardization, accepting continued manual trust anchor configuration and slower partner onboarding velocity, because the specification is still in draft status with insufficient production deployments and library support to justify the integration risk.*
 
 ---
 

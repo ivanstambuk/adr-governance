@@ -468,7 +468,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | JSON Schema Validation | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ |
 | **Context & Problem** | | | | | | | | | | | | | | |
 | Problem Statement | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | 🟡 | 🟡 | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ |
-| Summary / Elevator Pitch | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
+| Summary / Elevator Pitch | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ~~✅~~ ❌ |
 | Business Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Technical Drivers | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Decision Drivers | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ |
@@ -613,7 +613,7 @@ The survey identified several features from other templates that our schema inco
 
 | Feature | Inspired by | How our schema addresses it |
 |---------|-------------|----------------------------|
-| `adr.summary` | NHS Wales (§3.11) — executive summary / elevator pitch | Optional string field (max 500 chars) in the `adr` metadata object. Provides a quick overview without reading the full context. |
+| `adr.y_statement` | Y-Statements (§3.5) — Zimmermann/Fairbanks structured decision sentence | Long-form Y-Statement field replacing the earlier `adr.summary`. Mandatory on accepted ADRs. Contains all 7 structural clauses: context, concern, decision, neglected, benefits, tradeoffs, rationale. See `docs/glossary.md`. |
 | `extension_fields` (x-*) | smadr (§3.3) — custom metadata via `x-` prefixed fields | Supported via `patternProperties` at the top level. Any `x-` prefixed field is accepted, enabling organization-specific extensions without schema changes. |
 | `alternatives[].rejection_rationale` | Merson (§3.10) — rationale for rejected alternatives; DRF (§3.13) — rejection reasoning in `synthesis` | Optional free-text field on each alternative explaining why it was not chosen. Complements the existing pros/cons analysis with explicit rejection reasoning. |
 | `decision.confidence` | Azure Well-Architected Framework (§10.9) — confidence level per decision | Optional enum (`low`, `medium`, `high`) on the `decision` object. Low-confidence decisions signal the need for shorter review cycles and earlier re-evaluation. |

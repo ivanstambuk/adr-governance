@@ -144,7 +144,7 @@ into the following categories:
 - Are negative consequences acknowledged honestly?
 - Is the `confirmation.description` actionable — does it describe *how*
   compliance will be verified?
-- Is the `adr.summary` a compelling elevator pitch that enables stakeholder
+- Is the `adr.y_statement` a compelling elevator pitch that enables stakeholder
   triage without reading the full ADR?
 
 ### 3. Logical Consistency

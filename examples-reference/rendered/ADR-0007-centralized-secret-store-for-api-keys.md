@@ -15,7 +15,7 @@
 > **Decision Owner:** Marcus Chen (Head of IAM)  
 > **Decision Date:** 2026-03-05
 
-*Rejected proposal to centralize all API runtime secrets (DB credentials, API keys, signing keys) in HashiCorp Vault. Native cloud provider secret stores (AWS Secrets Manager, Azure Key Vault) chosen instead due to lower operational burden and tighter IAM integration.*
+> *In the context of API runtime secret management across multi-cloud (AWS + Azure) Kubernetes workloads, facing the need for consistent secret rotation and access auditing without introducing a single point of failure, we decided for native cloud provider secret stores (AWS Secrets Manager + Azure Key Vault) with External Secrets Operator synchronization and rejected HashiCorp Vault as a centralized secrets engine and Sealed Secrets with External Secrets Operator, to achieve native IAM-based access control, managed automatic rotation, and elimination of a self-hosted Vault cluster as a critical dependency, accepting the need to maintain two provider-specific configurations and reduced portability across cloud providers, because native stores provide equivalent security guarantees with lower operational burden and better integration with each cloud platform's IAM and audit infrastructure.*
 
 ---
 

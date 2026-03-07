@@ -95,6 +95,29 @@ The `decision_level` field captures the **architectural altitude** of a decision
 
 > **Confidence on rejected ADRs:** Confidence applies to the *decision outcome*, not the proposal. A `rejected` ADR with `confidence: high` means the team is highly confident in the rejection (e.g., strong evidence that the proposed approach is wrong). A rejected ADR with `confidence: low` means the rejection was made under uncertainty and may warrant re-evaluation.
 
+## Y-Statement (Decision Summary)
+
+The `adr.y_statement` field captures a single **long-form Y-Statement** (Zimmermann/Fairbanks) — a structured one-sentence summary of the decision:
+
+> *"In the context of **[use case/user story]**, facing **[concern/quality attribute]**, we decided for **[option]** and neglected **[alternatives]**, to achieve **[benefits]**, accepting **[tradeoffs]**, because **[rationale]**."*
+
+The Y-Statement is a **curated distillation**, not a mechanical derivation. It requires authorial judgment to condense multi-paragraph schema fields into a single coherent sentence.
+
+**Enforcement:** Schema-optional, but **mandatory when status is `accepted`** (enforced by the validator as a hard error). A warning is issued for `proposed` ADRs without a Y-Statement.
+
+**Template mapping:**
+
+| Y-Statement Part | Schema Source |
+|---|---|
+| "In the context of..." | `context.summary` |
+| "facing..." | `context.business_drivers` + `context.technical_drivers` |
+| "we decided for..." | `decision.chosen_alternative` |
+| "and neglected..." | `alternatives[].name` (where not chosen) |
+| "to achieve..." | `consequences.positive` |
+| "accepting..." | `decision.tradeoffs` or `consequences.negative` |
+| "because..." | `decision.rationale` |
+
+**Origins:** Introduced by Olaf Zimmermann at SATURN 2012, building on George Fairbanks' Architecture Haiku concept (WICSA 2011). The "because" extension was added by Zimmermann for cases where the tradeoff clause alone doesn't convey the full rationale.
 
 ## ID Formats
 

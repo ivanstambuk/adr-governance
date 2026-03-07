@@ -252,13 +252,20 @@ def validate_file(
                     )
 
 
-        # --- Warn if adr.summary is missing on proposed/accepted ADRs ---
-        if status in {"proposed", "accepted"}:
-            summary = data.get("adr", {}).get("summary", "")
-            if not summary or not summary.strip():
+
+        # --- Require y_statement on accepted ADRs ---
+        y_stmt = data.get("adr", {}).get("y_statement", "")
+        if status in {"accepted", "superseded", "deprecated"}:
+            if not y_stmt or not y_stmt.strip():
+                errors.append(
+                    "  'adr.y_statement' is missing or empty — required for accepted ADRs "
+                    "(Zimmermann/Fairbanks Y-Statement, long form)"
+                )
+        elif status == "proposed":
+            if not y_stmt or not y_stmt.strip():
                 warnings.append(
-                    f"  'adr.summary' is missing or empty — recommended for {status} ADRs "
-                    f"(elevator pitch for stakeholder triage)"
+                    "  'adr.y_statement' is missing or empty — recommended before acceptance "
+                    "(will be mandatory when status changes to accepted)"
                 )
 
         # --- Warn if schema_version is missing ---

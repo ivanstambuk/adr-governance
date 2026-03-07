@@ -326,7 +326,7 @@ If the ADR on the base branch is already `accepted`, CI enforces a stronger rule
 - The decision core may **not** be edited in place
 
 The frozen decision core includes:
-- `adr.title`, `adr.summary`, `adr.project`, `adr.component`, `adr.priority`, `adr.decision_type`
+- `adr.title`, `adr.y_statement`, `adr.project`, `adr.component`, `adr.priority`, `adr.decision_type`
 - `authors`, `decision_owner`, `reviewers`, `approvals`
 - `context`
 - `architecturally_significant_requirements`

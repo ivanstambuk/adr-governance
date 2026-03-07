@@ -690,7 +690,7 @@ If the ADR on the base branch is already `accepted`, CI enforces a stronger rule
 - The decision core may **not** be edited in place
 
 The frozen decision core includes:
-- `adr.title`, `adr.summary`, `adr.project`, `adr.component`, `adr.priority`, `adr.decision_type`
+- `adr.title`, `adr.y_statement`, `adr.project`, `adr.component`, `adr.priority`, `adr.decision_type`
 - `authors`, `decision_owner`, `reviewers`, `approvals`
 - `context`
 - `architecturally_significant_requirements`
@@ -1073,6 +1073,29 @@ The `decision_level` field captures the **architectural altitude** of a decision
 
 > **Confidence on rejected ADRs:** Confidence applies to the *decision outcome*, not the proposal. A `rejected` ADR with `confidence: high` means the team is highly confident in the rejection (e.g., strong evidence that the proposed approach is wrong). A rejected ADR with `confidence: low` means the rejection was made under uncertainty and may warrant re-evaluation.
 
+## Y-Statement (Decision Summary)
+
+The `adr.y_statement` field captures a single **long-form Y-Statement** (Zimmermann/Fairbanks) — a structured one-sentence summary of the decision:
+
+> *"In the context of **[use case/user story]**, facing **[concern/quality attribute]**, we decided for **[option]** and neglected **[alternatives]**, to achieve **[benefits]**, accepting **[tradeoffs]**, because **[rationale]**."*
+
+The Y-Statement is a **curated distillation**, not a mechanical derivation. It requires authorial judgment to condense multi-paragraph schema fields into a single coherent sentence.
+
+**Enforcement:** Schema-optional, but **mandatory when status is `accepted`** (enforced by the validator as a hard error). A warning is issued for `proposed` ADRs without a Y-Statement.
+
+**Template mapping:**
+
+| Y-Statement Part | Schema Source |
+|---|---|
+| "In the context of..." | `context.summary` |
+| "facing..." | `context.business_drivers` + `context.technical_drivers` |
+| "we decided for..." | `decision.chosen_alternative` |
+| "and neglected..." | `alternatives[].name` (where not chosen) |
+| "to achieve..." | `consequences.positive` |
+| "accepting..." | `decision.tradeoffs` or `consequences.negative` |
+| "because..." | `decision.rationale` |
+
+**Origins:** Introduced by Olaf Zimmermann at SATURN 2012, building on George Fairbanks' Architecture Haiku concept (WICSA 2011). The "because" extension was added by Zimmermann for cases where the tradeoff clause alone doesn't convey the full rationale.
 
 ## ID Formats
 
@@ -1772,7 +1795,7 @@ governance:
   immutable_after_acceptance_fields:
     - "adr.id"
     - "adr.title"
-    - "adr.summary"
+    - "adr.y_statement"
     - "adr.project"
     - "adr.component"
     - "adr.priority"
@@ -1820,7 +1843,7 @@ The default `yamllint` line-length limit is 80 characters. This repository sets 
 
 ### Validator warnings vs. errors
 
-Only **errors** block the merge. Governance invariants such as invalid status/audit-trail combinations, missing required terminal-status audit events, archival on non-terminal ADRs, and broken supersession symmetry now fail as hard errors. **Warnings** are advisory quality signals — for example missing `adr.summary`, missing `adr.schema_version`, premature confidence on drafts, or suspicious chronology. To change the boundary further, modify the `validate_file()` function in [`scripts/validate-adr.py`](../scripts/validate-adr.py).
+Only **errors** block the merge. Governance invariants such as invalid status/audit-trail combinations, missing required terminal-status audit events, archival on non-terminal ADRs, and broken supersession symmetry now fail as hard errors. **Warnings** are advisory quality signals — for example missing `adr.y_statement`, missing `adr.schema_version`, premature confidence on drafts, or suspicious chronology. To change the boundary further, modify the `validate_file()` function in [`scripts/validate-adr.py`](../scripts/validate-adr.py).
 
 ---
 

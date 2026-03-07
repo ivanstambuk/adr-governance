@@ -15,7 +15,7 @@
 > **Decision Owner:** Marcus Chen (Head of Identity and Access Management)  
 > **Decision Date:** 2025-12-10
 
-*Switch from public to pairwise pseudonymous subject identifiers (PPID) to prevent cross-RP user correlation, satisfying GDPR data minimization and eIDAS 2.0 unlinkability.*
+> *In the context of the multi-tenant OIDC identity platform, facing GDPR cross-service tracking prevention requirements and the need to limit blast radius of subject identifier leakage, we decided for pairwise pseudonymous subject identifiers (PPID) per OIDC Core §8.1 and neglected public subject identifiers with contractual controls and encrypted JWE-wrapped subject claims, to achieve unlinkable per-relying-party identifiers that satisfy GDPR data minimization by design, accepting increased operational complexity in cross-RP correlation scenarios and the need for a sector identifier registry, because PPIDs provide cryptographic unlinkability that contractual controls cannot enforce and JWE-wrapped approaches only obscure rather than prevent correlation.*
 
 ---
 

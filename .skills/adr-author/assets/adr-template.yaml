@@ -8,7 +8,7 @@
 adr:
   id: "ADR-NNNN-short-kebab-case-title" # Replace with next sequential ID + slug
   title: "" # 10-200 characters
-  summary: "" # Optional: 2-4 sentence elevator pitch (max 500 chars)
+  y_statement: "" # Optional for drafts, mandatory on accepted. Long-form Y-Statement: "In the context of..., facing..., we decided for... and neglected..., to achieve..., accepting..., because..."
   status: "draft" # draft | proposed | accepted | superseded | deprecated | rejected | deferred; use draft for complete-but-not-yet-proposed ADRs
   created_at: "" # ISO 8601 datetime
   last_modified: "" # ISO 8601 datetime

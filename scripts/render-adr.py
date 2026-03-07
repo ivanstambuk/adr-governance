@@ -66,9 +66,9 @@ def render_adr(data: dict) -> str:
     lines.append(f"> **Decision Date:** {decision_date}")
     lines.append("")
 
-    # Summary (elevator pitch)
-    if adr.get("summary"):
-        lines.append(f"*{adr['summary'].strip()}*")
+    # Y-Statement (Zimmermann/Fairbanks long form)
+    if adr.get("y_statement"):
+        lines.append(f"> *{adr['y_statement'].strip()}*")
         lines.append("")
 
     # --- Authors & Reviewers ---

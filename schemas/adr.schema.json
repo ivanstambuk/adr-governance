@@ -47,10 +47,9 @@
                     "maxLength": 200,
                     "description": "Human-readable decision title."
                 },
-                "summary": {
+                "y_statement": {
                     "type": "string",
-                    "maxLength": 500,
-                    "description": "Executive elevator pitch (2–4 sentences). Enables stakeholders to triage ADRs without reading the full document."
+                    "description": "Zimmermann/Fairbanks Y-Statement (long form): 'In the context of [use case], facing [concern], we decided for [option] and neglected [alternatives], to achieve [benefits], accepting [tradeoffs], because [rationale].' Schema-optional but mandatory when status is accepted. See docs/glossary.md."
                 },
                 "status": {
                     "type": "string",

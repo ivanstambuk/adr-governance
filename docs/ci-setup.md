@@ -526,7 +526,7 @@ governance:
   immutable_after_acceptance_fields:
     - "adr.id"
     - "adr.title"
-    - "adr.summary"
+    - "adr.y_statement"
     - "adr.project"
     - "adr.component"
     - "adr.priority"
@@ -574,4 +574,4 @@ The default `yamllint` line-length limit is 80 characters. This repository sets 
 
 ### Validator warnings vs. errors
 
-Only **errors** block the merge. Governance invariants such as invalid status/audit-trail combinations, missing required terminal-status audit events, archival on non-terminal ADRs, and broken supersession symmetry now fail as hard errors. **Warnings** are advisory quality signals — for example missing `adr.summary`, missing `adr.schema_version`, premature confidence on drafts, or suspicious chronology. To change the boundary further, modify the `validate_file()` function in [`scripts/validate-adr.py`](../scripts/validate-adr.py).
+Only **errors** block the merge. Governance invariants such as invalid status/audit-trail combinations, missing required terminal-status audit events, archival on non-terminal ADRs, and broken supersession symmetry now fail as hard errors. **Warnings** are advisory quality signals — for example missing `adr.y_statement`, missing `adr.schema_version`, premature confidence on drafts, or suspicious chronology. To change the boundary further, modify the `validate_file()` function in [`scripts/validate-adr.py`](../scripts/validate-adr.py).

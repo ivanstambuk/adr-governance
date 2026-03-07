@@ -18,7 +18,7 @@ def make_accepted_adr() -> dict:
             "id": "ADR-1234-accepted-example",
             "status": "accepted",
             "title": "Accepted ADR",
-            "summary": "Summary",
+            "y_statement": "In the context of testing, facing validation needs, we decided for Option A and neglected alternatives, to achieve correctness, accepting complexity, because it was necessary.",
             "project": "project-x",
             "component": "auth",
             "priority": "high",
