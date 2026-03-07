@@ -3,7 +3,7 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install validate lint render bundle llms-full review summarize all
+.PHONY: help install validate lint test integrity render bundle llms-full review summarize all
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -13,10 +13,16 @@ install: ## Install Python dependencies
 	pip install -r requirements.txt
 
 validate: ## Validate all ADR YAML files against the schema
-	python3 scripts/validate-adr.py architecture-decision-log/ examples-reference/
+	bash scripts/run-validation.sh
 
 lint: ## Run YAML lint on all ADR files
 	yamllint -c .yamllint.yml architecture-decision-log/ examples-reference/
+
+test: ## Run the automated regression test suite
+	python3 -m unittest discover -s tests -v
+
+integrity: ## Run repository integrity checks and smoke tests
+	bash scripts/check-repo-integrity.sh
 
 render: ## Render all ADRs to Markdown
 	python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/
@@ -34,4 +40,4 @@ review: ## Generate a review prompt for an ADR (usage: make review ADR=path/to/f
 summarize: ## Summarize ADRs for stakeholders (usage: make summarize ADR=path/to/file.yaml)
 	python3 scripts/summarize-adr.py $(ADR)
 
-all: validate lint render llms-full ## Run validate + lint + render + llms-full
+all: validate lint test render llms-full ## Run validate + lint + test + render + llms-full

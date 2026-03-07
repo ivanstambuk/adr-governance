@@ -72,7 +72,7 @@ def render_adr(data: dict) -> str:
     authors = data.get("authors", [])
     reviewers = data.get("reviewers", [])
     approvals = data.get("approvals", [])
-    if authors or reviewers:
+    if authors or reviewers or approvals:
         lines.append("---")
         lines.append("")
         # Trailing two spaces for soft line breaks (compact, no paragraph gaps)
@@ -82,9 +82,26 @@ def render_adr(data: dict) -> str:
         if reviewers:
             parts.append(f"**Reviewers:** {', '.join(r.get('name', '') + ' (' + r.get('role', '') + ')' for r in reviewers)}")
         if approvals:
-            approved = [a for a in approvals if a.get("approved_at")]
-            if approved:
-                parts.append(f"**Approvals:** {', '.join(a.get('name', '') + ' (' + str(a.get('approved_at', '')) + ')' for a in approved)}")
+            approval_parts = []
+            for approval in approvals:
+                name = approval.get("name", "")
+                role = approval.get("role", "")
+                identity = str(approval.get("identity", "")).strip()
+                approved_at = approval.get("approved_at")
+
+                label = name or "Unknown approver"
+                if role:
+                    label += f" ({role})"
+                if identity:
+                    label += f" [{identity}]"
+                if approved_at:
+                    label += f" — approved {approved_at}"
+                else:
+                    label += " — pending"
+                approval_parts.append(label)
+
+            if approval_parts:
+                parts.append(f"**Approvals:** {'; '.join(approval_parts)}")
         for i, part in enumerate(parts):
             if i < len(parts) - 1:
                 lines.append(part + "  ")  # soft break

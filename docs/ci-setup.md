@@ -1,16 +1,17 @@
 # CI/CD Setup Guide — ADR Validation
 
-This guide explains how to set up automated ADR validation as a **pre-merge gate** on your CI/CD platform. Once configured, every pull request (or merge request) that touches ADR files will be automatically validated against the JSON Schema, checked for semantic consistency, and linted — **before** it can be merged.
+This guide explains how to set up automated ADR validation as a **pre-merge gate** on your CI/CD platform. Once configured, every pull request (or merge request) and every push to `main` will run the validation pipeline. The shipped CI templates intentionally do **not** narrow execution by file path, because governance-critical source changes live outside ADR YAML as well.
 
 ## What Gets Validated
 
-The validation pipeline runs three checks:
+The validation pipeline runs four checks:
 
 | Check | Tool | Blocks merge? |
 |-------|------|:-------------:|
 | **Schema compliance** | `validate-adr.py` + JSON Schema | ✅ Yes (errors) |
 | **Semantic consistency** | `validate-adr.py` (built-in) | ✅ Yes (errors) / ⚠️ No (warnings) |
 | **YAML formatting** | `yamllint` | ✅ Yes |
+| **Repository integrity** | `check-repo-integrity.sh` | ✅ Yes |
 
 **Schema compliance** verifies every ADR YAML file conforms to the ADR meta-model ([`schemas/adr.schema.json`](../schemas/adr.schema.json)) — correct structure, types, required fields, and enum values.
 
@@ -25,11 +26,18 @@ The validation pipeline runs three checks:
 
 **YAML formatting** catches indentation errors, trailing whitespace, and overly long lines.
 
+**Repository integrity** smoke-tests governance-critical tooling that would otherwise be outside the ADR-only validation path:
+- Python script syntax across `scripts/*.py`
+- Shell script syntax across `scripts/*.sh`
+- Runtime smoke tests for `render-adr.py`, `extract-decisions.py`, `review-adr.py`, and `summarize-adr.py`
+- The `tests/` regression suite via `python3 -m unittest discover`
+- `repomix.config.json` JSON syntax when present
+
 ## Prerequisites
 
 All platforms need:
 - **Python 3.11+** (the validator uses `datetime.fromisoformat` improvements and `X | Y` union syntax)
-- **pip packages:** `jsonschema`, `pyyaml` (for validation), `yamllint` (for linting)
+- **pip packages:** `jsonschema[format]`, `pyyaml` (for validation), `yamllint` (for linting)
 
 The validator itself is [`scripts/validate-adr.py`](../scripts/validate-adr.py) and the schema is [`schemas/adr.schema.json`](../schemas/adr.schema.json) — both are included in this repository.
 
@@ -391,7 +399,7 @@ To add custom validation rules (e.g., enforcing naming conventions, checking for
 
 ### Removing Example Validation
 
-If you don't want CI to validate the `examples-reference/` directory (e.g., you've deleted it), remove the corresponding step from the pipeline file.
+The shipped pipelines use [`scripts/run-validation.sh`](../scripts/run-validation.sh), which auto-discovers ADR directories. If you delete `examples-reference/`, no pipeline edits are required — the helper simply skips missing directories.
 
 ---
 ## Approval Identity Verification
@@ -446,12 +454,22 @@ The workflow is already configured with the verify step. Ensure the following:
 
 #### AWS CodeBuild / GCP Cloud Build
 
-These platforms don't natively manage PR approvals. The verify script runs in **dry-run mode** by default, listing the required identities without calling an API.
+These platforms don't natively manage PR approvals, and the shipped templates therefore run [`scripts/verify-approvals.py`](../scripts/verify-approvals.py) in **dry-run mode** by default. Out-of-the-box full approval-identity verification is **not** currently wired for AWS/GCP templates.
 
-To enable full verification when your source is GitHub:
-1. Store a `GITHUB_TOKEN` as an environment variable in the build project
-2. Change `--dry-run` to remove the flag in the buildspec/cloudbuild configuration
-3. The script will auto-detect the GitHub API based on the token
+If your source of truth is GitHub and your build environment can expose the required PR metadata, you can build a custom integration by invoking the verifier explicitly:
+1. Provide a GitHub token (`GITHUB_TOKEN` or `GH_TOKEN`)
+2. Pass the GitHub repository slug with `--repo owner/repo`
+3. Pass the pull request number with `--pr <number>`
+4. Force the platform with `--platform github`
+5. Ensure the checkout has the PR branch and base branch available so the script can diff against the base revision
+
+Example custom invocation:
+
+```bash
+python3 scripts/verify-approvals.py --platform github --repo owner/repo --pr 42
+```
+
+Treat this as a manual integration path, not a built-in supported default of the AWS/GCP templates.
 
 ### Configuring mandatory reviewers
 
@@ -545,7 +563,7 @@ If your CI environment defaults to an older Python, explicitly set the version i
 
 ### `yamllint` reports line-length warnings
 
-The default `yamllint` line-length limit is 80 characters. The pipeline configurations override this to **300 characters** because ADR YAML files frequently contain long prose in Markdown fields. If you want a different limit, edit the `yamllint` configuration in the pipeline file.
+The default `yamllint` line-length limit is 80 characters. This repository sets the limit to **300 characters** in [`.yamllint.yml`](../.yamllint.yml) because ADR YAML files frequently contain long prose in Markdown fields. If you want a different limit, edit [`.yamllint.yml`](../.yamllint.yml).
 
 ### Validator warnings vs. errors
 

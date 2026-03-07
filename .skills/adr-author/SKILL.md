@@ -136,9 +136,9 @@ Follow the same YAML generation process as Mode A. In the `audit_trail` entry, n
 ```yaml
 audit_trail:
   - event: "created"
-    date: "2026-03-06"
-    author: "AI Assistant"
-    description: "ADR generated from uploaded artifacts: [list filenames]. Gap-filling interview conducted for [list sections]."
+    by: "AI Assistant"
+    at: "2026-03-06T00:00:00Z"
+    details: "ADR generated from uploaded artifacts: [list filenames]. Gap-filling interview conducted for [list sections]."
 ```
 
 #### Step 6: Validate and save
@@ -258,4 +258,3 @@ python3 scripts/validate-adr.py architecture-decision-log/
 ```
 
 The script exits with code 0 if valid, 1 if validation errors are found.
-

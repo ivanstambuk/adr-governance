@@ -1,0 +1,95 @@
+from __future__ import annotations
+
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+from _helpers import REPO_ROOT, load_example_adr, load_module, write_yaml
+
+
+class ValidateAdrTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.module = load_module("validate_adr", "scripts/validate-adr.py")
+        cls.validator = cls.module.build_validator(cls.module.load_schema())
+
+    def test_format_errors_are_enforced(self):
+        data = load_example_adr()
+        data["adr"]["created_at"] = "not-a-datetime"
+        data["authors"][0]["email"] = "not-an-email"
+        data["decision_owner"]["email"] = "still-not-an-email"
+        data["references"][0]["url"] = "not-a-uri"
+        data["audit_trail"][0]["at"] = "not-a-datetime"
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            errors, _warnings = self.module.validate_file(path, self.validator)
+
+        joined = "\n".join(errors)
+        self.assertIn("adr.created_at", joined)
+        self.assertIn("authors.0.email", joined)
+        self.assertIn("decision_owner.email", joined)
+        self.assertIn("references.0.url", joined)
+        self.assertIn("audit_trail.0.at", joined)
+
+    def test_filename_must_exactly_match_adr_id(self):
+        data = load_example_adr()
+        data["adr"]["id"] = "ADR-9999-id-bar"
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / "ADR-9999-filename-foo.yaml", data)
+            errors, _warnings = self.module.validate_file(path, self.validator)
+
+        self.assertTrue(
+            any("does not exactly match" in error for error in errors),
+            errors,
+        )
+
+    def test_last_modified_before_created_at_warns(self):
+        data = load_example_adr()
+        data["adr"]["created_at"] = "2026-03-06T10:00:00Z"
+        data["adr"]["last_modified"] = "2026-03-05T10:00:00Z"
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            path = write_yaml(Path(tmp_dir) / f"{data['adr']['id']}.yaml", data)
+            _errors, warnings = self.module.validate_file(path, self.validator)
+
+        self.assertTrue(
+            any("adr.last_modified" in warning for warning in warnings),
+            warnings,
+        )
+
+    def test_duplicate_ids_fail_when_validating_multiple_directories(self):
+        data_a = load_example_adr()
+        data_b = load_example_adr()
+        data_b["adr"]["title"] = "Duplicate ID in another directory"
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            dir_a = Path(tmp_dir) / "architecture-decision-log"
+            dir_b = Path(tmp_dir) / "examples-reference"
+            dir_a.mkdir()
+            dir_b.mkdir()
+            write_yaml(dir_a / f"{data_a['adr']['id']}.yaml", data_a)
+            write_yaml(dir_b / f"{data_b['adr']['id']}.yaml", data_b)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "scripts/validate-adr.py",
+                    str(dir_a),
+                    str(dir_b),
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("duplicate ADR ID", result.stdout)
+
+
+if __name__ == "__main__":
+    unittest.main()

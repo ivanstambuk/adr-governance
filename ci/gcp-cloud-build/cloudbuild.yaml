@@ -31,31 +31,23 @@ steps:
 
   # Step 2: Validate architecture-decision-log/
   - name: "python:3.12-slim"
-    id: "validate-adl"
+    id: "repo-integrity"
     entrypoint: "bash"
     args:
       - "-c"
       - |
         export PATH="$$HOME/.local/bin:$$PATH"
-        if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
-          python3 scripts/validate-adr.py architecture-decision-log/
-        else
-          echo "No ADR files in architecture-decision-log/ — skipping validation"
-        fi
+        bash scripts/check-repo-integrity.sh
 
-  # Step 3: Validate examples-reference/
+  # Step 3: Validate ADR sources
   - name: "python:3.12-slim"
-    id: "validate-examples"
+    id: "validate-adr-sources"
     entrypoint: "bash"
     args:
       - "-c"
       - |
         export PATH="$$HOME/.local/bin:$$PATH"
-        if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
-          python3 scripts/validate-adr.py examples-reference/
-        else
-          echo "No ADR files in examples-reference/ — skipping validation"
-        fi
+        bash scripts/run-validation.sh
 
   # Step 4: YAML lint
   - name: "python:3.12-slim"
@@ -82,8 +74,9 @@ steps:
 
   # Step 5: Verify approval identities
   # Note: GCP Cloud Build does not natively manage PR approvals.
-  # If your source is GitHub, set GITHUB_TOKEN as a substitution variable
-  # and the script will query the GitHub API.
+  # The shipped template therefore uses --dry-run. Full approval-identity
+  # verification requires a custom integration that passes GitHub PR metadata
+  # explicitly (for example: --platform github --repo owner/repo --pr 42).
   - name: "python:3.12-slim"
     id: "verify-approvals"
     entrypoint: "bash"

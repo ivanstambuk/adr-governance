@@ -251,9 +251,9 @@ Follow the same YAML generation process as the standard Socratic mode. In the `a
 ```yaml
 audit_trail:
   - event: "created"
-    date: "2026-03-06"
-    author: "AI Assistant"
-    description: "ADR generated from uploaded artifacts: [list filenames]. Gap-filling interview conducted for [list sections]."
+    by: "AI Assistant"
+    at: "2026-03-06T00:00:00Z"
+    details: "ADR generated from uploaded artifacts: [list filenames]. Gap-filling interview conducted for [list sections]."
 ```
 
 **Step 6 — Search-Before-Ask still applies:**
@@ -347,7 +347,7 @@ When the user provides ADR YAML content to validate:
    - All required top-level sections present
    - All required fields within each section present
    - All enum values valid
-   - ID format matches `^ADR-[0-9]{4}(-[a-z0-9]+)*$`
+   - ID format matches `^ADR-[0-9]{4}(-[a-z0-9]+)+$`
    - At least 2 alternatives
 2. Check semantic consistency:
    - `decision.chosen_alternative` matches an `alternatives[].name`
@@ -381,7 +381,7 @@ Report issues as: `ERROR` (schema violation), `WARNING` (semantic concern), or `
 
 **Markdown-native fields** (support full Markdown + Mermaid diagrams via code fences):
 - `context.summary`
-- `alternatives[].summary`
+- `alternatives[].description`
 - `decision.rationale`
 - `decision.tradeoffs`
 - `confirmation.description`
@@ -397,14 +397,14 @@ Once the user has a complete ADR YAML, advise them to:
 1. **Save the file** as `architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml`
 2. **Run validation:**
    ```bash
-   pip install jsonschema pyyaml yamllint  # one-time setup
+   pip install "jsonschema[format]" pyyaml yamllint  # one-time setup
    python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-title.yaml
    ```
 3. **Run the pre-review quality gate:**
    ```bash
    python3 scripts/review-adr.py architecture-decision-log/ADR-NNNN-title.yaml
    ```
-4. **Open a pull request** on a branch named `adr/NNNN-short-title`
+4. **Open a pull request** on a branch named `adr/ADR-NNNN-short-title`
 5. **CI will validate automatically** — the PR becomes the decision forum
 
 ---

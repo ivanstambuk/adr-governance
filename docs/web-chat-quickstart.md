@@ -213,10 +213,10 @@ The AI will output complete ADR YAML. To finalize:
 1. **Copy the YAML** and save it as `architecture-decision-log/ADR-NNNN-short-kebab-case-title.yaml`
 2. **Validate locally** (recommended):
    ```bash
-   pip install jsonschema pyyaml yamllint
+   pip install "jsonschema[format]" pyyaml yamllint
    python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-title.yaml
    ```
-3. **Open a pull request** on a branch named `adr/NNNN-short-title`
+3. **Open a pull request** on a branch named `adr/ADR-NNNN-short-title`
 4. **CI validates automatically** — the PR becomes the decision forum
 
 ## Re-bundling After Changes

@@ -2,22 +2,10 @@ name: Validate ADR
 
 on:
   pull_request:
-    paths:
-      - "architecture-decision-log/**"
-      - "examples-reference/**"
-      - "schemas/**"
-      - "scripts/validate-adr.py"
-      - "scripts/verify-approvals.py"
   pull_request_review:
     types: [submitted]
   push:
     branches: [main]
-    paths:
-      - "architecture-decision-log/**"
-      - "examples-reference/**"
-      - "schemas/**"
-      - "scripts/validate-adr.py"
-      - "scripts/verify-approvals.py"
 
 jobs:
   validate:
@@ -36,21 +24,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Validate ADL
-        run: |
-          if [ -d "architecture-decision-log" ] && [ "$(ls -A architecture-decision-log/*.yaml 2>/dev/null)" ]; then
-            python3 scripts/validate-adr.py architecture-decision-log/
-          else
-            echo "No ADR files in architecture-decision-log/ — skipping validation"
-          fi
+      - name: Repository integrity checks
+        run: bash scripts/check-repo-integrity.sh
 
-      - name: Validate examples-reference/
-        run: |
-          if [ -d "examples-reference" ] && [ "$(ls -A examples-reference/*.yaml 2>/dev/null)" ]; then
-            python3 scripts/validate-adr.py examples-reference/
-          else
-            echo "No ADR files in examples-reference/ — skipping validation"
-          fi
+      - name: Validate ADR sources
+        run: bash scripts/run-validation.sh
 
       - name: YAML lint (ADL)
         uses: ibiqlik/action-yamllint@v3

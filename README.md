@@ -251,7 +251,7 @@ cp .skills/adr-author/assets/adr-template.yaml \
 
 ```bash
 # Install dependencies
-pip install jsonschema pyyaml yamllint
+pip install "jsonschema[format]" pyyaml yamllint
 
 # Validate schema + semantic consistency
 python3 scripts/validate-adr.py architecture-decision-log/ADR-0001-your-decision-title.yaml
@@ -260,10 +260,10 @@ python3 scripts/validate-adr.py architecture-decision-log/ADR-0001-your-decision
 python3 scripts/review-adr.py architecture-decision-log/ADR-0001-your-decision-title.yaml
 
 # Open a PR — CI validates automatically
-git checkout -b adr/0001-your-decision-title
+git checkout -b adr/ADR-0001-your-decision-title
 git add architecture-decision-log/ADR-0001-your-decision-title.yaml
 git commit -m "feat(adr): ADR-0001 your decision title"
-git push origin adr/0001-your-decision-title
+git push origin adr/ADR-0001-your-decision-title
 ```
 
 The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
@@ -280,13 +280,13 @@ Each ADR YAML file captures a single **architecturally significant** decision �
 | `authors` | ✅ | Who drafted the ADR |
 | `decision_owner` | ✅ | Single accountable person |
 | `context` | ✅ | Problem summary (Markdown), business/technical drivers, constraints |
-| `alternatives` | ✅ | ≥2 alternatives with summary (Markdown), pros, cons, cost, risk, rejection rationale |
+| `alternatives` | ✅ | ≥2 alternatives with description (Markdown), pros, cons, cost, risk, rejection rationale |
 | `decision` | ✅ | Chosen alternative, rationale (Markdown), tradeoffs (Markdown), date, confidence |
 | `consequences` | ✅ | Positive and negative outcomes |
 | `confirmation` | ✅ | How the decision's implementation will be verified; artifact IDs (optional, backfilled later) |
 | `reviewers` | | People who reviewed |
 | `approvals` | | Formal approvals with timestamps and platform identities for CI verification |
-| `requirements` | | **Architecturally Significant Requirements (ASRs)** — quality attributes, architectural constraints, and non-functional requirements that drove this decision. Not feature-level requirements |
+| `architecturally_significant_requirements` | | **Architecturally Significant Requirements (ASRs)** — quality attributes, architectural constraints, and non-functional requirements that drove this decision. Not feature-level requirements |
 | `dependencies` | | Internal and external dependencies |
 | `references` | | External references, standards, evidence |
 | `lifecycle` | | Review cadence, supersession chain, archival |
@@ -298,7 +298,7 @@ Each ADR YAML file captures a single **architecturally significant** decision �
 
 Automated validation is the enforcement mechanism that makes the governance process real. Without it, the schema is a suggestion; with it, the schema is a contract.
 
-**GitHub Actions** is preconfigured — the workflow at [`.github/workflows/validate-adr.yml`](.github/workflows/validate-adr.yml) runs on every PR. You just need to [enable branch protection](docs/ci-setup.md#github-actions) to make it a merge gate.
+**GitHub Actions** is preconfigured — the workflow at [`.github/workflows/validate-adr.yml`](.github/workflows/validate-adr.yml) runs on every PR and every push to `main`. It intentionally avoids narrow path filters so governance/tooling changes cannot bypass CI. You just need to [enable branch protection](docs/ci-setup.md#github-actions) to make it a merge gate.
 
 **Other platforms** have ready-to-use pipeline files in the `ci/` directory:
 

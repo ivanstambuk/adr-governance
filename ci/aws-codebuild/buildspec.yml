@@ -37,23 +37,14 @@ phases:
 
   build:
     commands:
-      # Validate architecture-decision-log/
+      # Repository integrity checks
       - |
-        echo "=== Validating architecture-decision-log/ ==="
-        if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
-          python3 scripts/validate-adr.py architecture-decision-log/
-        else
-          echo "No ADR files in architecture-decision-log/ — skipping validation"
-        fi
+        echo "=== Repository integrity checks ==="
+        bash scripts/check-repo-integrity.sh
 
-      # Validate examples-reference/
+      # Validate ADR sources
       - |
-        echo "=== Validating examples-reference/ ==="
-        if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
-          python3 scripts/validate-adr.py examples-reference/
-        else
-          echo "No ADR files in examples-reference/ — skipping validation"
-        fi
+        bash scripts/run-validation.sh
 
   post_build:
     commands:
@@ -75,8 +66,10 @@ phases:
 
       # Verify approval identities
       # Note: AWS CodeBuild does not natively manage PR approvals.
-      # If your source is GitHub, set GITHUB_TOKEN as an environment variable
-      # in the CodeBuild project and the script will query the GitHub API.
+      # The shipped template therefore uses --dry-run. Full approval-identity
+      # verification requires a custom integration that passes GitHub PR
+      # metadata explicitly (for example: --platform github --repo owner/repo
+      # --pr 42) alongside a GitHub token.
       - |
         echo "=== Verifying approval identities ==="
         python3 scripts/verify-approvals.py --dry-run

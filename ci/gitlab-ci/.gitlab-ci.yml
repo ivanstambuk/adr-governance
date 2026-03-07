@@ -24,42 +24,14 @@ stages:
 validate-adr:
   stage: validate
   rules:
-    # Run on merge requests when relevant files change
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      changes:
-        - architecture-decision-log/**
-        - examples-reference/**
-        - schemas/**
-        - scripts/validate-adr.py
-        - scripts/verify-approvals.py
-    # Run on pushes to main
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - architecture-decision-log/**
-        - examples-reference/**
-        - schemas/**
-        - scripts/validate-adr.py
-        - scripts/verify-approvals.py
   before_script:
     - pip install --quiet -r requirements.txt
   script:
-    # Validate architecture-decision-log/
-    - |
-      echo "=== Validating architecture-decision-log/ ==="
-      if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
-        python3 scripts/validate-adr.py architecture-decision-log/
-      else
-        echo "No ADR files in architecture-decision-log/ — skipping validation"
-      fi
+    - bash scripts/check-repo-integrity.sh
 
-    # Validate examples-reference/
-    - |
-      echo "=== Validating examples-reference/ ==="
-      if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
-        python3 scripts/validate-adr.py examples-reference/
-      else
-        echo "No ADR files in examples-reference/ — skipping validation"
-      fi
+    - bash scripts/run-validation.sh
 
     # YAML lint
     - |

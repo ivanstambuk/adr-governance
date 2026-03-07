@@ -5,29 +5,24 @@ Validate ADR YAML files against the ADR JSON Schema.
 Usage:
     python3 validate-adr.py <file_or_directory> [<file_or_directory> ...]
 
-Requires: pip install jsonschema pyyaml
+Requires: pip install "jsonschema[format]" pyyaml
 """
 
 import json
-import re
 import sys
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 
 try:
     import yaml
-    from jsonschema import validate, ValidationError, Draft202012Validator
+    from jsonschema import Draft202012Validator
 except ImportError:
     print("ERROR: Missing dependencies. Install with:")
-    print("  pip install jsonschema pyyaml")
+    print('  pip install "jsonschema[format]" pyyaml')
     sys.exit(2)
 
 SCHEMA_PATH = Path(__file__).parent.parent / "schemas" / "adr.schema.json"
 REQUIRED_SCHEMA_FORMATS = {"date-time", "date", "email", "uri"}
-
-# Regex to extract ADR-NNNN prefix from filenames
-FILENAME_ID_RE = re.compile(r"^(ADR-\d{4})")
 
 
 def load_schema():
@@ -217,6 +212,7 @@ def validate_file(
         # --- Check decision_date within created_at → last_modified range ---
         decision_date = decision.get("decision_date", "")
         created_at = data.get("adr", {}).get("created_at", "")
+        last_modified = data.get("adr", {}).get("last_modified", "")
         if decision_date and created_at:
             # Compare date strings (ISO 8601 sorts lexicographically)
             created_date = str(created_at)[:10]  # extract date portion
@@ -224,6 +220,14 @@ def validate_file(
                 warnings.append(
                     f"  decision.decision_date ({decision_date}) is before "
                     f"adr.created_at ({created_date}) — decision cannot predate the ADR"
+                )
+        if created_at and last_modified:
+            created_dt = parse_iso_datetime(str(created_at))
+            last_modified_dt = parse_iso_datetime(str(last_modified))
+            if created_dt and last_modified_dt and last_modified_dt < created_dt:
+                warnings.append(
+                    f"  adr.last_modified ({last_modified}) is earlier than "
+                    f"adr.created_at ({created_at}) — modification time cannot predate creation"
                 )
 
         # --- Check archival consistency ---
@@ -242,16 +246,10 @@ def validate_file(
         adr_id = data.get("adr", {}).get("id", "")
         if adr_id:
             filename = filepath.stem  # e.g. "ADR-0001-dpop-over-mtls"
-            match = FILENAME_ID_RE.match(filename)
-            if match:
-                filename_id = match.group(1)
-                # Extract just the ADR-NNNN portion from the YAML id
-                yaml_id_match = FILENAME_ID_RE.match(adr_id)
-                yaml_id_prefix = yaml_id_match.group(1) if yaml_id_match else adr_id
-                if filename_id != yaml_id_prefix:
-                    errors.append(
-                        f"  filename prefix '{filename_id}' does not match adr.id '{adr_id}'"
-                    )
+            if filename != adr_id:
+                errors.append(
+                    f"  filename '{filename}' does not exactly match adr.id '{adr_id}'"
+                )
 
     return errors, warnings
 

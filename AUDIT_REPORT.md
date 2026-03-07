@@ -86,17 +86,17 @@ Tracker status is currently `Open` for all items.
 | R-02 | Critical | Governance | Approval evidence for proposed/accepted ADRs is too optional | Resolved 2026-03-06 |
 | R-03 | Critical | Auditability | The audit trail is described as immutable but is editable as maintenance | Resolved 2026-03-06 |
 | R-04 | High | Process model | Accepted ADR immutability is internally contradictory across docs and tooling | Resolved 2026-03-07 |
-| R-05 | High | CI coverage | CI does not trigger on several governance-critical source files | Open |
-| R-06 | High | Platform support | AWS/GCP approval-verification guidance is incomplete and currently overstated | Open |
-| R-07 | High | AI bundle | The web-chat bundle is not actually a complete framework artifact | Open |
-| R-08 | High | AI assets | Skill and bundle instructions already drift from the schema/tooling | Open |
-| R-09 | High | Quality engineering | No automated regression/sync test suite exists | Open |
-| R-10 | Medium | Lifecycle semantics | `draft` does not behave like a true work-in-progress state | Open |
-| R-11 | Medium | Lifecycle automation | Periodic review is documented but not operationalized | Open |
-| R-12 | Medium | Identifier integrity | Identifier checks are incomplete in validation and CI | Open |
-| R-13 | Medium | Policy enforcement | Too many normative governance failures are warnings, not errors | Open |
-| R-14 | Medium | Generated outputs | Generated docs/LLM assets rely on optional local hooks and are not checked in CI | Open |
-| R-15 | Low | Consistency/UX | Smaller documentation and rendering inconsistencies remain | Open |
+| R-05 | High | CI coverage | CI does not trigger on several governance-critical source files | Resolved 2026-03-07 |
+| R-06 | High | Platform support | AWS/GCP approval-verification guidance is incomplete and currently overstated | Resolved 2026-03-07 |
+| R-07 | High | AI bundle | The web-chat bundle is not actually a complete framework artifact | Needs decision 2026-03-07 |
+| R-08 | High | AI assets | Skill and bundle instructions already drift from the schema/tooling | Resolved 2026-03-07 |
+| R-09 | High | Quality engineering | No automated regression/sync test suite exists | Resolved 2026-03-07 |
+| R-10 | Medium | Lifecycle semantics | `draft` does not behave like a true work-in-progress state | Needs decision 2026-03-07 |
+| R-11 | Medium | Lifecycle automation | Periodic review is documented but not operationalized | Needs decision 2026-03-07 |
+| R-12 | Medium | Identifier integrity | Identifier checks are incomplete in validation and CI | Resolved 2026-03-07 |
+| R-13 | Medium | Policy enforcement | Too many normative governance failures are warnings, not errors | Needs decision 2026-03-07 |
+| R-14 | Medium | Generated outputs | Generated docs/LLM assets rely on optional local hooks and are not checked in CI | Needs decision 2026-03-07 |
+| R-15 | Low | Consistency/UX | Smaller documentation and rendering inconsistencies remain | Resolved 2026-03-07 |
 
 ---
 
@@ -221,7 +221,7 @@ Tracker status is currently `Open` for all items.
 ### R-05 - High - CI does not trigger on several governance-critical source files
 
 - Area: CI coverage
-- Status: Open
+- Status: Resolved 2026-03-07
 - Evidence:
   - [`.github/workflows/validate-adr.yml`](.github/workflows/validate-adr.yml) and the platform templates trigger on ADR files, schema files, and only two scripts.
   - They do not trigger on key governance/tooling files such as:
@@ -238,18 +238,26 @@ Tracker status is currently `Open` for all items.
 - Impact:
   - Governance-critical source changes can merge without the repo's own validation path running.
   - This is one reason drift between docs, instructions, and tooling can accumulate silently.
+- Resolution:
+  - [`.github/workflows/validate-adr.yml`](.github/workflows/validate-adr.yml), [ci/azure-devops/azure-pipelines.yml](ci/azure-devops/azure-pipelines.yml), and [ci/gitlab-ci/.gitlab-ci.yml](ci/gitlab-ci/.gitlab-ci.yml) no longer use the narrow ADR-only path filters; they now run on every PR/MR and every push to the default branch.
+  - All shipped CI templates now run [scripts/check-repo-integrity.sh](scripts/check-repo-integrity.sh) before ADR validation.
+  - [scripts/check-repo-integrity.sh](scripts/check-repo-integrity.sh) adds lightweight smoke coverage for governance tooling outside the main validator:
+    - Python syntax checks for `scripts/*.py`
+    - shell syntax checks for `scripts/*.sh`
+    - runtime smoke tests for `render-adr.py`, `extract-decisions.py`, `review-adr.py`, and `summarize-adr.py`
+    - `repomix.config.json` syntax validation when present
+  - Supporting docs now describe the broader CI coverage and the repository-integrity layer.
 - Recommended actions:
-  1. Expand CI trigger paths to cover all governance source files.
-  2. Add smoke checks for non-validation scripts where relevant.
-  3. Add a lightweight "repo integrity" job for schema/template/skill/bundle consistency.
-  4. Revisit path filtering after coverage is broadened; current filtering is too narrow for the advertised surface area.
+  1. Keep the default-branch / PR pipelines broad; do not reintroduce ADR-only path filtering unless a replacement integrity mechanism exists.
+  2. Expand `check-repo-integrity.sh` if more shipped tooling becomes governance-critical.
+  3. If adopters insist on path filters in their own repos, document the minimum governance-source file set explicitly.
 - Discussion notes:
   - This is less about more CI and more about covering the actual source of truth.
 
 ### R-06 - High - AWS/GCP approval-verification guidance is incomplete and currently overstated
 
 - Area: Platform support
-- Status: Open
+- Status: Resolved 2026-03-07
 - Evidence:
   - [docs/ci-setup.md](docs/ci-setup.md) says AWS/GCP can enable full approval verification by storing `GITHUB_TOKEN` and removing `--dry-run`.
   - [ci/gcp-cloud-build/cloudbuild.yaml](ci/gcp-cloud-build/cloudbuild.yaml) and [ci/aws-codebuild/buildspec.yml](ci/aws-codebuild/buildspec.yml) both run [scripts/verify-approvals.py](scripts/verify-approvals.py) in `--dry-run` mode by default.
@@ -258,22 +266,20 @@ Tracker status is currently `Open` for all items.
 - Impact:
   - The current docs make this capability sound easier and more complete than it is.
   - Adopters may believe they have approval identity enforcement on AWS/GCP when they actually only have a dry-run listing.
+- Resolution:
+  - [docs/ci-setup.md](docs/ci-setup.md) now states that the shipped AWS/GCP templates run approval verification in dry-run mode by default.
+  - [docs/ci-setup.md](docs/ci-setup.md) now describes full GitHub-backed approval verification on AWS/GCP as a manual custom integration path that requires explicit `--platform`, `--repo`, and `--pr` wiring plus a token.
+  - [ci/gcp-cloud-build/cloudbuild.yaml](ci/gcp-cloud-build/cloudbuild.yaml) and [ci/aws-codebuild/buildspec.yml](ci/aws-codebuild/buildspec.yml) now describe the same limitation in-template so adopters do not over-read the shipped defaults.
 - Recommended actions:
-  1. Decide whether AWS/GCP approval verification is truly supported today.
-  2. If yes:
-     - document the exact required env vars and CLI arguments
-     - update templates to pass `--platform`, `--repo`, and `--pr` explicitly
-     - add end-to-end test coverage
-  3. If not:
-     - reduce the claims in README/docs
-     - describe it as a future enhancement or manual integration path
+  1. If first-class AWS/GCP approval verification is desired later, add end-to-end templates that pass PR metadata explicitly instead of relying on dry-run output.
+  2. Keep the docs conservative until that integration is implemented and tested.
 - Discussion notes:
   - This is a product-trust issue more than an implementation detail.
 
 ### R-07 - High - The web-chat bundle is not actually a complete framework artifact
 
 - Area: AI bundle
-- Status: Open
+- Status: Needs decision 2026-03-07
 - Evidence:
   - [repomix.config.json](repomix.config.json) explicitly excludes:
     - [docs/web-chat-quickstart.md](docs/web-chat-quickstart.md)
@@ -296,11 +302,12 @@ Tracker status is currently `Open` for all items.
   3. If "full framework" remains the promise, include the excluded source files or generate a second, larger bundle variant.
 - Discussion notes:
   - This is especially important because AI/web-chat usage is one of the project's headline differentiators.
+  - Not changed in this pass because it requires a product decision about bundle scope, not just a repo-alignment fix.
 
 ### R-08 - High - Skill and bundle instructions already drift from the schema and validator
 
 - Area: AI assets
-- Status: Open
+- Status: Resolved 2026-03-07
 - Evidence:
   - [`.skills/adr-author/SKILL.md`](.skills/adr-author/SKILL.md) artifact-driven example uses `audit_trail` fields `date`, `author`, and `description`, but the schema requires `by`, `at`, and optional `details`.
   - [repomix-instruction.md](repomix-instruction.md) repeats the same schema-invalid `audit_trail` example.
@@ -309,20 +316,22 @@ Tracker status is currently `Open` for all items.
 - Impact:
   - The AI-facing experience can actively generate invalid ADR content or misleading validation expectations.
   - This undermines the repo's "AI-native" positioning.
+- Resolution:
+  - [`.skills/adr-author/SKILL.md`](.skills/adr-author/SKILL.md) and [repomix-instruction.md](repomix-instruction.md) now use the correct `audit_trail` field names: `by`, `at`, and `details`.
+  - [repomix-instruction.md](repomix-instruction.md) now references `alternatives[].description` instead of the nonexistent `alternatives[].summary`.
+  - AI-facing instructions now use the correct ADR branch naming pattern and the current `jsonschema[format]` install command.
+  - [`.skills/adr-author/references/SCHEMA_REFERENCE.md`](.skills/adr-author/references/SCHEMA_REFERENCE.md) was updated to reflect current validator behavior, including exact filename/`adr.id` matching and immutable-after-acceptance rules.
+  - Machine-checked consistency coverage now exists in the new `tests/` suite to catch future schema/instruction drift.
 - Recommended actions:
-  1. Do a line-by-line schema/tooling alignment pass across:
-     - [`.skills/adr-author/SKILL.md`](.skills/adr-author/SKILL.md)
-     - [repomix-instruction.md](repomix-instruction.md)
-     - [`.skills/adr-author/references/SCHEMA_REFERENCE.md`](.skills/adr-author/references/SCHEMA_REFERENCE.md)
-  2. Add machine-checked fixtures that fail if instructions reference nonexistent fields.
-  3. Treat AI instruction assets as first-class governed artifacts.
+  1. Keep AI instruction assets under the same regression suite as validator/tooling changes.
+  2. Treat schema-facing documentation as governed source, not passive prose.
 - Discussion notes:
   - The drift is already real, not hypothetical.
 
 ### R-09 - High - No automated regression or sync test suite exists
 
 - Area: Quality engineering
-- Status: Open
+- Status: Resolved 2026-03-07
 - Evidence:
   - The repo has no dedicated unit/golden/integration test directory.
   - CI currently validates example ADR data and runs linting, but does not test:
@@ -335,15 +344,14 @@ Tracker status is currently `Open` for all items.
 - Impact:
   - Regressions are likely to be found by users or by manual review after drift has already landed.
   - This is the systemic reason several current inconsistencies were able to accumulate.
+- Resolution:
+  - A new `tests/` suite now covers validator behavior, approval-verification rules, tool output contracts, and AI/doc asset consistency.
+  - [scripts/check-repo-integrity.sh](scripts/check-repo-integrity.sh) now runs the regression suite via `python3 -m unittest discover -s tests -v`.
+  - CI templates now run [scripts/check-repo-integrity.sh](scripts/check-repo-integrity.sh), so the regression suite executes on every shipped pipeline path.
+  - Local developer ergonomics now include [Makefile](Makefile) targets for `test` and `integrity`.
 - Recommended actions:
-  1. Add a small but targeted test suite:
-     - validator format enforcement
-     - approval verification scenarios
-     - append-only audit-trail rules
-     - draft/proposed/accepted lifecycle expectations
-     - bundle/skill/schema sync
-  2. Add golden tests for at least one rendered ADR, one extracted decision summary, and one summarized ADR output.
-  3. Run those tests in CI on every relevant change.
+  1. Extend the suite incrementally as unresolved governance decisions become concrete.
+  2. Add deeper golden/output coverage if renderer or bundle behavior becomes more central.
 - Discussion notes:
   - This does not need to start big.
   - A focused fixture suite would deliver a lot of value quickly.
@@ -351,7 +359,7 @@ Tracker status is currently `Open` for all items.
 ### R-10 - Medium - `draft` does not behave like a true work-in-progress state
 
 - Area: Lifecycle semantics
-- Status: Open
+- Status: Needs decision 2026-03-07
 - Evidence:
   - [docs/adr-process.md](docs/adr-process.md) presents `draft` as WIP authoring state.
   - [schemas/adr.schema.json](schemas/adr.schema.json) always requires `decision.chosen_alternative`, `decision.rationale`, and `decision.decision_date`.
@@ -365,11 +373,12 @@ Tracker status is currently `Open` for all items.
   3. If no, change the docs to make it clear that `draft` means "complete but not yet proposed", not early WIP.
 - Discussion notes:
   - This is mostly a product/UX decision, but it affects schema design directly.
+  - Not changed in this pass because both "true WIP draft" and "complete-but-unproposed draft" are plausible models.
 
 ### R-11 - Medium - Periodic review is documented but not operationalized
 
 - Area: Lifecycle automation
-- Status: Open
+- Status: Needs decision 2026-03-07
 - Evidence:
   - [docs/adr-process.md](docs/adr-process.md) says ADRs with review cadence "will be flagged for periodic review".
   - No script currently scans for overdue `lifecycle.next_review_date`.
@@ -386,11 +395,12 @@ Tracker status is currently `Open` for all items.
   3. Surface overdue status in rendered Markdown and/or decision-log indexes.
 - Discussion notes:
   - This is a good candidate for a scheduled CI workflow rather than PR-only validation.
+  - Not changed in this pass because advisory versus blocking review enforcement is a policy choice.
 
 ### R-12 - Medium - Identifier checks are incomplete in validation and CI
 
 - Area: Identifier integrity
-- Status: Open
+- Status: Resolved 2026-03-07
 - Evidence:
   - [scripts/validate-adr.py](scripts/validate-adr.py) only compares the `ADR-NNNN` prefix between filename and `adr.id`; it does not ensure the full slug matches.
   - Repro during audit: a file named `ADR-1234-filename-foo.yaml` with `adr.id: ADR-1234-id-bar` validated successfully.
@@ -399,17 +409,21 @@ Tracker status is currently `Open` for all items.
 - Impact:
   - Filename/source mismatches and cross-directory ID collisions can survive CI.
   - This weakens navigability and traceability.
+- Resolution:
+  - [scripts/validate-adr.py](scripts/validate-adr.py) now enforces exact filename-stem equality with `adr.id`, not just numeric-prefix equality.
+  - A new shared CI helper, [scripts/run-validation.sh](scripts/run-validation.sh), validates all ADR directories in one invocation so duplicate IDs across `architecture-decision-log/` and `examples-reference/` are caught in CI.
+  - [Makefile](Makefile) now uses the same shared validation helper locally, keeping local and CI behavior aligned.
+  - Regression coverage now exists for slug mismatch and cross-directory duplicate-ID scenarios.
 - Recommended actions:
-  1. Enforce full filename-to-`adr.id` equality, not just numeric prefix equality.
-  2. Update CI templates to validate both directories in one invocation when both exist.
-  3. Add regression fixtures for slug mismatch and cross-directory duplicate IDs.
+  1. Keep all validation entry points routed through [scripts/run-validation.sh](scripts/run-validation.sh) unless a stronger shared alternative replaces it.
+  2. Extend identifier checks further only if new ID-bearing sections are added to the schema.
 - Discussion notes:
   - This is a good example of local tooling and CI behaving differently today.
 
 ### R-13 - Medium - Too many normative governance failures are warnings, not errors
 
 - Area: Policy enforcement
-- Status: Open
+- Status: Needs decision 2026-03-07
 - Evidence:
   - [scripts/validate-adr.py](scripts/validate-adr.py) treats several normative governance conditions as warnings:
     - accepted/rejected/superseded status without matching audit event
@@ -431,11 +445,12 @@ Tracker status is currently `Open` for all items.
 - Discussion notes:
   - The main issue is not that warnings exist.
   - The issue is that some governance promises are currently only warnings.
+  - Not changed in this pass because the correct error/warning boundary is a policy decision, not a purely mechanical fix.
 
 ### R-14 - Medium - Generated docs and LLM assets rely on optional local hooks and are not checked in CI
 
 - Area: Generated outputs
-- Status: Open
+- Status: Needs decision 2026-03-07
 - Evidence:
   - [`.githooks/pre-commit`](.githooks/pre-commit) renders ADR Markdown and regenerates `llms-full.txt`, but enabling the hook is optional and per-clone.
   - CI does not verify that:
@@ -454,11 +469,12 @@ Tracker status is currently `Open` for all items.
   3. Decide whether the bundle is versioned source, build artifact, or release artifact; then enforce accordingly.
 - Discussion notes:
   - This matters because the project deliberately ships both human-facing and AI-facing derived assets.
+  - Not changed in this pass because the right enforcement model depends on whether generated outputs are treated as committed source, build artifacts, or release artifacts.
 
 ### R-15 - Low - Smaller documentation and rendering inconsistencies remain
 
 - Area: Consistency / UX
-- Status: Open
+- Status: Resolved 2026-03-07
 - Evidence:
   - Branch naming is inconsistent across docs:
     - `adr/ADR-NNNN-short-title`
@@ -468,10 +484,14 @@ Tracker status is currently `Open` for all items.
   - [scripts/render-adr.py](scripts/render-adr.py) only shows approvals with timestamps, so pending approvers are invisible in rendered proposed ADRs.
 - Impact:
   - These are not trust-boundary issues, but they add friction and can confuse adopters.
+- Resolution:
+  - Branch naming guidance is now consistent on the `adr/ADR-NNNN-short-title` pattern across [README.md](README.md), [docs/web-chat-quickstart.md](docs/web-chat-quickstart.md), and [repomix-instruction.md](repomix-instruction.md).
+  - [docs/ci-setup.md](docs/ci-setup.md) now correctly points line-length configuration guidance to [`.yamllint.yml`](.yamllint.yml), not to the pipeline files.
+  - [README.md](README.md) now uses the correct field names for `alternatives[].description` and `architecturally_significant_requirements`.
+  - [scripts/render-adr.py](scripts/render-adr.py) now renders pending approvers, not only already-approved entries, improving proposed-ADR review visibility.
 - Recommended actions:
-  1. Normalize branch naming guidance across docs.
-  2. Clean up minor doc inaccuracies during the larger alignment pass.
-  3. Consider rendering pending approvers and optionally approval identities for review visibility.
+  1. Keep small UX consistency fixes folded into the regression suite so they do not regress quietly.
+  2. Revisit approval rendering only if teams want different identity-visibility defaults.
 - Discussion notes:
   - These are worth fixing, but only after the higher-priority trust and enforcement issues.
 

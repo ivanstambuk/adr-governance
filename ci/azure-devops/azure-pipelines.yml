@@ -20,25 +20,11 @@ trigger:
   branches:
     include:
       - main
-  paths:
-    include:
-      - architecture-decision-log/*
-      - examples-reference/*
-      - schemas/*
-      - scripts/validate-adr.py
-      - scripts/verify-approvals.py
 
 pr:
   branches:
     include:
       - main
-  paths:
-    include:
-      - architecture-decision-log/*
-      - examples-reference/*
-      - schemas/*
-      - scripts/validate-adr.py
-      - scripts/verify-approvals.py
 
 pool:
   vmImage: "ubuntu-latest"
@@ -52,21 +38,11 @@ steps:
   - script: pip install -r requirements.txt
     displayName: "Install dependencies"
 
-  - script: |
-      if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
-        python3 scripts/validate-adr.py architecture-decision-log/
-      else
-        echo "No ADR files in architecture-decision-log/ — skipping validation"
-      fi
-    displayName: "Validate ADL (architecture-decision-log/)"
+  - script: bash scripts/check-repo-integrity.sh
+    displayName: "Repository integrity checks"
 
-  - script: |
-      if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
-        python3 scripts/validate-adr.py examples-reference/
-      else
-        echo "No ADR files in examples-reference/ — skipping validation"
-      fi
-    displayName: "Validate examples-reference/"
+  - script: bash scripts/run-validation.sh
+    displayName: "Validate ADR sources"
 
   - script: |
       echo "=== Linting architecture-decision-log/ ==="
