@@ -2058,6 +2058,45 @@ Several other schema fields capture dependency-adjacent concepts. Our `dependenc
 
 ## Section 11: `lifecycle` — Decision Management
 
+#### Literature Review: Architectural Decision Lifecycle Management
+
+The `lifecycle` block contains three sub-fields — review cadence, bidirectional supersession, and structured archival — all of which are **novel** in the ADR template landscape. This unified section reviews the academic foundations for decision lifecycle management and justifies each sub-field.
+
+##### 1. The Decision Decay Problem
+
+Architectural decisions have a **half-life**. Context changes, technologies evolve, teams turn over, and assumptions invalidate. Research on architectural decision staleness quantifies this:
+
+| Finding | Source | Implication |
+|---|---|---|
+| 20–25% of architectural decisions had stale evidence within 2 months | Retrospective audit of projects using traditional ADRs (ReflectRally, 2024) | Decisions decay faster than most teams expect |
+| Architectural decision staleness is a primary contributor to architectural technical debt | Architectural Decision Records with Evidence Decay Tracking (arXiv, 2024) | Decision maintenance is not optional — it's debt management |
+| "ADR logs with more than 100 entries will probably put your readers to sleep" | Zimmermann (SATURN, 2012) | Long-lived repositories need lifecycle management to remain useful |
+| "Good architecture allows major decisions to be deferred" | Robert C. Martin, *Clean Architecture* (2017) | Some decisions should explicitly wait — they need a `deferred` state |
+
+Two academic traditions address this problem:
+
+1. **Architectural Retrospectives** (Cervantes & Woods, InfoQ) — periodic review of accepted decisions to verify they're still valid, with structured retrospective questions
+2. **After-Action Reviews** (Henderson) — post-implementation review to verify that decisions were implemented correctly and consequences matched predictions
+
+Our `lifecycle` block provides the **schema-level infrastructure** for both practices.
+
+##### 2. Multi-Template Lifecycle Feature Comparison
+
+| Template | Review scheduling | Supersession linking | Archival | Lifecycle metadata? |
+|---|---|---|---|---|
+| Nygard | ❌ | 🟡 Inline prose ("Superseded by ADR-X") | ❌ | ❌ |
+| MADR 4.0 | ❌ | 🟡 Inline prose in status header | ❌ | ❌ |
+| smadr | ❌ | 🟡 Structured field | ❌ | 🟡 |
+| Tyree-Akerman | ❌ | ❌ | ❌ | ❌ |
+| Planguage | ❌ | ❌ | ❌ | ❌ |
+| EdgeX | ❌ | 🟡 Change log entries | ❌ | 🟡 |
+| NHS Wales | 🟡 Informal mention | 🟡 Inline prose | ❌ | ❌ |
+| **adr-governance** | ✅ `review_cycle_months` + `next_review_date` | ✅ Bidirectional `supersedes` + `superseded_by` | ✅ `archival.archived_at` + `archive_reason` | ✅ |
+
+**Key finding:** No template addresses all three lifecycle concerns. Most templates treat decisions as **write-once artifacts** that are either current or superseded, with no structured mechanisms for ongoing maintenance.
+
+---
+
 ### 11.1 `lifecycle.review_cycle_months` / `lifecycle.next_review_date`
 
 | Attribute | Value |
@@ -2066,21 +2105,43 @@ Several other schema fields capture dependency-adjacent concepts. Our `dependenc
 | **Type** | `integer` (min: 1), `string` (date) |
 | **Required?** | Optional |
 
-**Precedent:**
+##### Why Structured Review Cadence?
 
-| Template | Review scheduling | Structured? |
-|---|---|---|
-| NHS Wales | 🟡 Informal review mention | ❌ |
-| Cervantes & Woods | ✅ Architectural retrospectives (concept) | ❌ Process, not schema |
-| Henderson (After-Action Reviews) | ✅ Post-implementation review (concept) | ❌ Process, not schema |
-| **adr-governance** | ✅ `review_cycle_months` + `next_review_date` | ✅ |
+**No other template has structured review scheduling.** The concept exists as a *process recommendation* (Cervantes & Woods, Henderson) but never as a *schema field*. We schema-fy it because:
 
-**Rationale:** **No other template has structured review cadence.** Architectural decisions decay — context changes, technologies evolve, teams turn over. Without explicit review triggers, decisions become fossilized. The `review_cycle_months` field enables automated reminders; `next_review_date` captures the concrete date for the next review. Combined with `decision.confidence`, this enables risk-based review prioritization — low-confidence decisions get shorter review cycles.
+1. **Machine-readable review dates enable automation.** Without a structured field, review scheduling depends on human memory. With `next_review_date`, CI or external tooling can generate alerts: "3 ADRs are past their review date."
+2. **Risk-based prioritization.** Combined with `decision.confidence`, review cadence becomes risk-proportional:
 
-**Rejected alternatives:**
-- *Review-as-process-only (no schema field)* — without a machine-readable field, review scheduling depends on human memory. Automated CI reminders ("3 ADRs are past their review date") require structured data
-- *Single `next_review_date` without cycle* — loses the recurring nature of reviews. The cycle enables auto-computation of subsequent review dates
+   | Confidence | Recommended `review_cycle_months` | Rationale |
+   |---|---|---|
+   | `low` | 6 | Decision made under pressure or with incomplete data — re-evaluate early |
+   | `medium` | 12 | Standard review cycle |
+   | `high` | 24 | Strong empirical evidence — extended cycle acceptable |
+
+3. **Closing the lifecycle loop.** `review_cycle_months` triggers reviews; the `reviewed` event in `audit_trail` records that one occurred. This creates a verifiable review cadence: schedule → review → record → reschedule.
+
+##### The Review Process (Not Schema-Enforced)
+
+The schema captures *when* to review but not *how*. The review process is documented in `adr-process.md` §9 with 7 retrospective questions adapted from Cervantes & Woods:
+1. Did the consequences we predicted actually occur?
+2. Were there unforeseen consequences we should document?
+3. Has the context changed since this decision was made?
+4. Was the confidence level appropriate?
+5. Have we accumulated technical debt from this decision?
+6. Is this decision still the right choice given what we now know?
+7. Should we trigger a superseding ADR?
+
+This deliberate split — schema for scheduling, process doc for methodology — follows the principle that schemas should capture *data*, not *procedures*.
+
+##### Rejected Alternatives
+
+- *Review-as-process-only (no schema field)* — without machine-readable data, review scheduling depends on human memory. Automated CI reminders require structured fields
+- *Single `next_review_date` without cycle* — loses the recurring nature of reviews. The cycle enables auto-computation of subsequent review dates after each review
 - *Required field* — not all decisions need active review. Operational decisions with `confidence: high` may never need re-evaluation
+- *Evidence decay tracking with TTL per evidence item* — promising academic concept (arXiv, 2024) but adds significant schema complexity. Each evidence claim would need its own expiration date, requiring structured evidence objects rather than prose. Future schema versions may adopt this if the concept matures
+- *Automated review via CI (fail builds when review is overdue)* — too aggressive. Review dates are advisory, not blocking. A stale review date should generate a warning, not block deployments
+
+---
 
 ### 11.2 `lifecycle.superseded_by` / `lifecycle.supersedes`
 
@@ -2090,23 +2151,72 @@ Several other schema fields capture dependency-adjacent concepts. Our `dependenc
 | **Type** | `string` or `null`, ADR ID pattern |
 | **Required?** | Optional |
 
-**Precedent:**
+##### Why Bidirectional Supersession?
 
-| Template | Supersession mechanism | Bidirectional? | Structured? |
-|---|---|---|---|
-| Nygard | Inline "Superseded by ADR-NNNN" in status | ❌ One-way | ❌ Prose |
-| MADR 4.0 | Inline in status header | ❌ One-way | ❌ Prose |
-| smadr | Structured field | 🟡 | ✅ |
-| EdgeX | Change log entries | ❌ | 🟡 |
-| NHS Wales | Inline in status | ❌ One-way | ❌ |
-| **adr-governance** | `superseded_by` + `supersedes` | ✅ Bidirectional | ✅ |
+Every template that tracks supersession does so **unidirectionally** — the old ADR mentions the new one, but the new ADR doesn't formally link back. This creates a **broken navigation chain**:
 
-**Rationale:** Bidirectional cross-references (new ADR points to old via `supersedes`; old ADR points to new via `superseded_by`) create a navigable decision chain. Both fields are validated for symmetry by the validator script. The ADR ID pattern constraint ensures references are valid ADR identifiers.
+```
+Unidirectional (Nygard style):
+  ADR-0003 [status: superseded, "see ADR-0008"]
+  ADR-0008 [no reference to ADR-0003]
+  → Finding ADR-0003 from ADR-0008 requires searching the entire corpus
 
-**Rejected alternatives:**
-- *`related_adrs` / `attachments` (original schema)* — removed during schema refinement. ADR relationships are captured through `lifecycle.superseded_by` / `lifecycle.supersedes` for the most important relationship type (replacement). Other cross-references use `references` or prose in `context.description`. Attachments are external references via `confirmation.artifact_ids` or `references`.
+Bidirectional (our model):
+  ADR-0003 [superseded_by: "ADR-0008"]
+  ADR-0008 [supersedes: "ADR-0003"]
+  → Navigation works in both directions instantly
+```
+
+| Template | Supersession mechanism | Directionality | Structured? | CI-validated? |
+|---|---|---|---|---|
+| Nygard | Inline prose in status line | Old → New only | ❌ | ❌ |
+| MADR 4.0 | Inline prose in status header | Old → New only | ❌ | ❌ |
+| smadr | Structured field | 🟡 Partially bidirectional | ✅ | ❌ |
+| EdgeX | Change log entries | Old → New only | 🟡 | ❌ |
+| NHS Wales | Inline prose | Old → New only | ❌ | ❌ |
+| **adr-governance** | `superseded_by` + `supersedes` | ✅ Fully bidirectional | ✅ | ✅ |
+
+##### Symmetry Validation
+
+The validator script enforces that supersession references are **symmetric**:
+- If ADR-0003 has `lifecycle.superseded_by: "ADR-0008"`, then ADR-0008 must have `lifecycle.supersedes: "ADR-0003"`
+- If either side is missing or mismatched, validation fails
+
+This prevents orphaned supersession links — a common problem in long-lived ADR repositories where one side of the link is updated but the other is forgotten.
+
+##### The Single-PR Supersession Rule
+
+Supersession is the **only exception** to the single-ADR-per-PR rule (§3.4.2 in `adr-process.md`). A supersession PR must touch exactly two ADR files — the new and the old — to ensure atomic consistency:
+- The new ADR (with `lifecycle.supersedes`)
+- The old ADR (with `status: superseded` + `lifecycle.superseded_by`)
+
+If either file were modified in a separate PR, there would be a window where the references are inconsistent.
+
+##### Decision Chain Navigation
+
+Bidirectional supersession enables **chain navigation** — tracing the evolution of a decision across multiple generations:
+
+```
+ADR-0001 [accepted] ← original decision
+  └─ superseded_by: ADR-0003
+      ADR-0003 [accepted] ← first revision
+        └─ superseded_by: ADR-0008
+            ADR-0008 [accepted] ← current decision
+              └─ supersedes: ADR-0003
+                  ADR-0003.supersedes: ADR-0001
+```
+
+A script or AI tool can traverse this chain in either direction to provide full decision history.
+
+##### Rejected Alternatives
+
 - *Unidirectional supersession (old → new only, Nygard style)* — navigating from new to old requires searching the entire corpus. Bidirectional references make the chain immediately traversable
 - *Free-text supersession reference* — prevents validation. The ADR ID pattern constraint ensures the reference actually points to a valid ADR identifier
+- *`related_adrs` / `attachments` (original schema)* — removed during schema refinement. ADR relationships are captured through `superseded_by`/`supersedes` for the most important relationship type (replacement). Other cross-references use `references` or prose in `context.description`
+- *Multi-parent supersession (array of superseded ADRs)* — tempting for merge-style decisions where one new ADR replaces two old ones. Rejected because it complicates the symmetry rule (each old ADR's `superseded_by` points to one new ADR, but the new ADR's `supersedes` would need to be an array). Workaround: the new ADR supersedes the "primary" old ADR; the secondary old ADR is deprecated separately
+- *Version bumping instead of supersession* — treating ADRs as mutable documents with version history (1.0 → 2.0 → 3.0). Violates the immutability principle: accepted decisions are frozen. Material changes require a new ADR with its own review cycle, not an anonymous edit
+
+---
 
 ### 11.3 `lifecycle.archival`
 
@@ -2116,19 +2226,88 @@ Several other schema fields capture dependency-adjacent concepts. Our `dependenc
 | **Type** | `string` or `null` |
 | **Required?** | Optional |
 
-**Precedent:**
+##### Why Structured Archival?
 
-| Template | Archival concept | Structured? |
+**No other template has archival as a structured concept.** Most templates treat `superseded` and `deprecated` as terminal — the ADR exists forever in the decision log with no visibility management. This doesn't scale:
+
+| Repository Size | Active ADRs | Terminal ADRs | Problem |
+|---|---|---|---|
+| Small (< 20 ADRs) | ~15 | ~5 | No problem — all ADRs fit in one index |
+| Medium (20–100 ADRs) | ~40 | ~60 | Terminal ADRs outnumber active ones; index becomes noisy |
+| Large (100+ ADRs) | ~50 | ~100+ | "No more than 100 entries" (Zimmermann) — readers can't find what matters |
+
+Archival solves this by providing a **visibility filter** orthogonal to status:
+
+```
+                     ┌─────────────┬────────────────┐
+                     │  Not archived│   Archived     │
+  ┌──────────────────┼─────────────┼────────────────┤
+  │ accepted         │ ✅ Active    │ ❌ (accepted    │
+  │                  │             │ can't be       │
+  │                  │             │ archived)      │
+  ├──────────────────┼─────────────┼────────────────┤
+  │ superseded       │ In active   │ Hidden from    │
+  │                  │ index       │ active index;  │
+  │                  │ (may still  │ still query-   │
+  │                  │ be useful)  │ able           │
+  ├──────────────────┼─────────────┼────────────────┤
+  │ deprecated       │ In active   │ Hidden from    │
+  │                  │ index       │ active index   │
+  ├──────────────────┼─────────────┼────────────────┤
+  │ rejected         │ In active   │ Hidden from    │
+  │                  │ index       │ active index   │
+  └──────────────────┴─────────────┴────────────────┘
+```
+
+##### The Metadata Overlay Design
+
+Archival is implemented as a **metadata overlay**, not an 8th status value. This is a key design decision documented in §1.4 (status deep research):
+
+| Approach | Status query: "all superseded ADRs" | Visibility query: "all archived ADRs" | Both: "superseded but not archived" |
+|---|---|---|---|
+| `archived` as status | ❌ Misses archived-superseded ADRs | ✅ `status == archived` | ❌ Impossible — status is either `superseded` or `archived`, not both |
+| **Metadata overlay** (our approach) | ✅ `status == superseded` (includes archived) | ✅ `archival.archived_at != null` | ✅ `status == superseded AND archival.archived_at == null` |
+
+The overlay preserves **two independent query dimensions**: lifecycle outcome (what happened to this decision?) and visibility (should this appear in active listings?).
+
+##### When to Archive
+
+Archival is appropriate for ADRs in terminal states that no longer contribute to active decision-making:
+
+| Terminal Status | Archive When | Example |
 |---|---|---|
-| All surveyed templates | ❌ No archival concept | — |
-| **adr-governance** | ✅ `archival.archived_at` + `.archive_reason` | ✅ |
+| `superseded` | Successor ADR is accepted **and** confirmed in production | ADR-0003 superseded by ADR-0008; ADR-0008 deployed and verified |
+| `deprecated` | Replacement is fully operational or the technology is decommissioned | ADR-0001 deprecated; migrated off the deprecated framework |
+| `rejected` | No longer relevant to revisit; team has moved on | ADR-0012 rejected 2 years ago; alternative technology chosen and stable |
 
-**Rationale:** **No other template has archival as a structured concept.** Most templates treat superseded/deprecated as terminal. Long-lived ADR repositories accumulate hundreds of decisions. Archival removes decisions from active consideration without deleting them — preserving the historical record while reducing noise. The `archived_at` timestamp and `archive_reason` provide queryable metadata ("when was this archived?" "why?").
+##### Sub-Field Design
 
-**Rejected alternatives:**
-- *Delete archived ADRs* — violates the principle that decision history should be immutable. Future teams may need to understand why a decision was made even if the decision is no longer active
-- *Use `status: archived`* — considered adding an `archived` status to the status enum. Rejected because archival is orthogonal to status — a `superseded` ADR may or may not be archived (some superseded ADRs remain in active indexes for reference)
-- *Archive by moving files to an `archive/` folder* — filesystem-level archival loses metadata (when, why) and breaks cross-references
+| Sub-field | Why it exists |
+|---|---|
+| `archived_at` | ISO 8601 timestamp — enables "when was this archived?" queries and provides a chronological record. Also serves as the boolean flag: `null` = not archived, non-null = archived. |
+| `archive_reason` | Human-readable explanation. Critical for audit compliance: "why was this removed from active consideration?" Without a reason, archival could be misused to hide inconvenient decisions. |
+
+##### Rejected Alternatives
+
+- *Delete archived ADRs* — violates the principle that decision history should be immutable. Future teams may need to understand why a decision was made even if the decision is no longer active. "Never delete an ADR" is a core governance rule
+- *Use `status: archived`* — considered adding an 8th status. Rejected because archival is orthogonal to status. See the metadata overlay analysis above for detailed justification
+- *Archive by moving files to an `archive/` folder* — filesystem-level archival loses metadata (when, why) and breaks cross-references. An ADR referenced by `dependencies.internal` in another ADR would have a broken reference if the file moves
+- *Soft-delete flag (boolean `archived: true`)* — simpler but loses the timestamp (when?) and reason (why?). Two structured fields provide meaningful audit data that a boolean cannot
+- *Separate archival log (external to ADR file)* — creates a split-brain problem where the ADR file says one thing and the archival log says another. Embedding archival metadata in the ADR ensures the file is its own single source of truth
+
+#### Credits (Section 11 — all three sub-fields)
+
+| Concept | Source |
+|---|---|
+| Architectural retrospectives (periodic decision review) | Cervantes & Woods, "Architectural Retrospectives" (InfoQ) |
+| After-action reviews for architecture | Henderson, software architecture maintenance practice |
+| Decision decay / staleness as measurable concept | "ADRs with Evidence Decay Tracking" (arXiv, 2024) |
+| "No more than 100 entries" heuristic | Zimmermann, SATURN 2012 |
+| Decision immutability principle | Nygard, "Documenting Architecture Decisions" (2011) |
+| Bidirectional supersession with symmetry validation | adr-governance (novel) |
+| Structured review cadence as schema field | adr-governance (novel) |
+| Archival as metadata overlay vs. status value | adr-governance (novel) |
+| Risk-based review frequency tied to confidence | adr-governance (novel) |
 
 ---
 
