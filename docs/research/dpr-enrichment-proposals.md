@@ -15,7 +15,7 @@
 | P2 | [Y-Statement rendering](#p2-add-y-statement-rendering-capability) | Capability | Medium | Low | ✅ Done |
 | P3 | [QAS `measure` field on ASRs](#p3-add-quality-attribute-scenario-qas-measure-field) | Schema | Medium | Low | ❌ Rejected |
 | P4 | [AD Definition of Done checklist](#p4-add-definition-of-done-for-architecture-decisions) | Docs | Medium | Low | ✅ Done |
-| P5 | [Architectural Significance Test guidance](#p5-add-architectural-significance-test-guidance) | Docs | Low–Medium | Very low | ⬜ Not started |
+| P5 | [Architectural Significance Test guidance](#p5-add-architectural-significance-test-guidance) | Docs | Low–Medium | Very low | ✅ Done |
 | P6 | [`scope`/`phase` metadata](#p6-add-scope--phase-metadata) | Redundant | Low | Low | ⏭️ Skip |
 | P7 | [AD Definition of Ready](#p7-add-definition-of-ready-for-architecture-decisions) | Docs | Medium | Low | ⬜ Not started |
 | P8 | [ADR Verbosity Levels guidance](#p8-adr-verbosity-levels-guidance) | Docs | Low–Medium | Very low | ⬜ Not started |

@@ -101,10 +101,12 @@ Not every technical decision needs a full ADR. Before starting, verify that **at
 | 4 | The decision **establishes a pattern** that others will follow |
 | 5 | The decision involves a **tradeoff between quality attributes** (e.g., security vs. usability, latency vs. consistency) |
 | 6 | Someone will ask **"why did we do this?"** in 6 months |
+| 7 | The decision involves **high business value or business risk** |
+| 8 | The decision involves **external dependencies** that are uncontrollable, unpredictable, or create vendor lock-in |
 
 If **none** of these apply, the decision is likely not architecturally significant — just make it, document it inline (code comment, wiki, commit message), and move on.
 
-> **Source:** Adapted from Zimmermann's [Architectural Significance Test](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html). See also: *"An AD log with more than 100 entries will probably put your readers (and you) to sleep."*
+> **Source:** Adapted from Zimmermann's [Architectural Significance Test](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html) (7 criteria) with additions from Richards & Ford (*Fundamentals of Software Architecture*, irreversibility) and Henderson (documentation motivation). See also: *"An AD log with more than 100 entries will probably put your readers (and you) to sleep."*
 
 ### 3.1 Draft Phase
 
