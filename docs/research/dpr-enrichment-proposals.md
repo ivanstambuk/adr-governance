@@ -17,7 +17,7 @@
 | P4 | [AD Definition of Done checklist](#p4-add-definition-of-done-for-architecture-decisions) | Docs | Medium | Low | ✅ Done |
 | P5 | [Architectural Significance Test guidance](#p5-add-architectural-significance-test-guidance) | Docs | Low–Medium | Very low | ✅ Done |
 | P6 | [`scope`/`phase` metadata](#p6-add-scope--phase-metadata) | Redundant | Low | Low | ⏭️ Skip |
-| P7 | [AD Definition of Ready](#p7-add-definition-of-ready-for-architecture-decisions) | Docs | Medium | Low | ⬜ Not started |
+| P7 | [AD Definition of Ready](#p7-add-definition-of-ready-for-architecture-decisions) | Docs | Medium | Low | ✅ Done |
 | P8 | [ADR Verbosity Levels guidance](#p8-adr-verbosity-levels-guidance) | Docs | Low–Medium | Very low | ⬜ Not started |
 | P9 | [NFR Landing Zones](#p9-nfr-landing-zones-for-quality-requirements) | Schema + Docs | Medium | Low | ⬜ Not started |
 

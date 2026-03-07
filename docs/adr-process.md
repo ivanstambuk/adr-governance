@@ -134,6 +134,28 @@ If **none** of these apply, the decision is likely not architecturally significa
    python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-title.yaml
    ```
 
+#### 3.1.1 Definition of Ready — START Checklist
+
+Before moving from `draft` to `proposed`, verify these preconditions are met. The checklist adapts Zimmermann's **START** framework (Stakeholders, Time, Alternatives, Requirements, Template) to our process:
+
+| # | START | Question | Enforcement |
+|---|:-----:|----------|-------------|
+| 1 | **S** | Are the **decision owner**, **reviewers**, and **approvers** identified? Have affected stakeholders been notified that this decision is coming? | Hard — `decision_owner` required; `reviewers` and `approvals` prompted in template |
+| 2 | **T** | Is now the **Most Responsible Moment**? Do we have enough information to decide, and is delay riskier than deciding now? | Soft — see MRM heuristics below |
+| 3 | **A** | Have at least **2 genuine alternatives** been identified? (Not just "do X" and "do nothing.") | Hard — schema `minItems: 2` on `alternatives` |
+| 4 | **R** | Is the **problem context** clear? Are driving requirements, constraints, and assumptions documented? | Hard — `context.description` required; others prompted |
+| 5 | **T** | Is the ADR **schema-valid** and substantially complete? Does `validate-adr.py` pass? | Hard — schema validation |
+
+**Most Responsible Moment (MRM) heuristics** — for criterion 2, ask:
+- Is there enough information to meaningfully compare alternatives? If not, what's blocking?
+- What is the cost of delaying this decision by one more sprint/month?
+- What is the cost of making a wrong decision now vs. waiting?
+- Are there upcoming events (deadline, release, dependency change) that create urgency?
+
+If you can't answer "yes" to all five START criteria, the ADR may need more drafting work before it enters formal review.
+
+> **Source:** Adapted from Zimmermann, O. (2023). [*"A Definition of Ready for Architectural Decisions"*](https://medium.com/olzzio/a-definition-of-ready-for-architectural-decisions-ads-2814e399b09b). MRM concept from Wirfs-Brock, R. (2011). [*"Agile Architecture Myths #2"*](http://wirfs-brock.com/blog/2011/01/18/agile-architecture-myths-2-architecture-decisions-should-be-made-at-the-last-responsible-moment/).
+
 ### 3.2 Proposal Phase
 
 5. **Set status to `proposed`** when the ADR is ready for formal review:
