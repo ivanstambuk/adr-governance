@@ -466,12 +466,13 @@ If your source of truth is GitHub and your build environment can expose the requ
 2. Pass the GitHub repository slug with `--repo owner/repo`
 3. Pass the pull request number with `--pr <number>`
 4. Force the platform with `--platform github`
-5. Ensure the checkout has the PR branch and base branch available so the script can diff against the base revision
+5. Pass the target branch with `--base-ref <branch>` or `ADR_BASE_REF=<branch>` unless your CI already exposes a supported target-branch environment variable
+6. Ensure the checkout has the PR branch and base branch available so the script can diff against the base revision
 
 Example custom invocation:
 
 ```bash
-python3 scripts/verify-approvals.py --platform github --repo owner/repo --pr 42
+python3 scripts/verify-approvals.py --platform github --repo owner/repo --pr 42 --base-ref main
 ```
 
 Treat this as a manual integration path, not a built-in supported default of the AWS/GCP templates.
@@ -493,7 +494,7 @@ For the approval identity check to be meaningful, configure your platform to req
 - Existing `audit_trail` history is append-only. CI blocks PRs that edit, delete, or reorder historical audit-trail entries
 - If an ADR was already `accepted` on the base branch, its decision core is immutable in place. CI only allows it to remain `accepted` or transition to `superseded` / `deprecated`, and blocks edits to frozen fields such as `context`, `decision`, `alternatives`, `consequences`, and `approvals`
 - ADRs in `draft`, `rejected`, `deferred`, `superseded`, or `deprecated` status are **skipped for approval identity verification** after the base-vs-head governance checks run
-- When running outside a PR context (e.g., `push` to `main`), the check is **skipped**
+- The shipped CI templates only invoke enforcing mode in PR/MR contexts. Manual non-`--dry-run` invocations must provide resolvable PR metadata and a base ref or the verifier fails closed
 - **Maintenance changes** (non-substantive field edits) skip the identity check regardless of who authors the PR
 
 ### Governance config file

@@ -156,7 +156,13 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertIn("repository scripts do not currently add a second independent self-approval check", process)
         self.assertIn("mainly improves auditability and CI messaging", process)
         self.assertIn("mainly affects auditability / CI messaging", glossary)
+        self.assertIn("custom PR metadata and base-ref wiring", readme)
         self.assertIn("AWS CodeBuild and GCP Cloud Build templates run the verifier in dry-run mode by default", ci_setup)
+        self.assertIn("--base-ref <branch>", ci_setup)
+        self.assertIn(
+            "must provide resolvable PR metadata and a base ref or the verifier fails closed",
+            ci_setup,
+        )
         self.assertIn("curated inline documentation set", generator)
 
     def test_ci_templates_fetch_history_for_base_branch_comparisons(self):

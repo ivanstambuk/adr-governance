@@ -89,19 +89,26 @@ class VerifyApprovalsTests(unittest.TestCase):
         self,
         argv: list[str],
         env: dict[str, str],
-        changed_files: list[str],
+        changed_files: list[str] | None = None,
     ) -> tuple[int, str, str]:
         stdout = io.StringIO()
         stderr = io.StringIO()
-        with (
+        patchers = [
             mock.patch.object(self.module, "load_governance_config", return_value=self.make_config()),
             mock.patch.object(self.module, "get_pr_author", return_value=None),
-            mock.patch.object(self.module, "get_changed_yaml_files", return_value=changed_files),
             mock.patch.dict(self.module.os.environ, env, clear=True),
             mock.patch.object(sys, "argv", argv),
             contextlib.redirect_stdout(stdout),
             contextlib.redirect_stderr(stderr),
-        ):
+        ]
+        if changed_files is not None:
+            patchers.append(
+                mock.patch.object(self.module, "get_changed_yaml_files", return_value=changed_files)
+            )
+
+        with contextlib.ExitStack() as stack:
+            for patcher in patchers:
+                stack.enter_context(patcher)
             exit_code = self.module.main()
         return exit_code, stdout.getvalue(), stderr.getvalue()
 
@@ -215,7 +222,7 @@ class VerifyApprovalsTests(unittest.TestCase):
             new_path = self.write_temp_adr(new_adr, tmpdir)
             old_path = self.write_temp_adr(old_current, tmpdir)
 
-            def base_lookup(filepath: str) -> dict | None:
+            def base_lookup(filepath: str, *_args, **_kwargs) -> dict | None:
                 if filepath == old_path:
                     return old_base
                 return None
@@ -243,7 +250,7 @@ class VerifyApprovalsTests(unittest.TestCase):
             new_path = self.write_temp_adr(new_current, tmpdir)
             old_path = self.write_temp_adr(old_current, tmpdir)
 
-            def base_lookup(filepath: str) -> dict | None:
+            def base_lookup(filepath: str, *_args, **_kwargs) -> dict | None:
                 if filepath == new_path:
                     return new_base
                 if filepath == old_path:
@@ -271,7 +278,7 @@ class VerifyApprovalsTests(unittest.TestCase):
             new_path = self.write_temp_adr(new_adr, tmpdir)
             old_path = self.write_temp_adr(old_current, tmpdir)
 
-            def base_lookup(filepath: str) -> dict | None:
+            def base_lookup(filepath: str, *_args, **_kwargs) -> dict | None:
                 if filepath == old_path:
                     return old_base
                 return None
@@ -282,6 +289,72 @@ class VerifyApprovalsTests(unittest.TestCase):
         self.assertFalse(passed)
         self.assertIn("single_adr_per_pr", message)
 
+    def test_detect_base_ref_normalizes_platform_specific_values(self):
+        cases = [
+            ("github", {"GITHUB_BASE_REF": "main"}, None, "origin/main"),
+            (
+                "azure-devops",
+                {"SYSTEM_PULLREQUEST_TARGETBRANCH": "refs/heads/release/2026"},
+                None,
+                "origin/release/2026",
+            ),
+            ("gitlab", {"CI_MERGE_REQUEST_TARGET_BRANCH_NAME": "develop"}, None, "origin/develop"),
+            ("github", {"GITHUB_BASE_REF": "main"}, "release/2026", "origin/release/2026"),
+        ]
+
+        for platform, env, explicit_base_ref, expected in cases:
+            with self.subTest(platform=platform, expected=expected):
+                with mock.patch.dict(self.module.os.environ, env, clear=True):
+                    actual = self.module.detect_base_ref(platform, explicit_base_ref)
+                self.assertEqual(actual, expected)
+
+    def test_main_fails_closed_when_base_ref_is_missing_for_enforced_run(self):
+        cases = [
+            ("azure-devops", ["verify-approvals.py"], {"SYSTEM_TEAMFOUNDATIONCOLLECTIONURI": "https://dev.azure.com/example"}),
+            ("gitlab", ["verify-approvals.py"], {"GITLAB_CI": "true"}),
+            ("github", ["verify-approvals.py", "--platform", "github", "--repo", "owner/repo", "--pr", "42"], {}),
+        ]
+
+        for platform, argv, env in cases:
+            with self.subTest(platform=platform):
+                exit_code, stdout, stderr = self.run_main_with(argv, env, changed_files=None)
+
+                self.assertEqual(exit_code, 2)
+                self.assertIn("No governance config found", stdout)
+                self.assertIn("No base ref could be resolved", stderr)
+
+    def test_main_dry_run_allows_missing_base_ref(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            adr_path = self.write_temp_adr(make_proposed_adr(), tmpdir)
+            exit_code, stdout, stderr = self.run_main_with(
+                ["verify-approvals.py", "--dry-run"],
+                {"GITLAB_CI": "true"},
+                [adr_path],
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("DRY RUN", stdout)
+        self.assertIn("No base ref could be resolved", stderr)
+
+    def test_main_accepts_explicit_base_ref_override(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            adr_path = self.write_temp_adr(make_proposed_adr(), tmpdir)
+
+            with (
+                mock.patch.object(self.module, "ensure_base_ref_available", return_value=None),
+                mock.patch.object(self.module, "get_file_at_base", return_value=None),
+            ):
+                exit_code, stdout, stderr = self.run_main_with(
+                    ["verify-approvals.py", "--dry-run", "--base-ref", "release/2026"],
+                    {"SYSTEM_TEAMFOUNDATIONCOLLECTIONURI": "https://dev.azure.com/example"},
+                    [adr_path],
+                )
+
+        self.assertEqual(exit_code, 0)
+        self.assertIn("🔀 Base ref: origin/release/2026", stdout)
+        self.assertIn("DRY RUN", stdout)
+        self.assertEqual("", stderr)
+
     def test_verify_approvals_fails_closed_when_approver_data_is_unavailable(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             adr_path = self.write_temp_adr(make_proposed_adr(), tmpdir)
@@ -289,13 +362,14 @@ class VerifyApprovalsTests(unittest.TestCase):
             stderr = io.StringIO()
 
             with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-                exit_code = self.module.verify_approvals(
-                    "github",
-                    None,
-                    None,
-                    [adr_path],
-                    self.make_config(),
-                )
+                with mock.patch.object(self.module, "get_file_at_base", return_value=None):
+                    exit_code = self.module.verify_approvals(
+                        "github",
+                        None,
+                        None,
+                        [adr_path],
+                        self.make_config(),
+                    )
 
         self.assertEqual(exit_code, 1)
         self.assertIn("approval identity verification required", stdout.getvalue())
@@ -314,6 +388,7 @@ class VerifyApprovalsTests(unittest.TestCase):
                     None,
                     [adr_path],
                     self.make_config(),
+                    allow_missing_base=True,
                     dry_run=True,
                 )
 
@@ -350,13 +425,24 @@ class VerifyApprovalsTests(unittest.TestCase):
 
     def test_main_fails_closed_when_ci_metadata_is_missing(self):
         cases = [
-            ("github", ["verify-approvals.py"], {"GITHUB_ACTIONS": "1"}),
+            (
+                "github",
+                ["verify-approvals.py"],
+                {"GITHUB_ACTIONS": "1", "GITHUB_BASE_REF": "main"},
+            ),
             (
                 "azure-devops",
                 ["verify-approvals.py"],
-                {"SYSTEM_TEAMFOUNDATIONCOLLECTIONURI": "https://dev.azure.com/example"},
+                {
+                    "SYSTEM_TEAMFOUNDATIONCOLLECTIONURI": "https://dev.azure.com/example",
+                    "SYSTEM_PULLREQUEST_TARGETBRANCH": "refs/heads/main",
+                },
             ),
-            ("gitlab", ["verify-approvals.py"], {"GITLAB_CI": "true"}),
+            (
+                "gitlab",
+                ["verify-approvals.py"],
+                {"GITLAB_CI": "true", "CI_MERGE_REQUEST_TARGET_BRANCH_NAME": "main"},
+            ),
         ]
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -364,7 +450,8 @@ class VerifyApprovalsTests(unittest.TestCase):
 
             for platform, argv, env in cases:
                 with self.subTest(platform=platform):
-                    exit_code, stdout, stderr = self.run_main_with(argv, env, [adr_path])
+                    with mock.patch.object(self.module, "ensure_base_ref_available", return_value=None):
+                        exit_code, stdout, stderr = self.run_main_with(argv, env, [adr_path])
 
                     self.assertEqual(exit_code, 1)
                     self.assertIn("approval identity verification required", stdout)
@@ -373,11 +460,22 @@ class VerifyApprovalsTests(unittest.TestCase):
     def test_main_fails_closed_when_github_token_is_missing(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             adr_path = self.write_temp_adr(make_proposed_adr(), tmpdir)
-            exit_code, stdout, stderr = self.run_main_with(
-                ["verify-approvals.py", "--platform", "github", "--repo", "owner/repo", "--pr", "42"],
-                {},
-                [adr_path],
-            )
+            with mock.patch.object(self.module, "ensure_base_ref_available", return_value=None):
+                exit_code, stdout, stderr = self.run_main_with(
+                    [
+                        "verify-approvals.py",
+                        "--platform",
+                        "github",
+                        "--repo",
+                        "owner/repo",
+                        "--pr",
+                        "42",
+                        "--base-ref",
+                        "main",
+                    ],
+                    {},
+                    [adr_path],
+                )
 
         self.assertEqual(exit_code, 1)
         self.assertIn("approval identity verification required", stdout)

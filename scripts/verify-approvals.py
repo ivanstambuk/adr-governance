@@ -24,8 +24,8 @@ Usage:
   # Manual / dry-run (skip API calls, just parse ADRs):
   python3 scripts/verify-approvals.py --dry-run
 
-  # Explicit PR number and repo (for testing):
-  python3 scripts/verify-approvals.py --platform github --repo owner/repo --pr 42
+  # Explicit PR number, repo, and base branch:
+  python3 scripts/verify-approvals.py --platform github --repo owner/repo --pr 42 --base-ref main
 
 Exit codes:
   0  All checks passed (or nothing to check)
@@ -85,6 +85,10 @@ DEFAULT_IMMUTABLE_AFTER_ACCEPTANCE_FIELDS = [
     "consequences",
     "dependencies",
 ]
+
+
+class BaseRefError(RuntimeError):
+    """Raised when the verifier cannot resolve or read the target base branch."""
 
 
 def load_governance_config() -> dict:
@@ -166,27 +170,110 @@ def get_pr_author() -> str | None:
 # Git helpers
 # ---------------------------------------------------------------------------
 
-def get_changed_yaml_files() -> list[str]:
-    """Return ADR YAML files changed in the current PR (via git diff)."""
-    base_ref = os.environ.get("GITHUB_BASE_REF")
-    if base_ref:
-        base = f"origin/{base_ref}"
-    else:
-        base = "origin/main"
+def normalize_base_ref(base_ref: str | None) -> str | None:
+    """Normalize a branch name or ref to the git ref used for diff/show."""
+    if not base_ref:
+        return None
 
-    try:
-        result = subprocess.run(
-            ["git", "diff", "--name-only", "--diff-filter=ACMR", base, "HEAD"],
-            capture_output=True, text=True, check=True,
+    base_ref = base_ref.strip()
+    if not base_ref:
+        return None
+
+    if base_ref.startswith("refs/heads/"):
+        return f"origin/{base_ref.removeprefix('refs/heads/')}"
+    if base_ref.startswith("refs/remotes/"):
+        return base_ref.removeprefix("refs/remotes/")
+    if base_ref.startswith("origin/") or base_ref.startswith("refs/"):
+        return base_ref
+    return f"origin/{base_ref}"
+
+
+def detect_base_ref(platform: str | None, explicit_base_ref: str | None = None) -> str | None:
+    """Resolve the target/base branch from explicit input, env override, or CI env."""
+    candidates = [explicit_base_ref, os.environ.get("ADR_BASE_REF")]
+
+    if platform == "github":
+        candidates.append(os.environ.get("GITHUB_BASE_REF"))
+    elif platform == "azure-devops":
+        candidates.extend(
+            [
+                os.environ.get("SYSTEM_PULLREQUEST_TARGETBRANCH"),
+                os.environ.get("SYSTEM_PULLREQUEST_TARGETBRANCHNAME"),
+            ]
         )
-    except subprocess.CalledProcessError:
+    elif platform == "gitlab":
+        candidates.append(os.environ.get("CI_MERGE_REQUEST_TARGET_BRANCH_NAME"))
+    else:
+        candidates.extend(
+            [
+                os.environ.get("GITHUB_BASE_REF"),
+                os.environ.get("SYSTEM_PULLREQUEST_TARGETBRANCH"),
+                os.environ.get("CI_MERGE_REQUEST_TARGET_BRANCH_NAME"),
+            ]
+        )
+
+    for candidate in candidates:
+        normalized = normalize_base_ref(candidate)
+        if normalized:
+            return normalized
+
+    return None
+
+
+def ensure_base_ref_available(base_ref: str) -> None:
+    """Ensure the resolved base ref exists in the local checkout."""
+    try:
+        subprocess.run(
+            ["git", "rev-parse", "--verify", base_ref],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise BaseRefError(
+            f"Base ref '{base_ref}' is not available in the checkout. "
+            "Ensure the target branch is fetched or pass --base-ref / ADR_BASE_REF explicitly."
+        ) from exc
+
+
+def get_changed_yaml_files(
+    base_ref: str | None,
+    *,
+    allow_head_fallback: bool = False,
+) -> list[str]:
+    """Return ADR YAML files changed in the current PR (via git diff)."""
+    result = None
+
+    if base_ref:
         try:
             result = subprocess.run(
-                ["git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD~1", "HEAD"],
-                capture_output=True, text=True, check=True,
+                ["git", "diff", "--name-only", "--diff-filter=ACMR", base_ref, "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
             )
-        except subprocess.CalledProcessError:
-            return []
+        except subprocess.CalledProcessError as exc:
+            if not allow_head_fallback:
+                raise BaseRefError(
+                    f"Could not diff against base ref '{base_ref}'. "
+                    "Ensure the target branch is fetched or pass --base-ref / ADR_BASE_REF explicitly."
+                ) from exc
+    elif not allow_head_fallback:
+        raise BaseRefError(
+            "No base ref could be resolved. Pass --base-ref, set ADR_BASE_REF, "
+            "or ensure the platform target-branch environment variable is available."
+        )
+
+    try:
+        if result is None:
+            result = subprocess.run(
+                ["git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD~1", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+    except subprocess.CalledProcessError:
+        return []
 
     changed = []
     for line in result.stdout.strip().split("\n"):
@@ -201,20 +288,26 @@ def get_changed_yaml_files() -> list[str]:
     return changed
 
 
-def get_file_at_base(filepath: str) -> dict | None:
+def get_file_at_base(
+    filepath: str,
+    base_ref: str | None = None,
+    allow_missing_base: bool = False,
+) -> dict | None:
     """
     Get the YAML content of a file at the base branch (before PR changes).
     Returns parsed dict or None if file didn't exist at base.
     """
-    base_ref = os.environ.get("GITHUB_BASE_REF")
-    if base_ref:
-        base = f"origin/{base_ref}"
-    else:
-        base = "origin/main"
+    if not base_ref:
+        if allow_missing_base:
+            return None
+        raise BaseRefError(
+            "No base ref could be resolved for base-file comparisons. "
+            "Pass --base-ref, set ADR_BASE_REF, or ensure the platform target-branch environment variable is available."
+        )
 
     try:
         result = subprocess.run(
-            ["git", "show", f"{base}:{filepath}"],
+            ["git", "show", f"{base_ref}:{filepath}"],
             capture_output=True, text=True, check=True,
         )
         return yaml.safe_load(result.stdout)
@@ -391,7 +484,12 @@ def check_append_only_audit_trail(
 # Single ADR per PR
 # ---------------------------------------------------------------------------
 
-def check_single_adr_per_pr(changed_files: list[str]) -> tuple[bool, str]:
+def check_single_adr_per_pr(
+    changed_files: list[str],
+    base_ref: str | None = None,
+    *,
+    allow_missing_base: bool = False,
+) -> tuple[bool, str]:
     """
     Validate that at most one ADR is modified per PR.
 
@@ -418,7 +516,11 @@ def check_single_adr_per_pr(changed_files: list[str]) -> tuple[bool, str]:
                     {
                         "filepath": filepath,
                         "current": current_data,
-                        "base": get_file_at_base(filepath),
+                        "base": get_file_at_base(
+                            filepath,
+                            base_ref,
+                            allow_missing_base=allow_missing_base,
+                        ),
                     }
                 )
 
@@ -449,6 +551,8 @@ def check_single_adr_per_pr(changed_files: list[str]) -> tuple[bool, str]:
                         f"Supersession pair detected: new {new_id} supersedes existing {existing_id}",
                     )
 
+        except BaseRefError:
+            raise
         except Exception:
             pass
 
@@ -615,6 +719,8 @@ def verify_approvals(
     pr_author: str | None,
     changed_files: list[str],
     config: dict,
+    base_ref: str | None = None,
+    allow_missing_base: bool = False,
     dry_run: bool = False,
 ) -> int:
     """
@@ -645,149 +751,161 @@ def verify_approvals(
         DEFAULT_IMMUTABLE_AFTER_ACCEPTANCE_FIELDS,
     )
 
-    # ── Check 1: Single ADR per PR ──────────────────────────────────────
-    if config.get("single_adr_per_pr"):
-        passed, message = check_single_adr_per_pr(changed_files)
-        if passed:
-            if message:
-                print(f"✅ Single ADR per PR: {message}")
-            else:
-                print("✅ Single ADR per PR: OK")
-        else:
-            print(f"\n❌ GOVERNANCE VIOLATION: {message}")
-            exit_code = 1
-
-    # ── Check 2-6: Per-file analysis ────────────────────────────────────
-    all_required: list[tuple[str, dict]] = []      # substantive changes needing approval
-    maintenance_files: list[tuple[str, list]] = []  # maintenance-only changes
-    audit_trail_violations: list[str] = []
-    immutable_after_acceptance_violations: list[str] = []
-    invalid_approval_metadata: list[str] = []
-    skipped_files: list[str] = []
-
-    is_admin = pr_author is not None and pr_author in admins
-
-    for filepath in changed_files:
-        if not Path(filepath).exists():
-            continue
-
-        adr_id = filepath.split("/")[-1].replace(".yaml", "")
-
-        # Load current file
-        with open(filepath) as f:
-            new_data = yaml.safe_load(f)
-        if not isinstance(new_data, dict):
-            continue
-
-        old_data = get_file_at_base(filepath)
-        audit_ok, audit_message = check_append_only_audit_trail(old_data, new_data)
-        if not audit_ok:
-            audit_trail_violations.append(f"{adr_id}: {audit_message}")
-            exit_code = 1
-
-        immutable_ok, immutable_message = check_immutable_after_acceptance(
-            old_data, new_data, immutable_after_acceptance_fields
-        )
-        if not immutable_ok:
-            immutable_after_acceptance_violations.append(f"{adr_id}: {immutable_message}")
-            exit_code = 1
-
-        if not audit_ok or not immutable_ok:
-            continue
-
-        status = new_data.get("adr", {}).get("status", "")
-
-        # Skip non-actionable statuses
-        if status not in ("proposed", "accepted"):
-            skipped_files.append(f"{adr_id} (status: {status})")
-            continue
-
-        approvals = new_data.get("approvals", [])
-        if not approvals:
-            invalid_approval_metadata.append(
-                f"{adr_id}: status '{status}' requires approvals[] with at least one entry"
+    try:
+        # ── Check 1: Single ADR per PR ──────────────────────────────────────
+        if config.get("single_adr_per_pr"):
+            passed, message = check_single_adr_per_pr(
+                changed_files,
+                base_ref,
+                allow_missing_base=allow_missing_base,
             )
-            exit_code = 1
-            continue
-
-        missing_identity = [
-            str(i + 1)
-            for i, entry in enumerate(approvals)
-            if not isinstance(entry, dict) or not str(entry.get("identity", "")).strip()
-        ]
-        if missing_identity:
-            invalid_approval_metadata.append(
-                f"{adr_id}: approval entry/entries {', '.join(missing_identity)} "
-                f"missing required identity for status '{status}'"
-            )
-            exit_code = 1
-            continue
-
-        # Classify changes
-        is_substantive, changed_prefixes = classify_changes(
-            old_data, new_data, substantive_fields
-        )
-
-        if not is_substantive and old_data is not None:
-            # Maintenance-only change
-            maintenance_files.append((adr_id, changed_prefixes))
-
-            if is_admin:
-                print(
-                    f"🔧 {adr_id}: Maintenance change by admin @{pr_author} — "
-                    f"approval identity check skipped"
-                )
-                if changed_prefixes:
-                    print(f"   Changed: {', '.join(changed_prefixes)}")
-                continue
+            if passed:
+                if message:
+                    print(f"✅ Single ADR per PR: {message}")
+                else:
+                    print("✅ Single ADR per PR: OK")
             else:
-                print(
-                    f"🔧 {adr_id}: Maintenance change detected — "
-                    f"approval identity check skipped"
-                )
-                if changed_prefixes:
-                    print(f"   Changed: {', '.join(changed_prefixes)}")
+                print(f"\n❌ GOVERNANCE VIOLATION: {message}")
+                exit_code = 1
+
+        # ── Check 2-6: Per-file analysis ────────────────────────────────────
+        all_required: list[tuple[str, dict]] = []      # substantive changes needing approval
+        maintenance_files: list[tuple[str, list]] = []  # maintenance-only changes
+        audit_trail_violations: list[str] = []
+        immutable_after_acceptance_violations: list[str] = []
+        invalid_approval_metadata: list[str] = []
+        skipped_files: list[str] = []
+
+        is_admin = pr_author is not None and pr_author in admins
+
+        for filepath in changed_files:
+            if not Path(filepath).exists():
                 continue
 
-        # Substantive change — need identity verification
-        identities = extract_approval_identities(filepath)
+            adr_id = filepath.split("/")[-1].replace(".yaml", "")
 
-        if not identities:
-            continue
+            # Load current file
+            with open(filepath) as f:
+                new_data = yaml.safe_load(f)
+            if not isinstance(new_data, dict):
+                continue
 
-        print(
-            f"📝 {adr_id}: Substantive change detected — "
-            f"approval identity verification required"
-        )
-        if changed_prefixes:
-            print(f"   Changed fields: {', '.join(changed_prefixes)}")
+            old_data = get_file_at_base(
+                filepath,
+                base_ref,
+                allow_missing_base=allow_missing_base,
+            )
+            audit_ok, audit_message = check_append_only_audit_trail(old_data, new_data)
+            if not audit_ok:
+                audit_trail_violations.append(f"{adr_id}: {audit_message}")
+                exit_code = 1
 
-        for entry in identities:
-            all_required.append((adr_id, entry))
+            immutable_ok, immutable_message = check_immutable_after_acceptance(
+                old_data, new_data, immutable_after_acceptance_fields
+            )
+            if not immutable_ok:
+                immutable_after_acceptance_violations.append(f"{adr_id}: {immutable_message}")
+                exit_code = 1
 
-    # Report skipped files
-    if skipped_files:
-        for s in skipped_files:
-            print(f"⏭️  {s} — skipped (non-actionable status)")
+            if not audit_ok or not immutable_ok:
+                continue
 
-    for message in audit_trail_violations:
-        print(f"❌ GOVERNANCE VIOLATION: {message}")
+            status = new_data.get("adr", {}).get("status", "")
 
-    for message in immutable_after_acceptance_violations:
-        print(f"❌ GOVERNANCE VIOLATION: {message}")
+            # Skip non-actionable statuses
+            if status not in ("proposed", "accepted"):
+                skipped_files.append(f"{adr_id} (status: {status})")
+                continue
 
-    for message in invalid_approval_metadata:
-        print(f"❌ GOVERNANCE VIOLATION: {message}")
+            approvals = new_data.get("approvals", [])
+            if not approvals:
+                invalid_approval_metadata.append(
+                    f"{adr_id}: status '{status}' requires approvals[] with at least one entry"
+                )
+                exit_code = 1
+                continue
 
-    if not all_required:
-        if (
-            not maintenance_files
-            and not invalid_approval_metadata
-            and not audit_trail_violations
-            and not immutable_after_acceptance_violations
-        ):
-            print("ℹ️  No ADR approval identities to verify in this PR.")
-        return exit_code
+            missing_identity = [
+                str(i + 1)
+                for i, entry in enumerate(approvals)
+                if not isinstance(entry, dict) or not str(entry.get("identity", "")).strip()
+            ]
+            if missing_identity:
+                invalid_approval_metadata.append(
+                    f"{adr_id}: approval entry/entries {', '.join(missing_identity)} "
+                    f"missing required identity for status '{status}'"
+                )
+                exit_code = 1
+                continue
+
+            # Classify changes
+            is_substantive, changed_prefixes = classify_changes(
+                old_data, new_data, substantive_fields
+            )
+
+            if not is_substantive and old_data is not None:
+                # Maintenance-only change
+                maintenance_files.append((adr_id, changed_prefixes))
+
+                if is_admin:
+                    print(
+                        f"🔧 {adr_id}: Maintenance change by admin @{pr_author} — "
+                        f"approval identity check skipped"
+                    )
+                    if changed_prefixes:
+                        print(f"   Changed: {', '.join(changed_prefixes)}")
+                    continue
+                else:
+                    print(
+                        f"🔧 {adr_id}: Maintenance change detected — "
+                        f"approval identity check skipped"
+                    )
+                    if changed_prefixes:
+                        print(f"   Changed: {', '.join(changed_prefixes)}")
+                    continue
+
+            # Substantive change — need identity verification
+            identities = extract_approval_identities(filepath)
+
+            if not identities:
+                continue
+
+            print(
+                f"📝 {adr_id}: Substantive change detected — "
+                f"approval identity verification required"
+            )
+            if changed_prefixes:
+                print(f"   Changed fields: {', '.join(changed_prefixes)}")
+
+            for entry in identities:
+                all_required.append((adr_id, entry))
+
+        # Report skipped files
+        if skipped_files:
+            for s in skipped_files:
+                print(f"⏭️  {s} — skipped (non-actionable status)")
+
+        for message in audit_trail_violations:
+            print(f"❌ GOVERNANCE VIOLATION: {message}")
+
+        for message in immutable_after_acceptance_violations:
+            print(f"❌ GOVERNANCE VIOLATION: {message}")
+
+        for message in invalid_approval_metadata:
+            print(f"❌ GOVERNANCE VIOLATION: {message}")
+
+        if not all_required:
+            if (
+                not maintenance_files
+                and not invalid_approval_metadata
+                and not audit_trail_violations
+                and not immutable_after_acceptance_violations
+            ):
+                print("ℹ️  No ADR approval identities to verify in this PR.")
+            return exit_code
+    except BaseRefError as exc:
+        print(f"❌ FAILED — {exc}", file=sys.stderr)
+        return 2
 
     if dry_run:
         print(f"\n🔍 DRY RUN — Found {len(all_required)} approval identities to verify:\n")
@@ -873,6 +991,10 @@ def main():
         type=int,
         help="Pull request number. Auto-detected in CI.",
     )
+    parser.add_argument(
+        "--base-ref",
+        help="Target/base branch name or git ref (for example: main or origin/main). Auto-detected in supported CI platforms.",
+    )
     args = parser.parse_args()
 
     # Load governance config
@@ -886,6 +1008,30 @@ def main():
     # Detect platform
     platform = args.platform or detect_platform()
 
+    base_ref = detect_base_ref(platform, args.base_ref)
+    if base_ref:
+        print(f"🔀 Base ref: {base_ref}")
+        try:
+            ensure_base_ref_available(base_ref)
+        except BaseRefError as exc:
+            if not args.dry_run:
+                print(f"❌ FAILED — {exc}", file=sys.stderr)
+                return 2
+            print(f"⚠️  {exc} Dry-run will fall back to HEAD~1.", file=sys.stderr)
+            base_ref = None
+    elif not args.dry_run:
+        print(
+            "❌ FAILED — No base ref could be resolved. Pass --base-ref, set ADR_BASE_REF, "
+            "or ensure the platform target-branch environment variable is available.",
+            file=sys.stderr,
+        )
+        return 2
+    else:
+        print(
+            "⚠️  No base ref could be resolved. Dry-run will fall back to HEAD~1 and treat base comparisons as best-effort.",
+            file=sys.stderr,
+        )
+
     # Get PR author
     pr_author = get_pr_author()
     if pr_author and pr_author in config["admins"]:
@@ -894,14 +1040,30 @@ def main():
         print(f"👤 PR author: @{pr_author}")
 
     # Get changed files
-    changed_files = get_changed_yaml_files()
+    try:
+        changed_files = get_changed_yaml_files(
+            base_ref,
+            allow_head_fallback=args.dry_run,
+        )
+    except BaseRefError as exc:
+        print(f"❌ FAILED — {exc}", file=sys.stderr)
+        return 2
     print(f"📋 ADR files changed in this PR: {len(changed_files)}")
     for f in changed_files:
         print(f"   • {f}")
     print()
 
     if args.dry_run:
-        return verify_approvals(platform, None, pr_author, changed_files, config, dry_run=True)
+        return verify_approvals(
+            platform,
+            None,
+            pr_author,
+            changed_files,
+            config,
+            base_ref=base_ref,
+            allow_missing_base=True,
+            dry_run=True,
+        )
 
     # Get PR approvers from platform API
     pr_approvers: set[str] | None = None
@@ -920,11 +1082,25 @@ def main():
 
         if not pr_number:
             print("⚠️  No PR number detected. Set --pr or ensure GITHUB_EVENT_PATH is available.")
-            return verify_approvals(platform, None, pr_author, changed_files, config)
+            return verify_approvals(
+                platform,
+                None,
+                pr_author,
+                changed_files,
+                config,
+                base_ref=base_ref,
+            )
 
         if not token:
             print("⚠️  No GitHub token found. Set GH_TOKEN or GITHUB_TOKEN.")
-            return verify_approvals(platform, None, pr_author, changed_files, config)
+            return verify_approvals(
+                platform,
+                None,
+                pr_author,
+                changed_files,
+                config,
+                base_ref=base_ref,
+            )
 
         print(f"🔗 Querying GitHub API: {repo} PR #{pr_number}")
         pr_approvers = github_get_pr_approvers(repo, pr_number, token)
@@ -962,7 +1138,14 @@ def main():
     else:
         print(f"⚠️  Platform not detected or unsupported: {platform}")
 
-    return verify_approvals(platform, pr_approvers, pr_author, changed_files, config)
+    return verify_approvals(
+        platform,
+        pr_approvers,
+        pr_author,
+        changed_files,
+        config,
+        base_ref=base_ref,
+    )
 
 
 if __name__ == "__main__":

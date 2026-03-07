@@ -268,7 +268,7 @@ git commit -m "feat(adr): ADR-0001 your decision title"
 git push origin adr/ADR-0001-your-decision-title
 ```
 
-The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. On GitHub Actions, Azure DevOps, and GitLab CI, the shipped setup can also verify approval identities; AWS/GCP require custom PR metadata wiring for that check to be enforceable instead of advisory. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
+The CI pipeline validates schema compliance and lints the YAML. Reviewers are auto-assigned via CODEOWNERS. On GitHub Actions, Azure DevOps, and GitLab CI, the shipped setup can also verify approval identities; AWS/GCP require custom PR metadata and base-ref wiring for that check to be enforceable instead of advisory. The PR becomes the decision forum — all discussion, feedback, and approval happens asynchronously in the PR thread.
 
 </details>
 
