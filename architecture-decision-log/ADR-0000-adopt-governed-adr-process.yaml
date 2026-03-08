@@ -2,13 +2,17 @@ adr:
   id: ADR-0000-adopt-governed-adr-process
   title: Adopt schema-governed ADR process for architectural decision management
   y_statement: >-
-    In the context of enterprise-wide architectural governance, facing inconsistent decision documentation and
-    lack of traceability across teams, we decided for a schema-governed ADR process with YAML files, JSON Schema
-    validation, and GitOps workflows and neglected informal wiki-based documentation and heavyweight TOGAF-style
-    governance boards, to achieve machine-verifiable decision records with full audit trails and automated CI/CD
-    enforcement, accepting the upfront investment in schema design, tooling, and team onboarding, because
-    schema-governed records enable AI-assisted authoring, automated compliance checking, and cross-project
-    decision discovery that informal approaches cannot provide.
+    **In the context of** enterprise-wide architectural governance,
+    **facing** inconsistent decision documentation and lack of traceability
+    across teams, **we decided for** a schema-governed ADR process with YAML
+    files, JSON Schema validation, and GitOps workflows **and neglected**
+    informal wiki-based documentation and heavyweight TOGAF-style governance
+    boards, **to achieve** machine-verifiable decision records with full
+    audit trails and automated CI/CD enforcement, **accepting** the upfront
+    investment in schema design, tooling, and team onboarding, **because**
+    schema-governed records enable AI-assisted authoring, automated
+    compliance checking, and cross-project decision discovery that informal
+    approaches cannot provide.
   status: accepted
   created_at: "2026-03-05T09:00:00Z"
   last_modified: "2026-03-05T18:00:00Z"

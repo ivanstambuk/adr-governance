@@ -15,7 +15,7 @@
 > **Decision Owner:** Jonas Eriksen (CISO)  
 > **Decision Date:** 2026-02-27
 
-> *In the context of the step-up authentication and transaction signing flows, facing the need to persist high-assurance authentication proof across multiple requests without re-prompting users, we decided for IdP session enrichment (storing authentication context in the PingAM session) and neglected custom JWE cookies and a hybrid session-plus-JWE-fallback approach, to achieve atomic consistency between session state and authentication level with zero additional cryptographic infrastructure, accepting tight coupling to the IdP session lifecycle and loss of step-up proof on session expiry, because session enrichment leverages existing IdP infrastructure and avoids the key management complexity and cookie size limitations of JWE-based approaches.*
+> ***In the context of** the step-up authentication and transaction signing flows, **facing** the need to persist high-assurance authentication proof across multiple requests without re-prompting users, **we decided for** IdP session enrichment (storing authentication context in the PingAM session) **and neglected** custom JWE cookies and a hybrid session-plus-JWE-fallback approach, **to achieve** atomic consistency between session state and authentication level with zero additional cryptographic infrastructure, **accepting** tight coupling to the IdP session lifecycle and loss of step-up proof on session expiry, **because** session enrichment leverages existing IdP infrastructure and avoids the key management complexity and cookie size limitations of JWE-based approaches.*
 
 ---
 

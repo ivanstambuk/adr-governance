@@ -15,7 +15,7 @@
 > **Decision Owner:** Jonas Eriksen (CISO)  
 > **Decision Date:** 2025-12-18
 
-> *In the context of the platform-wide JWT and SAML assertion signing infrastructure, facing the need for high-performance signing with strong post-quantum migration readiness across all token-issuing services, we decided for EdDSA with Ed25519 (RFC 8037) and neglected ECDSA with P-256 (ES256) and RSA-2048 with PS256, to achieve 64-byte signatures (vs 256-byte RSA), deterministic signing without per-operation randomness, and a simpler migration path to Ed448, accepting limited HSM support in current-generation hardware and the need for JWS library upgrades across consuming services, because Ed25519 provides the best performance-to-security ratio with no known timing side-channels and its Edwards curve foundation positions the platform for post-quantum hybrid schemes.*
+> ***In the context of** the platform-wide JWT and SAML assertion signing infrastructure, **facing** the need for high-performance signing with strong post-quantum migration readiness across all token-issuing services, **we decided for** EdDSA with Ed25519 (RFC 8037) **and neglected** ECDSA with P-256 (ES256) and RSA-2048 with PS256, **to achieve** 64-byte signatures (vs 256-byte RSA), deterministic signing without per-operation randomness, and a simpler migration path to Ed448, **accepting** limited HSM support in current-generation hardware and the need for JWS library upgrades across consuming services, **because** Ed25519 provides the best performance-to-security ratio with no known timing side-channels and its Edwards curve foundation positions the platform for post-quantum hybrid schemes.*
 
 ---
 

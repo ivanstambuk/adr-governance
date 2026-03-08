@@ -2,13 +2,18 @@ adr:
   id: ADR-0006-session-enrichment-for-step-up-authentication
   title: Use IdP session enrichment over custom JWE cookies for persisting step-up authentication proof
   y_statement: >-
-    In the context of the step-up authentication and transaction signing flows, facing the need to persist
-    high-assurance authentication proof across multiple requests without re-prompting users, we decided for IdP session
-    enrichment (storing authentication context in the PingAM session) and neglected custom JWE cookies and a hybrid
-    session-plus-JWE-fallback approach, to achieve atomic consistency between session state and authentication level
-    with zero additional cryptographic infrastructure, accepting tight coupling to the IdP session lifecycle and loss of
-    step-up proof on session expiry, because session enrichment leverages existing IdP infrastructure and avoids the key
-    management complexity and cookie size limitations of JWE-based approaches.
+    **In the context of** the step-up authentication and transaction signing
+    flows, **facing** the need to persist high-assurance authentication
+    proof across multiple requests without re-prompting users, **we decided
+    for** IdP session enrichment (storing authentication context in the
+    PingAM session) **and neglected** custom JWE cookies and a hybrid
+    session-plus-JWE-fallback approach, **to achieve** atomic consistency
+    between session state and authentication level with zero additional
+    cryptographic infrastructure, **accepting** tight coupling to the IdP
+    session lifecycle and loss of step-up proof on session expiry,
+    **because** session enrichment leverages existing IdP infrastructure and
+    avoids the key management complexity and cookie size limitations of
+    JWE-based approaches.
   status: accepted
   created_at: "2026-02-10T08:00:00Z"
   last_modified: "2026-02-28T14:00:00Z"

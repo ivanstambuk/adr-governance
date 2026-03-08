@@ -2,20 +2,20 @@ adr:
   id: ADR-0103-go-generics
   title: Add generics to Go via type parameters with interface constraints
   y_statement: >-
-    In the context of Go's type system, facing over a decade of community
-    demand for parametric polymorphism to eliminate boilerplate and unsafe
-    interface{} workarounds, we decided for type parameters with
-    square-bracket syntax, interface-based constraints, and GC-shape
-    stenciling, and neglected the contracts-based design, Java-style type
-    erasure, full C++-style monomorphization, and continuing without
-    generics, to achieve compile-time type-safe generic programming with
+    **In the context of** Go's type system, **facing** over a decade of
+    community demand for parametric polymorphism to eliminate boilerplate
+    and unsafe interface{} workarounds, **we decided for** type parameters
+    with square-bracket syntax, interface-based constraints, and GC-shape
+    stenciling, **and neglected** the contracts-based design, Java-style
+    type erasure, full C++-style monomorphization, and continuing without
+    generics, **to achieve** compile-time type-safe generic programming with
     minimal new concepts and smooth integration with Go's interface system,
-    accepting deliberately limited expressiveness, ~15% initial compiler
+    **accepting** deliberately limited expressiveness, ~15% initial compiler
     slowdown, and the risk of overuse undermining Go's simplicity culture,
-    because the type-parameter-with-interfaces design was the only approach
-    satisfying all five guidelines — minimize new concepts, push complexity
-    to authors, preserve independent development, maintain fast builds, and
-    keep Go feeling like Go.
+    **because** the type-parameter-with-interfaces design was the only
+    approach satisfying all five guidelines — minimize new concepts, push
+    complexity to authors, preserve independent development, maintain fast
+    builds, and keep Go feeling like Go.
   status: accepted
   created_at: "2021-01-12T00:00:00Z"
   last_modified: "2022-03-15T00:00:00Z"

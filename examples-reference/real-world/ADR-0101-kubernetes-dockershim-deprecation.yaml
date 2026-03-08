@@ -2,18 +2,19 @@ adr:
   id: ADR-0101-kubernetes-dockershim-deprecation
   title: Deprecate and remove built-in dockershim in favor of CRI-compliant container runtimes
   y_statement: >-
-    In the context of Kubernetes's container runtime architecture, facing
-    unsustainable maintenance burden from the built-in dockershim compatibility
-    layer, we decided for removing dockershim and requiring CRI-compliant
-    runtimes (containerd, CRI-O) and neglected maintaining dockershim in-tree,
-    extracting it to an out-of-tree component, and waiting for Docker to
-    implement CRI natively, to achieve reduced kubelet complexity, elimination
-    of Docker-specific maintenance overhead, and unblocking runtime enhancements
-    like cgroups v2 and user namespaces, accepting massive migration pain for
-    every cluster operator globally and community confusion from the "Kubernetes
-    is dropping Docker" narrative, because Docker Engine is a full platform
-    rather than a focused runtime and would never converge with the CRI
-    standard.
+    **In the context of** Kubernetes's container runtime architecture,
+    **facing** unsustainable maintenance burden from the built-in dockershim
+    compatibility layer, **we decided for** removing dockershim and
+    requiring CRI-compliant runtimes (containerd, CRI-O) **and neglected**
+    maintaining dockershim in-tree, extracting it to an out-of-tree
+    component, and waiting for Docker to implement CRI natively, **to
+    achieve** reduced kubelet complexity, elimination of Docker-specific
+    maintenance overhead, and unblocking runtime enhancements like cgroups
+    v2 and user namespaces, **accepting** massive migration pain for every
+    cluster operator globally and community confusion from the "Kubernetes
+    is dropping Docker" narrative, **because** Docker Engine is a full
+    platform rather than a focused runtime and would never converge with the
+    CRI standard.
   status: accepted
   created_at: "2020-12-08T00:00:00Z"
   last_modified: "2022-05-03T00:00:00Z"

@@ -76,7 +76,9 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
   5. "to achieve [positive consequences],"
   6. "accepting [tradeoffs],"
   7. "because [decision.rationale]."
-  If any clause is missing, rewrite until all 7 are present. Present to the user for confirmation.
+  If any clause is missing, rewrite until all 7 are present. Present to the user for confirmation. Always use "**and neglected**" — never "and rejected" — to match the canonical Y-Statement vocabulary.
+
+  **Bold the clause keywords** in the YAML value to aid scanning: `**In the context of**`, `**facing**`, `**we decided for**`, `**and neglected**`, `**to achieve**`, `**accepting**`, `**because**`.
 
   **Target length: 100–150 words.** The Y-Statement is a *summary*, not a rationale — it must be a single scannable paragraph. If it exceeds 150 words, you are duplicating content that belongs in `context.description`, `decision.rationale`, or `decision.tradeoffs`. Apply these per-clause brevity rules:
   - **`facing`**: One headline problem (not a list of drivers) — the drivers belong in `context`

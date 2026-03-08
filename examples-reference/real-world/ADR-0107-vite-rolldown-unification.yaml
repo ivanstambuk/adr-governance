@@ -4,22 +4,23 @@ adr:
     Replace Vite's dual-bundler architecture (esbuild + Rollup) with Rolldown,
     a unified Rust-based bundler maintaining Rollup plugin compatibility
   y_statement: >-
-    In the context of Vite's build pipeline architecture, facing dev/prod
-    behavioral inconsistencies from using esbuild for development and Rollup
-    for production — including different module resolution, duplicated parsing,
-    and growing glue code — we decided for Rolldown, a unified Rust-based
-    bundler built on the Oxc toolchain that replaces both esbuild and Rollup,
-    and neglected keeping the dual-bundler status quo, adopting esbuild for
-    everything, adopting Turbopack, building a custom bundler, and waiting for
-    Rollup to add native performance, to achieve a single consistent bundler
-    eliminating dev/prod differences, 3x–16x faster production builds, up to
-    100x memory reduction, and Rollup plugin API compatibility preserving
-    2000+ existing plugins, accepting a multi-phase rollout via a temporary
+    **In the context of** Vite's build pipeline architecture, **facing**
+    dev/prod behavioral inconsistencies from using esbuild for development
+    and Rollup for production — including different module resolution,
+    duplicated parsing, and growing glue code — **we decided for** Rolldown,
+    a unified Rust-based bundler built on the Oxc toolchain that replaces
+    both esbuild and Rollup, **and neglected** keeping the dual-bundler
+    status quo, adopting esbuild for everything, adopting Turbopack,
+    building a custom bundler, and waiting for Rollup to add native
+    performance, **to achieve** a single consistent bundler eliminating
+    dev/prod differences, 3x–16x faster production builds, up to 100x memory
+    reduction, and Rollup plugin API compatibility preserving 2000+ existing
+    plugins, **accepting** a multi-phase rollout via a temporary
     rolldown-vite package, plugin adaptation for the Oxc transformation
-    pipeline, and VoidZero Inc. dependency in Vite's governance, because the
-    dual-bundler architecture had reached a complexity ceiling where glue code
-    was growing unsustainably and Rolldown's Rollup-compatible API preserved
-    ecosystem investment.
+    pipeline, and VoidZero Inc. dependency in Vite's governance, **because**
+    the dual-bundler architecture had reached a complexity ceiling where
+    glue code was growing unsustainably and Rolldown's Rollup-compatible API
+    preserved ecosystem investment.
   status: accepted
   created_at: "2024-03-01T00:00:00Z"
   last_modified: "2025-06-24T00:00:00Z"

@@ -2,19 +2,21 @@ adr:
   id: ADR-0102-react-server-components
   title: Introduce React Server Components for zero-bundle-size server-first rendering
   y_statement: >-
-    In the context of React's rendering architecture, facing growing JavaScript
-    bundle sizes, client-server data fetching waterfalls, and the inability to
-    access server-side resources from components, we decided for React Server
-    Components — a component type that renders exclusively on the server with
-    zero client-side JavaScript — and neglected enhanced SSR with progressive
-    hydration, a GraphQL-centric data layer, a server-rendering DSL, and
-    client-only rendering with manual code splitting, to achieve zero-bundle-size
-    server rendering, elimination of client-server waterfalls through colocated
-    data fetching, and seamless interleaving of server and client components,
-    accepting increased architectural complexity from the server/client boundary
-    and framework dependence for production implementation, because the component
-    model is the right abstraction level for the server/client split — more
-    granular and composable than per-page or per-route decisions.
+    **In the context of** React's rendering architecture, **facing** growing
+    JavaScript bundle sizes, client-server data fetching waterfalls, and the
+    inability to access server-side resources from components, **we decided
+    for** React Server Components — a component type that renders
+    exclusively on the server with zero client-side JavaScript — **and
+    neglected** enhanced SSR with progressive hydration, a GraphQL-centric
+    data layer, a server-rendering DSL, and client-only rendering with
+    manual code splitting, **to achieve** zero-bundle-size server rendering,
+    elimination of client-server waterfalls through colocated data fetching,
+    and seamless interleaving of server and client components, **accepting**
+    increased architectural complexity from the server/client boundary and
+    framework dependence for production implementation, **because** the
+    component model is the right abstraction level for the server/client
+    split — more granular and composable than per-page or per-route
+    decisions.
   status: accepted
   created_at: "2020-12-21T00:00:00Z"
   last_modified: "2024-12-05T00:00:00Z"

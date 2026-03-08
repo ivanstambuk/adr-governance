@@ -4,19 +4,20 @@ adr:
     Replace the eslintrc configuration system with flat config
     (eslint.config.js) using native JavaScript module loading
   y_statement: >-
-    In the context of ESLint's configuration architecture, facing a 9-year
-    accumulation of complexity in the eslintrc system — cascading directory
-    configs, multiple file formats, and custom require resolution that became
-    ESLint's biggest source of support requests — we decided for flat config
-    (eslint.config.js), a single JavaScript file exporting an array of config
-    objects with glob-based file matching and native module loading, and
-    neglected keeping eslintrc with incremental fixes, a YAML-only declarative
-    format, TOML-based configuration, and a purely programmatic API without
-    file convention, to achieve a single predictable config file per project,
-    native ES module loading that eliminates custom require resolution, and
-    explicit plugin imports as JavaScript objects, accepting that every existing
-    eslintrc configuration must be migrated and the 18-month RFC debate nearly
-    split the core team, because the eslintrc system's architectural problems
+    **In the context of** ESLint's configuration architecture, **facing** a
+    9-year accumulation of complexity in the eslintrc system — cascading
+    directory configs, multiple file formats, and custom require resolution
+    that became ESLint's biggest source of support requests — **we decided
+    for** flat config (eslint.config.js), a single JavaScript file exporting
+    an array of config objects with glob-based file matching and native
+    module loading, **and neglected** keeping eslintrc with incremental
+    fixes, a YAML-only declarative format, TOML-based configuration, and a
+    purely programmatic API without file convention, **to achieve** a single
+    predictable config file per project, native ES module loading that
+    eliminates custom require resolution, and explicit plugin imports as
+    JavaScript objects, **accepting** that every existing eslintrc
+    configuration must be migrated and the 18-month RFC debate nearly split
+    the core team, **because** the eslintrc system's architectural problems
     — cascading configs, custom require, and multiple formats — were
     interdependent and could not be fixed incrementally.
   status: accepted

@@ -4,22 +4,23 @@ adr:
     Replace Svelte's implicit compiler-magic reactivity ($: labels, stores)
     with an explicit signals-based runes system ($state, $derived, $effect)
   y_statement: >-
-    In the context of Svelte's reactivity model, facing limitations of the
-    implicit $: label-based system — compile-time-only dependency tracking
-    that broke on refactoring, reactivity confined to .svelte files, verbose
-    store APIs, and poor TypeScript integration — we decided for runes, an
-    explicit signals-based system using compiler primitives ($state, $derived,
-    $effect, $props) providing universal fine-grained reactivity, and neglected
-    keeping implicit $: reactivity, Vue-style Reactivity Transform macros,
-    React Hooks, SolidJS signals API, and stores as the primary cross-component
-    mechanism, to achieve universal reactivity across .svelte, .svelte.js, and
+    **In the context of** Svelte's reactivity model, **facing** limitations
+    of the implicit $: label-based system — compile-time-only dependency
+    tracking that broke on refactoring, reactivity confined to .svelte
+    files, verbose store APIs, and poor TypeScript integration — **we
+    decided for** runes, an explicit signals-based system using compiler
+    primitives ($state, $derived, $effect, $props) providing universal
+    fine-grained reactivity, **and neglected** keeping implicit $:
+    reactivity, Vue-style Reactivity Transform macros, React Hooks, SolidJS
+    signals API, and stores as the primary cross-component mechanism, **to
+    achieve** universal reactivity across .svelte, .svelte.js, and
     .svelte.ts files, runtime dependency tracking that survives refactoring,
-    fine-grained DOM updates, and first-class TypeScript support, accepting
-    increased verbosity for simple cases, community perception of becoming
-    React-like, and Svelte 4 migration effort, because the implicit $: system
-    had reached a complexity ceiling where tracking broke silently, Vue's
-    similar experiment was abandoned, and the signals pattern had proven
-    superior across SolidJS, Angular, Qwik, and Preact.
+    fine-grained DOM updates, and first-class TypeScript support,
+    **accepting** increased verbosity for simple cases, community perception
+    of becoming React-like, and Svelte 4 migration effort, **because** the
+    implicit $: system had reached a complexity ceiling where tracking broke
+    silently, Vue's similar experiment was abandoned, and the signals
+    pattern had proven superior across SolidJS, Angular, Qwik, and Preact.
   status: accepted
   created_at: "2023-09-20T00:00:00Z"
   last_modified: "2024-10-22T00:00:00Z"

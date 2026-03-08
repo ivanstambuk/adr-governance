@@ -15,7 +15,7 @@
 > **Decision Owner:** Ivan Stambuk (Principal Architect)  
 > **Decision Date:** 2026-03-05
 
-> *In the context of enterprise-wide architectural governance, facing inconsistent decision documentation and lack of traceability across teams, we decided for a schema-governed ADR process with YAML files, JSON Schema validation, and GitOps workflows and neglected informal wiki-based documentation and heavyweight TOGAF-style governance boards, to achieve machine-verifiable decision records with full audit trails and automated CI/CD enforcement, accepting the upfront investment in schema design, tooling, and team onboarding, because schema-governed records enable AI-assisted authoring, automated compliance checking, and cross-project decision discovery that informal approaches cannot provide.*
+> ***In the context of** enterprise-wide architectural governance, **facing** inconsistent decision documentation and lack of traceability across teams, **we decided for** a schema-governed ADR process with YAML files, JSON Schema validation, and GitOps workflows **and neglected** informal wiki-based documentation and heavyweight TOGAF-style governance boards, **to achieve** machine-verifiable decision records with full audit trails and automated CI/CD enforcement, **accepting** the upfront investment in schema design, tooling, and team onboarding, **because** schema-governed records enable AI-assisted authoring, automated compliance checking, and cross-project decision discovery that informal approaches cannot provide.*
 
 ---
 

@@ -2,13 +2,18 @@ adr:
   id: ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties
   title: Use pairwise pseudonymous subject identifiers over public subject identifiers for OIDC relying parties
   y_statement: >-
-    In the context of the multi-tenant OIDC identity platform, facing GDPR cross-service tracking prevention
-    requirements and the need to limit blast radius of subject identifier leakage, we decided for pairwise pseudonymous
-    subject identifiers (PPID) per OIDC Core §8.1 and neglected public subject identifiers with contractual controls and
-    encrypted JWE-wrapped subject claims, to achieve unlinkable per-relying-party identifiers that satisfy GDPR data
-    minimization by design, accepting increased operational complexity in cross-RP correlation scenarios and the need
-    for a sector identifier registry, because PPIDs provide cryptographic unlinkability that contractual controls cannot
-    enforce and JWE-wrapped approaches only obscure rather than prevent correlation.
+    **In the context of** the multi-tenant OIDC identity platform,
+    **facing** GDPR cross-service tracking prevention requirements and the
+    need to limit blast radius of subject identifier leakage, **we decided
+    for** pairwise pseudonymous subject identifiers (PPID) per OIDC Core
+    §8.1 **and neglected** public subject identifiers with contractual
+    controls and encrypted JWE-wrapped subject claims, **to achieve**
+    unlinkable per-relying-party identifiers that satisfy GDPR data
+    minimization by design, **accepting** increased operational complexity
+    in cross-RP correlation scenarios and the need for a sector identifier
+    registry, **because** PPIDs provide cryptographic unlinkability that
+    contractual controls cannot enforce and JWE-wrapped approaches only
+    obscure rather than prevent correlation.
   status: accepted
   created_at: "2025-11-01T08:00:00Z"
   last_modified: "2025-12-15T11:00:00Z"

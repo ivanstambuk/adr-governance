@@ -15,7 +15,7 @@
 > **Decision Owner:** Marcus Chen (Head of Identity and Access Management)  
 > **Decision Date:** 2026-01-24
 
-> *In the context of the OIDC-based IAM platform, facing the need for sender-constrained tokens that work across public (SPA/mobile), confidential (backend), and partner client types without infrastructure changes, we decided for DPoP (RFC 9449) and neglected mTLS certificate-bound tokens (RFC 8705) and a hybrid DPoP/mTLS approach, to achieve a single sender-constraining mechanism that survives CDN/reverse-proxy TLS termination and requires no client certificate provisioning, accepting per-request proof generation overhead and the need for server-side nonce/jti replay protection, because DPoP is the only mechanism that works for all three client types without infrastructure modifications and eliminates the $50K/year CDN mTLS passthrough cost.*
+> ***In the context of** the OIDC-based IAM platform, **facing** the need for sender-constrained tokens that work across public (SPA/mobile), confidential (backend), and partner client types without infrastructure changes, **we decided for** DPoP (RFC 9449) **and neglected** mTLS certificate-bound tokens (RFC 8705) and a hybrid DPoP/mTLS approach, **to achieve** a single sender-constraining mechanism that survives CDN/reverse-proxy TLS termination and requires no client certificate provisioning, **accepting** per-request proof generation overhead and the need for server-side nonce/jti replay protection, **because** DPoP is the only mechanism that works for all three client types without infrastructure modifications and eliminates the $50K/year CDN mTLS passthrough cost.*
 
 ---
 
