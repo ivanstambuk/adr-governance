@@ -420,36 +420,6 @@ Additionally, [`architecture-decision-log/ADR-0000`](architecture-decision-log/A
 
 > **Bootstrap exception:** ADR-0000 was self-approved by the initial author as the bootstrapping meta-decision. The "no self-approval" rule (§3.4) applies to all subsequent ADRs.
 
-## Automated Quality Testing (Triple-LLM Harness)
-
-The framework includes an automated testing harness ([`tests/llm_harness.py`](tests/llm_harness.py)) that validates ADR authoring quality by simulating realistic authoring conversations between three LLMs:
-
-| Role | Purpose | Default Model |
-|------|---------|---------------|
-| **Interviewer** | Runs the Socratic ADR authoring dialogue | GPT-5.2 Medium |
-| **User** | Plays a domain expert answering questions | GLM-5 |
-| **Analyst** | Reviews the generated ADR for quality | GPT-5.4 High |
-
-### How It Works
-
-1. A YAML **scenario** defines the decision context, persona, and expected coverage
-2. The **Interviewer** and **User** LLMs conduct a multi-turn ADR authoring conversation
-3. The resulting ADR YAML is **validated** against the schema and **reviewed** by the Analyst LLM
-4. Quality metrics are computed: schema compliance, field completeness, Y-Statement presence, ASR coverage
-
-### Running the Harness
-
-```bash
-# Install dependencies
-pip install google-genai anthropic pyyaml jsonschema
-
-# Run a single scenario
-python3 tests/llm_harness.py tests/scenarios/fictional-001-api-versioning.yaml
-
-# Run all scenarios (results go to tests/llm_runs/)
-python3 tests/llm_harness.py tests/scenarios/*.yaml
-```
-
 ## License
 
 MIT
