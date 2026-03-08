@@ -274,6 +274,10 @@ C --> F["❌ Ref-counting overhead\nnegates performance gains"]
 
 ### YAML scalar pitfalls
 
+Three common YAML pitfalls can silently corrupt ADR content. Learn all three to avoid debugging mysterious parse errors.
+
+#### Pitfall 1: Folded scalars (`>`) destroy code blocks
+
 ⚠️ **Critical: use `|` (literal), never `>` (folded), for descriptions containing code blocks.**
 
 The YAML folded scalar (`>`) collapses newlines into spaces, which destroys Mermaid code fences:
@@ -299,6 +303,42 @@ description: |
 ```
 
 The validator (`scripts/validate-adr.py`) will warn if it detects collapsed code fences caused by this mistake.
+
+#### Pitfall 2: Leading `"` in list items breaks parsing
+
+A YAML list item starting with a `"` character (e.g., a quoted phrase) opens a quoted string that the parser expects to be closed. This causes cryptic parse errors on subsequent lines.
+
+```yaml
+# ❌ WRONG — leading " opens a quoted string that never closes
+cons:
+  - "Reusability" is a counterproductive notion
+  - Next item causes parse error here
+
+# ✅ CORRECT — use >- folded scalar for items starting with "
+cons:
+  - >-
+    "Reusability" is a counterproductive notion
+  - Next item works fine
+```
+
+#### Pitfall 3: `#` in plain scalars is a comment
+
+A `#` character preceded by a space inside a **plain (unquoted) scalar** is treated as an inline comment start. Everything after it is silently dropped, causing a parse error on the *next* line.
+
+```yaml
+# ❌ WRONG — " #1" becomes a comment; "complaint..." is dropped
+business_drivers:
+  - Generics was the #1 complaint in annual surveys
+    for over a decade
+
+# ✅ CORRECT — use >- to prevent # from being parsed as comment
+business_drivers:
+  - >-
+    Generics was the #1 complaint in annual surveys
+    for over a decade
+```
+
+**Note:** This pitfall does NOT apply inside `|` or `>` block scalars — only in plain (unquoted) scalars and list items. Inside block scalars, `#` is always literal text.
 
 ## Reference documentation
 

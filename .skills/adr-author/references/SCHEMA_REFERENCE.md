@@ -77,7 +77,10 @@ The following fields support **full Markdown** including embedded Mermaid diagra
 | `decision.tradeoffs` | Acknowledged tradeoffs accepted with this decision |
 | `confirmation.description` | Verification evidence and implementation proof |
 
-⚠️ **Always use YAML literal scalars (`|`) for these fields** — never folded scalars (`>`). The `>` indicator collapses newlines into spaces, which destroys fenced code blocks (e.g., Mermaid diagrams). The validator will warn if collapsed code fences are detected.
+⚠️ **YAML scalar pitfalls** — three common issues can silently corrupt ADR content:
+1. **Folded scalars (`>`) destroy code blocks** — Always use `|` (literal) for these fields, never `>` (folded). The `>` indicator collapses newlines into spaces, breaking Mermaid fences. The validator will warn if collapsed code fences are detected.
+2. **Leading `"` in list items breaks parsing** — A list item starting with `"` (e.g., a quoted phrase) opens a quoted string the parser expects closed. Use `>-` for items starting with `"`.
+3. **`#` in plain scalars is a comment** — A `#` preceded by a space in a plain (unquoted) scalar is treated as a comment. Everything after it is silently dropped. Use `>-` for list items containing `#`. This does NOT affect `|` or `>` block scalars.
 
 **Mermaid quality patterns:**
 - Use **subgraphs** to group related concepts (e.g., "Native Outputs", "Measured Gains")
