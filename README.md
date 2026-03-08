@@ -144,64 +144,41 @@ See **[`docs/decision-enforcement.md`](docs/decision-enforcement.md)** for SDD w
 
 ## Quick Start — Adopting for Your Organization
 
-> **⚡ Fastest path — scripted bootstrap.** Run the bootstrap script to set up everything in one command:
->
-> ```bash
-> bash scripts/bootstrap-adoption.sh \
->   --platform azure \
->   --org "My Organisation" \
->   --name "Jane Doe" \
->   --email "jane.doe@contoso.com" \
->   --identity "jane.doe@contoso.com" \
->   --team "[MyProject]\Architecture" \
->   --remove-examples
-> ```
->
-> Then verify with `bash scripts/adoption-doctor.sh` and smoke-test CI with `bash scripts/create-validation-smoke-test.sh`.
-
-> **🤖 AI-agent path.** Fill in [`.adr-governance/adoption.yaml`](.adr-governance/adoption.yaml) and tell your AI assistant: *"Read `.adr-governance/adoption.yaml` and run `bootstrap-adoption.sh` with the values from that file."*
-
-<details>
-<summary><strong>AI prompt method</strong> — paste into any AI coding assistant</summary>
+> **⚡ Fastest path.** Paste this into any AI coding assistant (Antigravity, Claude Code, Codex, Copilot). Fill in the placeholders first, then copy the entire block.
 
 ```
-I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization.
+I'm adopting the adr-governance framework.
 
-Please help me:
-1. Fork or clone the repo into my organization as a new repository named "architecture-decisions".
-2. Delete the examples-reference/ directory (those are fictional reference ADRs). All scripts, hooks, CI, and tests will keep working after deletion.
-3. Update ADR-0000 (architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml):
-   - Replace authors, decision_owner, reviewers, and approvals with my name/identity
-   - Update adr.project to my organization name
-   - Update timestamps and audit trail entries
-4. Update .adr-governance/config.yaml:
-   - Replace admins[].identity with my Git identity
-   - Set adr_directory to architecture-decision-log (default)
-5. Set up CI validation as a required merge gate for my platform.
-6. Enable the pre-commit hook (git config core.hooksPath .githooks).
-7. Configure reviewer ownership:
-   - GitHub: copy CODEOWNERS.example to .github/CODEOWNERS and replace team handles
-   - Azure DevOps: add "Automatically included reviewers" in branch policies (CODEOWNERS does not exist on Azure DevOps)
-   - GitLab: add approval rules in Settings → Merge Requests
-8. Set identity format for approvals[].identity:
-   - GitHub: @username (e.g., @janedoe)
-   - Azure DevOps: Azure email or UPN (e.g., jane.doe@contoso.com)
-   - GitLab: GitLab username (e.g., janedoe)
-9. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the check fails.
+1. Clone https://github.com/ivanstambuk/adr-governance into a new repo.
+2. Run the bootstrap script with my details:
 
-My organization name is: [INSERT ORG NAME]
-My CI platform is: [GitHub Actions / Azure DevOps / GCP Cloud Build / AWS CodeBuild / GitLab CI]
-My architecture team handle is: [INSERT TEAM HANDLE, e.g., @myorg/architects]
-My name is: [INSERT YOUR NAME]
-My Git identity is: [INSERT YOUR GIT USERNAME]
+bash scripts/bootstrap-adoption.sh \
+  --platform PLATFORM \
+  --org "ORG_NAME" \
+  --name "FULL_NAME" \
+  --email "EMAIL" \
+  --identity "IDENTITY" \
+  --team "TEAM" \
+  --remove-examples
+
+Where:
+  PLATFORM = github | azure | gcp | aws | gitlab
+  ORG_NAME = my organisation name
+  FULL_NAME = my full name
+  EMAIL = my email address
+  IDENTITY = @ghuser (GitHub) | user@domain.com (Azure) | username (GitLab)
+  TEAM = @org/team (GitHub) | Azure group name | @group (GitLab)
+
+3. Configure branch protection / build policies for my platform (see docs/ci-setup.md).
+4. Run: bash scripts/adoption-doctor.sh
+5. Run: bash scripts/create-validation-smoke-test.sh
+6. Commit and push.
 ```
-
-</details>
 
 ---
 
 <details>
-<summary><h3>Manual Setup</h3> <em>If you used the bootstrap script or AI prompt above, skip this section.</em></summary>
+<summary><h3>Manual Setup</h3> <em>If you used the AI prompt above, skip this section.</em></summary>
 
 #### 1. Create your ADR repository
 
