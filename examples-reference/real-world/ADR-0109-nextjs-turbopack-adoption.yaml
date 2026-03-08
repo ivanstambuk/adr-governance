@@ -1,0 +1,1222 @@
+adr:
+  id: ADR-0109-nextjs-turbopack-adoption
+  title: >-
+    Adopt Turbopack as Next.js's bundler, replacing Webpack with a Rust-based
+    incremental bundler built by Webpack's creator Tobias Koppers
+  y_statement: >-
+    In the context of Next.js's build pipeline architecture, facing increasing
+    developer frustration with Webpack's slow compilation and Hot Module
+    Replacement times — especially in large applications with thousands of
+    modules, the inability to parallelize bundling across CPU cores due to
+    JavaScript's single-threaded architecture, and the need for a unified
+    module graph supporting both server and client environments for React
+    Server Components — we decided for Turbopack, a Rust-based incremental
+    bundler designed from scratch by Tobias Koppers (Webpack's original
+    creator) with function-level caching, native parallelization, and a
+    unified multi-environment module graph, and neglected keeping Webpack as
+    the default bundler with incremental optimizations, adopting Vite as the
+    bundler (the community-favorite alternative backed by Evan You), adopting
+    esbuild as the bundler (fast but limited production optimization), adopting
+    Rolldown (the emerging unified Rust-based bundler from VoidZero), and
+    building a minimal custom in-house bundler without Webpack lineage, to
+    achieve up to 76.7% faster local server startup, up to 96.3% faster code
+    updates with Fast Refresh, a unified compiler that handles server and
+    client environments in a single pass eliminating dual-compiler
+    coordination overhead, and native CPU parallelization that removes
+    JavaScript's single-threaded bottleneck, accepting that Turbopack does
+    not support Webpack plugins — breaking compatibility with the largest
+    plugin ecosystem in frontend development, that the initial "700x faster"
+    marketing claims were publicly challenged as misleading by Evan You and
+    the broader community, that Turbopack took over two years from
+    announcement to stable dev release and production builds are still
+    maturing, and that Turbopack is built and controlled by Vercel creating
+    a vendor dependency for Next.js's core build infrastructure, because
+    Webpack's JavaScript-based architecture had reached a fundamental
+    performance ceiling where further optimization yielded diminishing returns,
+    the creator of Webpack himself concluded that a ground-up Rust rewrite
+    was necessary rather than incremental improvement, no existing bundler
+    met all requirements simultaneously (unified multi-environment graph,
+    minimal breaking changes, support for both App Router and Pages Router),
+    and Vercel's ability to own the roadmap ensures Turbopack can evolve
+    alongside Next.js features like React Server Components and Server
+    Functions.
+  status: accepted
+  created_at: "2022-10-25T00:00:00Z"
+  last_modified: "2025-10-01T00:00:00Z"
+  version: "1.0"
+  schema_version: "1.0.0"
+  project: Next.js
+  component: Build Pipeline / Bundler
+  tags:
+    - nextjs
+    - turbopack
+    - webpack
+    - bundler
+    - rust
+    - build-tooling
+    - performance
+    - developer-experience
+    - vercel
+    - react-server-components
+  priority: high
+  decision_type: technology
+  decision_level: tactical
+authors:
+  - name: Tobias Koppers
+    role: Turbopack Lead / Webpack Creator
+    email: tobias.koppers@vercel.example.com
+  - name: Tim Neutkens
+    role: Next.js Lead
+    email: tim.neutkens@vercel.example.com
+  - name: Maia Teegarden
+    role: Turbopack Core Engineer
+    email: maia.teegarden@vercel.example.com
+decision_owner:
+  name: Vercel Engineering
+  role: Next.js and Turbopack Team
+  email: engineering@vercel.example.com
+reviewers:
+  - name: Next.js Core Team
+    role: Framework Maintainers
+    email: nextjs-team@vercel.example.com
+  - name: Vercel Developer Community
+    role: Early Adopters and Beta Testers
+    email: community@vercel.example.com
+approvals:
+  - name: Guillermo Rauch
+    role: Vercel CEO
+    identity: "@raaborern"
+    approved_at: "2022-10-25T00:00:00Z"
+    signature_id: null
+context:
+  summary: |
+    Next.js is the most widely deployed React framework with 128,000+ GitHub
+    stars and millions of production applications. Since its release 8 years
+    ago, Next.js has relied on Webpack as its bundling foundation. Webpack
+    pioneered the modern JavaScript bundler category — its code-splitting,
+    hot module replacement, and extensible loader/plugin architecture made it
+    the default choice for web application builds for nearly a decade.
+
+    ```mermaid
+    graph TD
+        subgraph "Webpack in Next.js — Status Quo"
+          A["Webpack 5\n(JavaScript-based)"] --> B["Single-threaded\nmodule resolution"]
+          A --> C["Dual compiler:\nserver + client"]
+          A --> D["Massive plugin\necosystem (100k+ projects)"]
+        end
+
+        subgraph "Growing Pain Points"
+          E["❌ Slow route compilation\nin large apps"]
+          F["❌ Cannot parallelize\nacross CPU cores"]
+          G["❌ Dual-compiler coordination\noverhead for RSC"]
+          H["❌ Diminishing returns\nfrom optimization efforts"]
+        end
+
+        B --> E
+        B --> F
+        C --> G
+        A --> H
+
+        style E fill:#f66,stroke:#333,color:#000
+        style F fill:#f66,stroke:#333,color:#000
+        style G fill:#f66,stroke:#333,color:#000
+        style H fill:#f66,stroke:#333,color:#000
+    ```
+
+    However, as Next.js applications grew in scale and complexity, Webpack's
+    limitations became increasingly painful:
+
+    **1. Single-threaded JavaScript architecture limits parallelization:**
+
+    Webpack is written in JavaScript and relies heavily on large JavaScript
+    objects that cannot be shared across threads without expensive
+    serialization. Only the SWC transformation step runs in parallel; the
+    core module resolution, graph construction, and chunk emission remain
+    single-threaded. The Next.js team invested significant effort in
+    Webpack optimization (Next.js 12 Rust compiler, Next.js 13.5 startup
+    improvements) but reached a point where "we weren't getting enough
+    improvement for the effort involved."
+
+    **2. Dual-compiler architecture for server and client:**
+
+    Webpack does not support creating module graphs that produce outputs for
+    multiple environments. Next.js runs two separate Webpack compilers — one
+    for the server and one for the browser. The server graph must be compiled
+    first to discover `"use client"` boundaries, then the browser compiler
+    creates its entrypoints. This sequential coordination means parsing the
+    same code twice and adds substantial overhead, particularly for React
+    Server Components where the server/client boundary is fundamental.
+
+    **3. Slow iteration velocity at scale:**
+
+    Developers at Vercel and in the broader community reported painfully slow
+    route compilation times. Even with on-demand compilation (lazy routes),
+    individual page loads in development could take multiple seconds in large
+    applications. Fast Refresh times degraded as application complexity grew.
+    The vercel.com codebase — a large Next.js application — was a primary
+    internal benchmark for measuring this pain.
+
+    **4. Plugin ecosystem as both strength and constraint:**
+
+    Webpack's plugin ecosystem is the largest in frontend development, with
+    over 100,000 projects depending on Webpack plugins. Any replacement
+    bundler would either need to support the entire plugin API (practically
+    impossible without being Webpack) or accept breaking plugin compatibility
+    — a significant adoption barrier for enterprise customers.
+
+    Tobias Koppers, the original creator of Webpack, joined Vercel in 2021
+    specifically to build the next generation of JavaScript bundling. His
+    conclusion — that Webpack's architecture could not be incrementally
+    improved to meet modern performance requirements — carried unique weight
+    as the person who understood Webpack's design most deeply.
+  business_drivers:
+    - >-
+      Developer iteration velocity had become the top community complaint —
+      slow route compilation and sluggish Fast Refresh in large applications
+      were driving developers to evaluate competing frameworks and build tools
+    - >-
+      React Server Components required a unified module graph supporting both
+      server and client environments — Webpack's dual-compiler architecture
+      added overhead and complexity that hindered RSC innovation
+    - >-
+      Vercel's competitive position depended on Next.js offering a
+      best-in-class development experience — losing the performance battle
+      to Vite-based frameworks would undermine Vercel's platform strategy
+    - >-
+      Enterprise customers with large codebases (thousands of modules) were
+      the most affected by Webpack's performance ceiling — these are the
+      highest-value customers for Vercel's platform
+  technical_drivers:
+    - >-
+      Webpack's JavaScript-based architecture is fundamentally
+      single-threaded — large JavaScript objects cannot be shared across
+      threads without expensive serialization, limiting parallelization to
+      only the SWC transformation step
+    - >-
+      The dual-compiler architecture (separate Webpack instances for server
+      and client) parses the same code twice and requires sequential
+      coordination to discover "use client" boundaries, adding overhead
+      proportional to application size
+    - >-
+      Module resolution, graph construction, and chunk emission cannot be
+      meaningfully parallelized in Webpack's architecture — incremental
+      optimization efforts yielded diminishing returns after years of
+      investment
+    - >-
+      The Turbo Engine's function-level memoization architecture allows
+      caching at the most granular level — individual function results are
+      cached and only re-computed when inputs change, making incremental
+      rebuild performance independent of total application size
+    - >-
+      Rust's ownership model enables true multi-threaded parallelization
+      without garbage collection pauses, data races, or the serialization
+      overhead that limits JavaScript-based tools
+  constraints:
+    - >-
+      Minimal breaking changes — existing Next.js applications using both
+      App Router and Pages Router must continue working with the new bundler
+      without application-level code changes
+    - >-
+      The 6,599 Next.js development tests must all pass with Turbopack before
+      any stable release — 8 years of edge-case coverage sets an extremely
+      high stability bar
+    - >-
+      Webpack must remain available as a fallback — projects depending on
+      Webpack plugins that Turbopack does not support must be able to
+      continue using Webpack without degradation
+    - >-
+      The new bundler must support all Next.js features including App Router,
+      Pages Router, React Server Components, Server Functions, CSS Modules,
+      and image optimization
+  assumptions:
+    - >-
+      Rust-based tooling represents a durable industry trend — the success
+      of SWC, esbuild (Go), and the broader native-speed tooling movement
+      validates that JavaScript-based build tools have reached their
+      performance ceiling
+    - >-
+      Development speed is more impactful than production build speed for
+      developer satisfaction — optimizing the dev server first (before
+      production builds) addresses the highest-value pain point
+    - >-
+      The Webpack plugin ecosystem will gradually develop Turbopack-compatible
+      alternatives — plugins that rely on Webpack internals will need to
+      be rewritten, but the most common use cases will be covered by built-in
+      Turbopack features or loader compatibility
+    - >-
+      Owning the bundler roadmap allows Vercel to align Turbopack's evolution
+      with Next.js's needs — features like multi-environment graphs and
+      Server Component support can be developed in lockstep rather than
+      depending on external project priorities
+architecturally_significant_requirements:
+  functional:
+    - id: F-001
+      description: >
+        Turbopack must support a unified module graph that handles both
+        server and client environments in a single compilation pass,
+        eliminating the dual-compiler coordination overhead required by
+        Webpack for React Server Components.
+    - id: F-002
+      description: >
+        Turbopack must support both Next.js App Router and Pages Router
+        with full feature parity, including React Server Components,
+        Server Functions, CSS Modules, image optimization, and all
+        existing Next.js routing conventions.
+    - id: F-003
+      description: >
+        Turbopack must provide Hot Module Replacement (Fast Refresh) that
+        preserves component state across code changes, with update times
+        that remain fast regardless of total application size due to
+        incremental computation.
+    - id: F-004
+      description: >
+        Turbopack must support Webpack loaders through a compatibility
+        layer, allowing projects to use existing loaders for custom file
+        transformations while migrating away from Webpack-specific plugins.
+    - id: F-005
+      description: >
+        Turbopack must provide lazy bundling that only compiles the modules
+        required for the currently requested route, keeping memory usage
+        and initial compilation times proportional to the requested code
+        rather than total application size.
+  non_functional:
+    - id: NF-001
+      description: >
+        Local server startup must be measurably faster than Webpack — the
+        target is at least 50% improvement for large applications, with
+        Vercel's own applications (vercel.com) serving as the primary
+        benchmark.
+    - id: NF-002
+      description: >
+        Fast Refresh (HMR) updates must complete in under 200ms for
+        typical code changes, maintaining sub-second feedback loops
+        regardless of total application module count.
+    - id: NF-003
+      description: >
+        All 6,599 Next.js development tests must pass with Turbopack before
+        the stable release, ensuring behavioral parity with Webpack across
+        8 years of accumulated edge cases.
+    - id: NF-004
+      description: >
+        Development builds must closely match production behavior to reduce
+        dev/prod discrepancies — differences in module resolution, CSS
+        ordering, and code transformation between dev and prod are a
+        significant source of production bugs.
+    - id: NF-005
+      description: >
+        Turbopack must parallelize computation across all available CPU
+        cores, with performance scaling proportional to core count for
+        module resolution, transformation, and graph construction workloads.
+alternatives:
+  - name: >-
+      Turbopack — Rust-based incremental bundler with unified
+      multi-environment graph, built by Webpack's creator
+    description: |
+      Build a new bundler from scratch in Rust, designed by Tobias Koppers
+      (the original creator of Webpack) who joined Vercel specifically for
+      this purpose. Turbopack represents the lessons learned from a decade
+      of Webpack development, applied to a clean-slate architecture that
+      eliminates Webpack's fundamental limitations.
+
+      The core architectural innovations are:
+
+      **1. Turbo Engine — function-level incremental memoization:**
+
+      Turbopack is built on the Turbo Engine, an open-source incremental
+      memoization framework for Rust inspired by build systems like Bazel
+      and Salsa. Every function in the compilation pipeline is automatically
+      cached at the most granular level — when inputs change, only the
+      affected functions re-execute. This makes incremental rebuild
+      performance nearly independent of total application size.
+
+      **2. Unified multi-environment module graph:**
+
+      Unlike Webpack (which requires separate compiler instances for server
+      and client), Turbopack maintains a single module graph with "target
+      transitions" that mark boundaries between environments. An import
+      can transition from server to browser or vice versa. This is how
+      Turbopack efficiently bundles Server Components and Client Components
+      in a single pass, eliminating the dual-compiler overhead.
+
+      **3. Native parallelization:**
+
+      Written in Rust, Turbopack parallelizes module resolution, parsing,
+      transformation, and graph construction across all available CPU cores.
+      Webpack could only parallelize the SWC transformation step because
+      JavaScript objects cannot be efficiently shared across threads.
+
+      **4. Lazy bundling:**
+
+      Turbopack only bundles modules that the dev server actually requests.
+      When a developer navigates to a route, only that route's dependency
+      tree is compiled — not the entire application. This keeps startup
+      fast and memory usage proportional to actual usage.
+
+      **Before (Webpack in Next.js):**
+
+      ```javascript
+      // next.config.js — Webpack configuration
+      module.exports = {
+        webpack: (config, { isServer }) => {
+          // Two separate compilers: server and client
+          // Custom plugins and loaders required
+          config.plugins.push(new MyWebpackPlugin());
+          config.module.rules.push({
+            test: /\.svg$/,
+            use: ['@svgr/webpack'],
+          });
+          return config;
+        },
+      };
+
+      // Development: `next dev` (Webpack)
+      // ▶ Server startup: ~12s for large apps
+      // ▶ Route compilation: 3-8s per route
+      // ▶ Fast Refresh: 200-800ms
+      ```
+
+      **After (Turbopack in Next.js):**
+
+      ```javascript
+      // next.config.js — Turbopack configuration
+      module.exports = {
+        // Turbopack is the default — no configuration needed
+        // Webpack loaders supported via turbopack config:
+        turbopack: {
+          rules: {
+            '*.svg': {
+              loaders: ['@svgr/webpack'],
+              as: '*.js',
+            },
+          },
+        },
+      };
+
+      // Development: `next dev --turbo` (now just `next dev`)
+      // ▶ Server startup: ~3s for large apps (76.7% faster)
+      // ▶ Route compilation: 1-4s per route (45.8% faster)
+      // ▶ Fast Refresh: 7-30ms (96.3% faster)
+      ```
+
+      **Performance results on vercel.com (large Next.js application):**
+
+      | Metric | Webpack | Turbopack | Improvement |
+      |--------|--------:|----------:|------------:|
+      | Local server startup | ~12s | ~3s | 76.7% faster |
+      | Fast Refresh | ~800ms | ~30ms | 96.3% faster |
+      | Initial route compile | ~8s | ~4.3s | 45.8% faster |
+      | Memory usage (RC2 vs RC1) | baseline | -25-35% | Ongoing optimization |
+
+      ```mermaid
+      graph TD
+          subgraph "Turbopack Architecture"
+            A["Turbo Engine\n(incremental memoization)"] --> B["Function-level\ncaching"]
+            A --> C["Native Rust\nparallelization"]
+            B --> D["Rebuilds only\nchanged functions"]
+            C --> E["All CPU cores\nutilized"]
+          end
+
+          subgraph "Unified Module Graph"
+            F["Single compiler\ninstance"] --> G["Server environment"]
+            F --> H["Client environment"]
+            G <--> |"target\ntransitions"| H
+          end
+
+          subgraph "Key Outcomes"
+            I["✅ 76.7% faster startup"]
+            J["✅ 96.3% faster HMR"]
+            K["✅ Single-pass RSC\ncompilation"]
+            L["✅ Lazy bundling\nper route"]
+          end
+
+          style I fill:#2d8,stroke:#333,color:#000
+          style J fill:#2d8,stroke:#333,color:#000
+          style K fill:#2d8,stroke:#333,color:#000
+          style L fill:#2d8,stroke:#333,color:#000
+      ```
+
+      **Stabilization timeline:**
+
+      | Date | Milestone | Significance |
+      |------|-----------|--------------|
+      | Nov 2021 | Tobias Koppers joins Vercel | Webpack creator hired to build successor |
+      | Oct 2022 | Turbopack alpha (Next.js 13) | "700x faster than Webpack" announced at Next.js Conf |
+      | Nov 2022 | Benchmark controversy | Evan You challenges claims; Vercel revises methodology |
+      | 2023 | Feature development | Missing Next.js features added; basic usage only |
+      | Apr 2024 | Next.js 14.2 — 99.8% tests passing | Near-complete Webpack feature parity |
+      | Oct 2024 | Next.js 15 — dev stable | `next dev --turbo` declared stable; 6,599 tests pass |
+      | Oct 2025 | Next.js 16 — builds stable | Production builds stable; Turbopack becomes default |
+      | Dec 2025 | Next.js 16.1 — FS caching stable | Persistent file system caching for faster restarts |
+    pros:
+      - >-
+        76.7% faster local server startup and 96.3% faster Fast Refresh on
+        vercel.com — measured improvements on a real large-scale application,
+        not synthetic benchmarks
+      - >-
+        Unified multi-environment module graph eliminates the dual-compiler
+        overhead for React Server Components — server and client are compiled
+        in a single pass with target transitions
+      - >-
+        Function-level incremental memoization via the Turbo Engine makes
+        rebuild performance nearly independent of total application size —
+        only changed code is reprocessed
+      - >-
+        Native Rust parallelization across all CPU cores removes the
+        single-threaded bottleneck that fundamentally limits JavaScript-based
+        bundlers like Webpack
+      - >-
+        Lazy bundling compiles only the requested route's dependency tree,
+        keeping memory usage and startup time proportional to actual usage
+        rather than total application size
+      - >-
+        Built by Webpack's original creator who understands the design
+        decisions and limitations most deeply — Turbopack addresses known
+        architectural problems rather than working around them
+      - Development builds closely match production behavior, reducing
+        dev/prod discrepancies that cause production bugs
+      - >-
+        Webpack loader compatibility layer allows gradual migration — most
+        common loaders work with Turbopack's loader API
+    cons:
+      - >-
+        Does not support Webpack plugins — the entire Webpack plugin
+        ecosystem (100,000+ projects) is incompatible, requiring projects
+        to find alternatives or continue using Webpack
+      - >-
+        Three-year stabilization timeline from announcement (Oct 2022) to
+        production builds stable (Oct 2025) — much longer than initially
+        implied by the "700x faster" marketing
+      - >-
+        Vendor dependency on Vercel — Turbopack is built by and for Vercel,
+        creating a dependency on a single company for Next.js's core build
+        infrastructure
+      - >-
+        The initial "700x faster than Webpack" claim was publicly challenged
+        as misleading — Evan You demonstrated that the benchmarks used
+        rounding artifacts and did not compare equivalent configurations,
+        damaging credibility
+      - >-
+        No standalone usage outside Next.js — unlike Webpack or Vite,
+        Turbopack cannot currently be used with other frameworks, limiting
+        its ecosystem and community investment
+      - >-
+        Memory usage remains higher than Webpack for cold starts due to
+        aggressive function-level caching — the team acknowledges this as
+        an ongoing optimization area
+    estimated_cost: high
+    risk: medium
+  - name: >-
+      Keep Webpack — continue optimizing the existing bundler incrementally
+    description: |
+      Continue using Webpack 5 as Next.js's bundler and invest in
+      incremental performance improvements: deeper SWC integration, better
+      caching strategies, module federation enhancements, and Webpack's own
+      planned improvements. This is the conservative approach that preserves
+      full plugin ecosystem compatibility and avoids the multi-year
+      investment of building a new bundler.
+
+      Next.js had already invested heavily in Webpack optimization:
+      - **Next.js 12 (Oct 2021):** Introduced the SWC-based Rust compiler
+        for JavaScript/TypeScript transformation, delivering 3x faster
+        Fast Refresh and 5x faster builds
+      - **Next.js 13.5 (Sep 2023):** Improved startup and Fast Refresh
+        with optimized module resolution and tree-shaking
+
+      The incremental approach would continue this trajectory:
+
+      ```javascript
+      // Webpack 5 optimization path
+      module.exports = {
+        webpack: (config) => {
+          // Persistent caching across builds
+          config.cache = { type: 'filesystem' };
+          // Module federation for micro-frontends
+          config.plugins.push(new ModuleFederationPlugin({...}));
+          // Full plugin ecosystem available
+          config.plugins.push(new BundleAnalyzerPlugin());
+          return config;
+        },
+      };
+      ```
+
+      ```mermaid
+      graph TD
+          A["Keep Webpack 5"] --> B{Optimization Paths}
+          B --> C["Deeper SWC\nintegration"]
+          B --> D["Persistent\nfilesystem cache"]
+          B --> E["Module federation\nenhancements"]
+          B --> F["Webpack 6?\n(uncertain timeline)"]
+
+          G{Fundamental Limits}
+          G --> H["❌ Single-threaded\nJS architecture"]
+          G --> I["❌ Dual-compiler\nfor RSC stays"]
+          G --> J["❌ Diminishing\nreturns on optimization"]
+
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+          style J fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Full plugin ecosystem compatibility — over 100,000 projects with
+        Webpack plugins continue working without any migration effort
+      - Zero risk of regression — 8 years of battle-tested stability with
+        all edge cases discovered and addressed
+      - No multi-year investment required — team can focus on framework
+        features rather than building a new bundler
+      - Community familiarity — every JavaScript developer knows Webpack
+        configuration and debugging patterns
+      - Webpack's persistent filesystem cache already provides significant
+        rebuild speed improvements
+    cons:
+      - >-
+        Single-threaded JavaScript architecture is a fundamental ceiling —
+        no amount of optimization can parallelize Webpack's core module
+        graph operations across CPU cores
+      - >-
+        Dual-compiler coordination overhead for React Server Components
+        cannot be eliminated without redesigning Webpack's architecture —
+        server and client will always require separate compilation passes
+      - >-
+        Diminishing returns on optimization — the Next.js team had already
+        invested years in Webpack optimization and concluded they "weren't
+        getting enough improvement for the effort involved"
+      - >-
+        Webpack 6 has no official release timeline, and even if released,
+        would be constrained by backward compatibility with the existing
+        plugin API, limiting the architectural changes possible
+      - >-
+        Competitive disadvantage as Vite-based frameworks demonstrated
+        significantly faster development experiences, attracting developers
+        away from Next.js
+    estimated_cost: low
+    risk: high
+    rejection_rationale: >
+      Webpack's performance limitations are architectural, not incidental.
+      The single-threaded JavaScript execution model cannot be fundamentally
+      changed without rewriting the bundler, and the dual-compiler
+      requirement for server/client environments adds overhead that grows
+      with application size. The Next.js team had invested years in Webpack
+      optimization (Next.js 12 SWC compiler, Next.js 13.5 improvements)
+      and concluded they "weren't getting enough improvement for the effort
+      involved." Tobias Koppers — Webpack's own creator — reached the same
+      conclusion: a ground-up rewrite in Rust was necessary to achieve
+      the performance characteristics that modern applications require.
+      Simply porting Webpack to Rust would have preserved the architectural
+      limitations; Turbopack's fundamentally different architecture
+      (function-level memoization, unified module graph, native parallelism)
+      was necessary to unlock meaningful performance gains.
+  - name: >-
+      Adopt Vite — community-favorite dev server with native ESM and
+      Rollup-based production builds
+    description: |
+      Adopt Vite as Next.js's bundler, leveraging its native ESM-based dev
+      server and Rollup-based production builds. Vite had emerged as the
+      community favorite build tool by 2022, powering SvelteKit, Nuxt 3,
+      Astro, SolidStart, and many other frameworks. Evan You (Vue.js
+      creator) built Vite to solve the same Webpack performance problems
+      that Next.js faced.
+
+      Vite's architecture is fundamentally different from Webpack: in
+      development, it serves individual modules via native ES module imports,
+      letting the browser handle module resolution. This eliminates the
+      need to bundle during development, providing near-instant server
+      startup regardless of application size.
+
+      ```javascript
+      // Vite dev server approach
+      // - No bundling in development
+      // - Browser loads ES modules directly
+      // - esbuild for TypeScript/JSX transformation
+      // - Rollup for production builds
+
+      // vite.config.js
+      import { defineConfig } from 'vite';
+      import react from '@vitejs/plugin-react';
+
+      export default defineConfig({
+        plugins: [react()],
+        // Near-instant dev server startup
+        // Browser-native ES module loading
+      });
+      ```
+
+      ```mermaid
+      graph TD
+          A["Vite for Next.js"] --> B{Architecture Fit}
+          B --> C["✅ Fast dev server\nvia native ESM"]
+          B --> D["✅ Large plugin\necosystem (Rollup)"]
+          B --> E["❌ Native ESM degrades\nfor large apps\n(many network requests)"]
+          B --> F["❌ Dual build system\n(esbuild dev + Rollup prod)"]
+          B --> G["❌ No multi-environment\nmodule graph\nfor RSC"]
+
+          style C fill:#2d8,stroke:#333,color:#000
+          style D fill:#2d8,stroke:#333,color:#000
+          style E fill:#f66,stroke:#333,color:#000
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+      ```
+
+      **Benchmark controversy context:** When Vercel announced Turbopack as
+      "10x faster than Vite," Evan You publicly challenged the claim. He
+      demonstrated that Vercel benchmarked Vite without SWC enabled (using
+      slower Babel defaults), and that rounding artifacts exaggerated the
+      difference — a 15ms Turbopack result was rounded to 0.01s while
+      Vite's 87ms was rounded to 0.09s, making a ~6x difference appear as
+      10x. This dispute highlighted the genuine competition between the
+      two approaches and led Vercel to revise its benchmark methodology.
+    pros:
+      - Proven technology powering SvelteKit, Nuxt 3, Astro, SolidStart,
+        and Remix — battle-tested across multiple major frameworks
+      - Near-instant dev server startup via native ESM — no bundling
+        required during development
+      - >-
+        Large plugin ecosystem via Rollup compatibility — 2,000+ Vite/Rollup
+        plugins available, with a richer and more modern ecosystem than
+        Webpack's
+      - Community-driven and framework-agnostic — not controlled by a single
+        company, reducing vendor lock-in concerns
+      - Evan You's VoidZero was investing in Rolldown to unify Vite's dev
+        and production bundlers — a long-term performance roadmap existed
+    cons:
+      - >-
+        Native ESM dev server degrades for large applications — hundreds or
+        thousands of individual module requests create network waterfall
+        effects, the exact problem Turbopack's bundling approach solves
+      - >-
+        Dual build system (esbuild for dev, Rollup for prod) creates
+        dev/prod behavior discrepancies — the same code can behave
+        differently in development and production
+      - >-
+        No native multi-environment module graph — supporting React Server
+        Components would require significant architectural additions to
+        Vite that do not exist in its current design
+      - >-
+        Adopting an external bundler means Next.js's build roadmap depends
+        on another project's priorities — features like multi-environment
+        graphs or server/client transitions would need upstream support
+      - >-
+        Breaking change for existing Next.js Webpack configurations —
+        custom webpack() configs would need to be rewritten for Vite's
+        plugin API, a migration at least as disruptive as moving to Turbopack
+    estimated_cost: high
+    risk: high
+    rejection_rationale: >
+      While Vite is an excellent build tool for many frameworks, it has
+      fundamental architectural mismatches with Next.js's requirements.
+      Vite's native ESM dev server degrades for large applications because
+      individual module requests create network waterfall effects — this
+      is precisely why Turbopack bundles during development. The dual
+      build system (esbuild for dev, Rollup for prod) creates behavior
+      discrepancies that Next.js's "dev matches prod" requirement
+      prohibits. Most critically, Vite lacks a multi-environment module
+      graph needed for React Server Components — server/client boundary
+      compilation would require major upstream changes to Vite's
+      architecture. Finally, adopting Vite would make Next.js's build
+      infrastructure dependent on an external project controlled by a
+      competitor (Evan You's VoidZero), limiting Vercel's ability to
+      evolve the bundler alongside Next.js features like Server Functions
+      and partial prerendering.
+  - name: >-
+      Adopt esbuild — extremely fast Go-based bundler for
+      JavaScript/TypeScript transformation
+    description: |
+      Adopt esbuild as Next.js's primary bundler. Built by Evan Wallace
+      (co-founder of Figma), esbuild is written in Go and is 10-100x
+      faster than JavaScript-based bundlers for basic transformation
+      tasks. Next.js already uses esbuild indirectly through SWC for
+      TypeScript and JSX transformation.
+
+      esbuild's speed comes from being written in Go with heavy
+      parallelization, parsing directly to an AST without an intermediate
+      token step, and using a single-pass architecture.
+
+      ```javascript
+      // esbuild configuration
+      import * as esbuild from 'esbuild';
+
+      await esbuild.build({
+        entryPoints: ['app.tsx'],
+        bundle: true,
+        outdir: 'dist',
+        splitting: true,  // code splitting (ESM only)
+        format: 'esm',
+        minify: true,
+      });
+      ```
+
+      ```mermaid
+      graph TD
+          A["esbuild for Next.js"] --> B{Strengths}
+          B --> C["✅ 10-100x faster\ntransformation"]
+          B --> D["✅ Native Go\nparallelization"]
+
+          A --> E{Limitations}
+          E --> F["❌ Code splitting\nESM-only, work in progress"]
+          E --> G["❌ Limited tree shaking\n(no namespace re-exports)"]
+          E --> H["❌ No plugin API\nfor complex transforms"]
+          E --> I["❌ Deliberately minimal\nscope by design"]
+
+          style C fill:#2d8,stroke:#333,color:#000
+          style D fill:#2d8,stroke:#333,color:#000
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Extremely fast transformation — 10-100x faster than Webpack for
+        parsing, transforming, and bundling JavaScript/TypeScript
+      - Written in Go with native parallelization — no JavaScript
+        single-threaded limitations
+      - Proven reliability as the transformation engine behind Vite's
+        dev server and SWC-based tools
+      - Minimal configuration — opinionated defaults reduce configuration
+        complexity
+    cons:
+      - >-
+        Code splitting is ESM-only and described as "work in progress"
+        by esbuild's author — production applications requiring CommonJS
+        or advanced splitting strategies cannot use esbuild
+      - >-
+        Limited tree shaking — does not effectively tree-shake re-exported
+        namespaces (star exports), reducing production bundle optimization
+      - >-
+        Deliberately minimal scope — esbuild's author has stated the tool
+        is not designed to be a full-featured production bundler and the
+        internal architecture prioritizes speed over extensibility
+      - >-
+        No multi-environment module graph — esbuild cannot produce outputs
+        for both server and client from a single compilation, which is
+        essential for React Server Components
+      - >-
+        No Webpack plugin backward compatibility — migrating from Webpack
+        would break all existing custom configurations
+    estimated_cost: medium
+    risk: high
+    rejection_rationale: >
+      esbuild excels at fast JavaScript/TypeScript transformation but is
+      deliberately not designed as a complete application bundler. Its
+      code splitting is ESM-only and labeled "work in progress," tree
+      shaking has known limitations with namespace re-exports, and the
+      author has explicitly stated that esbuild is not intended to
+      replace full-featured bundlers like Webpack. For Next.js, the
+      critical missing capability is a multi-environment module graph
+      for React Server Components — esbuild cannot compile server and
+      client code with boundary awareness in a single pass. Next.js
+      already uses esbuild-equivalent technology (SWC) for transformation;
+      the performance bottleneck is in module graph construction,
+      multi-environment compilation, and incremental caching — areas
+      where esbuild provides no solution.
+  - name: >-
+      Adopt Rolldown — emerging unified Rust-based bundler from
+      VoidZero with Rollup plugin compatibility
+    description: |
+      Adopt Rolldown, a Rust-based bundler being developed by Evan You's
+      VoidZero Inc. as the successor to Rollup. Rolldown aims to provide
+      Rollup API and plugin compatibility with native Rust performance,
+      eventually unifying Vite's dev and production bundling into a single
+      tool.
+
+      Rolldown was in early development when Turbopack was announced (Oct
+      2022) and reached alpha/beta stages during 2024-2025 as part of
+      Vite's roadmap.
+
+      ```mermaid
+      graph TD
+          A["Rolldown for Next.js"] --> B{Assessment}
+          B --> C["⚠️ Early development\nstage (2022-2024)"]
+          B --> D["✅ Rollup plugin\ncompatibility planned"]
+          B --> E["❌ No multi-environment\ngraph for RSC"]
+          B --> F["❌ Built for Vite\nnot Next.js"]
+          B --> G["❌ Depends on\ncompetitor's roadmap"]
+
+          style C fill:#fa0,stroke:#333,color:#000
+          style D fill:#2d8,stroke:#333,color:#000
+          style E fill:#f66,stroke:#333,color:#000
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Rollup API and plugin compatibility preserves access to the
+        Vite/Rollup plugin ecosystem (2,000+ plugins)
+      - Rust-based architecture provides native parallelization and
+        performance comparable to Turbopack
+      - Backed by VoidZero Inc. with dedicated funding and full-time
+        developers
+      - Unifies dev and production bundling in a single tool, eliminating
+        Vite's esbuild/Rollup duality
+    cons:
+      - >-
+        Was in early development when the Turbopack decision was made —
+        not production-ready for a framework serving millions of applications
+      - >-
+        Built for Vite's architecture and use cases, not Next.js's — lacks
+        the multi-environment module graph needed for React Server Components
+      - >-
+        Adopting Rolldown makes Next.js dependent on a competitor's (Evan
+        You / VoidZero) roadmap and priorities — Vercel would have no
+        control over the bundler's evolution
+      - >-
+        No Webpack plugin backward compatibility — migration disruption
+        equivalent to Turbopack but without the architectural advantages
+        of a unified multi-environment graph
+    estimated_cost: high
+    risk: critical
+    rejection_rationale: >
+      Rolldown was not production-ready during the decision period and is
+      purpose-built for Vite's architecture, not Next.js's. It lacks the
+      multi-environment module graph that React Server Components require,
+      and adding this capability would require architectural changes that
+      VoidZero has no incentive to prioritize for a competing framework.
+      Adopting Rolldown would make Next.js's core infrastructure dependent
+      on a competitor's roadmap — the same vendor lock-in concern that
+      critics raise about Turbopack, but directed at a company with
+      actively competing interests. The Turbopack team has the advantage
+      of building in lockstep with Next.js, ensuring features like target
+      transitions and Server Function compilation are first-class
+      capabilities rather than afterthoughts.
+  - name: >-
+      Custom minimal bundler — build a purpose-built Next.js bundler
+      without Webpack architectural lineage
+    description: |
+      Build a custom bundler from scratch without any architectural
+      influence from Webpack. Rather than hiring Webpack's creator, build
+      a minimal, purpose-built bundler optimized exclusively for Next.js's
+      specific requirements: React Server Components, App Router, and
+      Vercel's deployment model.
+
+      This approach would prioritize Next.js feature alignment over
+      general-purpose bundling, potentially achieving even tighter
+      integration with the framework's routing and rendering architecture.
+
+      ```mermaid
+      graph TD
+          A["Custom Minimal Bundler"] --> B{Potential Advantages}
+          B --> C["✅ Perfect Next.js\nalignment"]
+          B --> D["✅ No Webpack legacy\nconstraints"]
+
+          A --> E{Critical Risks}
+          E --> F["❌ Years of development\nbefore basic viability"]
+          E --> G["❌ No ecosystem\ncompatibility at all"]
+          E --> H["❌ Massive hiring\nand investment"]
+          E --> I["❌ Missing bundling\nexpertise"]
+
+          style C fill:#2d8,stroke:#333,color:#000
+          style D fill:#2d8,stroke:#333,color:#000
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Perfect architectural alignment with Next.js — no compromises for
+        general-purpose bundling requirements
+      - No legacy constraints from Webpack's design decisions or API surface
+      - Maximum flexibility to innovate on server/client compilation
+        strategies specific to React Server Components
+    cons:
+      - >-
+        Multi-year development timeline before achieving basic viability —
+        bundling is an enormously complex problem space with thousands of
+        edge cases in module resolution, transformation, and output
+      - >-
+        Zero ecosystem compatibility — no Webpack loaders, no Rollup
+        plugins, no Vite compatibility, requiring every integration to be
+        built from scratch
+      - >-
+        Massive hiring and investment required — building a production-grade
+        bundler requires deep expertise in compiler design, module systems,
+        and performance optimization that few engineers possess
+      - >-
+        Ignores the irreplaceable expertise of Tobias Koppers — the creator
+        of Webpack has a decade of hard-won knowledge about bundler design
+        pitfalls that a fresh team would need to rediscover
+      - >-
+        Even higher risk than Turbopack — without the empirical knowledge
+        of what went wrong with Webpack, a custom bundler is more likely to
+        recreate solved problems or introduce new architectural dead ends
+    estimated_cost: high
+    risk: critical
+    rejection_rationale: >
+      Building a bundler from scratch without Webpack's creator would
+      sacrifice the most valuable asset available: Tobias Koppers's decade
+      of empirical knowledge about what works and what doesn't in bundler
+      design. Webpack's limitations were not due to bad decisions but to
+      decisions made within the constraints of JavaScript circa 2012.
+      Turbopack applies the lessons learned — function-level caching
+      instead of module-level, unified graphs instead of separate
+      compilers, Rust instead of JavaScript — because the architect
+      understood exactly what to change. A minimal custom bundler would
+      face the same multi-year timeline as Turbopack but without the
+      architectural expertise, Webpack loader compatibility, or the
+      credibility that comes from the "if the creator says it's time to
+      move on" argument.
+decision:
+  chosen_alternative: >-
+    Turbopack — Rust-based incremental bundler with unified
+    multi-environment graph, built by Webpack's creator
+  rationale: |
+    Turbopack was chosen because it uniquely combines the architectural
+    expertise of Webpack's creator with a clean-slate design that addresses
+    every identified limitation of the Webpack-based build pipeline:
+
+    1. **The creator's verdict carries unique weight**: Tobias Koppers
+       spent a decade building and maintaining Webpack. His conclusion that
+       a ground-up rewrite was necessary — rather than incremental
+       improvement — is the most credible assessment possible. He
+       understood exactly which architectural decisions needed to change
+       (single-threaded JS → parallel Rust, module-level caching →
+       function-level memoization, separate compilers → unified graph)
+       and which should be preserved (lazy compilation, loader API
+       compatibility).
+
+    2. **Unified multi-environment module graph enables RSC**: React
+       Server Components are fundamental to Next.js's architecture. The
+       unified graph with target transitions eliminates the dual-compiler
+       overhead and enables single-pass compilation of server and client
+       code — a capability no other bundler offered.
+
+    3. **Function-level incremental memoization is architecturally
+       superior**: The Turbo Engine caches at the individual function
+       level, making incremental rebuild performance nearly independent
+       of total application size. This is a fundamentally different
+       approach from Webpack's module-level caching or Vite's no-caching
+       native ESM strategy.
+
+    4. **Owning the roadmap aligns bundler and framework evolution**:
+       Building in-house ensures that Turbopack's capabilities evolve in
+       lockstep with Next.js features. When the team needed multi-environment
+       target transitions for Server Functions, they could add it directly.
+       Depending on Vite or Rolldown would require upstream negotiations
+       with a competitor.
+
+    5. **Measured results validate the architecture**: On vercel.com
+       (a real large-scale Next.js application), Turbopack delivered
+       76.7% faster server startup, 96.3% faster Fast Refresh, and
+       45.8% faster initial route compilation. These are production
+       measurements, not synthetic benchmarks.
+
+    6. **Webpack remains available as fallback**: Projects depending on
+       Webpack plugins can continue using Webpack. The migration path is
+       opt-in, not forced — `next dev --turbo` was an explicit flag
+       before becoming the default.
+  tradeoffs: |
+    - **Webpack plugin ecosystem break accepted** because the plugin API's
+      deep coupling to Webpack's internal architecture makes compatibility
+      practically impossible without rebuilding Webpack. Turbopack supports
+      Webpack loaders as a partial migration path, and the most common
+      plugin use cases are addressed by built-in features.
+
+    - **Vendor lock-in on Vercel accepted** because the alternative
+      (depending on a competitor's bundler) carries equivalent risk with
+      less alignment. Turbopack's tight coupling to Next.js is a feature
+      for Next.js users — the bundler evolves alongside the framework.
+
+    - **Multi-year stabilization timeline accepted** because the 6,599
+      test suite represents 8 years of edge cases that any replacement
+      must handle. Rushing stability would undermine the claim of being
+      a production-ready Webpack replacement. The team followed Kent
+      Beck's "Make it work. Make it good. Make it fast" philosophy.
+
+    - **Benchmark credibility damage accepted** because the "700x faster"
+      claim, while directionally correct for specific scenarios, was
+      presented in a way that invited legitimate criticism. The revised
+      benchmarks (76.7% faster startup, 96.3% faster HMR on vercel.com)
+      are more defensible because they measure real-world applications
+      rather than synthetic scenarios.
+
+    - **No standalone usage outside Next.js accepted** because
+      Turbopack's value is maximized through tight Next.js integration.
+      A standalone bundler would require a general-purpose API that
+      would dilute the framework-specific optimizations.
+  decision_date: "2022-10-25"
+  confidence: high
+consequences:
+  positive:
+    - >-
+      Development iteration velocity dramatically improved — 76.7% faster
+      server startup and 96.3% faster Fast Refresh on vercel.com, with
+      similar improvements reported across the Next.js community
+    - >-
+      React Server Components compilation unified — single-pass
+      server/client compilation eliminates the dual-compiler overhead and
+      enables tighter integration between rendering environments
+    - >-
+      Build performance scales with CPU cores — Rust-based parallelization
+      utilizes all available cores for module resolution, transformation,
+      and graph construction, unlike Webpack's single-threaded architecture
+    - >-
+      Dev/prod behavior consistency improved — Turbopack aims for
+      development builds that closely match production, reducing the class
+      of bugs caused by dev/prod discrepancies
+    - >-
+      Incremental rebuild performance decoupled from application size —
+      function-level caching means editing a single file in a 10,000-module
+      application rebuilds only the affected functions, not the entire
+      module graph
+  negative:
+    - >-
+      Webpack plugin ecosystem fragmentation — projects relying on custom
+      Webpack plugins face a difficult choice between staying on Webpack
+      or finding Turbopack alternatives, creating ecosystem bifurcation
+    - >-
+      Benchmark credibility damage from "700x faster" claim — the
+      exaggerated marketing generated criticism from Evan You and the
+      broader community, creating a skepticism that persisted even as
+      Turbopack matured and delivered genuine improvements
+    - >-
+      Vendor dependency on Vercel deepened — Next.js's build infrastructure
+      now depends entirely on a Vercel-controlled project, raising concerns
+      about what happens if Vercel's priorities diverge from community needs
+    - >-
+      Multi-year transition period — the gap between announcement (Oct 2022)
+      and production stability (Oct 2025) meant developers lived with
+      uncertainty about whether to invest in Webpack configuration or wait
+      for Turbopack
+    - >-
+      Community perception of "Not Invented Here" syndrome — some developers
+      viewed Turbopack as Vercel reinventing an existing solution (Vite)
+      rather than adopting a proven community tool, fracturing the frontend
+      tooling ecosystem further
+confirmation:
+  description: |
+    The Turbopack adoption has progressed through multiple milestones
+    confirming its viability:
+
+    **Alpha and early development:**
+    - **October 25, 2022:** Turbopack announced at Next.js Conf as alpha
+      with Next.js 13, supporting basic usage with limited Next.js features
+
+    **Community validation and benchmark revision:**
+    - **November 2022:** Evan You's benchmark challenge led Vercel to
+      revise performance claims and methodology
+    - **2023:** Feature development phase — missing Next.js features
+      added incrementally
+
+    **Test parity and stabilization:**
+    - **April 2024:** Next.js 14.2 reached 99.8% test parity with Webpack,
+      reaching 100% shortly after
+    - **October 2024:** Next.js 15 released with `next dev --turbo` as
+      stable — all 6,599 development tests passing
+
+    **Production readiness:**
+    - **October 2025:** Next.js 16 released with Turbopack stable for
+      both development and production builds, becoming the default bundler
+    - **December 2025:** Next.js 16.1 — file system caching stable,
+      enabling persistent caching across dev server restarts
+
+    **Roadmap (2026):**
+    - Q1: Standalone Turbopack (not Next.js-specific)
+    - Q2: Plugin API for custom transformations
+    - Q3: Webpack config migration tool
+  artifact_ids:
+    - "https://nextjs.org/blog/turbopack-for-development-stable"
+    - "https://nextjs.org/blog/next-15"
+    - "https://nextjs.org/blog/next-13"
+    - "https://turbo.build/pack/docs"
+    - "https://areweturboyet.com"
+dependencies:
+  internal:
+    - >-
+      Next.js Framework — Turbopack is tightly integrated with Next.js's
+      routing, rendering, and configuration systems, including App Router,
+      Pages Router, and React Server Components
+    - >-
+      SWC Compiler — Next.js's Rust-based JavaScript/TypeScript compiler
+      that handles transformation; Turbopack builds on the same Rust
+      tooling infrastructure
+    - >-
+      Vercel Platform — Turbopack's production build output must be
+      compatible with Vercel's deployment infrastructure and edge runtime
+  external:
+    - >-
+      React — Turbopack must support React Server Components, Server
+      Functions, and the evolving React rendering model, with the unified
+      module graph designed specifically for RSC boundaries
+    - >-
+      npm ecosystem — Turbopack must correctly resolve and bundle packages
+      from npm, handling CommonJS/ESM interop, conditional exports, and
+      the full module resolution algorithm
+    - >-
+      Webpack loader ecosystem — Turbopack's loader compatibility layer
+      must support commonly used Webpack loaders to provide a migration
+      path for existing projects
+references:
+  - title: >-
+      Turbopack Dev is Now Stable — Next.js Blog
+    url: "https://nextjs.org/blog/turbopack-for-development-stable"
+  - title: >-
+      Next.js 13 Announcement — Introducing Turbopack Alpha
+    url: "https://nextjs.org/blog/next-13"
+  - title: Turbopack Documentation
+    url: "https://turbo.build/pack/docs"
+  - title: >-
+      Next.js 15 Release — Turbopack Dev Stable
+    url: "https://nextjs.org/blog/next-15"
+  - title: >-
+      Are We Turbo Yet? — Turbopack Feature Parity Tracker
+    url: "https://areweturboyet.com"
+  - title: >-
+      Vercel Blog — Why We Built Turbopack
+    url: "https://vercel.com/blog/turbopack"
+lifecycle:
+  review_cycle_months: 24
+  next_review_date: "2024-10-25"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+audit_trail:
+  - event: created
+    by: Tobias Koppers
+    at: "2022-10-25T00:00:00Z"
+    details: >
+      Turbopack announced at Next.js Conf 2022 as an alpha bundler integrated
+      with Next.js 13. Vercel claimed Turbopack was "up to 700x faster than
+      Webpack" and "10x faster than Vite" for large applications. Tobias
+      Koppers (Webpack's original creator, who joined Vercel in 2021)
+      presented the architectural rationale: function-level incremental
+      memoization, unified multi-environment module graph, and native Rust
+      parallelization.
+  - event: updated
+    by: Vercel Engineering
+    at: "2022-11-15T00:00:00Z"
+    details: >
+      Evan You (Vite/Vue.js creator) publicly challenged Turbopack's
+      benchmark claims, demonstrating that Vite was benchmarked without SWC
+      optimization enabled and that rounding artifacts exaggerated the
+      performance gap (15ms rounded to 0.01s vs 87ms rounded to 0.09s,
+      making a 6x difference appear as 10x). Vercel revised its benchmark
+      methodology and shifted to more conservative, application-specific
+      performance claims.
+  - event: updated
+    by: Next.js Core Team
+    at: "2024-04-01T00:00:00Z"
+    details: >
+      Next.js 14.2 released with 99.8% of development tests passing on
+      Turbopack, reaching 100% shortly after. The team had focused
+      exclusively on the development experience (next dev) based on
+      community feedback, deferring production builds to ensure maximum
+      stability for the most impactful use case.
+  - event: approved
+    by: Vercel Engineering
+    at: "2024-10-21T00:00:00Z"
+    details: >
+      Next.js 15 released with Turbopack development mode declared stable.
+      All 6,599 development tests passing. Performance measurements on
+      vercel.com showed 76.7% faster server startup, 96.3% faster Fast
+      Refresh, and 45.8% faster initial route compilation. Turbopack
+      activated via next dev --turbo flag. Webpack remained available as
+      fallback for projects with incompatible plugins.
+  - event: updated
+    by: Next.js Core Team
+    at: "2025-10-01T00:00:00Z"
+    details: >
+      Next.js 16 released with Turbopack stable for both development and
+      production builds. Turbopack became the default bundler for all new
+      Next.js projects. Performance improvements included 2-5x faster
+      production builds and up to 10x faster Fast Refresh. File system
+      caching stabilized in Next.js 16.1 (December 2025), enabling
+      persistent caching across dev server restarts. Standalone Turbopack
+      and plugin API planned for 2026.
