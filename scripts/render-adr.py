@@ -43,6 +43,20 @@ def table_cell(value: str) -> str:
     return " ".join(str(value).split())
 
 
+# Unicode non-breaking hyphen (U+2011) — visually identical to a regular
+# hyphen but prevents the browser from inserting a line break at that point.
+_NBSP_HYPHEN = "\u2011"
+
+
+def table_id(value: str) -> str:
+    """Replace ASCII hyphens with non-breaking hyphens for table cell IDs.
+
+    GitHub renders narrow ID columns; the browser wraps 'F-001' as 'F-\\n001'.
+    Using a non-breaking hyphen keeps the ID on a single line.
+    """
+    return str(value).replace("-", _NBSP_HYPHEN)
+
+
 def render_adr(data: dict) -> str:
     """Render a parsed ADR YAML dict to a Markdown string."""
     lines = []
@@ -155,7 +169,7 @@ def render_adr(data: dict) -> str:
             lines.append("| ID | Description |")
             lines.append("|----|-------------|")
             for r in functional:
-                lines.append(f"| `{r.get('id', '')}` | {table_cell(r.get('description', ''))} |")
+                lines.append(f"| `{table_id(r.get('id', ''))}` | {table_cell(r.get('description', ''))} |")
             lines.append("")
         if non_functional:
             lines.append("### Non-Functional")
@@ -163,7 +177,7 @@ def render_adr(data: dict) -> str:
             lines.append("| ID | Description |")
             lines.append("|----|-------------|")
             for r in non_functional:
-                lines.append(f"| `{r.get('id', '')}` | {table_cell(r.get('description', ''))} |")
+                lines.append(f"| `{table_id(r.get('id', ''))}` | {table_cell(r.get('description', ''))} |")
             lines.append("")
 
     # --- Alternatives ---

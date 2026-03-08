@@ -183,17 +183,17 @@ do not require musl libc.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The base image strategy must support language-specific runtime images for Python 3.x, Node.js 20+, Java 21+, and Go 1.22+ — each with appropriate libc, runtime libraries, and certificate bundles. |
-| `F-002` | Production images must be buildable via multi-stage Dockerfiles where build stages use full toolchain images and final stages use minimal runtime images with only application binaries and dependencies. |
-| `F-003` | A documented selection rubric must map workload characteristics (language runtime, debugging needs, compliance tier) to the appropriate base image tier — Distroless, Debian-slim, or Alpine. |
+| `F‑001` | The base image strategy must support language-specific runtime images for Python 3.x, Node.js 20+, Java 21+, and Go 1.22+ — each with appropriate libc, runtime libraries, and certificate bundles. |
+| `F‑002` | Production images must be buildable via multi-stage Dockerfiles where build stages use full toolchain images and final stages use minimal runtime images with only application binaries and dependencies. |
+| `F‑003` | A documented selection rubric must map workload characteristics (language runtime, debugging needs, compliance tier) to the appropriate base image tier — Distroless, Debian-slim, or Alpine. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Production runtime images must report zero critical and zero high CVEs in the base layer when scanned with Trivy or Grype — all reported CVEs must originate from application dependencies, not the operating system. |
-| `NF-002` | Container images must include a verifiable Software Bill of Materials (SBOM) and support attestation verification via cosign or equivalent supply chain security tooling. |
-| `NF-003` | Total image size for runtime containers must not exceed 150 MB for interpreted language runtimes (Python, Node.js) and 50 MB for compiled binaries (Go, Rust) — ensuring fast pull times and reduced registry storage costs. |
+| `NF‑001` | Production runtime images must report zero critical and zero high CVEs in the base layer when scanned with Trivy or Grype — all reported CVEs must originate from application dependencies, not the operating system. |
+| `NF‑002` | Container images must include a verifiable Software Bill of Materials (SBOM) and support attestation verification via cosign or equivalent supply chain security tooling. |
+| `NF‑003` | Total image size for runtime containers must not exceed 150 MB for interpreted language runtimes (Python, Node.js) and 50 MB for compiled binaries (Go, Rust) — ensuring fast pull times and reduced registry storage costs. |
 
 ## Alternatives Considered
 

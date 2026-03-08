@@ -167,17 +167,17 @@ disruptive.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The package manager must store each unique version of a package exactly once in a global content-addressable store, deduplicating identical files across versions and across projects on the same machine. |
-| `F-002` | The node_modules layout must expose only directly declared dependencies at the project root, preventing code from importing undeclared transitive dependencies at resolution time. |
-| `F-003` | Workspace support must allow monorepo packages to depend on each other using the workspace protocol, with symlinks ensuring local packages are always used over registry versions. |
+| `F‑001` | The package manager must store each unique version of a package exactly once in a global content-addressable store, deduplicating identical files across versions and across projects on the same machine. |
+| `F‑002` | The node_modules layout must expose only directly declared dependencies at the project root, preventing code from importing undeclared transitive dependencies at resolution time. |
+| `F‑003` | Workspace support must allow monorepo packages to depend on each other using the workspace protocol, with symlinks ensuring local packages are always used over registry versions. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Disk usage across multiple projects sharing common dependencies must be reduced by at least 50% compared to npm flat hoisting, measured by total node_modules size on disk. |
-| `NF-002` | Install times for repeated installs with a warm cache must be at least 2x faster than npm, measured on projects with 500+ dependencies. |
-| `NF-003` | The node_modules layout must be fully compatible with Node.js module resolution without requiring custom loaders, runtime patches, or IDE plugins. |
+| `NF‑001` | Disk usage across multiple projects sharing common dependencies must be reduced by at least 50% compared to npm flat hoisting, measured by total node_modules size on disk. |
+| `NF‑002` | Install times for repeated installs with a warm cache must be at least 2x faster than npm, measured on projects with 500+ dependencies. |
+| `NF‑003` | The node_modules layout must be fully compatible with Node.js module resolution without requiring custom loaders, runtime patches, or IDE plugins. |
 
 ## Alternatives Considered
 

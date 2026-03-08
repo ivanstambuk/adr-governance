@@ -145,18 +145,18 @@ abandoning its simplicity and becoming "React-like."
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The setup() function must be called once per component instance before options resolution, receiving props and context as arguments, and must return an object whose properties are exposed to the component's template and Options API via this. |
-| `F-002` | Composition functions (composables) must be plain JavaScript functions that use reactive primitives (ref, reactive, computed, watch) and can be freely imported, composed, and shared between components without namespace collision or unclear property origins. |
-| `F-003` | The Composition API must coexist with the Options API within the same component — properties returned from setup() must be accessible alongside data, computed, and methods defined via the Options API. |
-| `F-004` | Lifecycle hooks must be available as importable functions (onMounted, onUnmounted, onUpdated, etc.) that can be called within setup() or composables, enabling lifecycle logic to be colocated with the feature code that needs it. |
+| `F‑001` | The setup() function must be called once per component instance before options resolution, receiving props and context as arguments, and must return an object whose properties are exposed to the component's template and Options API via this. |
+| `F‑002` | Composition functions (composables) must be plain JavaScript functions that use reactive primitives (ref, reactive, computed, watch) and can be freely imported, composed, and shared between components without namespace collision or unclear property origins. |
+| `F‑003` | The Composition API must coexist with the Options API within the same component — properties returned from setup() must be accessible alongside data, computed, and methods defined via the Options API. |
+| `F‑004` | Lifecycle hooks must be available as importable functions (onMounted, onUnmounted, onUpdated, etc.) that can be called within setup() or composables, enabling lifecycle logic to be colocated with the feature code that needs it. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | TypeScript inference must work with plain variables and functions returned from setup() without manual type annotations — code written in TypeScript and plain JavaScript should look nearly identical. |
-| `NF-002` | Composition functions must incur no runtime overhead beyond the reactive primitives they use — no extra component instances, no wrapper objects, no proxy layers beyond Vue's reactivity system. |
-| `NF-003` | The Composition API must work without a build step — all APIs must be importable from the Vue package and usable in plain script tags, preserving Vue's progressive adoption model. |
+| `NF‑001` | TypeScript inference must work with plain variables and functions returned from setup() without manual type annotations — code written in TypeScript and plain JavaScript should look nearly identical. |
+| `NF‑002` | Composition functions must incur no runtime overhead beyond the reactive primitives they use — no extra component instances, no wrapper objects, no proxy layers beyond Vue's reactivity system. |
+| `NF‑003` | The Composition API must work without a build step — all APIs must be importable from the Vue package and usable in plain script tags, preserving Vue's progressive adoption model. |
 
 ## Alternatives Considered
 

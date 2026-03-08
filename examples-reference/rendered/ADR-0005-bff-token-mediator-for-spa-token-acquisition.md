@@ -91,18 +91,18 @@ The choice determines whether OAuth tokens are exposed to the browser's JavaScri
 
 | ID | Description |
 |----|-------------|
-| `F-001` | SPA must never receive, store, or have JavaScript access to access tokens or refresh tokens |
-| `F-002` | BFF performs OAuth 2.1 Authorization Code + PKCE flow as a confidential client |
-| `F-003` | BFF issues HTTP-only, Secure, SameSite=Strict cookies to the SPA for session management |
-| `F-004` | BFF generates DPoP proofs server-side and attaches them when calling backend APIs |
+| `F‑001` | SPA must never receive, store, or have JavaScript access to access tokens or refresh tokens |
+| `F‑002` | BFF performs OAuth 2.1 Authorization Code + PKCE flow as a confidential client |
+| `F‑003` | BFF issues HTTP-only, Secure, SameSite=Strict cookies to the SPA for session management |
+| `F‑004` | BFF generates DPoP proofs server-side and attaches them when calling backend APIs |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | BFF proxy latency < 5ms per request at p99 |
-| `NF-002` | BFF must handle 2000 concurrent sessions without degradation |
-| `NF-003` | Cookie-based session must survive browser tab close and resume |
+| `NF‑001` | BFF proxy latency < 5ms per request at p99 |
+| `NF‑002` | BFF must handle 2000 concurrent sessions without degradation |
+| `NF‑003` | Cookie-based session must survive browser tab close and resume |
 
 ## Alternatives Considered
 

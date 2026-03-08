@@ -169,18 +169,18 @@ be incrementally saved.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The flat config system must use a single eslint.config.js file (supporting .js, .mjs, .cjs, .ts, .mts, .cts extensions) at the project root that exports an array of configuration objects, each with optional files and ignores glob patterns for file matching. |
-| `F-002` | Plugins must be imported as JavaScript objects using native import or require statements, with user-defined namespace keys in the plugins object, eliminating string-based plugin resolution and the eslint-plugin- prefix convention. |
-| `F-003` | The FlatCompat utility class must translate existing eslintrc configurations (extends, environments, plugins referenced by string) into flat config arrays, enabling incremental migration without rewriting all configs at once. |
+| `F‑001` | The flat config system must use a single eslint.config.js file (supporting .js, .mjs, .cjs, .ts, .mts, .cts extensions) at the project root that exports an array of configuration objects, each with optional files and ignores glob patterns for file matching. |
+| `F‑002` | Plugins must be imported as JavaScript objects using native import or require statements, with user-defined namespace keys in the plugins object, eliminating string-based plugin resolution and the eslint-plugin- prefix convention. |
+| `F‑003` | The FlatCompat utility class must translate existing eslintrc configurations (extends, environments, plugins referenced by string) into flat config arrays, enabling incremental migration without rewriting all configs at once. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Configuration resolution must require only a single upward directory search for the eslint.config.js file, dramatically reducing disk I/O compared to eslintrc's per-directory cascade search. |
-| `NF-002` | The flat config array must be fully introspectable at runtime — because configs are plain JavaScript objects in an array, tools can inspect exactly which rules apply to any file without opaque string-based extends resolution. |
-| `NF-003` | The defineConfig() helper function must provide full TypeScript type definitions for configuration objects, enabling auto-completion, type checking, and deprecation warnings in TypeScript-aware editors. |
-| `NF-004` | The migration path from eslintrc to flat config must span at least two major ESLint versions — eslintrc support must remain available during the transition period to avoid forcing immediate migration of the plugin ecosystem. |
+| `NF‑001` | Configuration resolution must require only a single upward directory search for the eslint.config.js file, dramatically reducing disk I/O compared to eslintrc's per-directory cascade search. |
+| `NF‑002` | The flat config array must be fully introspectable at runtime — because configs are plain JavaScript objects in an array, tools can inspect exactly which rules apply to any file without opaque string-based extends resolution. |
+| `NF‑003` | The defineConfig() helper function must provide full TypeScript type definitions for configuration objects, enabling auto-completion, type checking, and deprecation warnings in TypeScript-aware editors. |
+| `NF‑004` | The migration path from eslintrc to flat config must span at least two major ESLint versions — eslintrc support must remain available during the transition period to avoid forcing immediate migration of the plugin ecosystem. |
 
 ## Alternatives Considered
 

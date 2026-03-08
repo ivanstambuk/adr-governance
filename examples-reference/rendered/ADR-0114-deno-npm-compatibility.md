@@ -166,17 +166,17 @@ runtime adoption.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The runtime must resolve and execute npm packages specified via npm: URL specifiers, downloading them on demand from the npm registry and caching them globally without requiring a local node_modules directory. |
-| `F-002` | The runtime must provide polyfills for Node.js built-in modules (fs, path, http, crypto, etc.) accessible via node: specifiers, enabling npm packages that depend on Node.js core APIs to function correctly. |
-| `F-003` | The runtime must support package.json for dependency declaration and deno.json for Deno-specific configuration, allowing both configuration systems to coexist in the same project. |
+| `F‑001` | The runtime must resolve and execute npm packages specified via npm: URL specifiers, downloading them on demand from the npm registry and caching them globally without requiring a local node_modules directory. |
+| `F‑002` | The runtime must provide polyfills for Node.js built-in modules (fs, path, http, crypto, etc.) accessible via node: specifiers, enabling npm packages that depend on Node.js core APIs to function correctly. |
+| `F‑003` | The runtime must support package.json for dependency declaration and deno.json for Deno-specific configuration, allowing both configuration systems to coexist in the same project. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | npm package compatibility must cover at least 80% of the top 1000 most-downloaded npm packages, including popular frameworks like Express, Fastify, and Next.js. |
-| `NF-002` | npm package execution must be subject to Deno's permission sandbox — file system, network, and environment access require explicit opt-in via permission flags. |
-| `NF-003` | npm package resolution and installation must not degrade Deno's startup time by more than 10% for programs that do not use npm packages — the compatibility layer must be lazy-loaded. |
+| `NF‑001` | npm package compatibility must cover at least 80% of the top 1000 most-downloaded npm packages, including popular frameworks like Express, Fastify, and Next.js. |
+| `NF‑002` | npm package execution must be subject to Deno's permission sandbox — file system, network, and environment access require explicit opt-in via permission flags. |
+| `NF‑003` | npm package resolution and installation must not degrade Deno's startup time by more than 10% for programs that do not use npm packages — the compatibility layer must be lazy-loaded. |
 
 ## Alternatives Considered
 

@@ -88,17 +88,17 @@ We must choose the token format that best balances revocation speed, latency, au
 
 | ID | Description |
 |----|-------------|
-| `F-001` | Access tokens must be revocable within 30 seconds of revocation request |
-| `F-002` | API gateway must resolve token to full claim set via introspection before forwarding request |
-| `F-003` | Introspection response must include DPoP confirmation (`cnf.jkt`) for sender validation |
+| `F‑001` | Access tokens must be revocable within 30 seconds of revocation request |
+| `F‑002` | API gateway must resolve token to full claim set via introspection before forwarding request |
+| `F‑003` | Introspection response must include DPoP confirmation (`cnf.jkt`) for sender validation |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Token introspection latency < 5ms at p99 with caching enabled |
-| `NF-002` | PingFederate introspection endpoint availability 99.99% |
-| `NF-003` | Token value must not contain PII when stored in access logs |
+| `NF‑001` | Token introspection latency < 5ms at p99 with caching enabled |
+| `NF‑002` | PingFederate introspection endpoint availability 99.99% |
+| `NF‑003` | Token value must not contain PII when stored in access logs |
 
 ## Alternatives Considered
 

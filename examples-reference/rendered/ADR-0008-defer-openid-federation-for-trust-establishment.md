@@ -90,15 +90,15 @@ for subordinate entities. This would eliminate manual metadata exchange.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | Automated discovery, validation, and key rotation of partner identity provider metadata via cryptographic trust chains — eliminating manual metadata exchange and out-of-band certificate verification |
-| `F-002` | Fallback to manual metadata exchange for partners that do not support federation |
+| `F‑001` | Automated discovery, validation, and key rotation of partner identity provider metadata via cryptographic trust chains — eliminating manual metadata exchange and out-of-band certificate verification |
+| `F‑002` | Fallback to manual metadata exchange for partners that do not support federation |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Trust chain resolution must complete in < 2 seconds |
-| `NF-002` | Must not introduce a single point of failure in the trust resolution chain |
+| `NF‑001` | Trust chain resolution must complete in < 2 seconds |
+| `NF‑002` | Must not introduce a single point of failure in the trust resolution chain |
 
 ## Alternatives Considered
 

@@ -96,17 +96,17 @@ We must choose the subject identifier strategy that balances privacy, regulatory
 
 | ID | Description |
 |----|-------------|
-| `F-001` | All external and partner RPs must receive pairwise pseudonymous sub values |
-| `F-002` | Internal workforce RPs grouped by sector identifier may receive shared sub within their sector |
-| `F-003` | The same user must receive the same pairwise sub for the same RP across all sessions (deterministic) |
+| `F‑001` | All external and partner RPs must receive pairwise pseudonymous sub values |
+| `F‑002` | Internal workforce RPs grouped by sector identifier may receive shared sub within their sector |
+| `F‑003` | The same user must receive the same pairwise sub for the same RP across all sessions (deterministic) |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | PPID generation must add < 1ms to token issuance latency |
-| `NF-002` | Pairwise sub must be a 128-bit hex string (32 characters) — no PII derivable from the value |
-| `NF-003` | PPID salt must be stored in HSM and never exposed to application layer |
+| `NF‑001` | PPID generation must add < 1ms to token issuance latency |
+| `NF‑002` | Pairwise sub must be a 128-bit hex string (32 characters) — no PII derivable from the value |
+| `NF‑003` | PPID salt must be stored in HSM and never exposed to application layer |
 
 ## Alternatives Considered
 

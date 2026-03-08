@@ -92,18 +92,18 @@ This decision determines how step-up proof is created, stored, validated, and ev
 
 | ID | Description |
 |----|-------------|
-| `F-001` | After successful step-up, access tokens must contain an acr claim reflecting the higher authentication level |
-| `F-002` | Step-up proof must expire after a configurable max_age (default 15 minutes) independent of the base session |
-| `F-003` | API gateway must reject high-value operations when acr claim does not meet the required level |
-| `F-004` | Step-up events must be logged in PingFederate audit trail with correlation to the triggering transaction |
+| `F‑001` | After successful step-up, access tokens must contain an acr claim reflecting the higher authentication level |
+| `F‑002` | Step-up proof must expire after a configurable max_age (default 15 minutes) independent of the base session |
+| `F‑003` | API gateway must reject high-value operations when acr claim does not meet the required level |
+| `F‑004` | Step-up events must be logged in PingFederate audit trail with correlation to the triggering transaction |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Step-up challenge-to-proof latency < 2 seconds (including MFA verification) |
-| `NF-002` | Token refresh with enriched session must complete in < 500ms |
-| `NF-003` | No additional cookies or local storage beyond the existing BFF session cookie |
+| `NF‑001` | Step-up challenge-to-proof latency < 2 seconds (including MFA verification) |
+| `NF‑002` | Token refresh with enriched session must complete in < 500ms |
+| `NF‑003` | No additional cookies or local storage beyond the existing BFF session cookie |
 
 ## Alternatives Considered
 

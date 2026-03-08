@@ -91,17 +91,17 @@ At 78% CPU during peak, PingFederate will exceed capacity within 6 months unless
 
 | ID | Description |
 |----|-------------|
-| `F-001` | All new JWT/JWS tokens signed with EdDSA (Ed25519) algorithm |
-| `F-002` | JWKS endpoint publishes both Ed25519 and RSA-2048 keys during transition period |
-| `F-003` | Legacy partners continue receiving RS256-signed tokens until they support EdDSA |
+| `F‑001` | All new JWT/JWS tokens signed with EdDSA (Ed25519) algorithm |
+| `F‑002` | JWKS endpoint publishes both Ed25519 and RSA-2048 keys during transition period |
+| `F‑003` | Legacy partners continue receiving RS256-signed tokens until they support EdDSA |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Token signing throughput must increase by at least 10x per core |
-| `NF-002` | Token signing latency p99 < 1ms (including HSM round-trip) |
-| `NF-003` | JWS compact serialization total size reduced by at least 30% compared to RS256 |
+| `NF‑001` | Token signing throughput must increase by at least 10x per core |
+| `NF‑002` | Token signing latency p99 < 1ms (including HSM round-trip) |
+| `NF‑003` | JWS compact serialization total size reduced by at least 30% compared to RS256 |
 
 ## Alternatives Considered
 

@@ -171,19 +171,19 @@ was right all along."
 
 | ID | Description |
 |----|-------------|
-| `F-001` | Runes ($state, $derived, $effect, $props) must provide universal reactivity that works identically inside .svelte components, .svelte.js modules, and .svelte.ts modules — eliminating the boundary between component-local and cross-component reactivity. |
-| `F-002` | The $derived rune must use runtime dependency tracking that automatically detects dependencies when the expression is evaluated, replacing the compile-time static analysis of $: that broke when reactive expressions were extracted into functions. |
-| `F-003` | The $effect rune must replace both $: side-effect statements and lifecycle functions (onMount, afterUpdate, beforeUpdate) with a unified side-effect primitive that automatically tracks its dependencies and cleans up on re-run. |
-| `F-004` | The $props rune must replace export let for component props declaration with a destructuring-based API that supports default values, rest props, and full TypeScript type inference. |
+| `F‑001` | Runes ($state, $derived, $effect, $props) must provide universal reactivity that works identically inside .svelte components, .svelte.js modules, and .svelte.ts modules — eliminating the boundary between component-local and cross-component reactivity. |
+| `F‑002` | The $derived rune must use runtime dependency tracking that automatically detects dependencies when the expression is evaluated, replacing the compile-time static analysis of $: that broke when reactive expressions were extracted into functions. |
+| `F‑003` | The $effect rune must replace both $: side-effect statements and lifecycle functions (onMount, afterUpdate, beforeUpdate) with a unified side-effect primitive that automatically tracks its dependencies and cleans up on re-run. |
+| `F‑004` | The $props rune must replace export let for component props declaration with a destructuring-based API that supports default values, rest props, and full TypeScript type inference. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Fine-grained reactivity must enable surgical DOM updates where only the specific DOM nodes affected by a state change are updated, improving rendering performance over the component-level invalidation model of Svelte 3/4. |
-| `NF-002` | All rune primitives must be fully typed for TypeScript, providing complete type inference for $state values, $derived computations, $props declarations, and $effect cleanup functions. |
-| `NF-003` | Existing Svelte 4 components must work unchanged in Svelte 5 without any modifications — runes are opt-in per component and activated by usage, with a provided migration script for incremental adoption. |
-| `NF-004` | Server-side rendering must remain zero-overhead — the compiler must be able to strip signals entirely when generating SSR output, since signals are pure overhead on the server where there are no reactive updates. |
+| `NF‑001` | Fine-grained reactivity must enable surgical DOM updates where only the specific DOM nodes affected by a state change are updated, improving rendering performance over the component-level invalidation model of Svelte 3/4. |
+| `NF‑002` | All rune primitives must be fully typed for TypeScript, providing complete type inference for $state values, $derived computations, $props declarations, and $effect cleanup functions. |
+| `NF‑003` | Existing Svelte 4 components must work unchanged in Svelte 5 without any modifications — runes are opt-in per component and activated by usage, with a provided migration script for incremental adoption. |
+| `NF‑004` | Server-side rendering must remain zero-overhead — the compiler must be able to strip signals entirely when generating SSR output, since signals are pure overhead on the server where there are no reactive updates. |
 
 ## Alternatives Considered
 

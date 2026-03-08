@@ -92,16 +92,16 @@ The decision comes down to whether the operational overhead of a self-managed Va
 
 | ID | Description |
 |----|-------------|
-| `F-001` | All API runtime secrets retrievable without application code changes (volume mount or sidecar) |
-| `F-002` | Database credential rotation without service redeployment |
-| `F-003` | Centralized audit log of all secret access events with caller identity |
+| `F‑001` | All API runtime secrets retrievable without application code changes (volume mount or sidecar) |
+| `F‑002` | Database credential rotation without service redeployment |
+| `F‑003` | Centralized audit log of all secret access events with caller identity |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Secret retrieval latency < 5ms at application startup |
-| `NF-002` | 99.99% availability of secret store (must not be a single point of failure) |
+| `NF‑001` | Secret retrieval latency < 5ms at application startup |
+| `NF‑002` | 99.99% availability of secret store (must not be a single point of failure) |
 
 ## Alternatives Considered
 

@@ -87,17 +87,17 @@ public mobile apps, confidential backend services, and partner API consumers.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | Every access token issued by PingFederate must be bound to the requesting client's proof key |
-| `F-002` | Resource servers must validate the DPoP proof JWT on every request and reject tokens without valid proof |
-| `F-003` | Token binding must work for public clients (mobile), confidential clients (backend), and partner clients |
+| `F‑001` | Every access token issued by PingFederate must be bound to the requesting client's proof key |
+| `F‑002` | Resource servers must validate the DPoP proof JWT on every request and reject tokens without valid proof |
+| `F‑003` | Token binding must work for public clients (mobile), confidential clients (backend), and partner clients |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | DPoP proof generation on mobile must complete in < 50ms (including secure enclave signature) |
-| `NF-002` | DPoP proof validation at the resource server must add < 5ms latency per request at p99 |
-| `NF-003` | No changes to existing TLS termination or CDN configuration required |
+| `NF‑001` | DPoP proof generation on mobile must complete in < 50ms (including secure enclave signature) |
+| `NF‑002` | DPoP proof validation at the resource server must add < 5ms latency per request at p99 |
+| `NF‑003` | No changes to existing TLS termination or CDN configuration required |
 
 ## Alternatives Considered
 
