@@ -512,6 +512,10 @@ governance:
   # Enforce one ADR per pull request
   single_adr_per_pr: true
 
+  # Enforce sequential ADR numbering (no gaps, no duplicates)
+  sequential_numbering: true
+  adr_directory: architecture-decision-log
+
   # Fields that trigger full approval identity verification when changed
   substantive_fields:
     - "adr.status"

@@ -124,7 +124,7 @@ class AssetConsistencyTests(unittest.TestCase):
 
         self.assertNotIn("will be flagged for periodic review", process)
         self.assertIn("does **not** schedule reminders, create tickets, open pull requests, or fail CI", process)
-        self.assertIn("scheduling/reminders are external to this repo", template)
+        self.assertIn("not automatically scheduled/enforced by this repo", template)
         self.assertIn("Review scheduling/reminders are outside this repo's scope", schema_ref)
 
     def test_committed_generated_artifacts_boundary_is_documented(self):
@@ -189,7 +189,8 @@ class AssetConsistencyTests(unittest.TestCase):
         self.assertIn("single `python3 scripts/validate-adr.py ...` invocation", readme)
         self.assertIn("single [`scripts/validate-adr.py`", examples)
         self.assertIn("Validating governed ADR corpus", runner)
-        self.assertIn("Validating reference ADR examples", runner)
+        self.assertIn("Validating fictional ADR examples", runner)
+        self.assertIn("Validating real-world ADR examples", runner)
 
 
 if __name__ == "__main__":

@@ -330,7 +330,41 @@ governance:
   single_adr_per_pr: true
 ```
 
-### 3.4.3 Change Classification
+### 3.4.3 Sequential ADR Numbering
+
+> **Rule:** New ADR files in `architecture-decision-log/` must use the **next available sequential number** — no gaps and no duplicates.
+
+The ADR ID format is `ADR-NNNN-slug` where `NNNN` is the zero-padded number. The CI check:
+
+1. Lists existing ADR numbers on the **base branch** (e.g., `main`)
+2. Identifies **new** ADR files in the PR (files that don't exist on base)
+3. Verifies the new ADR number equals `max(existing) + 1`
+
+**Slug freedom:** The slug portion after the number can be any valid kebab-case string. Only the numeric prefix is enforced.
+
+**Scope:** This rule only applies to the governed `architecture-decision-log/` directory. Example ADRs in `examples-reference/` are not subject to sequential numbering.
+
+This rule is configured in [`.adr-governance/config.yaml`](../.adr-governance/config.yaml):
+
+```yaml
+governance:
+  sequential_numbering: true
+  adr_directory: architecture-decision-log
+```
+
+#### Preventing race conditions
+
+Two developers may independently create branches, both claiming the same ADR number. To prevent this, configure your Git platform to **require branches to be up to date before merging**:
+
+| Platform | Setting |
+|----------|---------|
+| **GitHub** | Branch protection → *"Require branches to be up to date before merging"*, or enable **Merge Queue** |
+| **Azure DevOps** | Branch policy → *Semi-linear merge strategy* (forces rebase before merge) |
+| **GitLab** | Project settings → *Merge trains* or *"Pipelines must succeed"* + fast-forward merge |
+
+With these settings, after PR A merges with ADR-0001, PR B must rebase before merging. The rebase triggers a CI re-run, which detects that ADR-0001 now exists and the next available number is ADR-0002.
+
+### 3.4.4 Change Classification
 
 Not all changes to an ADR are equal. The governance framework distinguishes between **substantive** and **maintenance** changes.
 

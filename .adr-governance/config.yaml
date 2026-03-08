@@ -35,6 +35,25 @@ governance:
   single_adr_per_pr: true
 
   # ──────────────────────────────────────────────────────────────────────
+  # Sequential ADR Numbering
+  # ──────────────────────────────────────────────────────────────────────
+  # When true, new ADR files in adr_directory must use the next available
+  # sequential number (ADR-NNNN). No gaps or conflicts are allowed.
+  #
+  # The check only applies to NEW files — modifications to existing ADRs
+  # are not affected. The check determines the highest ADR number on the
+  # base branch and requires the new ADR to use (max + 1).
+  #
+  # Race condition safety: enable "Require branches to be up to date
+  # before merging" (GitHub), semi-linear merge (Azure DevOps), or merge
+  # trains (GitLab) to ensure two PRs cannot claim the same number.
+  sequential_numbering: true
+
+  # The directory containing governed ADRs (not examples).
+  # Sequential numbering is only enforced in this directory.
+  adr_directory: architecture-decision-log
+
+  # ──────────────────────────────────────────────────────────────────────
   # Change Classification — Substantive Fields
   # ──────────────────────────────────────────────────────────────────────
   # Changes to these YAML fields are classified as "substantive" (Tier 1)

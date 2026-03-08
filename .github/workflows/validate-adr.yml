@@ -4,6 +4,7 @@ on:
   pull_request:
   pull_request_review:
     types: [submitted]
+  merge_group: # Required for GitHub merge queue — sequential numbering check
   push:
     branches: [main]
 
@@ -45,7 +46,7 @@ jobs:
         if: hashFiles('examples-reference/*.yaml') != ''
 
       - name: Verify approval identities
-        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_review'
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_review' || github.event_name == 'merge_group'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 scripts/verify-approvals.py

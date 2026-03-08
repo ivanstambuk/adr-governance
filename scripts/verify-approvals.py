@@ -7,6 +7,7 @@ approved the pull request on the Git platform. This closes the loop between
 the ADR's declared approvers and the platform's recorded approvers.
 
 Governance rules are loaded from .adr-governance/config.yaml:
+  - Sequential ADR numbering (no gaps, no duplicates)
   - Single ADR per PR (with supersession exception)
   - Change classification (substantive vs. maintenance)
   - Immutable decision core after acceptance
@@ -38,6 +39,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import urllib.request
@@ -91,6 +93,10 @@ class BaseRefError(RuntimeError):
     """Raised when the verifier cannot resolve or read the target base branch."""
 
 
+ADR_ID_RE = re.compile(r"^ADR-(\d{4})-")
+DEFAULT_ADR_DIRECTORY = "architecture-decision-log"
+
+
 def load_governance_config() -> dict:
     """Load governance config from .adr-governance/config.yaml."""
     config_paths = [
@@ -110,6 +116,8 @@ def load_governance_config() -> dict:
                     if a.get("identity")
                 },
                 "single_adr_per_pr": gov.get("single_adr_per_pr", False),
+                "sequential_numbering": gov.get("sequential_numbering", False),
+                "adr_directory": gov.get("adr_directory", DEFAULT_ADR_DIRECTORY),
                 "substantive_fields": gov.get(
                     "substantive_fields", DEFAULT_SUBSTANTIVE_FIELDS
                 ),
@@ -123,6 +131,8 @@ def load_governance_config() -> dict:
     return {
         "admins": set(),
         "single_adr_per_pr": False,
+        "sequential_numbering": False,
+        "adr_directory": DEFAULT_ADR_DIRECTORY,
         "substantive_fields": DEFAULT_SUBSTANTIVE_FIELDS,
         "immutable_after_acceptance_fields": DEFAULT_IMMUTABLE_AFTER_ACCEPTANCE_FIELDS,
     }
@@ -566,6 +576,129 @@ def check_single_adr_per_pr(
 
 
 # ---------------------------------------------------------------------------
+# Sequential ADR numbering
+# ---------------------------------------------------------------------------
+
+def _extract_adr_number(filename: str) -> int | None:
+    """Extract the numeric portion from an ADR filename like 'ADR-0009-foo'."""
+    m = ADR_ID_RE.match(filename)
+    return int(m.group(1)) if m else None
+
+
+def _get_existing_adr_numbers_on_base(
+    base_ref: str | None,
+    adr_directory: str,
+) -> set[int]:
+    """List ADR numbers that exist on the base branch."""
+    if not base_ref:
+        return set()
+    try:
+        result = subprocess.run(
+            ["git", "ls-tree", "--name-only", base_ref, f"{adr_directory}/"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        return set()
+
+    numbers = set()
+    for line in result.stdout.strip().split("\n"):
+        filename = line.strip().split("/")[-1]
+        if filename.endswith(".yaml") or filename.endswith(".yml"):
+            stem = filename.rsplit(".", 1)[0]
+            num = _extract_adr_number(stem)
+            if num is not None:
+                numbers.add(num)
+    return numbers
+
+
+def check_sequential_numbering(
+    changed_files: list[str],
+    base_ref: str | None,
+    adr_directory: str,
+) -> tuple[bool, str]:
+    """
+    Validate that new ADR files in the governed ADR directory use the next
+    sequential number(s) — no gaps or conflicts.
+
+    Only checks files added in adr_directory (not examples).
+    Only checks new files (not modifications to existing files).
+
+    Returns:
+        (passed, message)
+    """
+    if not base_ref:
+        return True, "cannot determine base ref — skipping sequential numbering check"
+
+    # Filter to only files in the governed ADR directory
+    governed_files = [
+        f for f in changed_files
+        if f.startswith(adr_directory + "/")
+    ]
+    if not governed_files:
+        return True, ""
+
+    # Determine which files are NEW (not on base branch)
+    new_files = []
+    for filepath in governed_files:
+        try:
+            subprocess.run(
+                ["git", "cat-file", "-e", f"{base_ref}:{filepath}"],
+                capture_output=True,
+                check=True,
+            )
+            # File exists on base — it's a modification, not new
+        except subprocess.CalledProcessError:
+            new_files.append(filepath)
+
+    if not new_files:
+        return True, ""  # Only modifications, no new ADRs
+
+    # Extract numbers from new files
+    new_numbers = []
+    for filepath in new_files:
+        filename = filepath.split("/")[-1]
+        stem = filename.rsplit(".", 1)[0] if "." in filename else filename
+        num = _extract_adr_number(stem)
+        if num is None:
+            return (
+                False,
+                f"ADR filename '{filename}' does not follow the ADR-NNNN-slug pattern",
+            )
+        new_numbers.append((num, filepath))
+
+    new_numbers.sort()
+
+    # Get existing numbers on base branch
+    existing_numbers = _get_existing_adr_numbers_on_base(base_ref, adr_directory)
+    current_max = max(existing_numbers) if existing_numbers else -1
+
+    # Validate sequential assignment
+    errors = []
+    expected_next = current_max + 1
+    for num, filepath in new_numbers:
+        filename = filepath.split("/")[-1]
+        if num in existing_numbers:
+            errors.append(
+                f"ADR number {num:04d} ('{filename}') already exists on the base branch. "
+                f"Next available number is ADR-{expected_next:04d}."
+            )
+        elif num != expected_next:
+            errors.append(
+                f"ADR number {num:04d} ('{filename}') is not sequential. "
+                f"Expected ADR-{expected_next:04d} (current max on base branch is ADR-{current_max:04d})."
+            )
+        else:
+            expected_next = num + 1
+
+    if errors:
+        return False, " | ".join(errors)
+
+    return True, ""
+
+
+# ---------------------------------------------------------------------------
 # ADR parsing
 # ---------------------------------------------------------------------------
 
@@ -727,12 +860,13 @@ def verify_approvals(
     Verify governance rules for ADR changes in this PR.
 
     Checks performed:
-      1. Single ADR per PR (if enabled)
-      2. Append-only audit trail enforcement
-      3. Immutable decision core enforcement for accepted ADRs
-      4. Change classification (substantive vs. maintenance)
-      5. Admin override (maintenance by admin → skip identity check)
-      6. Approval identity verification (substantive changes → full check)
+      1. Sequential ADR numbering (if enabled)
+      2. Single ADR per PR (if enabled)
+      3. Append-only audit trail enforcement
+      4. Immutable decision core enforcement for accepted ADRs
+      5. Change classification (substantive vs. maintenance)
+      6. Admin override (maintenance by admin → skip identity check)
+      7. Approval identity verification (substantive changes → full check)
 
     Returns:
       0 if all OK
@@ -752,6 +886,23 @@ def verify_approvals(
     )
 
     try:
+        # ── Check 0: Sequential ADR numbering ───────────────────────────────
+        if config.get("sequential_numbering"):
+            adr_directory = config.get("adr_directory", DEFAULT_ADR_DIRECTORY)
+            passed, message = check_sequential_numbering(
+                changed_files,
+                base_ref,
+                adr_directory,
+            )
+            if passed:
+                if message:
+                    print(f"✅ Sequential numbering: {message}")
+                else:
+                    print("✅ Sequential numbering: OK")
+            else:
+                print(f"\n❌ GOVERNANCE VIOLATION (sequential numbering): {message}")
+                exit_code = 1
+
         # ── Check 1: Single ADR per PR ──────────────────────────────────────
         if config.get("single_adr_per_pr"):
             passed, message = check_single_adr_per_pr(
