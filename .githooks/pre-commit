@@ -23,8 +23,10 @@ STAGED_ADL=$(
 )
 STAGED_EXAMPLES=$(
     git diff --cached --name-only -- \
-        "examples-reference/*.yaml" \
-        "examples-reference/*.yml" 2>/dev/null || true
+        "examples-reference/fictional/*.yaml" \
+        "examples-reference/fictional/*.yml" \
+        "examples-reference/real-world/*.yaml" \
+        "examples-reference/real-world/*.yml" 2>/dev/null || true
 )
 
 if [ -z "$STAGED_ADL" ] && [ -z "$STAGED_EXAMPLES" ]; then
@@ -58,7 +60,7 @@ if [ -n "$STAGED_EXAMPLES" ]; then
     python3 scripts/render-adr.py \
         --output-dir "examples-reference/rendered/" \
         --generate-index \
-        "examples-reference/"
+        "examples-reference/fictional/" "examples-reference/real-world/"
     git add "examples-reference/rendered/"
 fi
 

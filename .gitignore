@@ -32,3 +32,6 @@ adr-governance-bundle.md
 
 # LLM test harness output (regenerate with tests/llm_harness.py)
 tests/llm_runs/
+
+# Work trackers (local only)
+docs/research/real-world-adr-candidates.md

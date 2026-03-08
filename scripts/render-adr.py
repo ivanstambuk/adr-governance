@@ -2,8 +2,8 @@
 """Render ADR YAML files to Markdown documents.
 
 Usage:
-    python3 scripts/render-adr.py examples-reference/ADR-0001-*.yaml
-    python3 scripts/render-adr.py examples-reference/           # render all in directory
+    python3 scripts/render-adr.py examples-reference/fictional/ADR-0001-*.yaml
+    python3 scripts/render-adr.py examples-reference/fictional/       # render all fictional examples
     python3 scripts/render-adr.py --output-dir architecture-decision-log/rendered/ --generate-index architecture-decision-log/
 """
 

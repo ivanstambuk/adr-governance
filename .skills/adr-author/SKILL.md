@@ -204,6 +204,102 @@ context:
     We need to decide between X and Y.
 ```
 
+### Mermaid diagram quality guide
+
+Every alternative description **should** include a Mermaid diagram. Invest in diagram quality — rich visuals make ADRs dramatically more readable. Follow these patterns:
+
+#### Use subgraphs to group related concepts
+
+```mermaid
+graph TD
+    subgraph "Native Outputs"
+      A[tsc CLI] --> B[Language Server]
+    end
+    subgraph "Measured Gains"
+      A --> C["10x faster builds"]
+    end
+```
+
+#### Use decision nodes (`{}`) for branching choices
+
+```mermaid
+graph TD
+    A[Input] --> B{Decision Point}
+    B -->|option 1| C[Outcome A]
+    B -->|option 2| D[Outcome B]
+```
+
+#### Style nodes to communicate outcome quality
+
+Use green for positive outcomes and red for failures/blockers:
+
+```mermaid
+graph TD
+    A[Approach] --> B["✅ Positive outcome"]
+    A --> C["❌ Blocked path"]
+    style B fill:#2d8,stroke:#333,color:#000
+    style C fill:#f66,stroke:#333,color:#000
+```
+
+#### Use bidirectional arrows for cyclic relationships
+
+```mermaid
+graph TD
+    A[Component A] <-->|depends on| B[Component B]
+    B <-->|references| C[Component C]
+```
+
+#### Add benchmark/comparison tables alongside diagrams
+
+When quantitative data is available, add a Markdown table in the description:
+
+```markdown
+| Metric | Before | After | Improvement |
+|--------|-------:|------:|------------:|
+| Build time | 77.8 s | 7.5 s | 10.4x |
+| Startup | 9.6 s | 1.2 s | 8.0x |
+```
+
+#### Line breaks inside node labels
+
+Use `<br/>` for multi-line node text. **Never use `\n`** — Mermaid renders it literally:
+
+```
+# ✅ Correct
+C --> F["❌ Ref-counting overhead<br/>negates performance gains"]
+
+# ❌ Wrong — renders literal \n
+C --> F["❌ Ref-counting overhead\nnegates performance gains"]
+```
+
+### YAML scalar pitfalls
+
+⚠️ **Critical: use `|` (literal), never `>` (folded), for descriptions containing code blocks.**
+
+The YAML folded scalar (`>`) collapses newlines into spaces, which destroys Mermaid code fences:
+
+```yaml
+# ❌ WRONG — > collapses ```mermaid and graph TD onto one line
+description: >
+  Some text.
+
+  ```mermaid
+  graph TD
+      A --> B
+  ```
+
+# ✅ CORRECT — | preserves newlines exactly
+description: |
+  Some text.
+
+  ```mermaid
+  graph TD
+      A --> B
+  ```
+```
+
+The validator (`scripts/validate-adr.py`) will warn if it detects collapsed code fences caused by this mistake.
+
 ## Reference documentation
 
 - See [the glossary](../../docs/glossary.md) for all enum values and term definitions

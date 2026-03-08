@@ -9,6 +9,7 @@ Requires: pip install "jsonschema[format]" pyyaml
 """
 
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -361,6 +362,24 @@ def validate_file(
             if filename != adr_id:
                 errors.append(
                     f"  filename '{filename}' does not exactly match adr.id '{adr_id}'"
+                )
+
+        # --- Check for collapsed code fences in description fields ---
+        # YAML folded scalars (>) collapse newlines into spaces, breaking
+        # fenced code blocks.  Detect "```lang content" on a single line —
+        # this means the author used > when they should have used |.
+        COLLAPSED_FENCE_RE = re.compile(r"```\w+[^\S\n]+\S")
+        for idx, alt in enumerate(alternatives):
+            if not isinstance(alt, dict):
+                continue
+            desc = alt.get("description", "")
+            if isinstance(desc, str) and COLLAPSED_FENCE_RE.search(desc):
+                alt_name = alt.get("name", f"#{idx}")
+                warnings.append(
+                    f"  alternatives[{idx}] '{alt_name}': description contains a collapsed "
+                    f"code fence (e.g. ```mermaid graph TD on one line). "
+                    f"Use YAML literal scalar (|) instead of folded scalar (>) "
+                    f"for descriptions containing code blocks"
                 )
 
     return errors, warnings

@@ -20,8 +20,10 @@ for shell_script in scripts/*.sh; do
 done
 
 REFERENCE_FILE=""
-if [ -d "examples-reference" ] && ls examples-reference/*.yaml >/dev/null 2>&1; then
-  REFERENCE_FILE="$(ls examples-reference/*.yaml | sort | head -n 1)"
+if [ -d "examples-reference/fictional" ] && ls examples-reference/fictional/*.yaml >/dev/null 2>&1; then
+  REFERENCE_FILE="$(ls examples-reference/fictional/*.yaml | sort | head -n 1)"
+elif [ -d "examples-reference/real-world" ] && ls examples-reference/real-world/*.yaml >/dev/null 2>&1; then
+  REFERENCE_FILE="$(ls examples-reference/real-world/*.yaml | sort | head -n 1)"
 elif [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml >/dev/null 2>&1; then
   REFERENCE_FILE="$(ls architecture-decision-log/*.yaml | sort | head -n 1)"
 fi
@@ -29,8 +31,8 @@ fi
 EXTRACT_DIR=""
 if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml >/dev/null 2>&1; then
   EXTRACT_DIR="architecture-decision-log/"
-elif [ -d "examples-reference" ] && ls examples-reference/*.yaml >/dev/null 2>&1; then
-  EXTRACT_DIR="examples-reference/"
+elif [ -d "examples-reference/fictional" ] && ls examples-reference/fictional/*.yaml >/dev/null 2>&1; then
+  EXTRACT_DIR="examples-reference/fictional/"
 fi
 
 if [ -z "$REFERENCE_FILE" ] || [ -z "$EXTRACT_DIR" ]; then

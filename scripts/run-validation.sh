@@ -56,7 +56,11 @@ if run_default_target "Validating governed ADR corpus" "architecture-decision-lo
   found_default_targets=1
 fi
 
-if run_default_target "Validating reference ADR examples" "examples-reference"; then
+if run_default_target "Validating fictional ADR examples" "examples-reference/fictional"; then
+  found_default_targets=1
+fi
+
+if run_default_target "Validating real-world ADR examples" "examples-reference/real-world"; then
   found_default_targets=1
 fi
 

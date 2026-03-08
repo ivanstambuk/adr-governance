@@ -327,18 +327,32 @@ See **[`docs/rendering.md`](docs/rendering.md)** for pre-commit hook setup, manu
 
 ## Example ADRs
 
-The [`examples-reference/`](examples-reference/) directory contains interconnected ADRs from a **fictional** IAM department at NovaTrust Financial Services. These are **not real decisions** — they demonstrate the meta-model at production quality. Use them as a reference for style, depth, and interconnection:
+The [`examples-reference/`](examples-reference/) directory contains example ADRs organized in two categories:
+
+### Fictional Examples
+
+Interconnected ADRs from a **fictional** IAM department at NovaTrust Financial Services. These are **not real decisions** — they demonstrate the meta-model at production quality. Use them as a reference for style, depth, and interconnection:
 
 | ID | Title | Status | Rendered | Source |
 |----|-------|--------|:--------:|:------:|
-| ADR-0001 | Use DPoP over mTLS for Sender-Constrained Tokens | accepted | [Markdown](examples-reference/rendered/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.md) | [YAML](examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml) |
-| ADR-0002 | Use Reference Tokens over JWTs for Gateway Introspection | accepted | [Markdown](examples-reference/rendered/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.md) | [YAML](examples-reference/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml) |
-| ADR-0003 | Use Pairwise Subject Identifiers for OIDC Relying Parties | accepted | [Markdown](examples-reference/rendered/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.md) | [YAML](examples-reference/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml) |
-| ADR-0004 | Use Ed25519 over RSA-2048 for JWT Signing Keys | accepted | [Markdown](examples-reference/rendered/ADR-0004-ed25519-over-rsa-for-jwt-signing.md) | [YAML](examples-reference/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml) |
-| ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | accepted | [Markdown](examples-reference/rendered/ADR-0005-bff-token-mediator-for-spa-token-acquisition.md) | [YAML](examples-reference/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml) |
-| ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted | [Markdown](examples-reference/rendered/ADR-0006-session-enrichment-for-step-up-authentication.md) | [YAML](examples-reference/ADR-0006-session-enrichment-for-step-up-authentication.yaml) |
-| ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** | [Markdown](examples-reference/rendered/ADR-0007-centralized-secret-store-for-api-keys.md) | [YAML](examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml) |
-| ADR-0008 | Defer OpenID Federation for Automated Trust Establishment | **deferred** | [Markdown](examples-reference/rendered/ADR-0008-defer-openid-federation-for-trust-establishment.md) | [YAML](examples-reference/ADR-0008-defer-openid-federation-for-trust-establishment.yaml) |
+| ADR-0001 | Use DPoP over mTLS for Sender-Constrained Tokens | accepted | [Markdown](examples-reference/rendered/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.md) | [YAML](examples-reference/fictional/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml) |
+| ADR-0002 | Use Reference Tokens over JWTs for Gateway Introspection | accepted | [Markdown](examples-reference/rendered/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.md) | [YAML](examples-reference/fictional/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml) |
+| ADR-0003 | Use Pairwise Subject Identifiers for OIDC Relying Parties | accepted | [Markdown](examples-reference/rendered/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.md) | [YAML](examples-reference/fictional/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml) |
+| ADR-0004 | Use Ed25519 over RSA-2048 for JWT Signing Keys | accepted | [Markdown](examples-reference/rendered/ADR-0004-ed25519-over-rsa-for-jwt-signing.md) | [YAML](examples-reference/fictional/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml) |
+| ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | accepted | [Markdown](examples-reference/rendered/ADR-0005-bff-token-mediator-for-spa-token-acquisition.md) | [YAML](examples-reference/fictional/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml) |
+| ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted | [Markdown](examples-reference/rendered/ADR-0006-session-enrichment-for-step-up-authentication.md) | [YAML](examples-reference/fictional/ADR-0006-session-enrichment-for-step-up-authentication.yaml) |
+| ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** | [Markdown](examples-reference/rendered/ADR-0007-centralized-secret-store-for-api-keys.md) | [YAML](examples-reference/fictional/ADR-0007-centralized-secret-store-for-api-keys.yaml) |
+| ADR-0008 | Defer OpenID Federation for Automated Trust Establishment | **deferred** | [Markdown](examples-reference/rendered/ADR-0008-defer-openid-federation-for-trust-establishment.md) | [YAML](examples-reference/fictional/ADR-0008-defer-openid-federation-for-trust-establishment.yaml) |
+
+### Real-World Examples
+
+Reverse-engineered ADRs from prominent open-source projects. These reconstruct real architectural decisions using publicly available design documents, RFCs, and community discussions:
+
+| ID | Project | Decision | Level | Source |
+|----|---------|----------|:-----:|:------:|
+| ADR-0100 | TypeScript | Port compiler from TypeScript to Go | Strategic | [YAML](examples-reference/real-world/ADR-0100-typescript-compiler-go-rewrite.yaml) |
+
+*More real-world examples across strategic, tactical, and operational levels are in progress.*
 
 See the [rendered example index](examples-reference/rendered/architecture-decision-log.md) for a full overview, or [`examples-reference/README.md`](examples-reference/README.md) for details on each example.
 

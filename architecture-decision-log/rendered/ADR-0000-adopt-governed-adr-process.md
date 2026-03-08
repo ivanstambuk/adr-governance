@@ -155,8 +155,8 @@ Record decisions in Confluence pages with a standardized template. Approvals man
 ADR governance process validated by authoring 8 example ADRs (ADR-0001 through ADR-0008) covering technology, security, and process decisions across accepted, rejected, and deferred statuses.
 
 **Artifacts:**
-- `examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml`
-- `examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml`
+- `examples-reference/fictional/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml`
+- `examples-reference/fictional/ADR-0007-centralized-secret-store-for-api-keys.yaml`
 - `TEST-SUITE-validate-adr-all-examples`
 
 ## Dependencies

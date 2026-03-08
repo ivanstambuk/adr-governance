@@ -49,7 +49,7 @@ approvals:
 
 # --- REQUIRED ---
 context:
-  summary: >
+  summary: | # Use | (not >) — preserves code blocks and Mermaid diagrams
     Describe the problem, the current state, and why a decision is needed.
   business_drivers:
     - ""

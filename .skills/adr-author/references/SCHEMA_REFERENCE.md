@@ -77,6 +77,16 @@ The following fields support **full Markdown** including embedded Mermaid diagra
 | `decision.tradeoffs` | Acknowledged tradeoffs accepted with this decision |
 | `confirmation.description` | Verification evidence and implementation proof |
 
+⚠️ **Always use YAML literal scalars (`|`) for these fields** — never folded scalars (`>`). The `>` indicator collapses newlines into spaces, which destroys fenced code blocks (e.g., Mermaid diagrams). The validator will warn if collapsed code fences are detected.
+
+**Mermaid quality patterns:**
+- Use **subgraphs** to group related concepts (e.g., "Native Outputs", "Measured Gains")
+- Use **decision nodes** (`{Decision Point}`) for branching choices
+- Use **styled nodes** to communicate outcomes: `fill:#2d8` (green = positive), `fill:#f66` (red = blocked)
+- Use **`<br/>`** for line breaks in node labels (never `\n` — Mermaid renders it literally)
+- Use **bidirectional arrows** (`<-->`) for cyclic or mutual dependencies
+- Add **benchmark/comparison tables** alongside diagrams when quantitative data is available
+
 ## Person Schema (`$defs/person`)
 
 Used for `authors[]`, `decision_owner`, `reviewers[]`:

@@ -220,7 +220,7 @@ Then configure branch protection to make the CI check a **required merge gate** 
 git config core.hooksPath .githooks
 ```
 
-This activates automatic Markdown rendering — every commit that touches `architecture-decision-log/*.yaml` will regenerate the human-friendly files in `rendered/` and the decision log index. Both the YAML source and its Markdown rendering are committed together, so reviewers approve both in the same PR.
+This activates automatic Markdown rendering — every commit that touches `architecture-decision-log/*.yaml` will regenerate the human-friendly files in `architecture-decision-log/rendered/` and the decision log index. Both the YAML source and its Markdown rendering are committed together, so reviewers approve both in the same PR.
 
 #### 6. Configure CODEOWNERS *(optional but recommended)*
 
@@ -323,30 +323,44 @@ Automated validation is the enforcement mechanism that makes the governance proc
 
 ## Rendered Markdown (Human-Friendly Views)
 
-ADRs are authored and stored as **structured YAML** — optimised for machine consumption, validation, and AI-assisted workflows. But humans need a readable format too. Every ADR YAML file has a corresponding **Markdown rendering** in [`rendered/`](rendered/), auto-generated via a Git pre-commit hook. Both the YAML source and its Markdown rendering are committed together — reviewers approve both in the same PR, and CI verifies that committed renderings and `llms-full.txt` stay current.
+ADRs are authored and stored as **structured YAML** — optimised for machine consumption, validation, and AI-assisted workflows. But humans need a readable format too. Every ADR YAML file has a corresponding **Markdown rendering** in [`architecture-decision-log/rendered/`](architecture-decision-log/rendered/), auto-generated via a Git pre-commit hook. Both the YAML source and its Markdown rendering are committed together — reviewers approve both in the same PR, and CI verifies that committed renderings and `llms-full.txt` stay current.
 
-- **[`rendered/architecture-decision-log.md`](rendered/architecture-decision-log.md)** — the decision log index with status, dates, and clickable links
-- **`rendered/ADR-NNNN-*.md`** — individual ADR renderings with a provenance disclaimer
+- **[`architecture-decision-log/rendered/architecture-decision-log.md`](architecture-decision-log/rendered/architecture-decision-log.md)** — the decision log index with status, dates, and clickable links
+- **`architecture-decision-log/rendered/ADR-NNNN-*.md`** — individual ADR renderings with a provenance disclaimer
 
-> **⚠️ Do not edit files in `rendered/` directly.** They are auto-generated from the YAML source.
+> **⚠️ Do not edit files in `architecture-decision-log/rendered/` directly.** They are auto-generated from the YAML source.
 
 See **[`docs/rendering.md`](docs/rendering.md)** for pre-commit hook setup, manual rendering commands, CI freshness checks, and the rationale behind the dual-format model.
 
 
 ## Example ADRs
 
-The [`examples-reference/`](examples-reference/) directory contains interconnected ADRs from a **fictional** IAM department at NovaTrust Financial Services. These are **not real decisions** — they demonstrate the meta-model at production quality. Use them as a reference for style, depth, and interconnection:
+The [`examples-reference/`](examples-reference/) directory contains example ADRs organized in two categories:
+
+### Fictional Examples
+
+Interconnected ADRs from a **fictional** IAM department at NovaTrust Financial Services. These are **not real decisions** — they demonstrate the meta-model at production quality. Use them as a reference for style, depth, and interconnection:
 
 | ID | Title | Status | Rendered | Source |
 |----|-------|--------|:--------:|:------:|
-| ADR-0001 | Use DPoP over mTLS for Sender-Constrained Tokens | accepted | [Markdown](examples-reference/rendered/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.md) | [YAML](examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml) |
-| ADR-0002 | Use Reference Tokens over JWTs for Gateway Introspection | accepted | [Markdown](examples-reference/rendered/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.md) | [YAML](examples-reference/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml) |
-| ADR-0003 | Use Pairwise Subject Identifiers for OIDC Relying Parties | accepted | [Markdown](examples-reference/rendered/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.md) | [YAML](examples-reference/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml) |
-| ADR-0004 | Use Ed25519 over RSA-2048 for JWT Signing Keys | accepted | [Markdown](examples-reference/rendered/ADR-0004-ed25519-over-rsa-for-jwt-signing.md) | [YAML](examples-reference/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml) |
-| ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | accepted | [Markdown](examples-reference/rendered/ADR-0005-bff-token-mediator-for-spa-token-acquisition.md) | [YAML](examples-reference/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml) |
-| ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted | [Markdown](examples-reference/rendered/ADR-0006-session-enrichment-for-step-up-authentication.md) | [YAML](examples-reference/ADR-0006-session-enrichment-for-step-up-authentication.yaml) |
-| ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** | [Markdown](examples-reference/rendered/ADR-0007-centralized-secret-store-for-api-keys.md) | [YAML](examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml) |
-| ADR-0008 | Defer OpenID Federation for Automated Trust Establishment | **deferred** | [Markdown](examples-reference/rendered/ADR-0008-defer-openid-federation-for-trust-establishment.md) | [YAML](examples-reference/ADR-0008-defer-openid-federation-for-trust-establishment.yaml) |
+| ADR-0001 | Use DPoP over mTLS for Sender-Constrained Tokens | accepted | [Markdown](examples-reference/rendered/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.md) | [YAML](examples-reference/fictional/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml) |
+| ADR-0002 | Use Reference Tokens over JWTs for Gateway Introspection | accepted | [Markdown](examples-reference/rendered/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.md) | [YAML](examples-reference/fictional/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml) |
+| ADR-0003 | Use Pairwise Subject Identifiers for OIDC Relying Parties | accepted | [Markdown](examples-reference/rendered/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.md) | [YAML](examples-reference/fictional/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml) |
+| ADR-0004 | Use Ed25519 over RSA-2048 for JWT Signing Keys | accepted | [Markdown](examples-reference/rendered/ADR-0004-ed25519-over-rsa-for-jwt-signing.md) | [YAML](examples-reference/fictional/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml) |
+| ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | accepted | [Markdown](examples-reference/rendered/ADR-0005-bff-token-mediator-for-spa-token-acquisition.md) | [YAML](examples-reference/fictional/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml) |
+| ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted | [Markdown](examples-reference/rendered/ADR-0006-session-enrichment-for-step-up-authentication.md) | [YAML](examples-reference/fictional/ADR-0006-session-enrichment-for-step-up-authentication.yaml) |
+| ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** | [Markdown](examples-reference/rendered/ADR-0007-centralized-secret-store-for-api-keys.md) | [YAML](examples-reference/fictional/ADR-0007-centralized-secret-store-for-api-keys.yaml) |
+| ADR-0008 | Defer OpenID Federation for Automated Trust Establishment | **deferred** | [Markdown](examples-reference/rendered/ADR-0008-defer-openid-federation-for-trust-establishment.md) | [YAML](examples-reference/fictional/ADR-0008-defer-openid-federation-for-trust-establishment.yaml) |
+
+### Real-World Examples
+
+Reverse-engineered ADRs from prominent open-source projects. These reconstruct real architectural decisions using publicly available design documents, RFCs, and community discussions:
+
+| ID | Project | Decision | Level | Source |
+|----|---------|----------|:-----:|:------:|
+| ADR-0100 | TypeScript | Port compiler from TypeScript to Go | Strategic | [YAML](examples-reference/real-world/ADR-0100-typescript-compiler-go-rewrite.yaml) |
+
+*More real-world examples across strategic, tactical, and operational levels are in progress.*
 
 See the [rendered example index](examples-reference/rendered/architecture-decision-log.md) for a full overview, or [`examples-reference/README.md`](examples-reference/README.md) for details on each example.
 
@@ -465,10 +479,27 @@ Not every technical decision needs a full ADR. Before starting, verify that **at
 | 4 | The decision **establishes a pattern** that others will follow |
 | 5 | The decision involves a **tradeoff between quality attributes** (e.g., security vs. usability, latency vs. consistency) |
 | 6 | Someone will ask **"why did we do this?"** in 6 months |
+| 7 | The decision involves **high business value or business risk** |
+| 8 | The decision involves **external dependencies** that are uncontrollable, unpredictable, or create vendor lock-in |
 
 If **none** of these apply, the decision is likely not architecturally significant — just make it, document it inline (code comment, wiki, commit message), and move on.
 
-> **Source:** Adapted from Zimmermann's [Architectural Significance Test](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html). See also: *"An AD log with more than 100 entries will probably put your readers (and you) to sleep."*
+> **Source:** Adapted from Zimmermann's [Architectural Significance Test](https://ozimmer.ch/practices/2020/09/24/ASRTestECSADecisions.html) (7 criteria) with additions from Richards & Ford (*Fundamentals of Software Architecture*, irreversibility) and Henderson (documentation motivation). See also: *"An AD log with more than 100 entries will probably put your readers (and you) to sleep."*
+
+#### 3.0.1 How Much Detail? — Verbosity Guidance
+
+Not every ADR needs maximum detail. Calibrate documentation effort to match the decision's impact:
+
+| Priority | Decision Level | Verbosity | What to populate |
+|:--------:|:--------------:|:---------:|-----------------|
+| `low` | `operational` | **Minimal** | Required fields only. Brief descriptions. 2 alternatives sufficient. |
+| `medium` | `tactical` | **Medium** | Required fields + `business_drivers`, `technical_drivers`, `constraints`, `tradeoffs`, `y_statement`. Balanced pros/cons with 3+ items each. |
+| `high` | `strategic` | **Full** | All sections populated. Detailed ASRs. Mermaid diagrams encouraged. Comprehensive rationale referencing evidence. |
+| `critical` | `strategic` | **Full+** | Full + extensive audit trail, formal review cadence, multiple reviewers/approvers, `dependencies` cross-references. |
+
+> **Principle:** *"Do not spend more time on capturing than on making."* A 3-page ADR for a logging library choice is over-documentation. One well-reasoned paragraph in `rationale` beats five paragraphs of filler. Optional fields can be left empty — the schema makes them optional for a reason.
+>
+> **Source:** Adapted from DPR's three verbosity levels (`activities/DPR-ArchitecturalDecisionCapturing.md`, lines 31–35).
 
 ### 3.1 Draft Phase
 
@@ -495,6 +526,28 @@ If **none** of these apply, the decision is likely not architecturally significa
    ```bash
    python3 scripts/validate-adr.py architecture-decision-log/ADR-NNNN-short-title.yaml
    ```
+
+#### 3.1.1 Definition of Ready — START Checklist
+
+Before moving from `draft` to `proposed`, verify these preconditions are met. The checklist adapts Zimmermann's **START** framework (Stakeholders, Time, Alternatives, Requirements, Template) to our process:
+
+| # | START | Question | Enforcement |
+|---|:-----:|----------|-------------|
+| 1 | **S** | Are the **decision owner**, **reviewers**, and **approvers** identified? Have affected stakeholders been notified that this decision is coming? | Hard — `decision_owner` required; `reviewers` and `approvals` prompted in template |
+| 2 | **T** | Is now the **Most Responsible Moment**? Do we have enough information to decide, and is delay riskier than deciding now? | Soft — see MRM heuristics below |
+| 3 | **A** | Have at least **2 genuine alternatives** been identified? (Not just "do X" and "do nothing.") | Hard — schema `minItems: 2` on `alternatives` |
+| 4 | **R** | Is the **problem context** clear? Are driving requirements, constraints, and assumptions documented? | Hard — `context.description` required; others prompted |
+| 5 | **T** | Is the ADR **schema-valid** and substantially complete? Does `validate-adr.py` pass? | Hard — schema validation |
+
+**Most Responsible Moment (MRM) heuristics** — for criterion 2, ask:
+- Is there enough information to meaningfully compare alternatives? If not, what's blocking?
+- What is the cost of delaying this decision by one more sprint/month?
+- What is the cost of making a wrong decision now vs. waiting?
+- Are there upcoming events (deadline, release, dependency change) that create urgency?
+
+If you can't answer "yes" to all five START criteria, the ADR may need more drafting work before it enters formal review.
+
+> **Source:** Adapted from Zimmermann, O. (2023). [*"A Definition of Ready for Architectural Decisions"*](https://medium.com/olzzio/a-definition-of-ready-for-architectural-decisions-ads-2814e399b09b). MRM concept from Wirfs-Brock, R. (2011). [*"Agile Architecture Myths #2"*](http://wirfs-brock.com/blog/2011/01/18/agile-architecture-myths-2-architecture-decisions-should-be-made-at-the-last-responsible-moment/).
 
 ### 3.2 Proposal Phase
 
@@ -528,6 +581,7 @@ If **none** of these apply, the decision is likely not architecturally significa
     - [ ] Risks are addressed (per-alternative `risk` level, cons, and `consequences.negative`)
     - [ ] No conflict with existing `accepted` ADRs (search `architecture-decision-log/` for related decisions)
     - [ ] `approvals[].identity` is populated with the platform handle for each required approver (§3.4.1)
+    - [ ] **Definition of Done** criteria are met (see §3.3.1 below)
 
 11. **Reviewers comment on the PR.** Discussions happen in PR comments.
 
@@ -549,6 +603,30 @@ Async PR review is the default. However, some decisions benefit from real-time d
 > **Format tip:** A 30-minute session works well: 5 min context recap → 15 min trade-off discussion → 10 min decision + action items. For lengthy ADRs, start with a silent reading slot (10–15 min) so everyone engages with the full document before discussion. Record the outcome in PR comments for traceability.
 
 > **Note on `reviewed` audit events:** The initial proposal review happens through the PR process. Do **not** add a `reviewed` event to `audit_trail` during the initial review — the `approved` or `rejected` event records the outcome. The `reviewed` event is reserved for **periodic reviews** (§9) of already-accepted ADRs.
+
+#### 3.3.1 Definition of Done — ecADR Checklist
+
+Before an ADR moves from `proposed` to `accepted`, verify these criteria are met. The checklist adapts Zimmermann's **ecADR** framework (Evidence, Criteria, Agreement, Documentation, Realization/Review) to our schema and process:
+
+| # | ecADR | Question | Enforcement |
+|---|:-----:|----------|-------------|
+| 1 | **E** | Is there evidence the chosen alternative will meet requirements? (PoC results, benchmarks, prior art, team experience) | Soft — reviewer judgement; reference in `decision.rationale` |
+| 2 | **E** | Does this decision conflict with any existing accepted ADR? | Soft — `review-adr.py` cross-reference; reviewer checklist item 7 |
+| 3 | **C** | Are at least 2 alternatives genuinely considered (not strawmen)? | Hard — schema `minItems: 2` + reviewer judgement |
+| 4 | **C** | Does each alternative have balanced, honest pros and cons? | Soft — `review-adr.py` balance heuristic; reviewer checklist |
+| 5 | **A** | Have all required reviewers and approvers been assigned? | Hard — `approvals[].identity` + CI verification (§3.4.1) |
+| 6 | **A** | Is the level of review proportional to the decision's reach? | Soft — escalation guidance (§3.3 sync meeting criteria) |
+| 7 | **D** | Is the Y-Statement populated? | Hard — schema conditional requirement (mandatory on `accepted`) |
+| 8 | **D** | Does the rationale reference specific evidence, not just opinion? | Soft — reviewer judgement |
+| 9 | **R** | Is there a verification plan? (`confirmation.description`) | Hard — schema-required field |
+| 10 | **R** | Is a review cycle set? (`lifecycle.review_cycle_months`) | Soft — recommended, not required |
+
+**Hard** = schema validation or CI will catch it automatically.
+**Soft** = reviewer responsibility; may also be flagged by AI-assisted review (`review-adr.py`).
+
+Not all 10 items must be fully satisfied for every ADR. Low-priority operational decisions require less rigor than high-priority strategic ones. Use judgement — but if a criterion is intentionally skipped, note why in the PR discussion.
+
+> **Source:** Adapted from Zimmermann, O. (2020). [*"A Definition of Done for Architectural Decision Making"*](https://ozimmer.ch/practices/2020/05/22/ADDefinitionOfDone.html). See also: DPR `activities/DPR-ArchitecturalDecisionCapturing.md` (line 71).
 
 ### 3.4 Approval Phase
 
@@ -988,6 +1066,8 @@ architecture-decision-log/ADR-*compliance*  @org/compliance-team
 | **ASR** | Architecturally Significant Requirement. A requirement (functional or non-functional) that directly shapes or constrains the architecture. |
 | **Change Classification** | The categorisation of ADR changes as either *substantive* (Tier 1 — requires original approver re-approval while the ADR is still mutable) or *maintenance* (Tier 2 — no ADR re-approval required). Accepted ADRs also have an immutable decision core that may not be edited in place. See [`adr-process.md` §3.4.3](adr-process.md#343-change-classification). |
 | **Decision Owner** | The single accountable individual responsible for the final decision. Not necessarily the author. |
+| **Definition of Done (ecADR)** | A 10-item checklist adapted from Zimmermann's ecADR framework that gates the `proposed` → `accepted` transition. Maps five criteria — **E**vidence, **C**riteria, **A**greement, **D**ocumentation, **R**ealization/Review — to our schema fields and review process. See [`adr-process.md` §3.3.1](adr-process.md#331-definition-of-done--ecadr-checklist). |
+| **Definition of Ready (START)** | A 5-item checklist adapted from Zimmermann's START framework that gates the `draft` → `proposed` transition. Maps five preconditions — **S**takeholders, **T**ime (MRM), **A**lternatives, **R**equirements, **T**emplate — to our schema fields and drafting process. See [`adr-process.md` §3.1.1](adr-process.md#311-definition-of-ready--start-checklist). |
 | **Identity** | The `approvals[].identity` field — a platform-resolvable handle (e.g., GitHub `@username`, Azure DevOps email) that CI pipelines use to verify the approver actually approved the pull request. |
 | **Immutable Decision Core** | The frozen portion of an already `accepted` ADR: decision content, governing context, alternatives, consequences, approvals, and other fields that define what was actually approved. Changing it requires a new superseding ADR rather than an in-place edit. |
 | **Maintenance Change** | A Tier 2 change to an ADR that does not alter the architectural decision itself (e.g., typo fix, email correction, schema version bump, confirmation backfill). Does not require re-approval from original ADR approvers, but cannot be used to bypass the immutable decision core of an accepted ADR. |
@@ -1243,6 +1323,16 @@ The following fields support **full Markdown** including embedded Mermaid diagra
 | `decision.tradeoffs` | Acknowledged tradeoffs accepted with this decision |
 | `confirmation.description` | Verification evidence and implementation proof |
 
+⚠️ **Always use YAML literal scalars (`|`) for these fields** — never folded scalars (`>`). The `>` indicator collapses newlines into spaces, which destroys fenced code blocks (e.g., Mermaid diagrams). The validator will warn if collapsed code fences are detected.
+
+**Mermaid quality patterns:**
+- Use **subgraphs** to group related concepts (e.g., "Native Outputs", "Measured Gains")
+- Use **decision nodes** (`{Decision Point}`) for branching choices
+- Use **styled nodes** to communicate outcomes: `fill:#2d8` (green = positive), `fill:#f66` (red = blocked)
+- Use **`<br/>`** for line breaks in node labels (never `\n` — Mermaid renders it literally)
+- Use **bidirectional arrows** (`<-->`) for cyclic or mutual dependencies
+- Add **benchmark/comparison tables** alongside diagrams when quantitative data is available
+
 ## Person Schema (`$defs/person`)
 
 Used for `authors[]`, `decision_owner`, `reviewers[]`:
@@ -1301,7 +1391,7 @@ The validation pipeline runs four checks:
 - Runtime smoke tests for `render-adr.py`, `extract-decisions.py`, `review-adr.py`, and `summarize-adr.py`
 - The `tests/` regression suite via `python3 -m unittest discover`
 - `repomix.config.json` JSON syntax when present
-- Freshness checks for committed generated artifacts: `rendered/`, `examples-reference/rendered/`, and `llms-full.txt`
+- Freshness checks for committed generated artifacts: `architecture-decision-log/rendered/`, `examples-reference/rendered/`, and `llms-full.txt`
 
 The Repomix web-chat bundle (`adr-governance-bundle.md`) is intentionally out of scope for freshness enforcement. It is treated as an on-demand export artifact, not a required committed deliverable.
 

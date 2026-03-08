@@ -13,7 +13,7 @@ SNAPSHOT_ROOT="$TMP_DIR/snapshot"
 cd "$PROJECT_ROOT"
 
 list_adr_sources() {
-    find "$1" -maxdepth 1 -type f \( -name '*.yaml' -o -name '*.yml' \) | sort
+    find "$1" -path '*/rendered' -prune -o -type f \( -name '*.yaml' -o -name '*.yml' \) -print | sort
 }
 
 check_directory() {
