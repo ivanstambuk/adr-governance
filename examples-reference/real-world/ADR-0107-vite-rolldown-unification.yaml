@@ -1,0 +1,1300 @@
+adr:
+  id: ADR-0107-vite-rolldown-unification
+  title: >-
+    Replace Vite's dual-bundler architecture (esbuild + Rollup) with Rolldown,
+    a unified Rust-based bundler maintaining Rollup plugin compatibility
+  y_statement: >-
+    In the context of Vite's build pipeline architecture, facing dev/prod
+    behavioral inconsistencies caused by using esbuild for development
+    transforms and Rollup for production bundling — including different module
+    resolution, transformation pipelines, and plugin execution — plus
+    performance bottlenecks from duplicated parsing and serialization across
+    separate JavaScript-based tools, we decided for Rolldown, a unified
+    Rust-based bundler built on the Oxc toolchain that replaces both esbuild
+    and Rollup with a single high-performance engine, and neglected keeping
+    the dual-bundler status quo, adopting esbuild for everything, adopting
+    Vercel's Turbopack, building a custom bundler from scratch, and waiting
+    for Rollup to add native performance, to achieve a single consistent
+    bundler for both development and production that eliminates dev/prod
+    behavioral differences, 3x to 16x faster production builds, up to 100x
+    reduction in memory usage, and a unified plugin API compatible with the
+    existing Rollup/Vite plugin ecosystem of 2000+ plugins, accepting that
+    the Rolldown integration requires a multi-phase rollout with a temporary
+    separate package (rolldown-vite), that some plugins need adaptation for
+    the new Oxc-based transformation pipeline, and that Evan You's founding
+    of VoidZero Inc. to fund Rolldown creates a commercial entity dependency
+    in Vite's otherwise community-governed project, because the dual-bundler
+    architecture had reached a complexity ceiling where glue code to align
+    esbuild and Rollup behaviors was growing unsustainably, Rolldown's
+    Rollup-compatible plugin API preserved the existing ecosystem investment,
+    and Vite's position as the shared infrastructure layer for 15+ frameworks
+    demanded a unified foundation that could scale from small projects to
+    enterprise applications with consistent behavior.
+  status: accepted
+  created_at: "2024-03-01T00:00:00Z"
+  last_modified: "2025-06-24T00:00:00Z"
+  version: "1.0"
+  schema_version: "1.0.0"
+  project: Vite
+  component: Build Pipeline
+  tags:
+    - vite
+    - rolldown
+    - bundler
+    - rust
+    - esbuild
+    - rollup
+    - build-tooling
+    - developer-experience
+    - performance
+    - oxc
+    - voidzero
+  priority: high
+  decision_type: technology
+  decision_level: tactical
+authors:
+  - name: Evan You
+    role: Vite Creator, VoidZero Founder
+    email: evan.you@vite.example.com
+  - name: Vite Core Team
+    role: Framework Maintainers
+    email: team@vite.example.com
+  - name: VoidZero Engineering Team
+    role: Rolldown and Oxc Developers
+    email: engineering@voidzero.example.com
+decision_owner:
+  name: Evan You
+  role: Vite Creator and VoidZero CEO
+  email: evan.you@vite.example.com
+reviewers:
+  - name: Vite Core Team
+    role: Framework Maintainers and Code Reviewers
+    email: team@vite.example.com
+  - name: Anthony Fu
+    role: Vite Core Team Member
+    email: anthony.fu@vite.example.com
+  - name: Rolldown Core Contributors
+    role: Bundler Engineers
+    email: contributors@rolldown.example.com
+approvals:
+  - name: Evan You
+    role: Vite Creator and VoidZero CEO
+    identity: "@yaborx"
+    approved_at: "2025-06-24T00:00:00Z"
+    signature_id: null
+context:
+  summary: |
+    Vite is one of the most widely used frontend build tools, powering over
+    31 million npm downloads per week and serving as the shared infrastructure
+    layer for 15+ major web frameworks including React, Vue, Svelte, Solid,
+    Astro, Nuxt, SvelteKit, Remix, and Qwik. Since its creation in 2020,
+    Vite has relied on a dual-bundler architecture: esbuild (written in Go)
+    for development-time dependency pre-bundling and transforms, and Rollup
+    (written in JavaScript) for optimized production builds.
+
+    ```mermaid
+    graph TD
+        subgraph "Vite's Dual-Bundler Architecture (Before Rolldown)"
+          A["Vite Dev Server"] --> B["esbuild<br/>(Go-based)"]
+          A --> C["Rollup<br/>(JavaScript-based)"]
+          B --> D["Dependency pre-bundling<br/>TypeScript/JSX transforms<br/>Fast dev startup"]
+          C --> E["Production bundling<br/>Tree-shaking<br/>Code splitting<br/>Plugin execution"]
+        end
+
+        subgraph "Resulting Problems"
+          F["❌ Dev/prod inconsistency<br/>Different module resolution"]
+          G["❌ Duplicated parsing<br/>across esbuild + Rollup"]
+          H["❌ Glue code to align<br/>two bundler behaviors"]
+          I["❌ esbuild limited<br/>plugin API"]
+          J["❌ Rollup performance<br/>bottleneck at scale"]
+        end
+
+        D --> F
+        E --> F
+        B --> G
+        C --> G
+        A --> H
+        B --> I
+        C --> J
+
+        style F fill:#f66,stroke:#333,color:#000
+        style G fill:#f66,stroke:#333,color:#000
+        style H fill:#f66,stroke:#333,color:#000
+        style I fill:#f66,stroke:#333,color:#000
+        style J fill:#f66,stroke:#333,color:#000
+    ```
+
+    This dual-bundler approach created several compounding problems:
+
+    **1. Dev/prod behavioral inconsistency:**
+
+    The unbundled JavaScript served by the dev server (powered by esbuild
+    transforms) and the bundled production output (powered by Rollup) created
+    different runtime behaviors. Module resolution, import handling, and
+    transformation pipelines differed between the two tools. This led to
+    bugs that only manifested in production, making debugging difficult. As
+    Evan You noted, Vite "remains bottlenecked by duplicated parsing and
+    serialization costs across different tools."
+
+    **2. Performance ceiling from JavaScript-based production bundling:**
+
+    Rollup, while excellent for code quality (tree-shaking, chunk splitting),
+    is written in JavaScript and inherently limited in speed. For large
+    enterprise applications, production build times of several minutes were
+    common. GitLab's Vite builds took 2.5 minutes; Excalidraw's took 22.9
+    seconds; PLAID Inc. had builds exceeding 80 seconds.
+
+    **3. Growing glue code complexity:**
+
+    Maintaining alignment between esbuild and Rollup required increasingly
+    complex abstraction layers. Vite's internals contained workarounds to
+    smooth over inconsistencies between the two bundlers' module resolution,
+    CommonJS handling, and plugin execution models. This glue code was
+    growing unsustainably.
+
+    **4. esbuild's limited customizability:**
+
+    While esbuild was extremely fast, its plugin API was deliberately
+    minimal. Evan You observed that Vite "can't fully leverage native
+    tooling like esbuild due to feature constraints and limited
+    customizability." esbuild also lacked advanced tree-shaking and
+    granular chunk splitting capabilities required for production builds.
+
+    **5. Unbundled dev server limitations at scale:**
+
+    Vite's dev server served native ES modules without bundling, which
+    was fast for small projects but caused performance degradation in
+    large applications. Each module was fetched separately, creating
+    hundreds or thousands of network requests during page loads. This
+    was especially severe when developers used network proxies.
+
+    The JavaScript ecosystem at large suffered from fragmentation:
+    "every application relies on a myriad of third-party dependencies,
+    and configuring them to work well together remains one of the most
+    daunting tasks in the development cycle." Vite's position as shared
+    infrastructure for 15+ frameworks made solving these problems urgent.
+  business_drivers:
+    - >-
+      Vite is downloaded 31 million times per week and powers 15+ major
+      frameworks — build pipeline reliability and performance directly
+      impacts millions of developers' productivity
+    - >-
+      Enterprise adopters (GitLab, Shopify, Cloudflare, OpenAI) reported
+      production build times of minutes and memory usage in gigabytes,
+      threatening Vite's viability for large-scale applications
+    - >-
+      Dev/prod inconsistencies caused production-only bugs that eroded
+      developer trust — the primary value proposition of a build tool is
+      predictable, consistent output
+    - >-
+      Competing build tools (Turbopack, Rspack) were gaining attention in
+      the Rust-based bundler space, pressuring Vite to modernize its core
+      architecture
+    - >-
+      The growing complexity of glue code between esbuild and Rollup was
+      increasing Vite's maintenance burden and slowing feature development
+  technical_drivers:
+    - >-
+      Duplicated parsing and serialization — source code was parsed by
+      esbuild (Go AST) during dev and reparsed by Rollup (JS AST) for
+      production, wasting CPU cycles and creating inconsistencies
+    - >-
+      esbuild's plugin API was deliberately minimal and could not support
+      the full range of transformations required by Vite plugins — leading
+      to a split where some plugins worked only in dev or only in prod
+    - >-
+      Rollup's JavaScript-based architecture was inherently slower than
+      native alternatives for large codebases, with no clear path to
+      matching Rust/Go-level performance
+    - >-
+      The unbundled dev server approach caused hundreds of network requests
+      for large applications, degrading startup and refresh times — a
+      unified bundler could enable a "full bundle mode" for dev as well
+    - >-
+      Module resolution and CommonJS/ESM interop differed between esbuild
+      and Rollup, causing subtle behavioral differences between dev and
+      prod environments
+  constraints:
+    - >-
+      Existing Rollup plugin API compatibility must be maintained — the
+      Vite ecosystem contains 2000+ plugins that depend on the Rollup
+      plugin interface
+    - >-
+      The migration must be phased and non-breaking — Vite cannot drop
+      esbuild/Rollup overnight; a multi-phase transition with a temporary
+      separate package (rolldown-vite) is required
+    - >-
+      The unified bundler must handle both development-time transforms
+      (TypeScript, JSX, CSS) and production-time optimizations
+      (tree-shaking, code splitting, minification) — it cannot be
+      dev-only or prod-only
+    - >-
+      Framework integrations (React, Vue, Svelte, Solid, Astro, Nuxt)
+      must continue to work through the transition with minimal or no
+      changes
+    - >-
+      Performance must improve or at minimum match the current dual-bundler
+      architecture — regression is unacceptable for either dev or prod
+  assumptions:
+    - >-
+      Rolldown's Rust-based implementation will deliver significant
+      performance improvements over JavaScript-based Rollup while
+      maintaining API compatibility — early benchmarks showing 3x-16x
+      faster builds support this assumption
+    - >-
+      Plugin authors will adapt to Rolldown's Oxc-based transformation
+      pipeline — the Vite ecosystem CI testing with rolldown-vite shows
+      most plugins work with minimal or no changes
+    - >-
+      The three-phase rollout (separate package, merge into Vite, full
+      bundle mode default) will give the ecosystem sufficient time to
+      adapt without forcing a disruptive migration
+    - >-
+      VoidZero Inc.'s commercial backing provides sustainable funding
+      for Rolldown development — the $4.6M seed round and enterprise
+      tooling revenue model can support long-term maintenance
+    - >-
+      The unified toolchain vision (Rolldown + Oxc for parsing, transforming,
+      resolving, linting, formatting, minification) will unlock further
+      optimizations that a fragmented toolchain cannot achieve
+architecturally_significant_requirements:
+  functional:
+    - id: F-001
+      description: >
+        Rolldown must implement a Rollup-compatible plugin API that allows
+        existing Rollup and Vite plugins to function with minimal or no
+        modifications, including support for all standard plugin hooks
+        (resolveId, load, transform, renderChunk, generateBundle).
+    - id: F-002
+      description: >
+        The unified bundler must handle both dependency pre-bundling
+        (currently esbuild's role) and production bundling (currently
+        Rollup's role) through a single tool, eliminating the need for
+        separate dev and prod bundling pipelines.
+    - id: F-003
+      description: >
+        Rolldown must support built-in TypeScript and JSX transformation
+        via the Oxc transformer, replacing esbuild's transform capabilities
+        while maintaining compatible output for all major frameworks.
+  non_functional:
+    - id: NF-001
+      description: >
+        Production build times must improve by at least 3x compared to
+        Rollup-based builds for typical applications, with larger projects
+        seeing improvements of 10x or greater as demonstrated by early
+        adopter benchmarks.
+    - id: NF-002
+      description: >
+        Memory usage during production builds must be significantly
+        reduced compared to the current Rollup-based pipeline, with
+        enterprise-scale applications seeing reductions of 4x to 100x
+        as demonstrated by GitLab and Appwrite benchmarks.
+    - id: NF-003
+      description: >
+        Dev/prod behavioral consistency must be achieved — the same
+        bundler engine processing source code in both environments
+        eliminates the class of bugs caused by differing module
+        resolution and transformation behavior.
+alternatives:
+  - name: >-
+      Rolldown — unified Rust-based bundler with Rollup-compatible
+      plugin API
+    description: |
+      Replace both esbuild and Rollup with Rolldown, a new bundler
+      written in Rust and built on the Oxc toolchain (parser,
+      transformer, resolver, minifier). Rolldown is designed as a
+      drop-in Rollup replacement with matching plugin API, but with
+      native-speed performance that matches or exceeds esbuild. The
+      project is developed by VoidZero Inc., founded by Evan You
+      (Vite creator) with $4.6M in seed funding specifically to build
+      unified JavaScript tooling.
+
+      Rolldown's architecture centers on a single Rust-based processing
+      pipeline. Source code is parsed once by Oxc's parser (3x faster
+      than SWC), resolved by Oxc's resolver (28x faster than
+      enhanced-resolve), and transformed by Oxc's transformer (4x
+      faster than SWC). All of these operations share the same AST
+      representation, eliminating the serialization/deserialization
+      overhead that occurs when separate tools (esbuild, Rollup) each
+      maintain their own AST. Plugin hooks are exposed via napi-rs
+      bindings, allowing JavaScript plugins to interact with the Rust
+      core. Plugin Hook Filters enable precise control over which
+      modules a hook processes, reducing JS-to-Rust communication
+      overhead.
+
+      The integration follows a three-phase rollout:
+
+      1. **Phase One (current):** `rolldown-vite` published as a
+         separate npm package — a drop-in replacement for `vite` that
+         uses Rolldown instead of Rollup for production builds and
+         Oxc instead of esbuild for transforms.
+      2. **Phase Two:** Merge `rolldown-vite` changes into the main
+         Vite codebase with opt-in full-bundle dev mode.
+      3. **Phase Three:** Full-bundle mode becomes the default — Vite
+         serves bundled files in both dev and production.
+
+      **Vite config — before (dual-bundler):**
+
+      ```javascript
+      // vite.config.js — current dual-bundler architecture
+      // esbuild handles dev transforms (TS, JSX)
+      // Rollup handles production builds
+      import { defineConfig } from 'vite'
+      import react from '@vitejs/plugin-react'
+
+      export default defineConfig({
+        plugins: [react()],
+        build: {
+          // Uses Rollup under the hood
+          rollupOptions: {
+            output: { manualChunks: { vendor: ['react'] } }
+          }
+        },
+        // esbuild options (dev transforms)
+        esbuild: {
+          jsxFactory: 'React.createElement'
+        }
+      })
+      ```
+
+      **Vite config — after (Rolldown unified):**
+
+      ```javascript
+      // vite.config.js — unified Rolldown architecture
+      // Same config, but Rolldown handles BOTH dev and prod
+      import { defineConfig } from 'vite' // or 'rolldown-vite'
+      import react from '@vitejs/plugin-react'
+
+      export default defineConfig({
+        plugins: [react()],
+        build: {
+          // Rolldown handles production builds
+          // Rollup options still work via compatibility layer
+          rollupOptions: {
+            output: { manualChunks: { vendor: ['react'] } }
+          }
+        }
+        // esbuild options mapped to Oxc equivalents
+        // No separate esbuild configuration needed
+      })
+      ```
+
+      ```mermaid
+      graph TD
+          subgraph "Rolldown Unified Architecture"
+            A["Vite"] --> B["Rolldown<br/>(Rust-based)"]
+            B --> C["Oxc Parser<br/>3x faster than SWC"]
+            B --> D["Oxc Resolver<br/>28x faster than<br/>enhanced-resolve"]
+            B --> E["Oxc Transformer<br/>4x faster than SWC"]
+            B --> F["Oxc Minifier"]
+          end
+
+          subgraph "Single Pipeline for Dev + Prod"
+            G["Dev Server<br/>+ Full Bundle Mode"]
+            H["Production Build<br/>Tree-shaking + Splitting"]
+            B --> G
+            B --> H
+          end
+
+          subgraph "Key Benefits"
+            I["✅ Dev/prod consistency"]
+            J["✅ 3x-16x faster builds"]
+            K["✅ Up to 100x less memory"]
+            L["✅ Rollup plugin compat"]
+          end
+
+          style I fill:#2d8,stroke:#333,color:#000
+          style J fill:#2d8,stroke:#333,color:#000
+          style K fill:#2d8,stroke:#333,color:#000
+          style L fill:#2d8,stroke:#333,color:#000
+      ```
+
+      **Early adopter performance results:**
+
+      | Adopter | Build Before | Build After | Speedup | Memory Reduction |
+      |---------|------------:|------------:|--------:|-----------------:|
+      | GitLab | 2.5 min | 40 sec | ~3.75x | 100x |
+      | Excalidraw | 22.9 sec | 1.4 sec | 16x | — |
+      | PLAID Inc. | 80 sec | 5 sec | 16x | — |
+      | Appwrite | 12+ min | 3 min | ~4x | 4x |
+      | Particl | 60+ sec | 6 sec | ~10x | — |
+
+      **Evolution timeline:**
+
+      | Date | Milestone | Significance |
+      |------|-----------|--------------|
+      | Feb 2020 | Vite 1.0 created | esbuild for dev, Rollup for prod — dual-bundler established |
+      | Oct 2024 | VoidZero Inc. announced | Evan You founds company with $4.6M seed to build Rolldown/Oxc |
+      | Nov 2024 | Vite 6.0 released | Environment API introduced; Rolldown development accelerated |
+      | Jan 2026 | Rolldown RC announced | Release Candidate status; rolldown-vite available as drop-in |
+      | Jun 2025 | Vite 7.0 released | rolldown-vite recommended; Rolldown will become default |
+      | Future | Vite 8+ (planned) | Rolldown merged into main Vite; full-bundle mode default |
+    pros:
+      - Single bundler for dev and prod eliminates the entire class of
+        dev/prod behavioral inconsistencies caused by differing module
+        resolution and transformation pipelines
+      - >-
+        3x to 16x faster production builds demonstrated by real-world
+        adopters — GitLab went from 2.5 minutes to 40 seconds,
+        Excalidraw from 22.9 seconds to 1.4 seconds
+      - >-
+        Up to 100x reduction in memory usage during builds — GitLab's
+        memory usage dropped by two orders of magnitude, enabling
+        builds on resource-constrained CI environments
+      - Rollup-compatible plugin API preserves the existing ecosystem of
+        2000+ Vite and Rollup plugins with minimal or no changes
+      - >-
+        Unified Oxc toolchain (parser, resolver, transformer, minifier)
+        eliminates duplicated parsing and serialization — source code
+        is parsed once with a shared AST representation
+      - Enables future full-bundle dev mode that serves bundled files
+        during development, solving the network request explosion
+        problem for large applications
+      - >-
+        Built-in features (CJS support, CSS bundling, Module Federation,
+        advanced chunk splitting) reduce the need for third-party
+        plugins
+      - Drop-in replacement via npm aliasing — projects can switch by
+        changing one line in package.json
+    cons:
+      - Multi-phase rollout requires maintaining a separate rolldown-vite
+        package during the transition period, doubling the testing and
+        release surface
+      - Some Vite plugins need adaptation for the Oxc-based transformation
+        pipeline — esbuild-specific APIs are deprecated
+      - >-
+        VoidZero Inc. (Evan You's company) controls Rolldown's direction
+        and copyright — creates a commercial entity dependency within
+        Vite's community-governed project
+      - Rolldown is still in technical preview — production stability has
+        not matched years of battle-testing with Rollup
+      - >-
+        Rust development expertise required for core bundler contributions
+        — reduces the pool of potential contributors compared to
+        JavaScript-based Rollup
+      - >-
+        The "full bundle mode" for dev is not yet proven at scale — the
+        unbundled dev approach that made Vite famous may behave
+        differently when replaced with bundled serving
+    estimated_cost: high
+    risk: medium
+  - name: >-
+      Keep dual-bundler — esbuild for dev, Rollup for production
+    description: |
+      Continue with the existing dual-bundler architecture where esbuild
+      handles development-time dependency pre-bundling and TypeScript/JSX
+      transforms, while Rollup handles production builds with tree-shaking
+      and code splitting. Address dev/prod inconsistencies through
+      targeted patches and additional glue code.
+
+      This is the "maintain what works" approach. Vite's dual-bundler
+      architecture has been in production since Vite 1.0 (February 2020)
+      and has proven sufficient for millions of projects. Incremental
+      improvements could address specific pain points:
+
+      - **Better dev/prod alignment:** Normalize module resolution
+        behavior between esbuild and Rollup through stricter
+        abstraction layers
+      - **Rollup performance patches:** Apply targeted optimizations
+        to Rollup's most expensive code paths
+      - **Reduced glue code:** Redesign internal abstractions to
+        minimize the esbuild/Rollup bridging layer
+      - **Selective native acceleration:** Use esbuild for specific
+        production tasks (minification) where it excels
+
+      ```javascript
+      // The status quo: two bundlers, two config surfaces
+      import { defineConfig } from 'vite'
+
+      export default defineConfig({
+        // esbuild handles dev transforms
+        esbuild: {
+          target: 'esnext',
+          jsxFactory: 'h',
+        },
+        build: {
+          // Rollup handles production
+          rollupOptions: {
+            plugins: [/* Rollup-specific plugins */],
+            output: {
+              manualChunks: (id) => {
+                if (id.includes('node_modules')) return 'vendor'
+              }
+            }
+          },
+          // esbuild for minification
+          minify: 'esbuild'
+        }
+      })
+      ```
+
+      ```mermaid
+      graph TD
+          A["Vite Dual-Bundler"] --> B{Dev or Prod?}
+          B -->|Dev| C["esbuild (Go)"]
+          B -->|Prod| D["Rollup (JS)"]
+
+          E{Core Problems Remain}
+          E --> F["❌ Dev/prod inconsistency<br/>persists"]
+          E --> G["❌ Glue code keeps<br/>growing"]
+          E --> H["❌ Rollup speed<br/>cannot improve beyond JS"]
+          E --> I["❌ Two plugin models<br/>to maintain"]
+
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Zero migration risk — the existing architecture has been in
+        production for 5+ years across millions of projects
+      - No ecosystem disruption — all existing plugins, configs, and
+        tutorials remain valid without changes
+      - No dependency on a new company (VoidZero) or a new bundler
+        that is still in technical preview
+      - The existing split works well for small to medium projects
+        where dev/prod inconsistencies rarely manifest
+      - Incremental improvements can be shipped in minor versions
+        without breaking changes
+    cons:
+      - >-
+        Dev/prod behavioral inconsistency is architectural — it cannot
+        be fully fixed without unifying the bundler because esbuild
+        and Rollup use fundamentally different module resolution
+        and transformation strategies
+      - >-
+        Rollup's JavaScript implementation is inherently slower than
+        native alternatives — no amount of optimization can overcome
+        the language-level performance ceiling for large codebases
+      - >-
+        The glue code between esbuild and Rollup is growing
+        unsustainably — Evan You described Vite as "bottlenecked by
+        duplicated parsing and serialization costs across different
+        tools"
+      - >-
+        esbuild's deliberately minimal plugin API cannot be extended
+        to support the full range of Vite plugin hooks — this
+        limitation is by design, not a fixable bug
+      - Enterprise adopters are hitting the performance ceiling —
+        multi-minute build times for large applications threaten
+        Vite's competitiveness against Turbopack and Rspack
+      - The unbundled dev server approach does not scale for large
+        applications with hundreds of modules, causing slow page
+        refreshes
+    estimated_cost: low
+    risk: high
+    rejection_rationale: >
+      The dual-bundler architecture's problems are structural, not
+      incidental. The dev/prod inconsistency stems from fundamentally
+      different module resolution and transformation pipelines in
+      esbuild and Rollup — no amount of glue code can fully eliminate
+      behavioral differences between two separate tools with different
+      ASTs, different module interop strategies, and different plugin
+      models. Rollup's JavaScript implementation imposes a hard
+      performance ceiling that cannot be overcome with optimization
+      alone — enterprise users reported multi-minute build times that
+      threatened Vite's viability. Evan You explicitly identified
+      this: Vite "remains bottlenecked by duplicated parsing and
+      serialization costs across different tools, and it can't fully
+      leverage native tooling like esbuild due to feature constraints
+      and limited customizability." The path forward required
+      unification, not incremental patching.
+  - name: >-
+      Adopt esbuild for everything — use esbuild for both dev and
+      production bundling
+    description: |
+      Extend esbuild's role from development transforms to full
+      production bundling, eliminating Rollup entirely. esbuild is
+      already integrated into Vite for dev-time dependency
+      pre-bundling and TypeScript/JSX transforms. Promoting it to
+      handle production builds would unify the pipeline around a
+      single, proven, extremely fast tool.
+
+      esbuild, created by Evan Wallace (CTO of Figma), is written
+      in Go and achieves 10-100x faster builds than traditional
+      JavaScript bundlers. It already handles Vite's dev-time
+      transforms with excellent performance. The idea is
+      straightforward: if esbuild is fast enough for dev, it should
+      be fast enough for prod.
+
+      However, esbuild's design philosophy is deliberately minimal.
+      Its plugin API is intentionally limited — Evan Wallace has
+      stated that esbuild is "not trying to be an extensible build
+      system." It lacks:
+
+      - Advanced tree-shaking (scope-level dead code elimination)
+      - Granular chunk splitting control (manual chunks, vendor splitting)
+      - Rollup-compatible plugin hooks (resolveId, load, transform, etc.)
+      - CSS Modules support (limited CSS processing)
+      - Source map quality for complex transformations
+
+      ```javascript
+      // Hypothetical esbuild-only Vite config
+      import { defineConfig } from 'vite'
+
+      export default defineConfig({
+        build: {
+          // esbuild handles everything — fast but limited
+          bundler: 'esbuild',
+          esbuildOptions: {
+            bundle: true,
+            splitting: true,     // esbuild splitting is basic
+            treeShaking: true,   // less granular than Rollup
+            minify: true,
+            format: 'esm',
+          }
+          // No rollupOptions — Rollup is removed
+          // manualChunks? Not supported by esbuild
+        }
+      })
+      ```
+
+      ```mermaid
+      graph TD
+          A["Vite + esbuild Only"] --> B["esbuild (Go)"]
+          B --> C["Dev transforms ✅"]
+          B --> D["Production bundling"]
+
+          E{esbuild Limitations for Production}
+          E --> F["❌ No Rollup plugin<br/>compatibility"]
+          E --> G["❌ Basic tree-shaking<br/>no scope analysis"]
+          E --> H["❌ Limited chunk<br/>splitting control"]
+          E --> I["❌ Minimal plugin API<br/>by design"]
+
+          J["2000+ Vite/Rollup<br/>plugins break"]
+
+          F --> J
+
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+          style J fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Unifies dev and prod around a single tool — eliminates dev/prod
+        inconsistency completely
+      - esbuild is already integrated into Vite — lower integration
+        effort than adopting an entirely new bundler
+      - Extreme speed — esbuild is one of the fastest bundlers available,
+        with Go-level performance for all operations
+      - Mature and battle-tested — esbuild has been in production for
+        years, not a new project in technical preview
+      - Small dependency footprint — single Go binary with no JavaScript
+        runtime dependencies
+    cons:
+      - >-
+        esbuild's plugin API is deliberately minimal and incompatible
+        with Rollup — adopting esbuild for production would break
+        2000+ existing Vite and Rollup plugins
+      - >-
+        Basic tree-shaking without scope-level analysis — production
+        bundles would be larger than Rollup's output, negating the
+        build speed advantage with larger downloads
+      - >-
+        Limited chunk splitting — esbuild cannot implement manual
+        chunks, vendor splitting, or the granular code splitting
+        strategies that production applications require
+      - >-
+        esbuild's creator has explicitly stated it is "not trying to
+        be an extensible build system" — the minimalism is by design,
+        and requesting Rollup-level features contradicts esbuild's
+        philosophy
+      - No CSS Modules support or advanced CSS processing — many
+        production applications depend on these features
+      - esbuild development is led by a single person (Evan Wallace)
+        with no commitment to extending the plugin API
+    estimated_cost: medium
+    risk: critical
+    rejection_rationale: >
+      esbuild's plugin API is deliberately minimal and fundamentally
+      incompatible with the Rollup plugin interface that Vite's
+      ecosystem depends on. Adopting esbuild for production would
+      break 2000+ existing Vite and Rollup plugins — an unacceptable
+      ecosystem disruption. esbuild also lacks the advanced
+      tree-shaking (scope-level dead code elimination) and granular
+      chunk splitting capabilities that production applications
+      require for optimal bundle sizes. Evan Wallace has explicitly
+      stated that esbuild is "not trying to be an extensible build
+      system," making it architecturally incompatible with Vite's
+      need for a rich plugin ecosystem. Rolldown was specifically
+      designed to combine esbuild's speed with Rollup's plugin
+      compatibility — addressing esbuild's limitations by design
+      rather than trying to extend a tool whose creator has different
+      goals.
+  - name: >-
+      Adopt Turbopack — Vercel's Rust-based bundler
+    description: |
+      Adopt Turbopack, Vercel's Rust-based bundler created by Tobias
+      Koppers (Webpack's creator), as Vite's unified bundler. Turbopack
+      uses an incremental computation architecture designed for
+      near-instant rebuilds and was announced at Next.js Conf 2022
+      with claims of being "700x faster than Webpack."
+
+      Turbopack is purpose-built for the Next.js ecosystem. It uses
+      a function-level caching system that tracks dependencies at a
+      granular level, enabling incremental rebuilds that only
+      reprocess changed files and their dependents. The architecture
+      targets large monorepos where traditional bundlers struggle
+      with rebuild times.
+
+      However, Turbopack is deeply integrated with Vercel's
+      infrastructure and the Next.js framework. It does not support
+      the Rollup plugin API, has its own plugin model, and is
+      primarily optimized for React Server Components and Next.js
+      conventions. Adopting it for Vite would mean abandoning Vite's
+      framework-agnostic philosophy and the entire Rollup plugin
+      ecosystem.
+
+      ```mermaid
+      graph TD
+          A["Vite + Turbopack"] --> B["Turbopack (Rust)"]
+          B --> C["Incremental computation"]
+          B --> D["Function-level caching"]
+
+          E{Adoption Barriers for Vite}
+          E --> F["❌ No Rollup plugin<br/>compatibility"]
+          E --> G["❌ Next.js-first design<br/>not framework-agnostic"]
+          E --> H["❌ Vercel-controlled<br/>development priorities"]
+          E --> I["❌ Different plugin model<br/>entire ecosystem rebuild"]
+
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Rust-based performance matching or exceeding esbuild for
+        hot module replacement and incremental rebuilds
+      - Incremental computation architecture — only rebuilds what
+        changed, ideal for large monorepos
+      - Created by Webpack's author (Tobias Koppers) — deep expertise
+        in bundler design and real-world requirements
+      - Proven scale at Vercel — handles some of the largest Next.js
+        deployments in production
+    cons:
+      - >-
+        No Rollup plugin API compatibility — adopting Turbopack would
+        break 2000+ existing Vite and Rollup plugins, requiring a
+        complete ecosystem rebuild
+      - >-
+        Deeply integrated with Next.js conventions and React Server
+        Components — not designed as a framework-agnostic bundler
+        suitable for Vue, Svelte, Solid, and other frameworks
+      - >-
+        Controlled by Vercel (a direct competitor in the framework
+        space) — Vite would depend on a competitor's priorities for
+        its core bundling infrastructure
+      - Production build support was not stable until late 2024 —
+        Turbopack was dev-only for its first two years
+      - >-
+        The "700x faster" benchmark claims were publicly challenged
+        by Evan You and others as misleading — undermining trust in
+        the project's performance claims
+      - Turbopack's plugin model would require fundamental changes
+        to Vite's architecture, not just a bundler swap
+    estimated_cost: high
+    risk: critical
+    rejection_rationale: >
+      Turbopack is architecturally incompatible with Vite's design
+      philosophy. It lacks Rollup plugin API compatibility, which
+      would break Vite's entire plugin ecosystem of 2000+ plugins.
+      Turbopack is designed primarily for Next.js and React Server
+      Components — its development priorities are set by Vercel, a
+      direct competitor in the framework ecosystem. Adopting a
+      competitor's bundler would make Vite dependent on Vercel's
+      roadmap and priorities. Turbopack's "700x faster" claims were
+      also publicly disputed by Evan You and other community members
+      as misleading benchmarks. Rolldown was specifically designed
+      to serve Vite's needs with Rollup plugin compatibility, making
+      it a natural fit rather than an awkward adoption of a
+      competitor's tool.
+  - name: >-
+      Build a custom bundler from scratch — maximum control, no
+      compatibility constraints
+    description: |
+      Design and build a completely new bundler from scratch,
+      optimized specifically for Vite's architecture and use cases.
+      This would provide maximum control over every design decision
+      — AST representation, plugin API, optimization strategies,
+      and output format — without being constrained by compatibility
+      with any existing tool.
+
+      A from-scratch bundler could be designed to natively understand
+      Vite's concepts (HMR boundaries, framework-specific transforms,
+      environment-aware module graphs) without the abstraction layers
+      required when adapting a general-purpose bundler. It could use
+      a Vite-specific plugin API optimized for the exact hooks and
+      capabilities that Vite plugins need.
+
+      However, building a production-quality bundler is an enormous
+      undertaking. Rollup has been in development since 2015 and
+      esbuild since 2020 — each represents years of engineering
+      effort to handle edge cases in JavaScript module resolution,
+      CommonJS interop, CSS processing, source maps, and tree-shaking.
+
+      ```mermaid
+      graph TD
+          A["Custom Vite Bundler"] --> B["Clean-slate design"]
+          B --> C["Vite-native concepts"]
+          B --> D["Custom plugin API"]
+          B --> E["Optimized for Vite"]
+
+          F{Critical Risks}
+          F --> G["❌ Years of development<br/>before production-ready"]
+          F --> H["❌ Entire plugin ecosystem<br/>must be rebuilt"]
+          F --> I["❌ Edge cases in JS<br/>module resolution take<br/>years to discover"]
+          F --> J["❌ Massive resource<br/>commitment"]
+
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+          style J fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Maximum architectural control — every design decision can be
+        optimized specifically for Vite's use cases
+      - No legacy compatibility constraints — the plugin API, AST,
+        and output format can be designed from first principles
+      - Native understanding of Vite-specific concepts (HMR, framework
+        transforms, environment-aware module graphs)
+      - No dependency on external projects or companies for the core
+        bundler component
+    cons:
+      - >-
+        Years of development before reaching production quality —
+        bundlers like Rollup (8+ years) and esbuild (4+ years) each
+        required extensive effort to handle JavaScript ecosystem
+        edge cases
+      - >-
+        Complete plugin ecosystem rebuild — none of the existing 2000+
+        Vite/Rollup plugins would work, requiring every plugin author
+        to rewrite for the new API
+      - >-
+        Enormous resource commitment that diverts engineering effort
+        from Vite core features, framework integrations, and
+        developer experience improvements
+      - JavaScript module resolution, CommonJS/ESM interop, and
+        source map generation have thousands of edge cases that take
+        years to discover through real-world usage
+      - >-
+        A custom bundler would not benefit from the broader Rollup
+        community's contributions, bug reports, and battle-testing
+        across diverse projects
+    estimated_cost: high
+    risk: critical
+    rejection_rationale: >
+      Building a bundler from scratch would require years of
+      development before reaching the production quality and edge
+      case coverage that Rollup has accumulated over 8+ years. The
+      entire plugin ecosystem of 2000+ plugins would need to be
+      rebuilt from scratch. This approach contradicts Vite's strategy
+      of leveraging the existing Rollup ecosystem — Rolldown achieves
+      the desired performance improvements while preserving plugin
+      compatibility, making a from-scratch approach unnecessary and
+      wasteful. The engineering resources are better spent on
+      Rolldown (which shares its Rollup compatibility goal) than on
+      duplicating years of bundler development.
+  - name: >-
+      Wait for Rollup to add native performance — let upstream solve
+      the speed problem
+    description: |
+      Wait for the Rollup project itself to add native performance
+      capabilities, either through a Rust/Go rewrite of its core
+      or through selective use of native modules for hot-path
+      operations (parsing, tree-shaking, code generation).
+
+      Rollup's maintainer (Lukas Taegert-Atkinson) has been
+      exploring performance improvements, and the broader JavaScript
+      tooling community is actively investing in native-speed
+      alternatives. The argument is that Rollup, as a mature project
+      with comprehensive test coverage and deep ecosystem adoption,
+      might eventually deliver the performance improvements that
+      Vite needs without requiring a separate bundler project.
+
+      This approach preserves perfect Rollup plugin compatibility
+      (by definition — it is Rollup) and requires zero migration
+      effort from Vite or its plugin ecosystem.
+
+      ```mermaid
+      graph TD
+          A["Wait for Rollup"] --> B{Rollup adds native perf?}
+          B -->|"Maybe years"| C["Potential native core"]
+          B -->|"Uncertain"| D["Incremental JS optimizations"]
+
+          E{Fundamental Concerns}
+          E --> F["❌ No timeline<br/>or commitment"]
+          E --> G["❌ Different architectural<br/>priorities"]
+          E --> H["❌ Vite-specific needs<br/>not prioritized"]
+          E --> I["❌ Dev/prod split<br/>remains unsolved"]
+
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Perfect Rollup plugin compatibility — by definition, since
+        it is the same tool
+      - Zero migration effort for Vite or plugin authors — everything
+        continues to work as-is
+      - Rollup has deep test coverage and years of battle-testing
+        across the JavaScript ecosystem
+      - No dependency on a new project (Rolldown) or company (VoidZero)
+    cons:
+      - >-
+        No timeline or commitment from Rollup's maintainers to add
+        native performance — there is no RFC, proposal, or roadmap
+        for a Rust/Go rewrite of Rollup's core
+      - >-
+        Rollup's architectural priorities differ from Vite's — Rollup
+        is a general-purpose library bundler, not optimized for
+        application bundling or dev server integration
+      - >-
+        Does not solve the dev/prod inconsistency — Vite would still
+        use esbuild for dev and Rollup for prod, maintaining the
+        dual-bundler architecture
+      - >-
+        Waiting indefinitely while competitors (Turbopack, Rspack)
+        ship native-speed solutions risks Vite losing its position
+        as the leading build tool
+      - >-
+        Rollup's JavaScript codebase would require a near-complete
+        rewrite to achieve native performance — this is effectively
+        building a new bundler under the Rollup name
+    estimated_cost: low
+    risk: high
+    rejection_rationale: >
+      There is no timeline, proposal, or commitment from Rollup's
+      maintainers to add native-speed performance. Rollup's
+      architectural priorities as a general-purpose library bundler
+      differ from Vite's needs as an application build tool. Waiting
+      indefinitely for upstream to solve a problem it has not
+      committed to solving would leave Vite stuck with the
+      dual-bundler architecture and its growing inconsistencies,
+      while competitors like Turbopack and Rspack ship native-speed
+      alternatives. Rolldown was created specifically because
+      waiting for Rollup was not a viable strategy — it provides
+      the Rollup-compatible API that Vite needs with the native
+      performance that Rollup cannot deliver on any foreseeable
+      timeline.
+decision:
+  chosen_alternative: >-
+    Rolldown — unified Rust-based bundler with Rollup-compatible
+    plugin API
+  rationale: |
+    Rolldown was chosen because it is the only alternative that
+    simultaneously addresses all three of Vite's core problems —
+    dev/prod inconsistency, production build performance, and plugin
+    ecosystem compatibility — without requiring the ecosystem to
+    rebuild from scratch:
+
+    1. **Unified pipeline eliminates dev/prod inconsistency**: By
+       using a single bundler for both development and production,
+       Rolldown eliminates the entire class of bugs caused by
+       differing module resolution, transformation pipelines, and
+       CJS/ESM interop between esbuild and Rollup. The same Oxc
+       parser, resolver, and transformer process code in both
+       environments.
+
+    2. **Native Rust performance exceeds JavaScript ceiling**: Early
+       adopter results demonstrate 3x-16x faster production builds
+       and up to 100x memory reduction. These improvements are not
+       incremental — they represent a fundamentally different
+       performance tier that JavaScript-based Rollup cannot match.
+       GitLab went from 2.5 minutes to 40 seconds; Excalidraw from
+       22.9 seconds to 1.4 seconds.
+
+    3. **Rollup plugin compatibility preserves ecosystem investment**:
+       Unlike esbuild (minimal API) or Turbopack (incompatible API),
+       Rolldown maintains the Rollup plugin interface. The Vite
+       ecosystem CI tests show most plugins work with minimal or no
+       changes. This was a non-negotiable constraint — breaking
+       2000+ plugins was unacceptable.
+
+    4. **Unified Oxc toolchain eliminates duplicated work**: Rolldown
+       is built on Oxc, which provides the fastest available parser
+       (3x faster than SWC), resolver (28x faster than
+       enhanced-resolve), and transformer (4x faster than SWC). All
+       share a single AST representation, eliminating the parsing
+       and serialization overhead of separate tools.
+
+    5. **VoidZero provides sustainable funding**: Evan You's founding
+       of VoidZero Inc. with $4.6M in seed funding ensures dedicated
+       full-time development. While this creates a commercial
+       dependency, it also provides the sustained engineering
+       investment that open-source bundler projects have historically
+       lacked.
+
+    6. **The phased rollout minimizes risk**: The three-phase
+       transition (separate package → merge into Vite → full bundle
+       mode default) gives the ecosystem time to adapt while
+       providing immediate benefits for early adopters.
+  tradeoffs: |
+    - **Commercial entity dependency accepted** because VoidZero's
+      funding model provides the sustained engineering investment
+      that Rolldown requires. Vite's team-based governance remains
+      independent — the core team includes members from VoidZero,
+      StackBlitz, NuxtLabs, and Astro. The tradeoff is explicit:
+      commercial backing enables faster development at the cost of
+      introducing a company's interests into the project's direction.
+
+    - **Technical preview risk accepted** because the phased rollout
+      (rolldown-vite as separate package first) allows real-world
+      validation before committing. Early adopter results from GitLab,
+      Excalidraw, PLAID, Appwrite, and others demonstrate production
+      viability. The alternative — waiting for a new bundler to match
+      8 years of Rollup battle-testing before starting adoption —
+      would delay the transition indefinitely.
+
+    - **Plugin adaptation effort accepted** because the scope is
+      limited. Most plugins work with no changes; others need minor
+      updates to use Oxc transforms instead of esbuild transforms.
+      The Vite ecosystem CI proactively tests compatibility. This is
+      a manageable migration compared to the complete ecosystem
+      rebuild that esbuild or Turbopack adoption would require.
+
+    - **Rust contribution barrier accepted** because the Rolldown
+      team at VoidZero handles core bundler development. Plugin
+      authors continue to write JavaScript-based plugins using the
+      familiar Rollup API. Only contributors to Rolldown's internals
+      need Rust expertise, not the broader Vite community.
+
+    - **Loss of the unbundled dev philosophy accepted** as a future
+      possibility. Vite's signature fast dev startup came from serving
+      unbundled ES modules, but this approach hits performance walls
+      at scale. The full-bundle dev mode enabled by Rolldown's speed
+      offers a better scaling path while maintaining HMR on ESM output.
+  decision_date: "2025-06-24"
+  confidence: high
+consequences:
+  positive:
+    - >-
+      Dev/prod behavioral inconsistency eliminated — a single Rolldown
+      engine processes source code in both environments, removing the
+      entire class of bugs caused by differing esbuild and Rollup
+      behaviors
+    - >-
+      Production build times reduced by 3x to 16x — GitLab from 2.5
+      minutes to 40 seconds, Excalidraw from 22.9 seconds to 1.4
+      seconds, PLAID Inc. from 80 seconds to 5 seconds
+    - >-
+      Memory usage during builds reduced by up to 100x — GitLab's
+      build memory dropped by two orders of magnitude, enabling builds
+      on resource-constrained CI environments
+    - >-
+      Unified Oxc toolchain eliminates duplicated parsing and
+      serialization — source code is parsed once by Oxc's parser with
+      a shared AST, rather than separately by esbuild and Rollup
+    - >-
+      Rollup plugin ecosystem preserved — 2000+ existing plugins
+      continue to work with minimal or no changes, protecting the
+      community's investment
+    - >-
+      Future full-bundle dev mode enabled — Rolldown's performance
+      makes it feasible to serve bundled files during development,
+      solving the network request explosion for large applications
+    - >-
+      Built-in features (CJS support, CSS bundling, Module Federation,
+      advanced chunk splitting) reduce third-party plugin dependencies
+    - >-
+      Vite reinforced as the shared infrastructure layer for the
+      JavaScript ecosystem — frameworks building on Vite benefit
+      from a faster, more consistent foundation
+  negative:
+    - >-
+      Multi-phase transition creates a temporary period where
+      rolldown-vite and vite coexist as separate packages, requiring
+      the core team to maintain two release surfaces
+    - >-
+      Plugin authors must test and potentially adapt their plugins
+      for the Oxc-based transformation pipeline — esbuild-specific
+      APIs (transformWithEsbuild) require esbuild as an optional
+      dependency
+    - >-
+      VoidZero Inc. controls Rolldown's copyright and development
+      direction — while Vite's governance remains community-based,
+      its core bundler is now developed by a commercial entity
+    - >-
+      Rolldown is still in technical preview — production stability
+      has not yet matched Rollup's 8+ years of battle-testing across
+      the JavaScript ecosystem
+    - >-
+      Rust expertise required for Rolldown core contributions narrows
+      the contributor pool compared to the JavaScript-based Rollup
+      project
+    - >-
+      Early adopters may encounter compatibility gaps with advanced
+      use cases or less-popular plugins during the transition period
+confirmation:
+  description: |
+    The Rolldown integration has progressed through multiple milestones
+    confirming the decision's viability and adoption trajectory:
+
+    **Development and announcement milestones:**
+    - **October 2024:** VoidZero Inc. announced at ViteConf with $4.6M
+      seed funding; Rolldown development accelerated with a dedicated
+      team including former Rspack core contributors
+    - **November 2024:** Vite 6.0 released with Environment API,
+      laying architectural groundwork for Rolldown integration
+    - **January 2026:** Rolldown reached Release Candidate status;
+      rolldown-vite published as a drop-in replacement package
+
+    **Real-world validation:**
+    - **GitLab:** Build time reduced from 2.5 minutes to 40 seconds,
+      memory usage reduced by 100x
+    - **Excalidraw:** Build time reduced from 22.9 seconds to 1.4
+      seconds (16x speedup)
+    - **PLAID Inc.:** Build time reduced from 80 seconds to 5 seconds
+      (16x speedup)
+    - **Appwrite:** Build time reduced from 12+ minutes to 3 minutes,
+      memory usage reduced by 4x
+
+    **Ecosystem compatibility:**
+    - Vite ecosystem CI forked and run against rolldown-vite — tests
+      passing for most frameworks and plugins
+    - Plugin author guide published for migration support
+    - VoidZero's own blog (voidzero.dev) built with VitePress on
+      rolldown-vite in production
+
+    **Vite 7.0 (June 2025):**
+    - Official recommendation to try rolldown-vite as drop-in
+      replacement
+    - Confirmed Rolldown will become the default bundler in a future
+      Vite major version
+  artifact_ids:
+    - "https://voidzero.dev/posts/announcing-voidzero-inc"
+    - "https://voidzero.dev/posts/announcing-rolldown-vite"
+    - "https://vite.dev/blog/announcing-vite6"
+    - "https://vite.dev/blog/announcing-vite7"
+    - "https://vite.dev/guide/rolldown"
+    - "https://github.com/vitejs/rolldown-vite"
+    - "https://github.com/vitejs/rolldown-vite-perf-wins"
+    - "https://rolldown.rs"
+dependencies:
+  internal:
+    - >-
+      Vite Core — the build tool framework that integrates Rolldown
+      as its production bundler and dev-time transform engine
+    - >-
+      Vite Plugin API — the layer that exposes Rollup-compatible
+      plugin hooks to JavaScript plugins via Rolldown's napi-rs
+      bindings
+    - >-
+      Vite Dev Server — the development server that will transition
+      from unbundled ESM serving to optional full-bundle mode
+      powered by Rolldown
+  external:
+    - >-
+      Rolldown — the Rust-based bundler developed by VoidZero Inc.
+      that replaces both esbuild and Rollup in Vite's architecture
+    - >-
+      Oxc — the Rust-based JavaScript toolchain (parser, resolver,
+      transformer, minifier, linter) that provides Rolldown's
+      foundational processing capabilities
+    - >-
+      napi-rs — the Node.js native addon framework that bridges
+      Rolldown's Rust core with JavaScript plugin execution
+    - >-
+      Framework integrations — React, Vue, Svelte, Solid, Astro,
+      Nuxt, SvelteKit, Remix, and other frameworks that build on
+      Vite's plugin API
+    - >-
+      rolldown-vite — temporary separate npm package for phased
+      rollout, following Vite's major/minor version numbers with
+      independent patch versions
+references:
+  - title: >-
+      VoidZero Founding Announcement — Next Generation Toolchain
+      for JavaScript
+    url: "https://voidzero.dev/posts/announcing-voidzero-inc"
+  - title: >-
+      Announcing Rolldown-Vite — Drop-in Replacement for Faster Builds
+    url: "https://voidzero.dev/posts/announcing-rolldown-vite"
+  - title: Vite 6.0 Release Announcement
+    url: "https://vite.dev/blog/announcing-vite6"
+  - title: Vite 7.0 Release Announcement
+    url: "https://vite.dev/blog/announcing-vite7"
+  - title: Vite Rolldown Integration Guide
+    url: "https://vite.dev/guide/rolldown"
+  - title: >-
+      Rolldown-Vite GitHub Repository — Issues and Changelog
+    url: "https://github.com/vitejs/rolldown-vite"
+  - title: >-
+      Rolldown-Vite Performance Wins — Community Benchmark Results
+    url: "https://github.com/vitejs/rolldown-vite-perf-wins"
+  - title: Rolldown Project Documentation
+    url: "https://rolldown.rs"
+  - title: Oxc Toolchain — High-Performance JavaScript Tools
+    url: "https://oxc.rs"
+lifecycle:
+  review_cycle_months: 24
+  next_review_date: "2027-06-24"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+audit_trail:
+  - event: created
+    by: Evan You
+    at: "2024-03-01T00:00:00Z"
+    details: >
+      Rolldown development initiated as part of VoidZero's unified
+      toolchain vision. Evan You identified that Vite's dual-bundler
+      architecture (esbuild for dev, Rollup for prod) was creating
+      growing dev/prod inconsistencies and performance ceilings.
+      The decision was to build a new Rust-based bundler with
+      Rollup-compatible plugin API rather than incrementally
+      patching the existing architecture.
+  - event: updated
+    by: VoidZero Engineering Team
+    at: "2024-10-01T00:00:00Z"
+    details: >
+      VoidZero Inc. publicly announced at ViteConf 2024 with $4.6M
+      seed funding led by Accel. The company's mission was explicitly
+      tied to building Rolldown and Oxc as the unified toolchain
+      for Vite. Early benchmarks showed Rolldown outperforming both
+      esbuild and Rollup. Team includes former Rspack core contributors
+      and creators of Oxc and Vitest.
+  - event: updated
+    by: Vite Core Team
+    at: "2024-11-26T00:00:00Z"
+    details: >
+      Vite 6.0 released with the experimental Environment API,
+      laying architectural groundwork for Rolldown integration.
+      Evan You described Vite 6 as "the most significant major
+      release since Vite 2." VoidZero's Rolldown development
+      progress confirmed — aiming to make Rolldown the unified
+      bundler for Vite in both dev and production.
+  - event: updated
+    by: VoidZero Engineering Team
+    at: "2025-06-01T00:00:00Z"
+    details: >
+      Rolldown-vite announced as a drop-in replacement package with
+      initial feature parity. Early adopter results published: GitLab
+      reduced build time from 2.5 minutes to 40 seconds with 100x
+      memory reduction; Excalidraw achieved 16x speedup. Three-phase
+      rollout plan confirmed: separate package, merge into Vite, full
+      bundle mode default. Vite ecosystem CI forked and run against
+      rolldown-vite with tests passing for most frameworks.
+  - event: approved
+    by: Evan You
+    at: "2025-06-24T00:00:00Z"
+    details: >
+      Vite 7.0 released with official recommendation to try
+      rolldown-vite as a drop-in replacement. Confirmed that Rolldown
+      will become the default bundler for Vite in a future major
+      version. Vite now downloaded 31 million times per week. The
+      decision to adopt Rolldown is validated by real-world adoption
+      across enterprise users and positive ecosystem feedback.
+  - event: updated
+    by: Rolldown Core Team
+    at: "2026-01-15T00:00:00Z"
+    details: >
+      Rolldown reached Release Candidate status, indicating
+      production readiness. Rolldown-vite became the default bundler
+      in the Vite 8 beta. The three-phase rollout progressed to
+      Phase Two preparation, with plans to merge rolldown-vite into
+      the main Vite codebase. Community adoption reports collected
+      at vitejs/rolldown-vite-perf-wins repository.
