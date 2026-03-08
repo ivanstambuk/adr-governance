@@ -1,0 +1,1057 @@
+adr:
+  id: ADR-0111-python-pyproject-toml
+  title: >-
+    Standardize Python project metadata in pyproject.toml (PEP 621),
+    replacing setup.py and setup.cfg with a declarative, tool-agnostic
+    configuration format
+  y_statement: >-
+    **In the context of** the Python packaging ecosystem, **facing**
+    ecosystem fragmentation where every build tool defined project metadata
+    differently and setup.py required executing arbitrary Python code to
+    extract basic package information, **we decided for** a standardized
+    `[project]` table in pyproject.toml (PEP 621) with static-first
+    declarative metadata and an explicit `dynamic` escape hatch —
+    **and neglected** keeping setup.py, setup.cfg-only declarative
+    metadata, tool-specific pyproject.toml sections, and alternative
+    file formats (YAML, JSON, INI) — **to achieve** tool-agnostic
+    metadata portability, elimination of arbitrary code execution for
+    metadata extraction, and a single canonical configuration file for
+    all Python projects, **accepting** the `dynamic` field's all-or-nothing
+    rigidity and a multi-year migration from 20 years of setup.py
+    inertia, **because** static, declarative metadata enables faster
+    builds, deterministic consumption, and decouples project identity
+    from any single build tool.
+  status: accepted
+  created_at: "2020-06-29T00:00:00Z"
+  last_modified: "2022-06-01T00:00:00Z"
+  version: "1.0"
+  schema_version: "1.0.0"
+  project: Python Packaging (CPython / PyPA)
+  component: Packaging / Project Configuration
+  tags:
+    - python
+    - packaging
+    - pyproject-toml
+    - pep-621
+    - pep-518
+    - metadata
+    - toml
+    - setup-py
+    - declarative-config
+  priority: high
+  decision_type: technology
+  decision_level: operational
+authors:
+  - name: Brett Cannon
+    role: PEP 621 Author / CPython Core Developer
+    email: brett@python.example.com
+  - name: Dustin Ingram
+    role: PEP 621 Author / PyPI Maintainer
+    email: dustin.ingram@python.example.com
+  - name: Paul Ganssle
+    role: PEP 621 Author / CPython Core Developer
+    email: paul.ganssle@python.example.com
+  - name: Pradyun Gedam
+    role: PEP 621 Author / pip Maintainer
+    email: pradyun.gedam@python.example.com
+decision_owner:
+  name: Python Packaging Authority (PyPA)
+  role: Packaging Standards Body
+  email: pypa@python.example.com
+reviewers:
+  - name: Python Packaging Community
+    role: Discourse Participants
+    email: packaging@python.example.com
+  - name: PEP Delegate
+    role: PEP Review Authority
+    email: pep-delegate@python.example.com
+approvals:
+  - name: Paul Moore
+    role: PEP Delegate
+    identity: "@pfmoore"
+    approved_at: "2020-11-15T00:00:00Z"
+    signature_id: null
+context:
+  description: |
+    Python's packaging ecosystem evolved over two decades from simple
+    script-based configuration to a fragmented landscape of competing
+    tools, each with their own metadata formats. At the center of this
+    evolution was `setup.py` — an executable Python script that served
+    simultaneously as build configuration, metadata declaration, and
+    installation logic since the introduction of `distutils` in Python
+    1.6 (2000).
+
+    ```mermaid
+    graph TD
+        subgraph "Python Packaging History"
+          A["distutils\n(2000)"] --> B["setuptools\n(2004)"]
+          B --> C["pip + PyPI\n(2008–2010)"]
+          C --> D["setup.cfg\n(declarative attempt)"]
+          D --> E["PEP 518: pyproject.toml\n(2016)"]
+          E --> F["PEP 517: Build backends\n(2017)"]
+          F --> G["PEP 621: Project metadata\n(2020)"]
+        end
+
+        subgraph "The Problem"
+          H["setup.py executes\narbitrary Python"] --> I["❌ Security risk:\ncode runs on pip install"]
+          H --> J["❌ Can't read metadata\nwithout running code"]
+          H --> K["❌ Chicken-and-egg:\nneed setuptools to\nread setup.py"]
+        end
+
+        subgraph "Fragmentation"
+          L["Poetry: [tool.poetry]"] --> M["❌ 5+ incompatible\nmetadata formats"]
+          N["Flit: [tool.flit]"] --> M
+          O["PDM: [tool.pdm]"] --> M
+          P["setuptools: setup.py/cfg"] --> M
+        end
+
+        style I fill:#f66,stroke:#333,color:#000
+        style J fill:#f66,stroke:#333,color:#000
+        style K fill:#f66,stroke:#333,color:#000
+        style M fill:#f66,stroke:#333,color:#000
+    ```
+
+    **1. The setup.py problem — 20 years of arbitrary code execution:**
+
+    `setup.py` was a full Python script. To extract even basic metadata
+    like a package's name and version, tools had to *execute* the file.
+    This created a fundamental security problem: running `pip install`
+    or even `pip download` on a source distribution would execute
+    arbitrary code with the user's privileges. Attackers exploited this
+    through typosquatting (malicious packages with names similar to
+    popular ones), compromised maintainer accounts, and malicious
+    transitive dependencies. The security implication went beyond
+    theoretical — real-world attacks stole SSH keys, AWS credentials,
+    and installed cryptocurrency miners.
+
+    Beyond security, `setup.py` created a "chicken-and-egg" problem:
+    to determine what build dependencies a project needed, you had to
+    execute `setup.py`, but executing `setup.py` required those build
+    dependencies to be installed first. Setuptools tried to solve this
+    with `setup_requires`, but as Brett Cannon documented, this had
+    numerous issues — tools other than setuptools couldn't access the
+    information, and the dependencies wouldn't be installed until
+    *during* `setup()` execution, leading to "increasingly complex
+    machinations."
+
+    **2. Ecosystem fragmentation — every tool invented its own format:**
+
+    By 2020, multiple packaging tools had emerged, each with its own
+    metadata format:
+
+    | Tool | Config Location | Format |
+    |------|----------------|--------|
+    | setuptools | `setup.py` + `setup.cfg` | Python code + INI |
+    | Poetry | `[tool.poetry]` in pyproject.toml | TOML (custom schema) |
+    | Flit | `[tool.flit.metadata]` in pyproject.toml | TOML (custom schema) |
+    | PDM | `[tool.pdm]` in pyproject.toml | TOML (custom schema) |
+    | Hatch | `[tool.hatch]` in pyproject.toml | TOML (custom schema) |
+
+    This fragmentation meant that switching build tools required
+    rewriting metadata configuration entirely. A project using Poetry
+    couldn't migrate to Flit without manually translating its
+    `[tool.poetry]` section. There was no standard, tool-agnostic way
+    to declare "this project is named X, version Y, with these
+    dependencies."
+
+    **3. The pyproject.toml foundation — PEP 518 (2016) and PEP 517 (2017):**
+
+    PEP 518 (Brett Cannon, 2016) introduced `pyproject.toml` as a
+    standard file for declaring build system requirements, solving the
+    chicken-and-egg problem. PEP 517 (2017) then standardized the
+    build backend interface, allowing pip to work with any compliant
+    build tool — not just setuptools. Together, these PEPs established
+    `pyproject.toml` as the canonical configuration file for Python
+    projects. But they only covered *build system* configuration, not
+    *project metadata*. Each tool still defined project name, version,
+    dependencies, and other metadata in its own proprietary section.
+
+    PEP 621, authored by Brett Cannon, Dustin Ingram, Paul Ganssle,
+    Pradyun Gedam, Sébastien Eustace, Thomas Kluyver, and Tzu-ping
+    Chung, was created in June 2020 to fill this gap — providing a
+    single, standardized `[project]` table where all build tools
+    would read and write project metadata.
+  business_drivers:
+    - >-
+      Ecosystem fragmentation forced developers to learn tool-specific
+      metadata formats — switching between Poetry, Flit, setuptools,
+      or PDM required rewriting project configuration entirely
+    - >-
+      Security incidents from setup.py code execution (typosquatting,
+      credential theft, cryptomining malware) created reputational and
+      operational risk for the Python ecosystem
+    - >-
+      Package index (PyPI) and installer tools (pip) needed a way to
+      extract metadata without executing arbitrary code, enabling
+      faster, safer dependency resolution
+  technical_drivers:
+    - >-
+      setup.py required executing arbitrary Python code to extract
+      metadata — a fundamental security flaw that enabled supply chain
+      attacks through malicious packages on PyPI
+    - >-
+      The chicken-and-egg problem of setup.py meant build dependencies
+      could not be determined without first installing the build tool,
+      creating circular dependency chains that pip resolved by
+      hardcoding setuptools as the default
+    - >-
+      PEP 518 and PEP 517 had already established pyproject.toml as
+      the canonical build configuration file, but project metadata
+      remained fragmented across tool-specific sections, preventing
+      interoperability between build backends
+  constraints:
+    - >-
+      Must not break existing projects — adoption of PEP 621 metadata
+      must be opt-in, with setup.py and setup.cfg continuing to work
+      for projects that have not migrated
+    - >-
+      Must be tool-agnostic — the metadata format must not privilege
+      any single build backend (setuptools, Poetry, Flit, PDM, Hatch)
+      over others
+    - >-
+      Must support both static and dynamic metadata — some fields like
+      version may need to be computed at build time (e.g., from VCS
+      tags via setuptools-scm), requiring an escape hatch from pure
+      static declaration
+    - >-
+      Must use the existing pyproject.toml file and TOML format as
+      established by PEP 518 — introducing a new file or format would
+      fragment the ecosystem further
+  assumptions:
+    - >-
+      The majority of project metadata is inherently static (name,
+      description, license, authors, URLs) and benefits from being
+      declared rather than computed, making a static-first design
+      appropriate for most projects
+    - >-
+      Build tools will adopt the standard [project] table rather than
+      continuing to maintain proprietary metadata sections, driven by
+      user demand for portability and reduced vendor lock-in
+    - >-
+      Projects with genuinely dynamic metadata (version from VCS,
+      platform-conditional dependencies) represent a minority that can
+      use the dynamic escape hatch without undermining the static-first
+      design goal
+architecturally_significant_requirements:
+  functional:
+    - id: F-001
+      description: >
+        The [project] table must support all core metadata fields
+        defined in the Python packaging core metadata specification,
+        including name, version, description, authors, license,
+        dependencies, optional-dependencies, URLs, entry-points,
+        and classifiers.
+    - id: F-002
+      description: >
+        A dynamic field must allow projects to explicitly list which
+        metadata fields will be provided by the build backend at
+        build time, clearly distinguishing intentionally unspecified
+        metadata from accidentally omitted metadata.
+    - id: F-003
+      description: >
+        Build backends must raise an error if a field is both
+        statically specified and listed in dynamic, enforcing the
+        all-or-nothing constraint that prevents ambiguous metadata
+        provenance.
+  non_functional:
+    - id: NF-001
+      description: >
+        Metadata extraction must be possible without executing
+        arbitrary Python code — tools must be able to parse the
+        [project] table using a standard TOML parser without
+        invoking a build backend for statically specified fields.
+    - id: NF-002
+      description: >
+        The metadata format must be consumable by tools written in
+        any programming language — not just Python — enabling
+        cross-ecosystem tooling for dependency analysis, security
+        scanning, and IDE integration.
+    - id: NF-003
+      description: >
+        Adoption must be non-disruptive — projects using setup.py,
+        setup.cfg, or tool-specific pyproject.toml sections must
+        continue to work without modification until they choose to
+        migrate.
+alternatives:
+  - name: >-
+      Standardized [project] table in pyproject.toml — PEP 621 with
+      static-first metadata and dynamic escape hatch
+    description: |
+      Define a new `[project]` table in `pyproject.toml` where all
+      build tools read and write project metadata using a standardized
+      schema. The design follows a "static-first" philosophy: metadata
+      should be declared directly in the TOML file wherever possible,
+      with an explicit `dynamic` field serving as an escape hatch for
+      fields that genuinely need to be computed at build time.
+
+      The `[project]` table maps directly to the Python core metadata
+      specification, using familiar field names while embracing more
+      modern terminology where appropriate (e.g., `dependencies`
+      instead of `install_requires`).
+
+      ```toml
+      # pyproject.toml — PEP 621 metadata example
+      [project]
+      name = "my-package"
+      version = "1.0.0"
+      description = "A well-configured Python package"
+      readme = "README.md"
+      requires-python = ">=3.8"
+      license = {file = "LICENSE"}
+      authors = [
+          {name = "Jane Developer", email = "jane@example.com"},
+      ]
+      dependencies = [
+          "httpx>=0.24",
+          "pydantic>=2.0",
+      ]
+
+      [project.optional-dependencies]
+      test = ["pytest>=7.0", "pytest-cov"]
+      docs = ["sphinx>=6.0"]
+
+      [project.urls]
+      Homepage = "https://example.com"
+      Repository = "https://github.com/example/my-package"
+
+      [project.scripts]
+      my-cli = "my_package:cli.main"
+
+      [build-system]
+      requires = ["hatchling"]
+      build-backend = "hatchling.build"
+      ```
+
+      **The `dynamic` field — the critical design tension:**
+
+      For fields that cannot be determined statically (e.g., version
+      derived from Git tags via `setuptools-scm`), the `dynamic` field
+      explicitly lists which fields the build backend will compute:
+
+      ```toml
+      [project]
+      name = "my-package"
+      dynamic = ["version"]  # version provided by build backend
+
+      [tool.setuptools.dynamic]
+      version = {attr = "my_package.__version__"}
+      ```
+
+      The design enforces an "all-or-nothing" rule: a field is either
+      fully static or fully dynamic. A build backend must raise an
+      error if a field is both specified statically and listed in
+      `dynamic`. This strictness was deliberate — it disambiguates
+      intent when metadata is absent and allows static analysis tools
+      to know exactly which fields are trustworthy without invoking
+      the build process.
+
+      ```mermaid
+      graph TD
+          subgraph "PEP 621 Architecture"
+            A["[project] table\nin pyproject.toml"] --> B{Field type?}
+            B -->|"Static"| C["Declared directly\nin TOML"]
+            B -->|"Listed in dynamic"| D["Build backend\ncomputes at build time"]
+          end
+
+          subgraph "Consumer Chain"
+            C --> E["TOML parser\n(any language)"]
+            D --> F["Build backend\n(Python)"]
+            E --> G["✅ pip / PyPI /\nIDEs / scanners"]
+            F --> G
+          end
+
+          subgraph "Design Goals"
+            H["✅ Tool-agnostic"]
+            I["✅ Static-first"]
+            J["✅ No code execution\nfor static fields"]
+            K["✅ Single canonical\nconfig file"]
+          end
+
+          style H fill:#2d8,stroke:#333,color:#000
+          style I fill:#2d8,stroke:#333,color:#000
+          style J fill:#2d8,stroke:#333,color:#000
+          style K fill:#2d8,stroke:#333,color:#000
+      ```
+
+      **Tool adoption timeline:**
+
+      | Date | Milestone | Significance |
+      |------|-----------|--------------|
+      | May 2016 | PEP 518 accepted | pyproject.toml introduced for build requirements |
+      | 2017 | PEP 517 accepted | Build backend interface standardized |
+      | Jun 2020 | PEP 621 created | Project metadata specification drafted |
+      | Nov 2020 | PEP 621 accepted (provisional) | Paul Moore approves as PEP delegate |
+      | Mar 2021 | PEP 621 finalized | Specification declared final |
+      | Mar 2022 | setuptools 61.0.0 | setuptools supports pyproject.toml metadata |
+      | Jan 2023 | pip implements PEP 621 support | Package installer reads [project] table |
+      | Jan 2025 | Poetry 2.0 | Poetry adopts PEP 621 [project] table |
+    pros:
+      - >-
+        Tool-agnostic metadata portability — projects can switch between
+        setuptools, Flit, Hatch, PDM, or Poetry without rewriting
+        metadata configuration
+      - >-
+        Static metadata extraction without code execution — tools in
+        any language can parse the [project] table using a TOML parser,
+        enabling faster and safer dependency resolution
+      - >-
+        Single canonical configuration file — pyproject.toml serves as
+        the one file for build system, project metadata, and tool
+        configuration, eliminating the setup.py + setup.cfg + MANIFEST.in
+        proliferation
+      - >-
+        Explicit dynamic/static distinction clarifies intent — tools
+        know which fields are trustworthy without invoking the build
+        backend, unlike setup.py where everything was potentially dynamic
+      - >-
+        Familiar field names with modern ergonomics — uses dependencies
+        instead of install_requires, aligning with how developers think
+        about their projects rather than setuptools internals
+      - >-
+        Ecosystem convergence — Flit, Hatch, PDM adopted immediately;
+        setuptools added support in v61; Poetry aligned in v2.0
+    cons:
+      - >-
+        The dynamic field's all-or-nothing rule creates friction for
+        projects needing partially dynamic metadata — a field cannot
+        have a static base with dynamic extension
+      - >-
+        Multi-year migration burden — 20 years of setup.py inertia
+        means millions of existing packages must eventually migrate,
+        creating a long tail of legacy configuration files
+      - >-
+        Poetry's delayed alignment (not until v2.0 in January 2025)
+        left a significant fraction of the ecosystem on proprietary
+        [tool.poetry] metadata for years after PEP 621 was finalized
+      - >-
+        TOML's limited expressiveness compared to Python code means
+        complex build logic (conditional dependencies, platform-specific
+        configuration) requires the dynamic escape hatch or tool-specific
+        [tool.*] sections
+    estimated_cost: medium
+    risk: low
+  - name: >-
+      Keep setup.py — maintain the status quo of executable
+      configuration scripts
+    description: |
+      Continue using `setup.py` as the primary configuration file for
+      Python packages. `setup.py` is a full Python script that invokes
+      `setuptools.setup()` with keyword arguments defining all project
+      metadata, build configuration, and installation logic in a single
+      executable file.
+
+      This approach had been the de facto standard since `distutils`
+      was added to the Python standard library in 2000, with
+      `setuptools` extending it from 2004 onward. By 2020, virtually
+      every Python package on PyPI was distributed with a `setup.py`.
+
+      ```python
+      # setup.py — the 20-year-old approach
+      from setuptools import setup, find_packages
+
+      setup(
+          name="my-package",
+          version="1.0.0",
+          description="A Python package",
+          author="Jane Developer",
+          author_email="jane@example.com",
+          packages=find_packages(),
+          install_requires=[
+              "requests>=2.25",
+              "click>=8.0",
+          ],
+          extras_require={
+              "test": ["pytest>=7.0"],
+          },
+          entry_points={
+              "console_scripts": [
+                  "my-cli=my_package.cli:main",
+              ],
+          },
+          classifiers=[
+              "Programming Language :: Python :: 3",
+              "License :: OSI Approved :: MIT License",
+          ],
+      )
+      ```
+
+      ```mermaid
+      graph TD
+          A["setup.py"] --> B{Execution required}
+          B --> C["Python interpreter\nruns setup.py"]
+          C --> D["setuptools.setup()\nextracts metadata"]
+
+          B --> E["❌ Arbitrary code\nexecution"]
+          B --> F["❌ Chicken-and-egg:\nneed setuptools\nto read setup.py"]
+          B --> G["❌ Only Python tools\ncan extract metadata"]
+
+          D --> H["✅ Full Python\nexpressiveness"]
+          D --> I["✅ 20 years of\necosystem support"]
+
+          style E fill:#f66,stroke:#333,color:#000
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#2d8,stroke:#333,color:#000
+          style I fill:#2d8,stroke:#333,color:#000
+      ```
+
+      **Evolution timeline of setup.py:**
+
+      | Date | Milestone | Significance |
+      |------|-----------|--------------|
+      | 1998 | distutils created | Greg Ward creates the first Python build system |
+      | 2000 | Python 1.6 | distutils added to the standard library |
+      | 2004 | setuptools released | Phillip Eby extends distutils with dependency management |
+      | 2008 | pip created | Modern installer replaces easy_install |
+      | 2012 | Wheel format (PEP 427) | Binary distribution format reduces need for setup.py execution |
+      | 2016 | PEP 518 | pyproject.toml introduced — the beginning of the end for setup.py |
+      | 2020 | PEP 632 | distutils deprecated in Python 3.10 |
+      | 2023 | Python 3.12 | distutils removed from standard library |
+    pros:
+      - >-
+        Maximum flexibility — full Python expressiveness allows computed
+        metadata, conditional logic, platform detection, and complex
+        build orchestration in a single file
+      - >-
+        Universal ecosystem support — every Python packaging tool,
+        tutorial, and CI/CD pipeline has supported setup.py for 20 years
+      - Zero migration cost — the entire existing ecosystem already
+        uses this approach
+    cons:
+      - >-
+        Requires executing arbitrary Python code to extract metadata —
+        a fundamental supply chain security vulnerability exploited
+        through typosquatting and malicious packages on PyPI
+      - >-
+        Chicken-and-egg dependency problem — setup.py cannot be read
+        without installing its build dependencies, but the dependencies
+        are declared inside the file that requires them to run
+      - >-
+        Tightly coupled to setuptools — pip hardcodes setuptools as the
+        default build tool, preventing alternative build backends from
+        gaining traction without friction
+      - >-
+        Non-portable metadata — only Python tools can parse setup.py,
+        preventing cross-language tooling for dependency analysis,
+        security scanning, and IDE integration
+    estimated_cost: low
+    risk: high
+    rejection_rationale: >
+      setup.py's fundamental design flaw — requiring arbitrary code
+      execution to extract basic metadata — made it a persistent
+      supply chain security risk. The chicken-and-egg problem where
+      build dependencies could not be determined without first
+      executing the file led pip to hardcode setuptools as the default,
+      creating an anticompetitive bottleneck that prevented alternative
+      build tools from emerging. As Brett Cannon documented in PEP 518,
+      setuptools' setup_requires mechanism had "numerous issues" and
+      led to "increasingly complex machinations." The packaging
+      community's 20 years of experience with setup.py demonstrated
+      that executable configuration files are fundamentally the wrong
+      abstraction for declaring project identity — metadata should
+      be data, not code.
+  - name: >-
+      Declarative setup.cfg only — extend the existing INI-based
+      configuration system
+    description: |
+      Expand `setup.cfg` to serve as the sole declarative metadata
+      file, completely replacing the need for `setup.py` code. By
+      2020, setuptools already supported reading most metadata from
+      `setup.cfg` in an INI-like format, reducing the amount of
+      Python code needed in `setup.py`.
+
+      ```ini
+      # setup.cfg — declarative metadata in INI format
+      [metadata]
+      name = my-package
+      version = 1.0.0
+      description = A Python package
+      author = Jane Developer
+      author_email = jane@example.com
+      license = MIT
+
+      [options]
+      packages = find:
+      install_requires =
+          requests>=2.25
+          click>=8.0
+
+      [options.extras_require]
+      test =
+          pytest>=7.0
+
+      [options.entry_points]
+      console_scripts =
+          my-cli = my_package.cli:main
+      ```
+
+      ```mermaid
+      graph TD
+          A["setup.cfg\n(INI format)"] --> B{Assessment}
+          B --> C["✅ Declarative —\nno code execution"]
+          B --> D["✅ Already supported\nby setuptools"]
+          B --> E["❌ Tightly coupled\nto setuptools"]
+          B --> F["❌ INI format lacks\nrich data structures"]
+          B --> G["❌ No formal\nspecification"]
+          B --> H["❌ configparser\nversioning issues"]
+
+          style C fill:#2d8,stroke:#333,color:#000
+          style D fill:#2d8,stroke:#333,color:#000
+          style E fill:#f66,stroke:#333,color:#000
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Declarative format — metadata can be read without executing
+        Python code, solving the security concern
+      - Already supported by setuptools — no new tooling needed for
+        existing projects, minimizing migration effort
+      - Familiar to Python developers — many projects already used
+        partial setup.cfg declarations alongside setup.py
+    cons:
+      - >-
+        Tightly coupled to setuptools — setup.cfg's schema is defined
+        by setuptools, not by a cross-tool standard, making it
+        impossible for alternative build backends to reliably consume
+      - >-
+        INI format limitations — no native support for nested data
+        structures, arrays, or typed values; configparser treats
+        everything as strings, making dependency specifications
+        error-prone
+      - >-
+        No formal specification — the schema for setup.cfg was never
+        rigorously defined, leading to differences between Python 2
+        and Python 3 configparser implementations and version skew
+        across tools
+      - >-
+        Still required a minimal setup.py — even with setup.cfg
+        handling metadata, a setup.py stub was often needed to invoke
+        the build, perpetuating the chicken-and-egg problem
+    estimated_cost: low
+    risk: medium
+    rejection_rationale: >
+      setup.cfg solved the "code execution for metadata" problem but
+      remained fundamentally coupled to setuptools. As PEP 518 noted,
+      "the schema for that file has never been rigorously defined and
+      thus it's unknown which format would be safe to use going
+      forward." The INI format's inability to express rich data
+      structures (nested tables, typed arrays) made it awkward for
+      complex metadata like optional-dependencies. Most critically,
+      setup.cfg was a setuptools-specific format — standardizing on
+      it would have enshrined setuptools' monopoly rather than
+      enabling tool-agnostic metadata that any build backend could
+      consume. The goal of PEP 621 was exactly this decoupling:
+      separating project identity from build tool choice.
+  - name: >-
+      Tool-specific pyproject.toml sections — each tool defines its
+      own [tool.*] metadata schema
+    description: |
+      Continue the pattern where each build tool defines its own
+      metadata section under `[tool.*]` in `pyproject.toml`. By 2020,
+      this was already the *de facto* approach: Poetry used
+      `[tool.poetry]`, Flit used `[tool.flit.metadata]`, and other
+      tools had their own schemas.
+
+      PEP 518 explicitly reserved the `[tool]` namespace for build
+      tools, making this a sanctioned approach. Under this alternative,
+      there would be no standardized `[project]` table — each tool
+      would continue to innovate independently.
+
+      ```toml
+      # Poetry's proprietary format
+      [tool.poetry]
+      name = "my-package"
+      version = "1.0.0"
+      description = "A Python package"
+      authors = ["Jane Developer <jane@example.com>"]
+
+      [tool.poetry.dependencies]
+      python = "^3.8"
+      requests = "^2.25"
+      click = "^8.0"
+      ```
+
+      ```toml
+      # Flit's proprietary format — different structure
+      [tool.flit.metadata]
+      module = "my_package"
+      author = "Jane Developer"
+      author-email = "jane@example.com"
+
+      [tool.flit.metadata.requires]
+      requests = ">=2.25"
+      ```
+
+      ```mermaid
+      graph TD
+          A["pyproject.toml"] --> B["[tool.poetry]"]
+          A --> C["[tool.flit.metadata]"]
+          A --> D["[tool.pdm]"]
+          A --> E["[tool.hatch]"]
+
+          B --> F["Poetry schema"]
+          C --> G["Flit schema"]
+          D --> H["PDM schema"]
+          E --> I["Hatch schema"]
+
+          F --> J["❌ Incompatible with\neach other"]
+          G --> J
+          H --> J
+          I --> J
+
+          J --> K["❌ Switching tools\nrequires rewriting\nmetadata"]
+
+          style J fill:#f66,stroke:#333,color:#000
+          style K fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Maximum tool innovation — each build tool can design the most
+        ergonomic metadata schema for its specific workflow without
+        compromise
+      - No standards process overhead — tools can iterate on their
+        metadata format independently, shipping improvements without
+        waiting for PEP approval
+      - Already implemented and working — Poetry, Flit, PDM, and Hatch
+        already had functioning tool-specific metadata sections by 2020
+    cons:
+      - >-
+        Complete vendor lock-in — a project's metadata is written in
+        a tool-specific format, making migration to a different build
+        backend require full metadata rewriting
+      - >-
+        No cross-tool interoperability — pip, PyPI, IDEs, and security
+        scanners cannot extract metadata without understanding every
+        tool's proprietary schema
+      - >-
+        Ecosystem fragmentation worsens over time — as new tools emerge,
+        each adds another incompatible metadata format, increasing the
+        learning burden for developers
+      - >-
+        Duplicated innovation — every tool independently solves the
+        same metadata representation problems (dependency specification,
+        version constraints, entry points) with slightly different
+        syntax
+    estimated_cost: low
+    risk: high
+    rejection_rationale: >
+      Tool-specific metadata sections perpetuated the fragmentation
+      that motivated PEP 621 in the first place. While PEP 518
+      reserved the [tool] namespace for build-tool-specific
+      configuration, using it for *project metadata* — the identity
+      of the project itself — created vendor lock-in. The PEP 621
+      authors' design rationale explicitly stated the goal of
+      providing "a tool-agnostic way of specifying metadata for ease
+      of learning and transitioning between build back-ends." Without
+      a standard [project] table, every tool would continue inventing
+      slightly different ways to express the same information, and
+      switching tools would remain needlessly painful. The standard
+      [project] table complements tool-specific [tool.*] sections:
+      common metadata goes in [project], tool-specific build config
+      goes in [tool.*].
+  - name: >-
+      Alternative file formats — use YAML, JSON, or INI instead
+      of TOML for project configuration
+    description: |
+      Choose a different serialization format instead of TOML for
+      `pyproject.toml`. PEP 518 extensively evaluated multiple file
+      formats before selecting TOML, considering JSON, YAML,
+      configparser (INI), and Python literals.
+
+      Each format had distinct tradeoffs:
+
+      **JSON** was rejected because, while universally understood,
+      it does not support comments — a critical shortcoming for a
+      configuration file that developers need to annotate. The syntax
+      is also more verbose than necessary for human editing.
+
+      **YAML** was rejected for three reasons: (1) the specification
+      is 86 pages long, creating the risk that parsers implement
+      different subsets; (2) YAML is "not safe by default" — the
+      specification allows arbitrary code execution, ironic given
+      the security motivation for moving away from setup.py; and
+      (3) the most popular Python YAML library (PyYAML) is thousands
+      of lines of code, making it difficult to vendor into pip.
+
+      **configparser (INI)** was rejected because there is no formal
+      specification — what Python 2's ConfigParser accepts differs
+      from Python 3's configparser, and there is no guarantee of
+      cross-version consistency.
+
+      **Python literals** (parsed via `ast.literal_eval()`) were
+      considered but rejected as a Python-specific format that
+      non-Python tools could not consume.
+
+      ```mermaid
+      graph TD
+          A{Format selection} --> B["JSON"]
+          A --> C["YAML"]
+          A --> D["INI (configparser)"]
+          A --> E["Python literals"]
+          A --> F["TOML"]
+
+          B --> G["❌ No comments"]
+          C --> H["❌ 86-page spec<br/>❌ Unsafe by default<br/>❌ Large parser"]
+          D --> I["❌ No specification<br/>❌ No nested types"]
+          E --> J["❌ Python-only"]
+          F --> K["✅ Human-readable<br/>✅ Comments<br/>✅ Typed values<br/>✅ ~300 line parser"]
+
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+          style J fill:#f66,stroke:#333,color:#000
+          style K fill:#2d8,stroke:#333,color:#000
+      ```
+
+      | Format | Comments | Typed Values | Spec Size | Python Parser Size | Safe by Default |
+      |--------|:--------:|:------------:|:---------:|:------------------:|:---------------:|
+      | TOML | ✅ | ✅ | Compact | ~300 lines | ✅ |
+      | JSON | ❌ | ✅ | Compact | stdlib | ✅ |
+      | YAML | ✅ | ✅ | 86 pages | ~5000 lines | ❌ |
+      | INI | ✅ | ❌ | None | stdlib | ✅ |
+      | Python literals | ✅ | ✅ | N/A | stdlib | ✅ |
+    pros:
+      - YAML and JSON are more widely known than TOML — lower learning
+        curve for developers coming from web development ecosystems
+      - JSON has universal parser support in every programming language
+        with zero extra dependencies
+      - INI format uses Python's stdlib configparser — no external
+        dependency needed
+    cons:
+      - >-
+        JSON lacks comment support — configuration files require
+        annotations for developer communication, and JSON provides
+        no mechanism for inline documentation
+      - >-
+        YAML's specification is 86 pages long with implicit typing
+        rules that cause surprising behavior — a format designed to
+        eliminate security risks from setup.py should not introduce
+        new ones through YAML's unsafe-by-default code execution
+      - >-
+        INI via configparser has no formal specification and
+        inconsistent behavior across Python versions — a packaging
+        standard cannot be built on an unspecified foundation
+      - >-
+        TOML was already chosen by PEP 518 for pyproject.toml — using
+        a different format for project metadata in the same file is
+        impossible, and creating a separate file would fragment
+        configuration across multiple files
+    estimated_cost: low
+    risk: medium
+    rejection_rationale: >
+      The file format question was settled by PEP 518 in 2016 when
+      TOML was chosen for pyproject.toml after extensive evaluation.
+      PEP 621 did not revisit this decision — it built upon the
+      established TOML foundation. JSON's lack of comments made it
+      unsuitable for human-edited configuration. YAML's unsafe-by-default
+      specification was ironic given that PEP 621's primary motivation
+      was eliminating arbitrary code execution from metadata extraction.
+      TOML's compact specification, support for comments and typed
+      values, and ability to be implemented in approximately 300 lines
+      of pure Python (pytoml) made it the pragmatic choice that
+      balanced human readability with machine parseability.
+decision:
+  chosen_alternative: >-
+    Standardized [project] table in pyproject.toml — PEP 621 with
+    static-first metadata and dynamic escape hatch
+  rationale: |
+    PEP 621 was chosen because it uniquely solved the three
+    interconnected problems of the Python packaging ecosystem:
+
+    1. **Tool-agnostic metadata eliminates vendor lock-in**: By
+       defining a standard `[project]` table that all build tools
+       read, PEP 621 decoupled project identity from build tool
+       choice. A project can declare its name, version, and
+       dependencies once in `[project]` and switch between
+       setuptools, Flit, Hatch, PDM, or Poetry by only changing
+       the `[build-system]` table. This was the explicit design
+       goal: "a tool-agnostic way of specifying metadata for ease
+       of learning and transitioning between build back-ends."
+
+    2. **Static-first design eliminates code execution for metadata
+       extraction**: Unlike `setup.py`, which required executing
+       arbitrary Python to determine even a package's name, PEP 621
+       metadata is pure TOML data that any parser in any language
+       can read. This enables pip, PyPI, IDEs, and security scanners
+       to extract metadata without running code — a fundamental
+       security improvement.
+
+    3. **The `dynamic` field provides a principled escape hatch**:
+       Rather than requiring everything to be static (which would
+       break projects using VCS-based versioning), PEP 621 introduced
+       an explicit opt-in mechanism. Projects must list which fields
+       are dynamic, making it clear to tools which metadata is
+       trustworthy without invoking the build backend. This "static
+       by default, dynamic by exception" approach was the key
+       design insight.
+
+    4. **Building on PEP 518 and PEP 517 foundations**: PEP 621
+       completed the pyproject.toml vision by adding the missing
+       project metadata layer on top of PEP 518's build requirements
+       and PEP 517's backend interface. The final architecture
+       gives each file section a clear purpose: `[build-system]`
+       for build deps, `[project]` for metadata, `[tool.*]` for
+       tool-specific config.
+
+    5. **Ecosystem convergence validated the design**: Flit, Hatch,
+       PDM, and maturin adopted PEP 621 immediately. Setuptools
+       added full support in v61.0.0 (March 2022). Poetry, the
+       most prominent holdout, finally adopted PEP 621 in v2.0
+       (January 2025). This gradual but comprehensive adoption
+       confirmed that the standard served diverse tool philosophies.
+  tradeoffs: |
+    - **`dynamic` field's all-or-nothing rigidity accepted** because
+      the strict separation between static and dynamic metadata
+      enables tooling to know which fields are trustworthy without
+      invoking the build backend. The alternative — allowing
+      "partially dynamic" fields where a static base could be
+      extended dynamically — was considered too complex and
+      ambiguous. Community requests for partial-dynamic support
+      continue, but the original design prioritized clarity over
+      flexibility.
+
+    - **Multi-year migration burden accepted** because the adoption
+      was designed to be fully opt-in. Existing `setup.py` and
+      `setup.cfg` files continued to work unchanged. The migration
+      cost was spread across the ecosystem over years, with each
+      tool adding PEP 621 support on its own timeline.
+
+    - **TOML's limited expressiveness compared to Python accepted**
+      because the constraint was the point. Complex build logic
+      that required Python code belonged in the build backend,
+      not in the metadata declaration. The separation of concerns
+      — static metadata in `[project]`, dynamic computation in
+      the build backend — was a deliberate architectural boundary.
+  decision_date: "2020-11-15"
+  confidence: high
+consequences:
+  positive:
+    - >-
+      Projects can switch build backends by changing only [build-system] —
+      metadata in [project] is portable across setuptools, Flit, Hatch,
+      PDM, and Poetry
+    - >-
+      Package metadata is extractable without code execution — pip, PyPI,
+      and security scanners parse TOML directly for static fields
+    - >-
+      Single pyproject.toml replaces the setup.py + setup.cfg + MANIFEST.in
+      file proliferation that every Python project maintained for decades
+    - >-
+      Ecosystem convergence accelerated — all major build tools support
+      PEP 621, reducing the learning curve for new Python developers
+  negative:
+    - >-
+      The dynamic field's strictness creates friction for projects needing
+      hybrid static-dynamic metadata, spawning ongoing community debate
+      about relaxing the all-or-nothing rule
+    - >-
+      Poetry's delayed adoption (v2.0, January 2025) left the largest
+      alternative package manager on proprietary metadata format for
+      four years after PEP 621 was finalized
+    - >-
+      Migration from setup.py remains incomplete for legacy packages —
+      many older PyPI packages still use executable configuration, leaving
+      the security benefit partially unrealized
+confirmation:
+  description: |
+    PEP 621 has been implemented and adopted across the Python
+    packaging ecosystem:
+
+    **Standards acceptance:**
+    - **November 2020:** PEP 621 accepted (provisional) by PEP
+      delegate Paul Moore
+    - **March 2021:** PEP 621 declared Final — specification locked
+
+    **Build tool adoption:**
+    - **Flit, Hatch, PDM, maturin:** Immediate adoption of [project]
+      table upon PEP 621 finalization
+    - **March 2022:** setuptools 61.0.0 adds full pyproject.toml
+      metadata support — the dominant build tool now reads [project]
+    - **January 2023:** pip implements PEP 621 support for metadata
+      extraction
+    - **January 2025:** Poetry 2.0 adds PEP 621 [project] table
+      support — the last major holdout aligns
+
+    **Ecosystem metric:**
+    - By 2023, the majority of new PyPI packages used pyproject.toml
+      with [project] metadata rather than setup.py
+  artifact_ids:
+    - "https://peps.python.org/pep-0621/"
+    - "https://peps.python.org/pep-0518/"
+    - "https://peps.python.org/pep-0517/"
+    - "https://packaging.python.org/en/latest/guides/writing-pyproject-toml/"
+dependencies:
+  internal:
+    - >-
+      PEP 518 (pyproject.toml file) — established pyproject.toml as
+      the canonical configuration file for Python projects, providing
+      the foundation that PEP 621 builds upon for project metadata
+    - >-
+      PEP 517 (build backend interface) — standardized the build
+      backend API that PEP 621's dynamic field delegates to for
+      computed metadata, decoupling build frontends from backends
+    - >-
+      Core metadata specification — PEP 621 maps directly to the
+      existing core metadata fields, ensuring compatibility with
+      PyPI and other packaging infrastructure
+  external:
+    - >-
+      TOML specification — the file format chosen by PEP 518 that
+      PEP 621 inherits, providing human-readable configuration with
+      comments, typed values, and a compact parser implementation
+references:
+  - title: >-
+      PEP 621 — Storing project metadata in pyproject.toml
+    url: "https://peps.python.org/pep-0621/"
+  - title: >-
+      PEP 518 — Specifying Minimum Build System Requirements for
+      Python Projects
+    url: "https://peps.python.org/pep-0518/"
+  - title: >-
+      PEP 517 — A build-system independent format for source trees
+    url: "https://peps.python.org/pep-0517/"
+  - title: >-
+      Python Packaging User Guide — Writing pyproject.toml
+    url: "https://packaging.python.org/en/latest/guides/writing-pyproject-toml/"
+  - title: >-
+      PEP 632 — Deprecate distutils module
+    url: "https://peps.python.org/pep-0632/"
+lifecycle:
+  review_cycle_months: 18
+  next_review_date: "2022-05-15"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+audit_trail:
+  - event: created
+    by: Brett Cannon
+    at: "2020-06-29T00:00:00Z"
+    details: >-
+      PEP 621 created by Brett Cannon, Dustin Ingram, Paul Ganssle,
+      and Pradyun Gedam. Specified project metadata in pyproject.toml.
+  - event: approved
+    by: Paul Moore
+    at: "2020-11-15T00:00:00Z"
+    details: >-
+      PEP 621 accepted as provisional by PEP delegate Paul Moore.
+      Specification open for implementation feedback.
+  - event: updated
+    by: PEP Authors
+    at: "2021-03-01T00:00:00Z"
+    details: >-
+      PEP 621 declared Final. Specification locked — all core
+      metadata fields standardized in the [project] table.
+  - event: updated
+    by: setuptools maintainers
+    at: "2022-03-15T00:00:00Z"
+    details: >-
+      setuptools 61.0.0 released with full pyproject.toml metadata
+      support. The dominant build tool now reads [project] natively.
+  - event: updated
+    by: pip maintainers
+    at: "2023-01-15T00:00:00Z"
+    details: >-
+      pip implements PEP 621 support for metadata extraction.
+      The primary installer can now read [project] table directly.
