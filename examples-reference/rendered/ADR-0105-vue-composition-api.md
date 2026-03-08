@@ -8,7 +8,7 @@
 # ADR-0105-vue-composition-api: Introduce Composition API as an additive API for function-based component logic organization in Vue.js 3
 
 > **Status:** `accepted`  
-> **Priority:** `critical`  
+> **Priority:** `high`  
 > **Type:** `technology`  
 > **Level:** `tactical`  
 > **Confidence:** `high`  

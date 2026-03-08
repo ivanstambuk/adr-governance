@@ -383,22 +383,22 @@ graph LR
 
 ### Positive
 
-- 10x faster command-line type-checking for all TypeScript projects
-- 8x faster editor startup time for large codebases
-- ~50% memory reduction with further optimization potential
-- Enables previously infeasible features — instant project-wide error listings, advanced refactorings, deeper semantic analysis
-- Enables next-generation AI tools with tighter latency requirements
-- LSP adoption improves editor integration and standardization
-- Single static binary distribution simplifies installation and deployment
-- Go's goroutines enable future parallelization of type-checking passes
+- 10x faster command-line type-checking measured on real codebases — VS Code 1.5M-line codebase drops from 77.8 seconds to 7.5 seconds
+- 8x faster editor startup time for large codebases eliminates the multi-second wait that caused developers to disable project-wide error checking
+- Approximately 50% memory reduction with further optimization potential as the Go implementation matures beyond the initial port
+- Enables previously infeasible features — instant project-wide error listings, advanced refactorings, and deeper semantic analysis become practical at scale
+- Enables next-generation AI-powered development tools that require sub-second latency for semantic type information across entire codebases
+- LSP adoption replaces the custom tsserver protocol, improving cross-editor integration and standardizing the language service interface
+- Single static binary distribution simplifies installation and deployment, eliminating the Node.js runtime dependency for end users
+- Go's goroutines enable future parallelization of type-checking passes, unlocking additional speedups on multi-core hardware
 
 ### Negative
 
-- TypeScript is no longer self-hosted — the most important TypeScript tool is written in Go
-- Community contributors must learn Go to contribute to the compiler
-- npm ecosystem tools depending on TypeScript's JavaScript API must migrate
-- Multi-year transition period with parallel TypeScript 6/7 maintenance
-- In-browser TypeScript tooling (playgrounds, online IDEs) may see degraded performance due to Go's WebAssembly characteristics
+- TypeScript is no longer self-hosted — the most important TypeScript tool is written in Go, breaking the "dogfooding" feedback loop
+- Community contributors must learn Go to contribute to the compiler, narrowing the contributor pool from the broader TypeScript community
+- npm ecosystem tools depending on TypeScript's JavaScript compiler API must migrate to the new native interface during the transition period
+- Multi-year transition period with parallel TypeScript 6 and 7 maintenance doubles the team's release engineering and bug-fix workload
+- In-browser TypeScript tooling (playgrounds, online IDEs) may see degraded performance due to Go's suboptimal WebAssembly compilation characteristics
 
 ## Confirmation
 
@@ -422,6 +422,15 @@ The TypeScript Go port is published at github.com/microsoft/typescript-go under 
 - Go compiler toolchain (for building the native TypeScript compiler)
 - Language Server Protocol (LSP) specification
 - Node.js runtime (for TypeScript 6.x during transition)
+
+## References
+
+- ["A 10x Faster TypeScript" — Anders Hejlsberg's announcement of the native Go port at Microsoft Developer Day (March 2025)](https://devblogs.microsoft.com/typescript/typescript-native-port/)
+- [TypeScript Go repository — the open-source native port of the TypeScript compiler to Go](https://github.com/microsoft/typescript-go)
+- [Ryan Dahl's "10 Things I Regret About Node.js" — JSConf EU 2018, referenced for context on JavaScript runtime limitations](https://www.youtube.com/watch?v=M3BM9TB-8yA)
+- [TypeScript GitHub repository — source code and issue tracker for the JavaScript-based TypeScript compiler](https://github.com/microsoft/TypeScript)
+- [Anders Hejlsberg's interview on the Go port decision — detailed rationale for Go over Rust, C#, and hybrid approaches](https://www.youtube.com/watch?v=pNlq-EVld70)
+- [TypeScript roadmap — official plan for TypeScript 6.x/7.x parallel development and transition timeline](https://github.com/microsoft/TypeScript/wiki/Roadmap)
 
 ## Lifecycle
 

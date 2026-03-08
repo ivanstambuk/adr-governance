@@ -11,7 +11,7 @@
 > **Priority:** `critical`  
 > **Type:** `technology`  
 > **Level:** `strategic`  
-> **Confidence:** `high`  
+> **Confidence:** `medium`  
 > **Decision Owner:** React Core Team (Meta) (Framework Architecture Team)  
 > **Decision Date:** 2020-12-21
 
@@ -548,8 +548,8 @@ integrated with Relay for data fetching at massive scale.
 
 ## Lifecycle
 
-- **Review cycle:** 60 months
-- **Next review:** 2025-12-21
+- **Review cycle:** 36 months
+- **Next review:** 2023-12-21
 
 ## Audit Trail
 

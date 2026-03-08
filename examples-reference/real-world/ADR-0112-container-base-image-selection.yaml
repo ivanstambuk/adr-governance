@@ -1011,8 +1011,8 @@ references:
       open-sourced under Apache 2.0
     url: "https://www.docker.com/blog/docker-hardened-images-free-open-source/"
 lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2021-08-01"
+  review_cycle_months: 18
+  next_review_date: "2022-02-01"
   superseded_by: null
   supersedes: null
   archival:

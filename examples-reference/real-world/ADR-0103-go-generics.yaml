@@ -31,6 +31,8 @@ adr:
     - parametric-polymorphism
     - interface-constraints
     - simplicity
+    - go
+    - backward-compatibility
   priority: critical
   decision_type: technology
   decision_level: strategic

@@ -35,7 +35,7 @@ adr:
     - typescript
     - api-design
     - frontend-framework
-  priority: critical
+  priority: high
   decision_type: technology
   decision_level: tactical
 authors:

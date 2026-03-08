@@ -8,7 +8,7 @@
 # ADR-0106-eslint-flat-config: Replace the eslintrc configuration system with flat config (eslint.config.js) using native JavaScript module loading
 
 > **Status:** `accepted`  
-> **Priority:** `critical`  
+> **Priority:** `high`  
 > **Type:** `technology`  
 > **Level:** `tactical`  
 > **Confidence:** `high`  

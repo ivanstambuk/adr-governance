@@ -752,8 +752,8 @@ broad industry adoption and measurable security outcomes:
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2021-08-01
+- **Review cycle:** 18 months
+- **Next review:** 2022-02-01
 
 ## Audit Trail
 

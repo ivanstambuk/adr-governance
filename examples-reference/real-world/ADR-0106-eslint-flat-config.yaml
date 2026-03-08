@@ -36,7 +36,7 @@ adr:
     - developer-experience
     - linting
     - migration
-  priority: critical
+  priority: high
   decision_type: technology
   decision_level: tactical
 authors:

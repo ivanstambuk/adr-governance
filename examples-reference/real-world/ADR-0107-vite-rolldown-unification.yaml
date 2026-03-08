@@ -1068,7 +1068,7 @@ decision:
       at scale. The full-bundle dev mode enabled by Rolldown's speed
       offers a better scaling path while maintaining HMR on ESM output.
   decision_date: "2025-06-24"
-  confidence: high
+  confidence: medium
 consequences:
   positive:
     - >-
@@ -1228,8 +1228,8 @@ references:
   - title: Oxc Toolchain — High-Performance JavaScript Tools
     url: "https://oxc.rs"
 lifecycle:
-  review_cycle_months: 24
-  next_review_date: "2027-06-24"
+  review_cycle_months: 18
+  next_review_date: "2026-12-24"
   superseded_by: null
   supersedes: null
   archival:

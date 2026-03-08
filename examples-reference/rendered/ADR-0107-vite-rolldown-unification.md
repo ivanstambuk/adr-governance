@@ -11,7 +11,7 @@
 > **Priority:** `high`  
 > **Type:** `technology`  
 > **Level:** `tactical`  
-> **Confidence:** `high`  
+> **Confidence:** `medium`  
 > **Decision Owner:** Evan You (Vite Creator and VoidZero CEO)  
 > **Decision Date:** 2025-06-24
 
@@ -866,8 +866,8 @@ confirming the decision's viability and adoption trajectory:
 
 ## Lifecycle
 
-- **Review cycle:** 24 months
-- **Next review:** 2027-06-24
+- **Review cycle:** 18 months
+- **Next review:** 2026-12-24
 
 ## Audit Trail
 

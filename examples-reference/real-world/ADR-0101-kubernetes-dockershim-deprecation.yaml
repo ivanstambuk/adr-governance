@@ -31,6 +31,8 @@ adr:
     - decoupling
     - interface-standardization
     - deprecation
+    - kubernetes
+    - cloud-native
   priority: critical
   decision_type: technology
   decision_level: strategic

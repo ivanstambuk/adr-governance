@@ -593,7 +593,7 @@ decision:
       benefits of zero-bundle-size rendering are most impactful for the
       applications that warrant server infrastructure
   decision_date: "2020-12-21"
-  confidence: high
+  confidence: medium
 consequences:
   positive:
     - Non-interactive components contribute zero bytes to client bundles —
@@ -680,8 +680,8 @@ references:
   - title: "Josh W. Comeau: Making Sense of React Server Components"
     url: "https://www.joshwcomeau.com/react/server-components/"
 lifecycle:
-  review_cycle_months: 60
-  next_review_date: "2025-12-21"
+  review_cycle_months: 36
+  next_review_date: "2023-12-21"
   superseded_by: null
   supersedes: null
   archival:
