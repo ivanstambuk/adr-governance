@@ -54,7 +54,7 @@ class ToolOutputTests(unittest.TestCase):
         )
         payload = json.loads(result.stdout)
 
-        self.assertEqual(payload["count"], 6)
+        self.assertEqual(payload["count"], 21)
         first = payload["active_decisions"][0]
         self.assertEqual(first["id"], "ADR-0001-dpop-over-mtls-for-sender-constrained-tokens")
         self.assertIn("chosen_alternative", first)

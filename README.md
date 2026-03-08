@@ -190,7 +190,7 @@ By default, the shipped validation flow validates `architecture-decision-log/` a
 - Replace the `authors`, `decision_owner`, `reviewers`, and `approvals` names and identities
 - Update `adr.project` to your project or organisation name
 - Update timestamps and audit trail entries
-- Adjust the `context.summary` if your adoption rationale differs
+- Adjust the `context.description` if your adoption rationale differs
 
 #### 4. Set up CI
 
@@ -278,10 +278,10 @@ Each ADR YAML file captures a single **architecturally significant** decision �
 
 | Section | Required | Description |
 |---------|:--------:|-------------|
-| `adr` | ✅ | ID, title, status, summary, timestamps, project, tags, priority, decision type, schema version |
+| `adr` | ✅ | ID, title, status, Y-Statement, timestamps, project, tags, priority, decision type, decision level (`strategic` / `tactical` / `operational`), schema version |
 | `authors` | ✅ | Who drafted the ADR |
 | `decision_owner` | ✅ | Single accountable person |
-| `context` | ✅ | Problem summary (Markdown), business/technical drivers, constraints |
+| `context` | ✅ | Problem description (Markdown), business/technical drivers, constraints, assumptions |
 | `alternatives` | ✅ | ≥2 alternatives with description (Markdown), pros, cons, cost, risk, rejection rationale |
 | `decision` | ✅ | Chosen alternative, rationale (Markdown), tradeoffs (Markdown), date, confidence |
 | `consequences` | ✅ | Positive and negative outcomes |
@@ -294,6 +294,8 @@ Each ADR YAML file captures a single **architecturally significant** decision �
 | `lifecycle` | | Review cadence, supersession chain, archival |
 | `audit_trail` | | Immutable append-only event log |
 
+> **Y-Statement** — the `adr.y_statement` field captures the full decision in a single sentence using the 7-clause Zimmermann/Fairbanks format: *"In the context of…, facing…, we decided for… and neglected…, to achieve…, accepting…, because…"*. Optional for `draft`/`proposed`; mandatory for `accepted` ADRs. Target length: 100–150 words.
+>
 > **Markdown-native fields** support full Markdown including embedded Mermaid diagrams via code fences. Use YAML literal block scalars (`|`) for multiline content.
 
 ## CI/CD Setup
@@ -333,32 +335,96 @@ The [`examples-reference/`](examples-reference/) directory contains example ADRs
 
 Interconnected ADRs from a **fictional** IAM department at NovaTrust Financial Services. These are **not real decisions** — they demonstrate the meta-model at production quality. Use them as a reference for style, depth, and interconnection:
 
-| ID | Title | Status | Rendered | Source |
-|----|-------|--------|:--------:|:------:|
-| ADR-0001 | Use DPoP over mTLS for Sender-Constrained Tokens | accepted | [Markdown](examples-reference/rendered/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.md) | [YAML](examples-reference/fictional/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml) |
-| ADR-0002 | Use Reference Tokens over JWTs for Gateway Introspection | accepted | [Markdown](examples-reference/rendered/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.md) | [YAML](examples-reference/fictional/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml) |
-| ADR-0003 | Use Pairwise Subject Identifiers for OIDC Relying Parties | accepted | [Markdown](examples-reference/rendered/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.md) | [YAML](examples-reference/fictional/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml) |
-| ADR-0004 | Use Ed25519 over RSA-2048 for JWT Signing Keys | accepted | [Markdown](examples-reference/rendered/ADR-0004-ed25519-over-rsa-for-jwt-signing.md) | [YAML](examples-reference/fictional/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml) |
-| ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | accepted | [Markdown](examples-reference/rendered/ADR-0005-bff-token-mediator-for-spa-token-acquisition.md) | [YAML](examples-reference/fictional/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml) |
-| ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | accepted | [Markdown](examples-reference/rendered/ADR-0006-session-enrichment-for-step-up-authentication.md) | [YAML](examples-reference/fictional/ADR-0006-session-enrichment-for-step-up-authentication.yaml) |
-| ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | **rejected** | [Markdown](examples-reference/rendered/ADR-0007-centralized-secret-store-for-api-keys.md) | [YAML](examples-reference/fictional/ADR-0007-centralized-secret-store-for-api-keys.yaml) |
-| ADR-0008 | Defer OpenID Federation for Automated Trust Establishment | **deferred** | [Markdown](examples-reference/rendered/ADR-0008-defer-openid-federation-for-trust-establishment.md) | [YAML](examples-reference/fictional/ADR-0008-defer-openid-federation-for-trust-establishment.yaml) |
+| ID | Decision | Rendered | Source |
+|----|----------|:--------:|:------:|
+| ADR-0001 | Use DPoP over mTLS for Sender-Constrained Tokens | [Markdown](examples-reference/rendered/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.md) | [YAML](examples-reference/fictional/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml) |
+| ADR-0002 | Use Reference Tokens over JWTs for Gateway Introspection | [Markdown](examples-reference/rendered/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.md) | [YAML](examples-reference/fictional/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml) |
+| ADR-0003 | Use Pairwise Subject Identifiers for OIDC Relying Parties | [Markdown](examples-reference/rendered/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.md) | [YAML](examples-reference/fictional/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml) |
+| ADR-0004 | Use Ed25519 over RSA-2048 for JWT Signing Keys | [Markdown](examples-reference/rendered/ADR-0004-ed25519-over-rsa-for-jwt-signing.md) | [YAML](examples-reference/fictional/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml) |
+| ADR-0005 | Use BFF Token Mediator for SPA Token Acquisition | [Markdown](examples-reference/rendered/ADR-0005-bff-token-mediator-for-spa-token-acquisition.md) | [YAML](examples-reference/fictional/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml) |
+| ADR-0006 | Use Session Enrichment for Step-Up Authentication Proof | [Markdown](examples-reference/rendered/ADR-0006-session-enrichment-for-step-up-authentication.md) | [YAML](examples-reference/fictional/ADR-0006-session-enrichment-for-step-up-authentication.yaml) |
+| ADR-0007 | Reject Centralized HashiCorp Vault for API Runtime Secrets | [Markdown](examples-reference/rendered/ADR-0007-centralized-secret-store-for-api-keys.md) | [YAML](examples-reference/fictional/ADR-0007-centralized-secret-store-for-api-keys.yaml) |
+| ADR-0008 | Defer OpenID Federation for Automated Trust Establishment | [Markdown](examples-reference/rendered/ADR-0008-defer-openid-federation-for-trust-establishment.md) | [YAML](examples-reference/fictional/ADR-0008-defer-openid-federation-for-trust-establishment.yaml) |
 
 ### Real-World Examples
 
-Reverse-engineered ADRs from prominent open-source projects. These reconstruct real architectural decisions using publicly available design documents, RFCs, and community discussions:
+Reverse-engineered ADRs from prominent open-source projects. These reconstruct real architectural decisions using publicly available design documents, RFCs, and community discussions, organized by decision level:
 
-| ID | Project | Decision | Level | Source |
-|----|---------|----------|:-----:|:------:|
-| ADR-0100 | TypeScript | Port compiler from TypeScript to Go | Strategic | [YAML](examples-reference/real-world/ADR-0100-typescript-compiler-go-rewrite.yaml) |
+#### Strategic Decisions (ADR-0100 – ADR-0104)
 
-*More real-world examples across strategic, tactical, and operational levels are in progress.*
+| ID | Project | Decision | Rendered | Source |
+|----|---------|----------|:--------:|:------:|
+| ADR-0100 | **TypeScript** | Rewrite compiler in Go | [Markdown](examples-reference/rendered/ADR-0100-typescript-compiler-go-rewrite.md) | [YAML](examples-reference/real-world/ADR-0100-typescript-compiler-go-rewrite.yaml) |
+| ADR-0101 | **Kubernetes** | Deprecate dockershim for CRI | [Markdown](examples-reference/rendered/ADR-0101-kubernetes-dockershim-deprecation.md) | [YAML](examples-reference/real-world/ADR-0101-kubernetes-dockershim-deprecation.yaml) |
+| ADR-0102 | **React** | Server Components (RFC 0188) | [Markdown](examples-reference/rendered/ADR-0102-react-server-components.md) | [YAML](examples-reference/real-world/ADR-0102-react-server-components.yaml) |
+| ADR-0103 | **Go** | Add generics via type parameters | [Markdown](examples-reference/rendered/ADR-0103-go-generics.md) | [YAML](examples-reference/real-world/ADR-0103-go-generics.yaml) |
+| ADR-0104 | **Rust** | Async/await with stackless coroutines | [Markdown](examples-reference/rendered/ADR-0104-rust-async-await.md) | [YAML](examples-reference/real-world/ADR-0104-rust-async-await.yaml) |
+
+#### Tactical Decisions (ADR-0105 – ADR-0109)
+
+| ID | Project | Decision | Rendered | Source |
+|----|---------|----------|:--------:|:------:|
+| ADR-0105 | **Vue.js** | Composition API (RFC-0013) | [Markdown](examples-reference/rendered/ADR-0105-vue-composition-api.md) | [YAML](examples-reference/real-world/ADR-0105-vue-composition-api.yaml) |
+| ADR-0106 | **ESLint** | Flat config system | [Markdown](examples-reference/rendered/ADR-0106-eslint-flat-config.md) | [YAML](examples-reference/real-world/ADR-0106-eslint-flat-config.yaml) |
+| ADR-0107 | **Vite** | Rolldown unification | [Markdown](examples-reference/rendered/ADR-0107-vite-rolldown-unification.md) | [YAML](examples-reference/real-world/ADR-0107-vite-rolldown-unification.yaml) |
+| ADR-0108 | **Svelte** | Runes reactivity system | [Markdown](examples-reference/rendered/ADR-0108-svelte-runes-reactivity.md) | [YAML](examples-reference/real-world/ADR-0108-svelte-runes-reactivity.yaml) |
+| ADR-0109 | **Next.js** | Turbopack adoption | [Markdown](examples-reference/rendered/ADR-0109-nextjs-turbopack-adoption.md) | [YAML](examples-reference/real-world/ADR-0109-nextjs-turbopack-adoption.yaml) |
+
+#### Operational Decisions (ADR-0110 – ADR-0114)
+
+| ID | Project | Decision | Rendered | Source |
+|----|---------|----------|:--------:|:------:|
+| ADR-0110 | **Node.js** | Built-in test runner | [Markdown](examples-reference/rendered/ADR-0110-nodejs-built-in-test-runner.md) | [YAML](examples-reference/real-world/ADR-0110-nodejs-built-in-test-runner.yaml) |
+| ADR-0111 | **Python** | pyproject.toml (PEP 621) | [Markdown](examples-reference/rendered/ADR-0111-python-pyproject-toml.md) | [YAML](examples-reference/real-world/ADR-0111-python-pyproject-toml.yaml) |
+| ADR-0112 | **Docker** | Container base image selection | [Markdown](examples-reference/rendered/ADR-0112-container-base-image-selection.md) | [YAML](examples-reference/real-world/ADR-0112-container-base-image-selection.yaml) |
+| ADR-0113 | **pnpm** | Content-addressable store | [Markdown](examples-reference/rendered/ADR-0113-pnpm-content-addressable-store.md) | [YAML](examples-reference/real-world/ADR-0113-pnpm-content-addressable-store.yaml) |
+| ADR-0114 | **Deno** | npm compatibility layer | [Markdown](examples-reference/rendered/ADR-0114-deno-npm-compatibility.md) | [YAML](examples-reference/real-world/ADR-0114-deno-npm-compatibility.yaml) |
 
 See the [rendered example index](examples-reference/rendered/architecture-decision-log.md) for a full overview, or [`examples-reference/README.md`](examples-reference/README.md) for details on each example.
 
 Additionally, [`architecture-decision-log/ADR-0000`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is a meta-ADR documenting the AD to adopt this governance process itself.
 
 > **Bootstrap exception:** ADR-0000 was self-approved by the initial author as the bootstrapping meta-decision. The "no self-approval" rule (§3.4) applies to all subsequent ADRs.
+
+## Automated Quality Testing (Triple-LLM Harness)
+
+The framework includes an automated testing harness ([`tests/llm_harness.py`](tests/llm_harness.py)) that validates ADR authoring quality by simulating realistic authoring conversations between three LLMs:
+
+| Role | Purpose | Model |
+|------|---------|-------|
+| **Interviewer** | Runs the Socratic ADR authoring dialogue | Gemini 2.5 Pro |
+| **User** | Plays a domain expert answering questions | Claude 3.5 Sonnet |
+| **Analyst** | Reviews the generated ADR for quality | Gemini 2.5 Pro |
+
+### How It Works
+
+1. A YAML **scenario** defines the decision context, persona, and expected coverage
+2. The **Interviewer** and **User** LLMs conduct a multi-turn ADR authoring conversation
+3. The resulting ADR YAML is **validated** against the schema and **reviewed** by the Analyst LLM
+4. Quality metrics are computed: schema compliance, field completeness, Y-Statement presence, ASR coverage
+
+### Running the Harness
+
+```bash
+# Install dependencies
+pip install google-genai anthropic pyyaml jsonschema
+
+# Run a single scenario
+python3 tests/llm_harness.py tests/scenarios/fictional-001-api-versioning.yaml
+
+# Run all scenarios (results go to tests/llm_runs/)
+python3 tests/llm_harness.py tests/scenarios/*.yaml
+```
+
+### Scenario Categories
+
+| Category | Description | Examples |
+|----------|-------------|---------|
+| **Fictional** | Synthetic decision contexts | API versioning, monolith decomposition, secrets management |
+| **GitHub PR-based** | Extracted from real PRs | *(planned)* |
+| **Existing ADR-based** | Round-trip validation against reference ADRs | *(planned)* |
+
+See [`docs/research/automated-triple-llm-testing.md`](docs/research/automated-triple-llm-testing.md) for the full design document.
 
 ## License
 

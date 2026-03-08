@@ -386,9 +386,10 @@ def main():
     files = []
     for target in args.targets:
         if os.path.isdir(target):
-            for f in sorted(os.listdir(target)):
-                if f.endswith((".yaml", ".yml")):
-                    files.append(os.path.join(target, f))
+            for dirpath, _, filenames in os.walk(target):
+                for f in sorted(filenames):
+                    if f.endswith((".yaml", ".yml")):
+                        files.append(os.path.join(dirpath, f))
         elif os.path.isfile(target):
             files.append(target)
         else:

@@ -524,7 +524,7 @@ governance:
     - "alternatives"
     - "consequences"
     - "approvals"
-    - "context.summary"
+    - "context.description"
 
   # Fields that become immutable once an ADR is already accepted
   immutable_after_acceptance_fields:

@@ -28,7 +28,7 @@ generated: ## Verify committed generated artifacts are current
 	bash scripts/check-generated-artifacts.sh
 
 render: ## Render all ADRs to Markdown
-	python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/
+	python3 scripts/render-adr.py --output-dir architecture-decision-log/rendered/ --generate-index architecture-decision-log/
 	python3 scripts/render-adr.py --output-dir examples-reference/rendered/ --generate-index examples-reference/
 
 bundle: ## Generate the repomix bundle for AI chat

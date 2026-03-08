@@ -51,8 +51,8 @@ def load_adrs(paths: list[str]) -> list[dict]:
         if target.is_file():
             files.append(target)
         elif target.is_dir():
-            files.extend(sorted(target.glob("*.yaml")))
-            files.extend(sorted(target.glob("*.yml")))
+            files.extend(sorted(target.rglob("*.yaml")))
+            files.extend(sorted(target.rglob("*.yml")))
         else:
             print(f"WARNING: {target} is not a file or directory — skipping",
                   file=sys.stderr)

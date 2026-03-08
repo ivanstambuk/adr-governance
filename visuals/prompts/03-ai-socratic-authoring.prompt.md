@@ -124,11 +124,13 @@ Center region — "AI Socratic Dialogue" (the core — most visually rich):
   4. "Proposer refines" — annotation: "Strengthens rationale, adds missing tradeoffs"
   5. "AI validates completeness" — annotation: "All required fields populated, cross-references consistent"
 - Show the ADR YAML document being progressively built during this loop — a small document icon near the center of the loop that grows or fills in with each iteration. Use a visual metaphor like a progress bar, sections lighting up, or layers being added to suggest progressive construction.
-- Add 3–4 small callout labels around the loop highlighting what the AI does:
+- Add 5–6 small callout labels around the loop highlighting what the AI does:
   - "Surfaces unstated assumptions"
   - "Demands ≥ 2 balanced alternatives"
   - "Checks cross-reference consistency"
   - "Verifies schema compliance"
+  - "Auto-generates 7-clause Y-Statement"
+  - "Classifies decision level (strategic / tactical / operational)"
 - The loop should have a clear exit point (arrow out) labeled "ADR complete — ready for review" leading to the right region.
 - Use teal/blue for the AI elements and a warm accent (orange or amber) for the proposer elements, creating a clear visual dialogue between the two parties.
 

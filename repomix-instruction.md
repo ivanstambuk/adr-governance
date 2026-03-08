@@ -184,7 +184,7 @@ The context section can be arbitrarily large — diagrams, extended narratives, 
 - Search for `adr-template.yaml` in this file to get the skeleton
 - Fill in all required sections from the interview answers
 - **Auto-generate `adr.y_statement`** — synthesize the long-form Y-Statement from the collected answers. Do NOT ask the user to write this. The Y-Statement **must** contain all 7 structural clauses in this exact order (see `glossary.md` → "Y-Statement" for the full template mapping):
-  1. "In the context of **[context.summary]**,"
+  1. "In the context of **[context.description]**,"
   2. "facing **[key business/technical driver]**,"
   3. "we decided for **[decision.chosen_alternative]**"
   4. "and neglected **[rejected alternatives]**,"
@@ -312,7 +312,7 @@ When the user asks a question about architectural decisions, **search the ADR fi
 
 **How to search:**
 - Search for keywords in the file content (e.g., "DPoP", "mTLS", "token", "signing", "session")
-- Look at `adr.title`, `adr.status`, `adr.y_statement`, `context.summary`, `decision.chosen_alternative`, and `decision.rationale` fields
+- Look at `adr.title`, `adr.status`, `adr.y_statement`, `context.description`, `decision.chosen_alternative`, and `decision.rationale` fields
 - Match by tags in `adr.tags`
 
 **How to respond:** Follow the **mandatory response template** defined at the top of this document. Every query response must include the governance metadata table, summary, alternatives, and tradeoffs — in that exact order.
@@ -444,7 +444,7 @@ Report issues as: `ERROR` (schema violation or hard author-facing rule), `WARNIN
 **Audit trail events:** `created` | `updated` | `reviewed` | `approved` | `rejected` | `deferred` | `superseded` | `deprecated` | `archived`
 
 **Markdown-native fields** (support full Markdown + Mermaid diagrams via code fences):
-- `context.summary`
+- `context.description`
 - `alternatives[].description`
 - `decision.rationale`
 - `decision.tradeoffs`

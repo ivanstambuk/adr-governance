@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLE_ADR = (
     REPO_ROOT
     / "examples-reference"
+    / "fictional"
     / "ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml"
 )
 

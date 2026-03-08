@@ -1,4 +1,4 @@
-# Visual Prompt — Hero Overview: What This Framework Does
+# Visual Prompt — Real-World ADR Showcase
 
 ## Style Primer
 
@@ -90,59 +90,56 @@ Bottom strip (final synthesis):
 ## Slide-Specific Instantiation
 
 NOW INSTANTIATE THIS STYLE FOR:
-"ADR Governance — Schema-Governed, AI-Native Architecture Decision Records"
+"Real-World ADR Showcase — 15 Decisions Across Three Architectural Altitudes"
 
 Goal:
-- Draw a single, visually striking infographic that communicates the full value proposition of the ADR governance framework at a glance. This is a "hero image" for the top of a GitHub README. It must be immediately engaging and tell the story in 5 seconds of viewing.
-- The narrative arc is left→right: broken process → structured framework → governed outcomes.
+- Draw a single infographic that visualizes the 15 reverse-engineered real-world ADRs organized by their decision level (strategic, tactical, operational). This showcases the breadth of the ADR meta-model by demonstrating it can capture real architectural decisions from prominent open-source projects across all three altitudes.
+- The narrative arc is top→bottom, structured as a three-tier pyramid or layered stack representing architectural altitude.
 
 Overall layout:
-- Partition the canvas into three regions, reading left→right:
-  - Left (~25% width): "The Problem" — why current approaches fail.
-  - Center (~50% width): "The Framework" — what this system provides.
-  - Right (~25% width): "The Outcome" — what you get.
-- Use a subtle gradient or tonal shift across the three regions to reinforce the left→right narrative: the left region should feel slightly darker or muted (representing the broken status quo), the center should be the most visually rich and vibrant (the framework), and the right should feel clean and resolved (the outcome).
-- Place a title at the top center of the canvas: "ADR Governance" in a large, bold heading.
+- Use a layered/tiered layout with three horizontal bands, reading top→bottom:
+  - Top tier (~30% height): "Strategic" — highest-impact, platform-defining decisions.
+  - Middle tier (~35% height): "Tactical" — API/tooling/design-level decisions.
+  - Bottom tier (~35% height): "Operational" — configuration/infrastructure/build decisions.
+- Place a title at the top center: "Real-World ADR Showcase" in a prominent heading. Subtitle: "15 decisions across three architectural altitudes".
+- Use a visual metaphor of layers, strata, or altitude bands. The strategic tier should feel elevated (use deeper, bolder colors — navy blue or dark teal). The tactical tier should use medium tones (teal or slate blue). The operational tier should use lighter, more grounded tones (light teal or cool grey).
 
-Left region — "The Problem":
-- Region heading: "Status quo" or "Without structured governance".
-- Show 3–4 visual pain points, each as a small icon with a short label:
-  1. A meeting-room / calendar icon with label: "Decisions made in meetings — context lost immediately"
-  2. A scattered-documents / chat-bubbles icon with label: "Buried in Slack, wikis, and ticket comments"
-  3. A broken-chain or disconnected-nodes icon with label: "No link between decisions and code"
-  4. A clock or hourglass icon with label: "Decisions rot — no scheduled review"
-- Use muted, desaturated styling for these icons — grey tones, dashed outlines — to visually convey that this is the "before" state.
-- A large arrow leads from this region into the center region, implying transformation.
+Top tier — "Strategic Decisions":
+- Tier heading: "Strategic" with a small annotation: "Platform-defining, multi-year impact".
+- Arrange 5 cards or nodes horizontally, each representing one ADR:
+  1. TypeScript icon (abstract code/language icon) → "Rewrite compiler in Go"
+  2. Kubernetes icon (abstract container/orchestration icon) → "Deprecate dockershim for CRI"
+  3. React icon (abstract UI/component icon) → "Server Components"
+  4. Go icon (abstract language/gopher icon) → "Add generics via type parameters"
+  5. Rust icon (abstract systems/gear icon) → "Async/await with stackless coroutines"
+- Each card should show the project name prominently and the decision as a subtitle.
+- Use bold, confident styling — heavier borders, deeper colors — to convey these are the highest-impact decisions.
 
-Center region — "The Framework" (hub-and-spoke):
-- Region heading: "ADR Governance Framework".
-- At the center, draw a prominent node representing the ADR YAML file — a document icon or structured-data block labeled "ADR" with small field previews: "context", "alternatives", "decision", "consequences", "approvals".
-- Radiating outward from this central ADR node, draw 8 spokes connecting to surrounding capability nodes, each as a distinct small icon with a label:
-  1. Shield/checkmark icon → "JSON Schema Validation" — with a tiny annotation: "Draft 2020-12 meta-model"
-  2. Git branch / PR icon → "GitOps Governance" — annotation: "PR-based status transitions"
-  3. Robot/AI brain icon → "AI Socratic Authoring" — annotation: "Probing questions, gap analysis"
-  4. Pipeline/gear icon → "CI/CD Enforcement" — annotation: "5 platforms, merge gate"
-  5. Document-render icon → "Rendered Markdown" — annotation: "Human-friendly views, auto-generated"
-  6. Bundle/package icon → "ADL Bundle" — annotation: "Machine-readable, cross-repo"
-  7. Globe/stack icon → "Real-World ADR Library" — annotation: "15 ADRs: TypeScript, Kubernetes, React, Go, Rust…"
-  8. Laboratory/beaker icon → "Triple-LLM Quality Testing" — annotation: "Automated authoring validation"
-- Use the full accent palette here — teal and blue for the spokes and nodes, with orange or magenta highlights on 1–2 key capabilities (AI Socratic Authoring and Real-World ADR Library) to draw the eye.
-- Keep lines thin and clean; don't overcrowd. Each spoke should have clear visual separation.
+Middle tier — "Tactical Decisions":
+- Tier heading: "Tactical" with annotation: "API design, tooling, framework-level".
+- Arrange 5 cards horizontally:
+  1. Vue.js (abstract framework icon) → "Composition API"
+  2. ESLint (abstract lint/check icon) → "Flat config system"
+  3. Vite (abstract build/lightning icon) → "Rolldown unification"
+  4. Svelte (abstract compiler icon) → "Runes reactivity"
+  5. Next.js (abstract SSR/web icon) → "Turbopack adoption"
+- Medium-weight styling — balanced between strategic weight and operational lightness.
 
-Right region — "The Outcome":
-- Region heading: "What you get" or "Governed decisions".
-- Show 4 outcome indicators, each as an icon with a short label:
-  1. A traceable-chain or linked-nodes icon → "Every decision traceable — who, when, why"
-  2. An audit/clipboard icon → "Audit-ready decision log"
-  3. A code-compliance / shield-with-code icon → "AI-enforced code compliance"
-  4. An async/distributed-team icon → "Asynchronous, timezone-proof review"
-- Use clean, confident styling — solid outlines, green or teal accents — to convey that this is the "after" state, resolved and governed.
-- Optionally, a subtle checkmark or seal near the bottom of this region reinforcing "governed".
+Bottom tier — "Operational Decisions":
+- Tier heading: "Operational" with annotation: "Config, packaging, infrastructure".
+- Arrange 5 cards horizontally:
+  1. Node.js (abstract runtime icon) → "Built-in test runner"
+  2. Python (abstract snake/language icon) → "pyproject.toml (PEP 621)"
+  3. Docker (abstract container icon) → "Container base image selection"
+  4. pnpm (abstract package icon) → "Content-addressable store"
+  5. Deno (abstract runtime icon) → "npm compatibility layer"
+- Lighter, more compact styling — thinner borders, lighter colors — to convey these are at the operational level.
 
-Visual connections:
-- A bold arrow from the left region into the center region, suggesting transformation.
-- Thin arrows or flow lines from the center spokes toward the right region, suggesting that the framework produces the outcomes.
-- The overall visual flow must be unmistakably left→right: problem → framework → outcome.
+Visual connections and annotations:
+- A vertical axis or altitude indicator on the left side, labeled from top to bottom: "High impact / Long horizon" → "Medium impact / Multi-sprint" → "Low impact / Rapid cycle".
+- Subtle connecting lines between tiers where decisions influence each other (e.g., TypeScript strategic decision relates to build tooling operational decisions).
+- Each card could include a small "accepted" badge or status indicator.
+- On the right side, a small annotation block: "Each ADR captures: context, alternatives, decision rationale, consequences, Y-Statement, review cycle, audit trail — all validated by JSON Schema + CI".
 
 Footer sentence (bottom strip):
-Schema-governed, AI-native Architecture Decision Records — structured, traceable, enforceable by design. 15 real-world ADRs spanning strategic, tactical, and operational decisions.
+The same meta-model captures TypeScript's multi-year compiler rewrite and Docker's base-image selection — from boardroom strategy to pull-request operations.

@@ -1,6 +1,6 @@
 # adr-governance
 
-> A schema-governed, AI-native Architecture Decision Record (ADR) framework. Provides a JSON Schema (Draft 2020-12) meta-model for structured YAML-based ADRs, a GitOps governance process, Python validation tooling, pre-built CI/CD pipelines for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI, and an agentskills.io Agent Skill for AI-assisted authoring and review. The Architecture Decision Log (ADL) lives in `architecture-decision-log/`. Example ADRs cover IAM/security scenarios from a fictional enterprise.
+> A schema-governed, AI-native Architecture Decision Record (ADR) framework. Provides a JSON Schema (Draft 2020-12) meta-model for structured YAML-based ADRs with multidimensional classification (decision type × decision level), Y-Statement summaries, and Markdown-native fields. Includes a GitOps governance process, Python validation tooling, pre-built CI/CD pipelines for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI, an agentskills.io Agent Skill for AI-assisted authoring and review, and a triple-LLM testing harness for automated quality validation. Ships with 8 fictional and 15 real-world reverse-engineered ADRs spanning strategic, tactical, and operational decisions.
 
 For curated inline documentation (README + process + glossary + schema reference + CI setup), see [llms-full.txt](https://github.com/ivanstambuk/adr-governance/blob/main/llms-full.txt).
 
@@ -9,12 +9,13 @@ For curated inline documentation (README + process + glossary + schema reference
 - [README](https://github.com/ivanstambuk/adr-governance/blob/main/README.md): Project overview, problem statement, quick start, and directory structure
 - [ADR Governance Process](https://github.com/ivanstambuk/adr-governance/blob/main/docs/adr-process.md): Normative process — roles, status lifecycle (Mermaid state diagram), workflows for proposing, reviewing, approving, rejecting, deferring, superseding, deprecating, archiving, and confirming ADRs. Includes the Architectural Significance Test, branch protection rules, CODEOWNERS setup, periodic review guidance, and schema versioning policy
 - [CI/CD Setup Guide](https://github.com/ivanstambuk/adr-governance/blob/main/docs/ci-setup.md): Step-by-step setup for GitHub Actions, Azure DevOps, GCP Cloud Build, AWS CodeBuild, and GitLab CI — includes LLM-ready setup prompts
-- [Glossary](https://github.com/ivanstambuk/adr-governance/blob/main/docs/glossary.md): All enum values (status, decision_type, priority, confidence, risk levels), ID formats, audit trail events, and abbreviations (AD, ADL, ADR, AKM, ASR)
+- [Glossary](https://github.com/ivanstambuk/adr-governance/blob/main/docs/glossary.md): All enum values (status, decision_type, decision_level, priority, confidence, risk levels), ID formats, audit trail events, and abbreviations (AD, ADL, ADR, AKM, ASR)
 - [JSON Schema](https://github.com/ivanstambuk/adr-governance/blob/main/schemas/adr.schema.json): The complete ADR meta-model — Draft 2020-12, defines all required/optional sections, field types, enums, and constraints
 - [Agent Skill (SKILL.md)](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/SKILL.md): Instructions for AI assistants — how to author, review, validate, and supersede ADRs using the governed meta-model
 - [Web Chat Quickstart](https://github.com/ivanstambuk/adr-governance/blob/main/docs/web-chat-quickstart.md): Platform-specific starter prompts for using the Repomix bundle with ChatGPT, Claude.ai, Google Gemini, and Microsoft Copilot — no skill execution required
 - [ADR Template](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/assets/adr-template.yaml): Blank YAML template with all sections
 - [Schema Reference](https://github.com/ivanstambuk/adr-governance/blob/main/.skills/adr-author/references/SCHEMA_REFERENCE.md): Human-readable schema documentation for the Agent Skill
+- [Triple-LLM Testing Harness Design](https://github.com/ivanstambuk/adr-governance/blob/main/docs/research/automated-triple-llm-testing.md): Design document for the automated ADR quality testing system
 
 ## Decision Enforcement
 
@@ -26,15 +27,43 @@ The ADL (Architecture Decision Log) isn't just documentation — it's a machine-
 
 ## Examples
 
+### Fictional Examples (NovaTrust Financial Services)
+
 - [ADR-0000: Adopt Governed ADR Process (meta-ADR)](https://github.com/ivanstambuk/adr-governance/blob/main/architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml): Bootstrap decision adopting this governance framework
-- [ADR-0001: DPoP over mTLS](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml): Accepted — sender-constrained token strategy
-- [ADR-0002: Reference Tokens over JWTs](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml): Accepted — gateway introspection pattern
-- [ADR-0003: Pairwise Subject Identifiers](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml): Accepted — OIDC privacy pattern
-- [ADR-0004: Ed25519 over RSA](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml): Accepted — JWT signing key algorithm
-- [ADR-0005: BFF Token Mediator](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml): Accepted — SPA token acquisition
-- [ADR-0006: Session Enrichment for Step-Up](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0006-session-enrichment-for-step-up-authentication.yaml): Accepted — step-up authentication proof
-- [ADR-0007: Centralized Vault (rejected)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0007-centralized-secret-store-for-api-keys.yaml): Rejected — documents why HashiCorp Vault was not adopted
-- [ADR-0008: OpenID Federation (deferred)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/ADR-0008-defer-openid-federation-for-trust-establishment.yaml): Deferred — postponed until ecosystem matures
+- [ADR-0001: DPoP over mTLS](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/fictional/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml): Accepted — sender-constrained token strategy
+- [ADR-0002: Reference Tokens over JWTs](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/fictional/ADR-0002-reference-tokens-over-jwt-for-gateway-introspection.yaml): Accepted — gateway introspection pattern
+- [ADR-0003: Pairwise Subject Identifiers](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/fictional/ADR-0003-pairwise-subject-identifiers-for-oidc-relying-parties.yaml): Accepted — OIDC privacy pattern
+- [ADR-0004: Ed25519 over RSA](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/fictional/ADR-0004-ed25519-over-rsa-for-jwt-signing.yaml): Accepted — JWT signing key algorithm
+- [ADR-0005: BFF Token Mediator](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/fictional/ADR-0005-bff-token-mediator-for-spa-token-acquisition.yaml): Accepted — SPA token acquisition
+- [ADR-0006: Session Enrichment for Step-Up](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/fictional/ADR-0006-session-enrichment-for-step-up-authentication.yaml): Accepted — step-up authentication proof
+- [ADR-0007: Centralized Vault (rejected)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/fictional/ADR-0007-centralized-secret-store-for-api-keys.yaml): Rejected — documents why HashiCorp Vault was not adopted
+- [ADR-0008: OpenID Federation (deferred)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/fictional/ADR-0008-defer-openid-federation-for-trust-establishment.yaml): Deferred — postponed until ecosystem matures
+
+### Real-World Examples (Reverse-Engineered)
+
+#### Strategic
+
+- [ADR-0100: TypeScript — Rewrite compiler in Go](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0100-typescript-compiler-go-rewrite.yaml)
+- [ADR-0101: Kubernetes — Deprecate dockershim for CRI](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0101-kubernetes-dockershim-deprecation.yaml)
+- [ADR-0102: React — Server Components (RFC 0188)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0102-react-server-components.yaml)
+- [ADR-0103: Go — Add generics via type parameters](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0103-go-generics.yaml)
+- [ADR-0104: Rust — Async/await with stackless coroutines](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0104-rust-async-await.yaml)
+
+#### Tactical
+
+- [ADR-0105: Vue.js — Composition API (RFC-0013)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0105-vue-composition-api.yaml)
+- [ADR-0106: ESLint — Flat config system](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0106-eslint-flat-config.yaml)
+- [ADR-0107: Vite — Rolldown unification](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0107-vite-rolldown-unification.yaml)
+- [ADR-0108: Svelte — Runes reactivity system](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0108-svelte-runes-reactivity.yaml)
+- [ADR-0109: Next.js — Turbopack adoption](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0109-nextjs-turbopack-adoption.yaml)
+
+#### Operational
+
+- [ADR-0110: Node.js — Built-in test runner](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0110-nodejs-built-in-test-runner.yaml)
+- [ADR-0111: Python — pyproject.toml (PEP 621)](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0111-python-pyproject-toml.yaml)
+- [ADR-0112: Docker — Container base image selection](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0112-container-base-image-selection.yaml)
+- [ADR-0113: pnpm — Content-addressable store](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0113-pnpm-content-addressable-store.yaml)
+- [ADR-0114: Deno — npm compatibility layer](https://github.com/ivanstambuk/adr-governance/blob/main/examples-reference/real-world/ADR-0114-deno-npm-compatibility.yaml)
 
 ## Tooling
 
@@ -43,6 +72,7 @@ The ADL (Architecture Decision Log) isn't just documentation — it's a machine-
 - [Pre-Review Quality Gate](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/review-adr.py): Generates an LLM Socratic review prompt for ADR drafts — probes for semantic clarity, completeness, logical consistency, assumption risks, and cross-reference consistency before the ADR reaches human reviewers.
 - [Markdown Renderer](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/render-adr.py): Renders ADR YAML to polished Markdown with Mermaid diagram passthrough
 - [Repomix Bundle Script](https://github.com/ivanstambuk/adr-governance/blob/main/scripts/bundle.sh): Creates single-file bundle for LLM context injection
+- [Triple-LLM Testing Harness](https://github.com/ivanstambuk/adr-governance/blob/main/tests/llm_harness.py): Automated quality testing — simulates authoring conversations between Interviewer, User, and Analyst LLMs to validate ADR completeness and quality
 
 ## CI/CD Pipelines
 
