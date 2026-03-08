@@ -123,6 +123,8 @@ would align Kubernetes's architecture with its own CRI standard.
  |
 | `F-003` | Container logging must work through CRI-standard log paths — no fallback to Docker-specific journald or legacy log providers
  |
+| `F-004` | An external CRI adapter (cri-dockerd) must exist and be maintained by the community to provide a migration path for users who require continued Docker Engine integration without burdening kubelet
+ |
 
 ### Non-Functional
 
@@ -133,6 +135,8 @@ would align Kubernetes's architecture with its own CRI standard.
 | `NF-002` | Container lifecycle operations (create, start, stop) must not degrade in latency when switching from dockershim to a CRI-native runtime
  |
 | `NF-003` | The kubelet's CVE exposure surface must decrease by removing transitive dependencies from the docker/docker repository
+ |
+| `NF-004` | All E2E and Node e2e tests must pass against CRI-native runtimes (containerd, CRI-O) with no Docker-specific test paths remaining in the default test suite
  |
 
 ## Alternatives Considered

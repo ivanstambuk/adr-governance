@@ -132,6 +132,10 @@ Async/await syntax was needed to make this ecosystem accessible.
  |
 | `F-003` | Async functions must be compiled to state machines that capture only the variables live across await points, minimizing the future's in-memory size without heap allocation.
  |
+| `F-004` | The design must support self-referential futures through the Pin<T> and Unpin system — async state machines that borrow across await points must remain in a fixed memory location, and Pin must enforce this invariant at compile time.
+ |
+| `F-005` | Async functions must compose with Rust's existing error handling — returning Result types, using the ? operator for early return, and propagating errors through .await chains without requiring separate error-handling patterns.
+ |
 
 ### Non-Functional
 
@@ -142,6 +146,10 @@ Async/await syntax was needed to make this ecosystem accessible.
 | `NF-002` | Runtime-agnostic — the language feature must define only the Future trait and async/await syntax, with all scheduling and execution delegated to external runtime crates.
  |
 | `NF-003` | no_std compatible — async/await must work without the standard library, enabling use in embedded systems, kernels, and WebAssembly targets.
+ |
+| `NF-004` | The compiler must determine the exact size of each future at compile time — no dynamic allocation for the future's state unless explicitly boxed by the developer, enabling stack allocation of futures in performance-critical paths.
+ |
+| `NF-005` | Async code must not require heap allocation in any code path — enabling use in no_alloc environments (embedded, kernel) where only static or stack allocation is available.
  |
 
 ## Alternatives Considered

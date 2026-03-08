@@ -161,6 +161,8 @@ infrastructure for 15+ frameworks made solving these problems urgent.
  |
 | `F-003` | Rolldown must support built-in TypeScript and JSX transformation via the Oxc transformer, replacing esbuild's transform capabilities while maintaining compatible output for all major frameworks.
  |
+| `F-004` | The migration must follow a phased, non-breaking rollout — a temporary separate package (rolldown-vite) must function as a drop-in replacement for vite before Rolldown is merged into the main Vite codebase.
+ |
 
 ### Non-Functional
 
@@ -171,6 +173,8 @@ infrastructure for 15+ frameworks made solving these problems urgent.
 | `NF-002` | Memory usage during production builds must be significantly reduced compared to the current Rollup-based pipeline, with enterprise-scale applications seeing reductions of 4x to 100x as demonstrated by GitLab and Appwrite benchmarks.
  |
 | `NF-003` | Dev/prod behavioral consistency must be achieved — the same bundler engine processing source code in both environments eliminates the class of bugs caused by differing module resolution and transformation behavior.
+ |
+| `NF-004` | All 15+ major framework integrations (React, Vue, Svelte, Solid, Astro, Nuxt, SvelteKit) must continue working through the transition with minimal or no changes to their Vite plugins.
  |
 
 ## Alternatives Considered

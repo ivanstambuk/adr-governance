@@ -276,6 +276,12 @@ architecturally_significant_requirements:
         Rolldown must support built-in TypeScript and JSX transformation
         via the Oxc transformer, replacing esbuild's transform capabilities
         while maintaining compatible output for all major frameworks.
+    - id: F-004
+      description: >
+        The migration must follow a phased, non-breaking rollout — a
+        temporary separate package (rolldown-vite) must function as a
+        drop-in replacement for vite before Rolldown is merged into the
+        main Vite codebase.
   non_functional:
     - id: NF-001
       description: >
@@ -295,6 +301,11 @@ architecturally_significant_requirements:
         bundler engine processing source code in both environments
         eliminates the class of bugs caused by differing module
         resolution and transformation behavior.
+    - id: NF-004
+      description: >
+        All 15+ major framework integrations (React, Vue, Svelte, Solid,
+        Astro, Nuxt, SvelteKit) must continue working through the
+        transition with minimal or no changes to their Vite plugins.
 alternatives:
   - name: >-
       Rolldown — unified Rust-based bundler with Rollup-compatible

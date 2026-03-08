@@ -208,6 +208,18 @@ architecturally_significant_requirements:
         Async functions must be compiled to state machines that capture
         only the variables live across await points, minimizing the
         future's in-memory size without heap allocation.
+    - id: F-004
+      description: >
+        The design must support self-referential futures through the
+        Pin<T> and Unpin system — async state machines that borrow across
+        await points must remain in a fixed memory location, and Pin
+        must enforce this invariant at compile time.
+    - id: F-005
+      description: >
+        Async functions must compose with Rust's existing error handling
+        — returning Result types, using the ? operator for early return,
+        and propagating errors through .await chains without requiring
+        separate error-handling patterns.
   non_functional:
     - id: NF-001
       description: >
@@ -225,6 +237,17 @@ architecturally_significant_requirements:
         no_std compatible — async/await must work without the standard
         library, enabling use in embedded systems, kernels, and
         WebAssembly targets.
+    - id: NF-004
+      description: >
+        The compiler must determine the exact size of each future at
+        compile time — no dynamic allocation for the future's state
+        unless explicitly boxed by the developer, enabling stack
+        allocation of futures in performance-critical paths.
+    - id: NF-005
+      description: >
+        Async code must not require heap allocation in any code path —
+        enabling use in no_alloc environments (embedded, kernel) where
+        only static or stack allocation is available.
 alternatives:
   - name: Stackless coroutines with lazy futures and no built-in runtime
     description: |

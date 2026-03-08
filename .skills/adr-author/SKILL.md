@@ -85,7 +85,7 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 - `decision` — chosen_alternative, rationale, tradeoffs, decision_date, confidence **(all values must come from the user's answers — do not invent defaults)**
 - `consequences` — positive, negative
 - `confirmation` — description of how implementation will be verified (artifact_ids added later)
-- `architecturally_significant_requirements` — extract at least 2 functional or non-functional ASRs from the interview answers (technical drivers, constraints, performance targets, compliance mandates). If none are obvious from the conversation, ask the user explicitly.
+- `architecturally_significant_requirements` — extract functional and non-functional ASRs from the interview answers (technical drivers, constraints, performance targets, compliance mandates). Target 2-7 per category based on the decision's complexity — strategic/high-priority decisions typically need 4-6, simple operational decisions may need only 2. **Vary the count naturally; do NOT always use exactly 3 functional + 3 non-functional.** If none are obvious from the conversation, ask the user explicitly.
 - `dependencies` — internal and external dependency tracking
 - `audit_trail` — initial `created` event
 - `lifecycle` — set `review_cycle_months` based on `decision_level` × `confidence`:

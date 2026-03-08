@@ -296,6 +296,12 @@ architecturally_significant_requirements:
         type definitions for configuration objects, enabling
         auto-completion, type checking, and deprecation warnings in
         TypeScript-aware editors.
+    - id: NF-004
+      description: >
+        The migration path from eslintrc to flat config must span at
+        least two major ESLint versions — eslintrc support must remain
+        available during the transition period to avoid forcing immediate
+        migration of the plugin ecosystem.
 alternatives:
   - name: >-
       Flat config — single JS file with native module loading and

@@ -102,7 +102,6 @@ The decision comes down to whether the operational overhead of a self-managed Va
 |----|-------------|
 | `NF-001` | Secret retrieval latency < 5ms at application startup |
 | `NF-002` | 99.99% availability of secret store (must not be a single point of failure) |
-| `NF-003` | Operable by existing SRE team without specialized training > 2 days |
 
 ## Alternatives Considered
 

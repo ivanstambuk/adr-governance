@@ -185,6 +185,11 @@ architecturally_significant_requirements:
       description: >
         Container logging must work through CRI-standard log paths — no fallback
         to Docker-specific journald or legacy log providers
+    - id: F-004
+      description: >
+        An external CRI adapter (cri-dockerd) must exist and be maintained
+        by the community to provide a migration path for users who require
+        continued Docker Engine integration without burdening kubelet
   non_functional:
     - id: NF-001
       description: >
@@ -198,6 +203,11 @@ architecturally_significant_requirements:
       description: >
         The kubelet's CVE exposure surface must decrease by removing transitive
         dependencies from the docker/docker repository
+    - id: NF-004
+      description: >
+        All E2E and Node e2e tests must pass against CRI-native runtimes
+        (containerd, CRI-O) with no Docker-specific test paths remaining
+        in the default test suite
 alternatives:
   - name: Remove dockershim and require CRI-compliant runtimes
     description: |

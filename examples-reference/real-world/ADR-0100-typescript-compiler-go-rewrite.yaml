@@ -103,6 +103,49 @@ context:
     - The npm ecosystem tools that depend on TypeScript's compiler API will be
       able to adapt during the transition period
     - A multi-year parallel maintenance period (TS 6 and TS 7) is sustainable
+architecturally_significant_requirements:
+  functional:
+    - id: F-001
+      description: >
+        The Go compiler must pass the existing TypeScript test suite with
+        99.999% semantic compatibility — this is a port, not a rewrite, and
+        behavioral equivalence is the primary correctness criterion.
+    - id: F-002
+      description: >
+        File-by-file porting strategy must maintain structural correspondence
+        between TypeScript and Go source files to enable incremental
+        validation and side-by-side comparison during the transition period.
+    - id: F-003
+      description: >
+        The native compiler must adopt Language Server Protocol (LSP) for
+        editor integration, replacing the custom tsserver protocol used by
+        the JavaScript-based compiler.
+    - id: F-004
+      description: >
+        The native compiler must produce single static binaries for all
+        major platforms (Windows, macOS, Linux) without requiring a runtime
+        installation (Node.js, .NET, JVM).
+  non_functional:
+    - id: NF-001
+      description: >
+        Command-line type-checking build time must improve by at least 10x
+        compared to the JavaScript-based compiler on codebases exceeding
+        100k lines (validated on VS Code 1.5M-line codebase).
+    - id: NF-002
+      description: >
+        Memory usage must decrease by at least 50% compared to the
+        JavaScript-based compiler for equivalent workloads, with further
+        optimization potential in subsequent releases.
+    - id: NF-003
+      description: >
+        Editor startup time (language service initialization) must improve
+        by at least 8x compared to the JavaScript-based language service
+        on large projects.
+    - id: NF-004
+      description: >
+        The parallel maintenance period (TypeScript 6.x JS + TypeScript 7.x
+        native) must not degrade the release cadence or feature velocity
+        of the JavaScript-based compiler during transition.
 alternatives:
   - name: Native port to Go
     description: |

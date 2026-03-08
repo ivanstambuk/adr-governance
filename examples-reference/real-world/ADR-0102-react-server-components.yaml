@@ -188,6 +188,11 @@ architecturally_significant_requirements:
         The 'use client' directive must create a clear, enforceable boundary
         between server and client code, preventing server-only code from being
         bundled into the client JavaScript
+    - id: F-004
+      description: >
+        Existing client-only React applications must continue to work without
+        any modification — Server Components are additive to the React
+        component model, not a replacement for Client Components
   non_functional:
     - id: NF-001
       description: >
@@ -204,6 +209,12 @@ architecturally_significant_requirements:
         The server/client component boundary must enable automatic code
         splitting — client components referenced by server components are
         automatically split into separate chunks without manual React.lazy
+    - id: NF-004
+      description: >
+        The RSC Payload wire format must be framework-agnostic — any
+        framework implementing the React Flight protocol can serve and
+        consume Server Component output, preventing lock-in to a single
+        meta-framework
 alternatives:
   - name: React Server Components with server/client component model
     description: |

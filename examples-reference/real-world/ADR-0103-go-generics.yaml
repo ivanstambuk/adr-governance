@@ -190,6 +190,18 @@ architecturally_significant_requirements:
         features — channels, goroutines, slices, maps, structs, methods —
         without special cases or restrictions beyond those specified in
         constraints
+    - id: F-004
+      description: >
+        The compiler must perform bidirectional type inference — inferring
+        type arguments from function arguments, return value context, and
+        constraint satisfaction — so that most generic function calls require
+        no explicit type arguments at the call site
+    - id: F-005
+      description: >
+        All existing Go 1.x programs must compile and execute identically
+        under the generics-enabled compiler — the Go 1 compatibility
+        promise must not be broken by any aspect of the generics design
+        including the new `any` predeclared identifier
   non_functional:
     - id: NF-001
       description: >
@@ -208,6 +220,12 @@ architecturally_significant_requirements:
         new concepts — no new keywords, no separate constraint language,
         and complexity must fall on generic library authors rather than
         on users calling generic functions
+    - id: NF-004
+      description: >
+        Binary size increase from GC-shape stenciling must be controlled —
+        types with identical memory layouts (GC shapes) must share a single
+        compiled instantiation to prevent C++-style code bloat from full
+        monomorphization
 alternatives:
   - name: Type parameters with interface constraints
     description: |

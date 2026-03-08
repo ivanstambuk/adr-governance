@@ -151,6 +151,8 @@ abandoning its simplicity and becoming "React-like."
  |
 | `F-003` | The Composition API must coexist with the Options API within the same component — properties returned from setup() must be accessible alongside data, computed, and methods defined via the Options API.
  |
+| `F-004` | Lifecycle hooks must be available as importable functions (onMounted, onUnmounted, onUpdated, etc.) that can be called within setup() or composables, enabling lifecycle logic to be colocated with the feature code that needs it.
+ |
 
 ### Non-Functional
 

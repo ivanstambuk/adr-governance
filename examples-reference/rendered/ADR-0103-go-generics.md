@@ -119,6 +119,10 @@ iteration learning from community feedback and rejected approaches.
  |
 | `F-003` | Generic functions must work correctly with all of Go's existing features — channels, goroutines, slices, maps, structs, methods — without special cases or restrictions beyond those specified in constraints
  |
+| `F-004` | The compiler must perform bidirectional type inference — inferring type arguments from function arguments, return value context, and constraint satisfaction — so that most generic function calls require no explicit type arguments at the call site
+ |
+| `F-005` | All existing Go 1.x programs must compile and execute identically under the generics-enabled compiler — the Go 1 compatibility promise must not be broken by any aspect of the generics design including the new `any` predeclared identifier
+ |
 
 ### Non-Functional
 
@@ -129,6 +133,8 @@ iteration learning from community feedback and rejected approaches.
 | `NF-002` | Runtime performance of generic code must be comparable to hand-written type-specific code — the GC-shape-stenciling implementation must avoid boxing overhead for types with the same memory layout
  |
 | `NF-003` | The generics design must introduce the minimum possible number of new concepts — no new keywords, no separate constraint language, and complexity must fall on generic library authors rather than on users calling generic functions
+ |
+| `NF-004` | Binary size increase from GC-shape stenciling must be controlled — types with identical memory layouts (GC shapes) must share a single compiled instantiation to prevent C++-style code bloat from full monomorphization
  |
 
 ## Alternatives Considered

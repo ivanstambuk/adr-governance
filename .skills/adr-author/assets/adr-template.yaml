@@ -61,6 +61,9 @@ context:
     - ""
 
 # --- Optional ---
+# Add as many ASRs as the decision warrants (typically 2-7 per category).
+# Vary the count based on complexity — do NOT always default to exactly 3.
+# Strategic/high-priority decisions often need 4-6; simple operational ones may need only 2.
 architecturally_significant_requirements:
   functional:
     - id: "F-001"

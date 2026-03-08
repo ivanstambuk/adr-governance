@@ -125,6 +125,8 @@ the client, and the framework could automatically handle the boundary?
  |
 | `F-003` | The 'use client' directive must create a clear, enforceable boundary between server and client code, preventing server-only code from being bundled into the client JavaScript
  |
+| `F-004` | Existing client-only React applications must continue to work without any modification — Server Components are additive to the React component model, not a replacement for Client Components
+ |
 
 ### Non-Functional
 
@@ -135,6 +137,8 @@ the client, and the framework could automatically handle the boundary?
 | `NF-002` | Server Components must support streaming via React Suspense, allowing partial rendering results to reach the client before all data fetching completes
  |
 | `NF-003` | The server/client component boundary must enable automatic code splitting — client components referenced by server components are automatically split into separate chunks without manual React.lazy
+ |
+| `NF-004` | The RSC Payload wire format must be framework-agnostic — any framework implementing the React Flight protocol can serve and consume Server Component output, preventing lock-in to a single meta-framework
  |
 
 ## Alternatives Considered

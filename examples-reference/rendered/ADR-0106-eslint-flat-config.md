@@ -186,6 +186,8 @@ be incrementally saved.
  |
 | `NF-003` | The defineConfig() helper function must provide full TypeScript type definitions for configuration objects, enabling auto-completion, type checking, and deprecation warnings in TypeScript-aware editors.
  |
+| `NF-004` | The migration path from eslintrc to flat config must span at least two major ESLint versions — eslintrc support must remain available during the transition period to avoid forcing immediate migration of the plugin ecosystem.
+ |
 
 ## Alternatives Considered
 
