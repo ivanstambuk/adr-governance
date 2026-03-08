@@ -382,6 +382,94 @@ def validate_file(
                     f"for descriptions containing code blocks"
                 )
 
+        # --- Check for bare HTML tags in Markdown text fields ---
+        # Bare <tag> sequences are interpreted as HTML when rendered to
+        # Markdown, silently swallowing the content.  Authors must wrap
+        # code references like <script setup> in backticks.
+        #
+        # Exempt: <br/>, <br>, and HTML entities like &lt;.
+        # Strategy: strip code fences and backtick spans first, then scan.
+        BARE_HTML_RE = re.compile(r"<(?!br\s*/?\s*>)([a-zA-Z][a-zA-Z0-9._-]*(?:\s[^>]*)?)>")
+        CODE_FENCE_RE = re.compile(r"```[\s\S]*?```", re.MULTILINE)
+        BACKTICK_SPAN_RE = re.compile(r"`[^`]+`")
+
+        def _find_bare_html_tags(text: str) -> list[str]:
+            """Return bare HTML-like tags found outside code fences/backticks."""
+            if not text or not isinstance(text, str):
+                return []
+            stripped = CODE_FENCE_RE.sub("", text)
+            stripped = BACKTICK_SPAN_RE.sub("", stripped)
+            return [m.group(0) for m in BARE_HTML_RE.finditer(stripped)]
+
+        markdown_fields: list[tuple[str, str]] = []
+
+        # Top-level Markdown fields
+        ctx = data.get("context", {})
+        if isinstance(ctx, dict):
+            summary = ctx.get("summary", "")
+            if isinstance(summary, str):
+                markdown_fields.append(("context.summary", summary))
+
+        if isinstance(decision, dict):
+            for field_name in ("rationale", "tradeoffs"):
+                val = decision.get(field_name, "")
+                if isinstance(val, str):
+                    markdown_fields.append((f"decision.{field_name}", val))
+
+        confirmation = data.get("confirmation", {})
+        if isinstance(confirmation, dict):
+            conf_desc = confirmation.get("description", "")
+            if isinstance(conf_desc, str):
+                markdown_fields.append(("confirmation.description", conf_desc))
+
+        # Alternatives: description + pros/cons items
+        for idx, alt in enumerate(alternatives):
+            if not isinstance(alt, dict):
+                continue
+            alt_name = alt.get("name", f"#{idx}")
+            desc = alt.get("description", "")
+            if isinstance(desc, str):
+                markdown_fields.append((f"alternatives[{idx}] '{alt_name}'.description", desc))
+            for list_field in ("pros", "cons"):
+                items = alt.get(list_field, [])
+                if isinstance(items, list):
+                    for j, item in enumerate(items):
+                        if isinstance(item, str):
+                            markdown_fields.append(
+                                (f"alternatives[{idx}] '{alt_name}'.{list_field}[{j}]", item)
+                            )
+
+        # Audit trail details
+        if audit_trail:
+            for idx, entry in enumerate(audit_trail):
+                if isinstance(entry, dict):
+                    details = entry.get("details", "")
+                    if isinstance(details, str):
+                        markdown_fields.append((f"audit_trail[{idx}].details", details))
+
+        # Consequences
+        consequences = data.get("consequences", {})
+        if isinstance(consequences, dict):
+            for list_field in ("positive", "negative"):
+                items = consequences.get(list_field, [])
+                if isinstance(items, list):
+                    for j, item in enumerate(items):
+                        if isinstance(item, str):
+                            markdown_fields.append(
+                                (f"consequences.{list_field}[{j}]", item)
+                            )
+
+        for field_path, text in markdown_fields:
+            bare_tags = _find_bare_html_tags(text)
+            if bare_tags:
+                shown = ", ".join(bare_tags[:3])
+                suffix = f" (and {len(bare_tags) - 3} more)" if len(bare_tags) > 3 else ""
+                errors.append(
+                    f"  {field_path}: bare HTML tag(s) {shown}{suffix} — "
+                    f"wrap in backticks (e.g. `<script setup>`) to prevent "
+                    f"content from being swallowed when rendered to Markdown"
+                )
+
     return errors, warnings
 
 
