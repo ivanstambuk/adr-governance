@@ -44,6 +44,20 @@ If your organization's decision log has additional ADRs beyond the examples, mak
 
 ### Creating a New ADR (Interactive)
 
+#### Microsoft Copilot
+
+```
+This file contains an ADR (Architecture Decision Record) authoring and query bundle. At the
+end of the file there are instructions under "# Instruction" — please read them.
+
+Then help me create a new ADR by asking me questions about my architectural decision,
+following the step-by-step process described in those instructions.
+
+My decision: [describe your decision]
+```
+
+> See [example-copilot-session.md](example-copilot-session.md) for a full walkthrough with example answers.
+
 #### ChatGPT
 
 ```
@@ -83,18 +97,6 @@ to understand the valid fields and values.
 I need to decide: [describe your decision]
 ```
 
-#### Microsoft Copilot
-
-```
-This file contains an ADR (Architecture Decision Record) authoring and query bundle. At the
-end of the file there are instructions under "# Instruction" — please read them.
-
-Then help me create a new ADR by asking me questions about my architectural decision,
-following the step-by-step process described in those instructions.
-
-My decision: [describe your decision]
-```
-
 ---
 
 ### Creating an ADR from Documents (Artifact-Driven)
@@ -102,6 +104,21 @@ My decision: [describe your decision]
 > **Use this when you have existing materials** — meeting transcripts, PowerPoint slides, design documents, PDFs, images, architecture diagrams, email threads, or any other reference materials — and want the AI to extract an ADR from them automatically.
 
 Upload the `adr-governance-bundle.md` **plus** your artifact files, then paste one of these prompts:
+
+#### Microsoft Copilot
+
+```
+I've uploaded an ADR governance bundle and additional documents. The bundle
+file has instructions under "# Instruction" at the end — please read the
+"Artifact-driven mode" section.
+
+Analyze my additional documents and extract an Architecture Decision Record:
+1. Show me what information you found for each ADR section
+2. Ask only about what's missing
+3. Generate the ADR YAML
+
+My documents are: [briefly describe what you uploaded]
+```
 
 #### ChatGPT
 
@@ -153,21 +170,6 @@ for the schema.
 The documents I uploaded are: [briefly describe what you uploaded]
 ```
 
-#### Microsoft Copilot
-
-```
-I've uploaded an ADR governance bundle and additional documents. The bundle
-file has instructions under "# Instruction" at the end — please read the
-"Artifact-driven mode" section.
-
-Analyze my additional documents and extract an Architecture Decision Record:
-1. Show me what information you found for each ADR section
-2. Ask only about what's missing
-3. Generate the ADR YAML
-
-My documents are: [briefly describe what you uploaded]
-```
-
 ---
 
 ### Querying the Decision Log
@@ -202,10 +204,10 @@ a numbered list of issues.
 
 | Platform | Tip |
 |---|---|
+| **Microsoft Copilot** | Upload the `.md` file directly. If your org limits file size to 1 MB, the bundle fits (~350 KB). If it must be `.txt`, rename it. See [example-copilot-session.md](example-copilot-session.md) for a full walkthrough. |
 | **ChatGPT** | If the response seems shallow, ask: "Use Code Interpreter to search the uploaded file for the relevant ADR sections." ChatGPT can use Python to `grep` through the file. |
 | **Claude.ai** | Claude loads the full file into context. For long conversations, consider using a **Claude Project** with the bundle as pinned knowledge — then you don't need to re-upload every conversation. |
 | **Google Gemini** | Gemini has 1M+ token context — it can ingest the entire bundle trivially. If you have additional context files, you can upload up to 10 files per prompt. |
-| **Microsoft Copilot** | If your org limits file size to 1 MB, the bundle should fit (~350 KB). If the file needs to be `.txt`, rename it: `cp adr-governance-bundle.md adr-governance-bundle.txt`. Copilot's reasoning is more limited — be more explicit in follow-up prompts. |
 
 ## After the AI Generates Your ADR
 
