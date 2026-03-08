@@ -387,13 +387,14 @@ def main():
     for target in args.targets:
         if os.path.isdir(target):
             for dirpath, _, filenames in os.walk(target):
-                for f in sorted(filenames):
+                for f in filenames:
                     if f.endswith((".yaml", ".yml")):
                         files.append(os.path.join(dirpath, f))
         elif os.path.isfile(target):
             files.append(target)
         else:
             print(f"WARNING: {target} not found, skipping", file=sys.stderr)
+    files.sort(key=lambda p: os.path.basename(p))
 
     if not files:
         print("No YAML files found.", file=sys.stderr)
