@@ -195,6 +195,11 @@ When reviewing, check for:
 11. **Empirical evidence**: If an alternative was actually tried and removed (not just theoretically rejected), is this prominently stated? This includes both "tried and removed from production" (e.g., Rust green threads) and "prototyped and discarded" (e.g., Vue Class API RFC that was dropped). An empirical rejection is far stronger than a theoretical one.
 12. **Community backlash as evidence**: If a decision generated significant community controversy, is this captured as both a negative consequence and an acknowledged tradeoff? Community backlash reveals genuine philosophical disagreements (simplicity vs. power, prescriptive vs. flexible) that are architecturally significant, not mere noise.
 13. **Coexistence/meta-decisions**: If the decision involves supporting multiple approaches simultaneously (e.g., Vue's Options + Composition API), is the coexistence strategy itself analyzed as an architectural choice? The "additive vs. replacement" decision deserves explicit rationale.
+14. **Evolution timeline tables**: For decisions with multi-year or multi-phase design histories (e.g., Go generics: 12 years, 6 iterations), include a timeline table showing the progression. For multi-phase rollout plans (e.g., ESLint 4-year transition, Vite 3-phase rollout), the rollout strategy itself is an architectural decision worth analyzing.
+15. **Before/after examples for configuration and migration ADRs**: When the decision replaces an existing configuration or API pattern (`.eslintrc` → `eslint.config.js`, `setup.py` → `pyproject.toml`), show the old and new side by side. Property mapping tables (what changed, what was removed, what's new) are more effective than prose for communicating scope.
+16. **Creator quotes as primary sources**: Direct quotes from project creators or leads (e.g., "biggest regret," "afraid to touch") provide authenticity and weight that paraphrasing cannot match. Always attribute to official blog posts or talks, not secondhand sources.
+17. **Selection rubric tables for cross-cutting decisions**: When the decision applies across multiple contexts (e.g., "which container base image for which workload?"), include a selection rubric table mapping workload characteristics to the appropriate option. This is the most actionable artifact for cross-cutting ADRs.
+18. **Commercial entity and vendor dynamics as architectural tradeoffs**: When the tool is backed by a commercial entity (VC-funded company, single-vendor control), surface this as an explicit tradeoff — not just context. Include: vendor dependency risk, governance model, and commercial pressure as first-class architectural concerns alongside technical tradeoffs.
 
 ## How to supersede an ADR
 
@@ -371,6 +376,30 @@ business_drivers:
 ```
 
 **Note:** This pitfall does NOT apply inside `|` or `>` block scalars — only in plain (unquoted) scalars and list items. Inside block scalars, `#` is always literal text.
+
+#### Pitfall 4: `$:` in plain scalars is a mapping value
+
+The `$:` token (common in Svelte's reactive `$:` labels, jQuery selectors, etc.) contains a colon-space after `$`, which YAML interprets as a mapping value indicator inside a plain scalar.
+
+```yaml
+# ❌ WRONG — $: triggers YAML mapping interpretation
+cons:
+  - Svelte's $: reactivity labels are replaced by runes
+
+# ✅ CORRECT — use >- to prevent $: from being parsed as mapping
+cons:
+  - >-
+    Svelte's $: reactivity labels are replaced by runes
+```
+
+**Summary of all four pitfalls:**
+
+| # | Trigger | Where | Fix |
+|:-:|---------|-------|-----|
+| 1 | `>` folded scalar | Description fields with code blocks | Use `\|` instead |
+| 2 | Leading `"` | List items starting with a quote | Use `>-` |
+| 3 | `#` after space | Plain scalars mid-text | Use `>-` |
+| 4 | `$:` | Plain scalars with colon after `$` | Use `>-` |
 
 ## Reference documentation
 
