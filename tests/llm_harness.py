@@ -15,16 +15,16 @@ End-to-end flow:
            │
            ▼
     ┌──────────────────────────────────────────────┐
-    │          Conversation Loop (≤30 turns)        │
+    │          Conversation Loop (≤30 turns)       │
     │                                              │
     │   ┌─────────────┐    question    ┌─────────┐ │
-    │   │ Interviewer  │──────────────▶│  User   │ │
+    │   │ Interviewer  │─────────────▶│  User   │ │
     │   │ (GPT-5.2)    │◀─────────────│ (GLM-5) │ │
     │   │ + ADR Bundle │    answer     │+Persona │ │
     │   └──────┬───────┘               └─────────┘ │
-    │          │                                    │
-    │          │ produces YAML                      │
-    │          ▼                                    │
+    │          │                                   │
+    │          │ produces YAML                     │
+    │          ▼                                   │
     │   ┌──────────────────┐                       │
     │   │ Chunked YAML     │  If output truncated: │
     │   │ Collection       │  Part 2 → alts        │
@@ -36,7 +36,7 @@ End-to-end flow:
     ┌──────────────────┐     ┌──────────────────┐
     │ Schema Validator │────▶│ Analyst LLM      │
     │ (validate-adr.py)│     │ (GPT-5.4-high)   │
-    │ + review-adr.py  │     │ scores quality    │
+    │ + review-adr.py  │     │ scores quality   │
     └──────────────────┘     └────────┬─────────┘
                                       │
                                       ▼
