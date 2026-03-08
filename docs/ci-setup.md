@@ -266,19 +266,29 @@ Create a branch, add or modify an ADR YAML file with an intentional error (e.g.,
 
 #### Steps
 
-1. **Copy the pipeline file** to your repository root (or reference it by path):
+1. **Import or push to Azure Repos:**
+   ```bash
+   # Option A: Import from GitHub
+   # Azure Repos → Import a repository → paste the GitHub URL
+
+   # Option B: Push an existing local clone
+   git remote add azure https://dev.azure.com/YOUR_ORG/YOUR_PROJECT/_git/architecture-decisions
+   git push azure main
+   ```
+
+2. **Copy the pipeline file** to your repository root (or reference it by path):
    ```bash
    cp ci/azure-devops/azure-pipelines.yml azure-pipelines.yml
    ```
 
-2. **Create the pipeline** in Azure DevOps:
+3. **Create the pipeline** in Azure DevOps:
    - Go to **Pipelines → New Pipeline**
    - Select your repository source (Azure Repos Git, GitHub, etc.)
    - Choose **"Existing Azure Pipelines YAML file"**
    - Select `/azure-pipelines.yml` (or the subdirectory path if you kept it in `ci/`)
    - Click **Run** to verify it works
 
-3. **Enable branch policy** (merge gate):
+4. **Enable branch policy** (merge gate):
    - Go to **Repos → Branches**
    - Click the `⋯` menu on the `main` branch → **Branch policies**
    - Under **Build Validation**, click **+ Add build policy**
@@ -288,12 +298,12 @@ Create a branch, add or modify an ADR YAML file with an intentional error (e.g.,
    - Build expiration: **Immediately when `main` is updated** (recommended)
    - Save
 
-4. **(Optional) Require reviewers:**
+5. **(Optional) Require reviewers:**
    - In the same Branch policies page, set **Minimum number of reviewers** ≥ 1
    - Enable: ✅ **Allow requestors to approve their own changes** → No (mirrors the ADR "no self-approval" rule from §3.4)
    - **(Optional) Automatically include reviewers** — add an "Automatically included reviewers" policy for `architecture-decision-log/*.yaml` to designate your architecture team as required reviewers
 
-5. **(Identity format for `approvals[].identity`):**
+6. **(Identity format for `approvals[].identity`):**
    - On Azure DevOps, use the reviewer's **Azure email address or UPN** (e.g., `jane.doe@contoso.com`)
    - The `verify-approvals.py` script matches `approvals[].identity` against the Azure DevOps PR reviewers API, which returns UPNs
    - Example:

@@ -20,6 +20,7 @@
 ---
 
 **Authors:** Ivan Stambuk (Principal Architect)  
+**Reviewers:** Ivan Stambuk (Principal Architect)  
 **Approvals:** Ivan Stambuk (Principal Architect) [@ivanstambuk] — approved 2026-03-05T18:00:00Z
 
 ---
@@ -43,14 +44,14 @@ Architecture teams make dozens of significant decisions per year — technology 
 
 ### Constraints
 
-- Must work with GitHub as the primary code hosting platform
 - Must be adoptable by teams without specialized tooling (YAML is human-readable)
-- Must support formal approval workflows for regulated financial services
+- Must support formal approval workflows for regulated environments
+- Must work with any major Git platform (GitHub, Azure DevOps, GitLab, etc.)
 
 ### Assumptions
 
 - Teams are comfortable with Git-based workflows and pull requests
-- JSON Schema validation tooling is available in CI (Python, GitHub Actions)
+- JSON Schema validation tooling is available in CI (Python 3.11+)
 - ADR volume will remain under 100 active decisions per year
 
 ## Alternatives Considered
@@ -152,18 +153,18 @@ Record decisions in Confluence pages with a standardized template. Approvals man
 
 ## Confirmation
 
-ADR governance process validated by authoring 8 example ADRs (ADR-0001 through ADR-0008) covering technology, security, and process decisions across accepted, rejected, and deferred statuses.
+ADR governance process adopted. Validation confirmed by running scripts/run-validation.sh and scripts/check-repo-integrity.sh. If examples-reference/ is present, it is validated separately as a reference corpus.
 
 **Artifacts:**
-- `examples-reference/fictional/ADR-0001-dpop-over-mtls-for-sender-constrained-tokens.yaml`
-- `examples-reference/fictional/ADR-0007-centralized-secret-store-for-api-keys.yaml`
-- `TEST-SUITE-validate-adr-all-examples`
+- `TEST-SUITE-validate-adr`
+- `scripts/run-validation.sh`
+- `scripts/check-repo-integrity.sh`
 
 ## Dependencies
 
 **Internal:**
-- GitHub Actions CI pipeline for schema validation
-- Python 3.x with jsonschema and pyyaml libraries
+- CI pipeline for schema validation (platform-specific template shipped in ci/)
+- Python 3.11+ with jsonschema, pyyaml, and yamllint
 
 **External:**
 - JSON Schema specification (Draft 2020-12)

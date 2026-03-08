@@ -144,7 +144,25 @@ See **[`docs/decision-enforcement.md`](docs/decision-enforcement.md)** for SDD w
 
 ## Quick Start — Adopting for Your Organization
 
-> **⚡ Fastest path.** Paste the prompt below into any AI coding assistant (Codex, Claude Code, Antigravity, Copilot) to have it set up the entire framework for your organization in one shot. For manual step-by-step instructions, skip to [Manual Setup](#manual-setup).
+> **⚡ Fastest path — scripted bootstrap.** Run the bootstrap script to set up everything in one command:
+>
+> ```bash
+> bash scripts/bootstrap-adoption.sh \
+>   --platform azure \
+>   --org "My Organisation" \
+>   --name "Jane Doe" \
+>   --email "jane.doe@contoso.com" \
+>   --identity "jane.doe@contoso.com" \
+>   --team "[MyProject]\Architecture" \
+>   --remove-examples
+> ```
+>
+> Then verify with `bash scripts/adoption-doctor.sh` and smoke-test CI with `bash scripts/create-validation-smoke-test.sh`.
+
+> **🤖 AI-agent path.** Fill in [`.adr-governance/adoption.yaml`](.adr-governance/adoption.yaml) and tell your AI assistant: *"Read `.adr-governance/adoption.yaml` and run `bootstrap-adoption.sh` with the values from that file."*
+
+<details>
+<summary><strong>AI prompt method</strong> — paste into any AI coding assistant</summary>
 
 ```
 I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization.
@@ -178,10 +196,12 @@ My name is: [INSERT YOUR NAME]
 My Git identity is: [INSERT YOUR GIT USERNAME]
 ```
 
+</details>
+
 ---
 
 <details>
-<summary><h3>Manual Setup</h3> <em>If you used the AI prompt above, skip this section.</em></summary>
+<summary><h3>Manual Setup</h3> <em>If you used the bootstrap script or AI prompt above, skip this section.</em></summary>
 
 #### 1. Create your ADR repository
 

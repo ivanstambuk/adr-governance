@@ -1,0 +1,48 @@
+# .adr-governance/adoption.yaml — Machine-readable adoption manifest
+#
+# This file is the preferred entry point for AI agents bootstrapping
+# ADR governance in a downstream repository. The bootstrap-adoption.sh
+# script can consume this file, or an AI agent can read it directly.
+#
+# Fill in the values below and run:
+#   bash scripts/bootstrap-adoption.sh \
+#     --platform "$(yq -r .platform .adr-governance/adoption.yaml)" \
+#     --org      "$(yq -r .organization .adr-governance/adoption.yaml)" \
+#     --name     "$(yq -r .adopter.name .adr-governance/adoption.yaml)" \
+#     --email    "$(yq -r .adopter.email .adr-governance/adoption.yaml)" \
+#     --identity "$(yq -r .adopter.identity .adr-governance/adoption.yaml)" \
+#     --team     "$(yq -r .adopter.team .adr-governance/adoption.yaml)"
+#
+# Or simply tell your AI agent:
+#   "Read .adr-governance/adoption.yaml and run bootstrap-adoption.sh
+#    with the values from that file."
+
+# Required — one of: github, azure, gcp, aws, gitlab
+platform: github
+
+# Your organisation or project name (used in ADR-0000 adr.project)
+organization: "CHANGEME — Your Organisation Name"
+
+# Remove examples-reference/ during bootstrap?
+# Set to true for consumer-mode adoption (recommended for production repos).
+remove_examples: false
+
+adopter:
+  # Full name (used in ADR-0000 authors, decision_owner, approvals)
+  name: "CHANGEME — Your Full Name"
+
+  # Email address
+  email: "CHANGEME — you@example.com"
+
+  # Approval identity — platform-specific format:
+  #   GitHub:     @username
+  #   Azure:      user@domain.com (Azure email or UPN)
+  #   GitLab:     username
+  #   GCP/AWS:    @username (or email)
+  identity: "CHANGEME — @username or user@domain.com"
+
+  # Architecture team handle or group:
+  #   GitHub:     @org/team-slug
+  #   Azure:      Azure DevOps group name (e.g., "[MyProject]\Architecture Team")
+  #   GitLab:     @group/subgroup
+  team: "CHANGEME — @org/architecture-team"
