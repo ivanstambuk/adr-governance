@@ -89,6 +89,8 @@ The following fields support **full Markdown** including embedded Mermaid diagra
 - Use **`<br/>`** for line breaks in node labels (never `\n` — Mermaid renders it literally)
 - Use **bidirectional arrows** (`<-->`) for cyclic or mutual dependencies
 - Add **benchmark/comparison tables** alongside diagrams when quantitative data is available
+- Include **side-by-side comparison tables** for tactical decisions where a competitor/inspiration exists (e.g., Vue vs. React Hooks) — tables communicate differentiators more efficiently than prose
+- Label alternatives with **empirical evidence** markers — "actually prototyped and discarded" or "tried in production and removed" — to distinguish theoretical from empirical rejection rationale
 
 ## Person Schema (`$defs/person`)
 
