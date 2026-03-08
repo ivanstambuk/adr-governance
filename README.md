@@ -450,16 +450,6 @@ python3 tests/llm_harness.py tests/scenarios/fictional-001-api-versioning.yaml
 python3 tests/llm_harness.py tests/scenarios/*.yaml
 ```
 
-### Scenario Categories
-
-| Category | Description | Examples |
-|----------|-------------|---------|
-| **Fictional** | Synthetic decision contexts | API versioning, monolith decomposition, secrets management |
-| **GitHub PR-based** | Extracted from real PRs | *(planned)* |
-| **Existing ADR-based** | Round-trip validation against reference ADRs | *(planned)* |
-
-See [`docs/research/automated-triple-llm-testing.md`](docs/research/automated-triple-llm-testing.md) for the full design document.
-
 ## License
 
 MIT
