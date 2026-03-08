@@ -225,8 +225,8 @@ references:
   - title: PingFederate Product Roadmap (internal)
     url: https://docs.pingidentity.com/pingfederate/latest/release-notes.html
 lifecycle:
-  review_cycle_months: 6
-  next_review_date: "2026-08-15"
+  review_cycle_months: 24
+  next_review_date: "2028-02-15"
   superseded_by: null
   supersedes: null
   archival:

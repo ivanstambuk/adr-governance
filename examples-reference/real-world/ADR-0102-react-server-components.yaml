@@ -673,7 +673,7 @@ references:
   - title: "Josh W. Comeau: Making Sense of React Server Components"
     url: "https://www.joshwcomeau.com/react/server-components/"
 lifecycle:
-  review_cycle_months: 12
+  review_cycle_months: 60
   next_review_date: "2025-12-21"
   superseded_by: null
   supersedes: null

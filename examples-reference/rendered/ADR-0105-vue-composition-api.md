@@ -808,8 +808,8 @@ Community adoption validation:
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2025-09-18
+- **Review cycle:** 24 months
+- **Next review:** 2022-09-18
 
 ## Audit Trail
 

@@ -170,8 +170,8 @@ ADR governance process validated by authoring 8 example ADRs (ADR-0001 through A
 
 ## Lifecycle
 
-- **Review cycle:** 24 months
-- **Next review:** 2028-03-05
+- **Review cycle:** 60 months
+- **Next review:** 2031-03-05
 
 ## Audit Trail
 

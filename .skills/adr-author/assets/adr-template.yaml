@@ -129,7 +129,7 @@ references:
 
 # --- Optional ---
 lifecycle:
-  review_cycle_months: 12 # Optional advisory metadata; scheduling/reminders are external to this repo
+  review_cycle_months: 12 # Advisory review cadence (months). 0 = permanent (no review). Varies by level × confidence — see adr-process.md §9: Strategic/high=60, Tactical/high=24, Operational/high=18
   next_review_date: "" # ISO 8601 date; tracked here, not automatically scheduled/enforced by this repo
   superseded_by: null
   supersedes: null

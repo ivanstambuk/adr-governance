@@ -155,8 +155,8 @@ dependencies:
   external:
     - JSON Schema specification (Draft 2020-12)
 lifecycle:
-  review_cycle_months: 24
-  next_review_date: "2028-03-05"
+  review_cycle_months: 60
+  next_review_date: "2031-03-05"
   superseded_by: null
   supersedes: null
   archival:

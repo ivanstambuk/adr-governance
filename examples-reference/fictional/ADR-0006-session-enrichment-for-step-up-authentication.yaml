@@ -301,8 +301,8 @@ references:
   - title: PingFederate Session Management Documentation
     url: https://docs.pingidentity.com/pingfederate/latest/session-management.html
 lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2027-02-27"
+  review_cycle_months: 24
+  next_review_date: "2028-02-27"
   superseded_by: null
   supersedes: null
   archival:

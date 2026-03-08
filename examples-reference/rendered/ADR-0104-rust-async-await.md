@@ -613,8 +613,8 @@ Production validation:
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2020-11-07
+- **Review cycle:** 60 months
+- **Next review:** 2024-11-07
 
 ## Audit Trail
 

@@ -239,8 +239,8 @@ Periodic review of OpenID Federation specification maturity. Track industry adop
 
 ## Lifecycle
 
-- **Review cycle:** 6 months
-- **Next review:** 2026-08-15
+- **Review cycle:** 24 months
+- **Next review:** 2028-02-15
 
 ## Audit Trail
 

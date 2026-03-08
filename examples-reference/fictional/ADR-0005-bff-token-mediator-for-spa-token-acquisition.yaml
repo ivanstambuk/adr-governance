@@ -315,8 +315,8 @@ references:
   - title: OAuth 2.1 Authorization Framework — RFC 9700
     url: https://datatracker.ietf.org/doc/html/rfc9700
 lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2027-02-18"
+  review_cycle_months: 24
+  next_review_date: "2028-02-18"
   superseded_by: null
   supersedes: null
   archival:

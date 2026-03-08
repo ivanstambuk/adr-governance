@@ -602,13 +602,29 @@ Archival is for decisions that are no longer active and should be removed from r
 
    > These questions focus on improving the *decision-making process*, not just the architecture. Adapted from [Cervantes & Woods, "Architectural Retrospectives"](https://www.infoq.com/articles/architectural-retrospectives/).
 
-3. **Confidence-driven review frequency.** Use `decision.confidence` to set default review cadence metadata:
+3. **Level-aware review frequency.** Use both `adr.decision_level` and `decision.confidence` to set review cadence metadata. Strategic decisions are inherently more stable and expensive to change — they deserve longer review cycles than tactical or operational ones:
 
-   | Confidence | Recommended `review_cycle_months` | Rationale |
-   |------------|----------------------------------|----------|
-   | `low` | 6 | Decision made under pressure or with incomplete data — re-evaluate early |
-   | `medium` | 12 | Standard review cycle |
-   | `high` | 24 | Strong empirical evidence — extended cycle acceptable |
+   | Decision Level \\ Confidence | `low` | `medium` | `high` |
+   |------------------------------|:-----:|:--------:|:------:|
+   | **Strategic** | 24 | 36 | 60 |
+   | **Tactical** | 12 | 18 | 24 |
+   | **Operational** | 6 | 12 | 18 |
+
+   > **Rationale:** Strategic decisions (system landscape, bounded contexts, multi-year impact) take years to implement and evaluate. Reviewing a strategic, high-confidence decision every 12 months creates noise if implementation alone takes 18 months. Operational decisions (library choices, deployment config) can shift more frequently and benefit from shorter review windows.
+
+4. **Permanent decisions.** Set `review_cycle_months: 0` for decisions that are effectively permanent and do not require periodic review. Examples:
+   - Industry-standard choices unlikely to change (e.g., "Use UTF-8 for text encoding")
+   - Foundational decisions where reversal is inconceivable and the decision has been validated over many years
+
+   > Use `0` sparingly. Most decisions *do* benefit from periodic re-evaluation — context changes, technologies evolve, and assumptions invalidate. When in doubt, set a long cycle (36–60 months) rather than `0`.
+
+   **Three-state semantics** for `review_cycle_months`:
+
+   | Value | Meaning | Tooling behavior |
+   |-------|---------|------------------|
+   | *absent* | Author hasn't set it yet | CI can warn: "review cycle not set" |
+   | `0` | **Permanent** — no periodic review needed | CI skips review reminders |
+   | `> 0` | Review every N months | CI schedules review alerts |
 
 
 ---

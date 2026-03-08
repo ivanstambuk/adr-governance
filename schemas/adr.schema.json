@@ -357,7 +357,7 @@
                         "medium",
                         "high"
                     ],
-                    "description": "Confidence level in this decision. Low-confidence decisions should have shorter review cycles and be prioritized for reconsideration."
+                    "description": "Confidence level in this decision. Combined with decision_level, this influences lifecycle.review_cycle_months — low-confidence decisions should have shorter review cycles; strategic decisions should have longer ones."
                 }
             },
             "description": "The chosen alternative and its justification."
@@ -454,8 +454,8 @@
             "properties": {
                 "review_cycle_months": {
                     "type": "integer",
-                    "minimum": 1,
-                    "description": "How often (in months) this decision should be reviewed."
+                    "minimum": 0,
+                    "description": "How often (in months) this decision should be reviewed. Set to 0 for permanent decisions that do not require periodic review. Recommended values vary by decision level and confidence — see adr-process.md §9."
                 },
                 "next_review_date": {
                     "type": "string",

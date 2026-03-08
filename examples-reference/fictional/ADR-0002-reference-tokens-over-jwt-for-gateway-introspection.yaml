@@ -287,8 +287,8 @@ references:
   - title: PingFederate Token Management Documentation
     url: https://docs.pingidentity.com/pingfederate/latest/token-management.html
 lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2027-01-30"
+  review_cycle_months: 24
+  next_review_date: "2028-01-30"
   superseded_by: null
   supersedes: null
   archival:

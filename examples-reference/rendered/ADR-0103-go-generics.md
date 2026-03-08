@@ -593,8 +593,8 @@ addressed the core community need.
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2023-03-15
+- **Review cycle:** 60 months
+- **Next review:** 2027-03-15
 
 ## Audit Trail
 

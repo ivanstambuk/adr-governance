@@ -504,8 +504,8 @@ Post-removal validation:
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2023-12-08
+- **Review cycle:** 60 months
+- **Next review:** 2025-12-08
 
 ## Audit Trail
 

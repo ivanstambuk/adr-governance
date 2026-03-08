@@ -311,8 +311,8 @@ Integration test: verify SPA receives tokens only via BFF, no tokens in browser 
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2027-02-18
+- **Review cycle:** 24 months
+- **Next review:** 2028-02-18
 
 ## Audit Trail
 

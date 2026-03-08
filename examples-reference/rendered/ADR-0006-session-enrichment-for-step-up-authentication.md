@@ -299,8 +299,8 @@ Session enrichment validated in staging with PingFederate 12.x and PingAccess 8.
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2027-02-27
+- **Review cycle:** 24 months
+- **Next review:** 2028-02-27
 
 ## Audit Trail
 

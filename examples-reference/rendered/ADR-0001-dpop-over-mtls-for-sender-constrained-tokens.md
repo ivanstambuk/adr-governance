@@ -285,8 +285,8 @@ Verified via integration test suite covering all three client types (mobile, bac
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2027-01-24
+- **Review cycle:** 18 months
+- **Next review:** 2027-07-24
 
 ## Audit Trail
 

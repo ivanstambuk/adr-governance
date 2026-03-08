@@ -397,8 +397,8 @@ The TypeScript Go port is published at github.com/microsoft/typescript-go under 
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2026-03-11
+- **Review cycle:** 60 months
+- **Next review:** 2030-03-11
 
 ## Audit Trail
 

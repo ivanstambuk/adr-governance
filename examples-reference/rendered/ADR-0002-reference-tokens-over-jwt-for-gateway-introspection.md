@@ -289,8 +289,8 @@ Code review of gateway introspection configuration. Validate token format in sta
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2027-01-30
+- **Review cycle:** 24 months
+- **Next review:** 2028-01-30
 
 ## Audit Trail
 

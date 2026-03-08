@@ -544,7 +544,7 @@ integrated with Relay for data fetching at massive scale.
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
+- **Review cycle:** 60 months
 - **Next review:** 2025-12-21
 
 ## Audit Trail

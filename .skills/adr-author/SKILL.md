@@ -88,6 +88,15 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 - `architecturally_significant_requirements` — extract at least 2 functional or non-functional ASRs from the interview answers (technical drivers, constraints, performance targets, compliance mandates). If none are obvious from the conversation, ask the user explicitly.
 - `dependencies` — internal and external dependency tracking
 - `audit_trail` — initial `created` event
+- `lifecycle` — set `review_cycle_months` based on `decision_level` × `confidence`:
+
+  | Level \\ Confidence | `low` | `medium` | `high` |
+  |---------------------|:-----:|:--------:|:------:|
+  | **Strategic** | 24 | 36 | 60 |
+  | **Tactical** | 12 | 18 | 24 |
+  | **Operational** | 6 | 12 | 18 |
+
+  Set `review_cycle_months: 0` only for permanent decisions that never need review (e.g., "Use UTF-8"). Compute `next_review_date` = `decision_date` + `review_cycle_months`.
 
 #### Step 4: Validate
 

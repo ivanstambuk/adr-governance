@@ -274,8 +274,8 @@ references:
   - title: eIDAS 2.0 Regulation — Unlinkability Requirements
     url: https://eur-lex.europa.eu/eli/reg/2024/1183/oj
 lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2026-12-10"
+  review_cycle_months: 24
+  next_review_date: "2027-12-10"
   superseded_by: null
   supersedes: null
   archival:

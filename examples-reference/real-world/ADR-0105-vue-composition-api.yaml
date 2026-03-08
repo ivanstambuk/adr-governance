@@ -1046,8 +1046,8 @@ references:
   - title: "VueUse — Collection of Vue Composition Utilities"
     url: "https://vueuse.org/"
 lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2025-09-18"
+  review_cycle_months: 24
+  next_review_date: "2022-09-18"
   superseded_by: null
   supersedes: null
   archival:

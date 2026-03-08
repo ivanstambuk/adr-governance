@@ -273,8 +273,8 @@ Verify pairwise subject identifiers in token responses across relying parties. C
 
 ## Lifecycle
 
-- **Review cycle:** 12 months
-- **Next review:** 2026-12-10
+- **Review cycle:** 24 months
+- **Next review:** 2027-12-10
 
 ## Audit Trail
 

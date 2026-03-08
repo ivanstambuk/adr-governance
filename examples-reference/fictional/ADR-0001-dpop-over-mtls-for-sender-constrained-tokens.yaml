@@ -282,8 +282,8 @@ references:
   - title: PingFederate DPoP Configuration Guide
     url: https://docs.pingidentity.com/pingfederate/latest/dpop.html
 lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2027-01-24"
+  review_cycle_months: 18
+  next_review_date: "2027-07-24"
   superseded_by: null
   supersedes: null
   archival:

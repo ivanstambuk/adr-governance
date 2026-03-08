@@ -1794,7 +1794,7 @@ The landing zone **concept** is valuable educational content referenced in our v
 
 **Precedent:** Azure Well-Architected Framework recommends confidence levels. No ADR template has this as a structured field.
 
-**Rationale:** `confidence: low` signals that the decision was made under time pressure or with incomplete information, and should have a shorter review cycle. `confidence: high` signals strong empirical evidence (PoC, benchmarks) and can tolerate a longer review interval. This field directly influences the `lifecycle.review_cycle_months` — low-confidence decisions should be reviewed sooner.
+**Rationale:** `confidence: low` signals that the decision was made under time pressure or with incomplete information, and should have a shorter review cycle. `confidence: high` signals strong empirical evidence (PoC, benchmarks) and can tolerate a longer review interval. Combined with `decision_level`, this field drives the two-dimensional review cycle guidance in `adr-process.md` §9 — e.g., a strategic/high decision gets 60 months, while an operational/low decision gets 6 months.
 
 ---
 
@@ -2102,7 +2102,7 @@ Our `lifecycle` block provides the **schema-level infrastructure** for both prac
 | Attribute | Value |
 |---|---|
 | **Schema path** | `lifecycle.review_cycle_months`, `lifecycle.next_review_date` |
-| **Type** | `integer` (min: 1), `string` (date) |
+| **Type** | `integer` (min: 0), `string` (date) |
 | **Required?** | Optional |
 
 ##### Why Structured Review Cadence?
@@ -2110,15 +2110,27 @@ Our `lifecycle` block provides the **schema-level infrastructure** for both prac
 **No other template has structured review scheduling.** The concept exists as a *process recommendation* (Cervantes & Woods, Henderson) but never as a *schema field*. We schema-fy it because:
 
 1. **Machine-readable review dates enable automation.** Without a structured field, review scheduling depends on human memory. With `next_review_date`, CI or external tooling can generate alerts: "3 ADRs are past their review date."
-2. **Risk-based prioritization.** Combined with `decision.confidence`, review cadence becomes risk-proportional:
+2. **Risk-based prioritization.** Combined with `decision.confidence` and `adr.decision_level`, review cadence becomes risk-proportional and scope-proportional:
 
-   | Confidence | Recommended `review_cycle_months` | Rationale |
-   |---|---|---|
-   | `low` | 6 | Decision made under pressure or with incomplete data — re-evaluate early |
-   | `medium` | 12 | Standard review cycle |
-   | `high` | 24 | Strong empirical evidence — extended cycle acceptable |
+   | Decision Level \\ Confidence | `low` | `medium` | `high` |
+   |------------------------------|:-----:|:--------:|:------:|
+   | **Strategic** | 24 | 36 | 60 |
+   | **Tactical** | 12 | 18 | 24 |
+   | **Operational** | 6 | 12 | 18 |
 
-3. **Closing the lifecycle loop.** `review_cycle_months` triggers reviews; the `reviewed` event in `audit_trail` records that one occurred. This creates a verifiable review cadence: schedule → review → record → reschedule.
+   **Rationale for two-dimensional guidance:** The original schema used confidence as the sole dimension (low=6, medium=12, high=24). This was inadequate because strategic decisions (system landscape, bounded contexts, multi-year impact) take years to implement and evaluate. Reviewing a strategic, high-confidence decision every 12 months creates noise if implementation alone takes 18 months. Decision level captures the *velocity of change* — strategic decisions are stable by nature while operational ones shift frequently.
+
+3. **Permanent decisions (`review_cycle_months: 0`).** The schema allows `0` as a sentinel value meaning "this decision is permanent — no periodic review needed." Three-state semantics:
+
+   | Value | Meaning | Tooling behavior |
+   |-------|---------|------------------|
+   | *absent* | Author hasn't set it yet | CI can warn: "review cycle not set" |
+   | `0` | **Permanent** — no periodic review needed | CI skips review reminders |
+   | `> 0` | Review every N months | CI schedules review alerts |
+
+   Use `0` sparingly — most decisions benefit from periodic re-evaluation. Examples of genuinely permanent decisions: "Use UTF-8 for text encoding", "Use HTTPS for all external APIs." When in doubt, prefer a long cycle (36–60 months) over `0`.
+
+4. **Closing the lifecycle loop.** `review_cycle_months` triggers reviews; the `reviewed` event in `audit_trail` records that one occurred. This creates a verifiable review cadence: schedule → review → record → reschedule.
 
 ##### The Review Process (Not Schema-Enforced)
 
@@ -2137,9 +2149,11 @@ This deliberate split — schema for scheduling, process doc for methodology —
 
 - *Review-as-process-only (no schema field)* — without machine-readable data, review scheduling depends on human memory. Automated CI reminders require structured fields
 - *Single `next_review_date` without cycle* — loses the recurring nature of reviews. The cycle enables auto-computation of subsequent review dates after each review
-- *Required field* — not all decisions need active review. Operational decisions with `confidence: high` may never need re-evaluation
+- *Required field* — not all decisions need active review. Permanent decisions (e.g., industry-standard choices) with `confidence: high` may never need re-evaluation; `review_cycle_months: 0` captures this explicitly
 - *Evidence decay tracking with TTL per evidence item* — promising academic concept (arXiv, 2024) but adds significant schema complexity. Each evidence claim would need its own expiration date, requiring structured evidence objects rather than prose. Future schema versions may adopt this if the concept matures
 - *Automated review via CI (fail builds when review is overdue)* — too aggressive. Review dates are advisory, not blocking. A stale review date should generate a warning, not block deployments
+- *Confidence-only review guidance (original approach: low=6, medium=12, high=24)* — treated all decision levels identically. A high-confidence strategic decision (multi-year, system-wide) and a high-confidence operational decision (library choice, easily reversible) got the same 24-month cycle. Adding `decision_level` as a second dimension creates more proportional guidance without over-engineering the schema itself (the schema field remains a simple integer; the guidance table lives in process documentation)
+- *Null sentinel for permanent decisions* — YAML `null` and field-absent are easily confused by parsers. `0` is unambiguous: it's an integer that clearly means "zero months between reviews" = "never review"
 
 ---
 

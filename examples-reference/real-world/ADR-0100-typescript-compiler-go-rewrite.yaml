@@ -447,8 +447,8 @@ dependencies:
     - Language Server Protocol (LSP) specification
     - Node.js runtime (for TypeScript 6.x during transition)
 lifecycle:
-  review_cycle_months: 12
-  next_review_date: "2026-03-11"
+  review_cycle_months: 60
+  next_review_date: "2030-03-11"
   superseded_by: null
   supersedes: null
   archival:
