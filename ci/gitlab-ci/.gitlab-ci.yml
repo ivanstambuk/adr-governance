@@ -42,16 +42,16 @@ validate-adr:
     - |
       echo "=== Linting architecture-decision-log/ ==="
       if [ -d "architecture-decision-log" ] && ls architecture-decision-log/*.yaml 1>/dev/null 2>&1; then
-        yamllint -c .yamllint.yml architecture-decision-log/
+        python3 -m yamllint -c .yamllint.yml architecture-decision-log/
       else
         echo "No YAML files — skipping"
       fi
 
       echo "=== Linting examples-reference/ ==="
-      if [ -d "examples-reference" ] && ls examples-reference/*.yaml 1>/dev/null 2>&1; then
-        yamllint -c .yamllint.yml examples-reference/
+      if [ -d "examples-reference" ] && find examples-reference -name '*.yaml' -print -quit | grep -q .; then
+        find examples-reference -name '*.yaml' -print0 | xargs -0 python3 -m yamllint -c .yamllint.yml
       else
-        echo "No YAML files — skipping"
+        echo "No YAML files or directory absent — skipping"
       fi
 
     # Verify approval identities (MR only)

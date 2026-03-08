@@ -151,15 +151,25 @@ I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-go
 
 Please help me:
 1. Fork or clone the repo into my organization as a new repository named "architecture-decisions".
-2. Delete the examples-reference/ directory (those are fictional reference ADRs).
+2. Delete the examples-reference/ directory (those are fictional reference ADRs). All scripts, hooks, CI, and tests will keep working after deletion.
 3. Update ADR-0000 (architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml):
    - Replace authors, decision_owner, reviewers, and approvals with my name/identity
    - Update adr.project to my organization name
    - Update timestamps and audit trail entries
-4. Set up CI validation as a required merge gate for my platform.
-5. Enable the pre-commit hook (git config core.hooksPath .githooks).
-6. Configure CODEOWNERS with my team handle.
-7. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the check fails.
+4. Update .adr-governance/config.yaml:
+   - Replace admins[].identity with my Git identity
+   - Set adr_directory to architecture-decision-log (default)
+5. Set up CI validation as a required merge gate for my platform.
+6. Enable the pre-commit hook (git config core.hooksPath .githooks).
+7. Configure reviewer ownership:
+   - GitHub: copy CODEOWNERS.example to .github/CODEOWNERS and replace team handles
+   - Azure DevOps: add "Automatically included reviewers" in branch policies (CODEOWNERS does not exist on Azure DevOps)
+   - GitLab: add approval rules in Settings → Merge Requests
+8. Set identity format for approvals[].identity:
+   - GitHub: @username (e.g., @janedoe)
+   - Azure DevOps: Azure email or UPN (e.g., jane.doe@contoso.com)
+   - GitLab: GitLab username (e.g., janedoe)
+9. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the check fails.
 
 My organization name is: [INSERT ORG NAME]
 My CI platform is: [GitHub Actions / Azure DevOps / GCP Cloud Build / AWS CodeBuild / GitLab CI]
@@ -235,13 +245,19 @@ git config core.hooksPath .githooks
 
 This activates automatic Markdown rendering — every commit that touches `architecture-decision-log/*.yaml` will regenerate the human-friendly files in `architecture-decision-log/rendered/` and the decision log index. Both the YAML source and its Markdown rendering are committed together, so reviewers approve both in the same PR.
 
-#### 6. Configure CODEOWNERS *(optional but recommended)*
+#### 6. Configure reviewer ownership *(optional but recommended)*
+
+**GitHub** — copy `CODEOWNERS.example` to `.github/CODEOWNERS` and replace the placeholder team handles:
 
 ```bash
 cp CODEOWNERS.example .github/CODEOWNERS
 ```
 
-Edit `.github/CODEOWNERS` to replace the placeholder team handles (`@org/architecture-team`, etc.) with your real GitHub teams. This ensures ADRs and schema changes automatically request review from the right people.
+**Azure DevOps** — CODEOWNERS does not exist on Azure DevOps. Instead:
+- Branch policies → **Automatically included reviewers** for `architecture-decision-log/*.yaml`
+- Use the reviewer's **Azure email / UPN** (e.g., `jane.doe@contoso.com`) as `approvals[].identity`
+
+**GitLab** — Settings → Merge Requests → **Approval rules** → add required approvers.
 
 #### 7. Copy the Agent Skill to your code repositories *(optional)*
 

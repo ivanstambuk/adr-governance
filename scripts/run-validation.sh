@@ -44,27 +44,45 @@ run_default_target() {
     echo "=== $label ==="
     echo "  • $target"
     python3 scripts/validate-adr.py "$target"
-    return 0
+    return $?
   fi
 
-  return 1
+  # Directory missing or empty — not a failure, just nothing to validate
+  return 255
 }
 
 found_default_targets=0
+validation_failed=0
 
-if run_default_target "Validating governed ADR corpus" "architecture-decision-log"; then
-  found_default_targets=1
-fi
+for spec in \
+  "Validating governed ADR corpus|architecture-decision-log" \
+  "Validating fictional ADR examples|examples-reference/fictional" \
+  "Validating real-world ADR examples|examples-reference/real-world"; do
 
-if run_default_target "Validating fictional ADR examples" "examples-reference/fictional"; then
-  found_default_targets=1
-fi
+  label="${spec%%|*}"
+  target="${spec##*|}"
 
-if run_default_target "Validating real-world ADR examples" "examples-reference/real-world"; then
+  set +e
+  run_default_target "$label" "$target"
+  rc=$?
+  set -e
+
+  if [ "$rc" -eq 255 ]; then
+    continue  # directory absent or empty — skip
+  fi
+
   found_default_targets=1
-fi
+  if [ "$rc" -ne 0 ]; then
+    validation_failed=1
+  fi
+done
 
 if [ "$found_default_targets" -eq 0 ]; then
   echo "No ADR files found — skipping validation"
   exit 0
+fi
+
+if [ "$validation_failed" -ne 0 ]; then
+  echo "Validation failed for one or more ADR directories."
+  exit 1
 fi

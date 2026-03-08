@@ -16,7 +16,8 @@ validate: ## Validate all ADR YAML files against the schema
 	bash scripts/run-validation.sh
 
 lint: ## Run YAML lint on all ADR files
-	yamllint -c .yamllint.yml architecture-decision-log/ examples-reference/
+	python3 -m yamllint -c .yamllint.yml architecture-decision-log/
+	@if [ -d examples-reference ]; then find examples-reference -name '*.yaml' -print0 | xargs -0 python3 -m yamllint -c .yamllint.yml; fi
 
 test: ## Run the automated regression test suite
 	python3 -m unittest discover -s tests -v
@@ -29,7 +30,7 @@ generated: ## Verify committed generated artifacts are current
 
 render: ## Render all ADRs to Markdown
 	python3 scripts/render-adr.py --output-dir architecture-decision-log/rendered/ --generate-index architecture-decision-log/
-	python3 scripts/render-adr.py --output-dir examples-reference/rendered/ --generate-index examples-reference/
+	@if [ -d examples-reference ]; then python3 scripts/render-adr.py --output-dir examples-reference/rendered/ --generate-index examples-reference/; fi
 
 bundle: ## Generate the repomix bundle for AI chat
 	./scripts/bundle.sh

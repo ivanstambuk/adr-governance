@@ -113,7 +113,7 @@ I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-go
 Please help me set this up in Azure DevOps:
 
 1. Clone or import the adr-governance repo into our Azure DevOps project.
-2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions).
+2. Delete the examples-reference/ directory if you want (those are fictional reference ADRs, not real decisions). All scripts, hooks, CI, and tests will keep working.
 3. Keep the architecture-decision-log/ directory with ADR-0000 as the bootstrap meta-ADR, updating the authors and decision_owner fields to my name.
 4. Copy ci/azure-devops/azure-pipelines.yml to the repository root as azure-pipelines.yml.
 5. Create a new pipeline in Azure Pipelines pointing to this file.
@@ -121,7 +121,11 @@ Please help me set this up in Azure DevOps:
    - Add the pipeline as a required Build Validation (automatic trigger, required policy)
    - Set minimum reviewers to at least 1
    - Disallow requestors from approving their own changes
-7. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the build policy blocks merge.
+   - Add an "Automatically included reviewers" policy for architecture-decision-log/*.yaml targeting the architecture team
+7. In ADR-0000's approvals[].identity and all future ADRs, use the reviewer's **Azure email or UPN** (e.g., jane.doe@contoso.com). This is what verify-approvals.py matches against the Azure DevOps API.
+8. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the build policy blocks merge.
+
+Note: CODEOWNERS is GitHub-specific — it does not exist on Azure DevOps. The Azure equivalents are "Automatically included reviewers" and "Required reviewers" in branch policies.
 
 Our Azure DevOps organization URL is: [INSERT URL, e.g., https://dev.azure.com/myorg]
 Our project name is: [INSERT PROJECT NAME]
@@ -287,6 +291,22 @@ Create a branch, add or modify an ADR YAML file with an intentional error (e.g.,
 4. **(Optional) Require reviewers:**
    - In the same Branch policies page, set **Minimum number of reviewers** ≥ 1
    - Enable: ✅ **Allow requestors to approve their own changes** → No (mirrors the ADR "no self-approval" rule from §3.4)
+   - **(Optional) Automatically include reviewers** — add an "Automatically included reviewers" policy for `architecture-decision-log/*.yaml` to designate your architecture team as required reviewers
+
+5. **(Identity format for `approvals[].identity`):**
+   - On Azure DevOps, use the reviewer's **Azure email address or UPN** (e.g., `jane.doe@contoso.com`)
+   - The `verify-approvals.py` script matches `approvals[].identity` against the Azure DevOps PR reviewers API, which returns UPNs
+   - Example:
+     ```yaml
+     approvals:
+       - name: "Jane Doe"
+         role: "Lead Architect"
+         identity: "jane.doe@contoso.com"  # Azure email / UPN
+         approved_at: "2026-03-15T10:00:00Z"
+         signature_id: sig-example-001
+     ```
+
+> **Note:** `CODEOWNERS` is a **GitHub-specific** mechanism and does not exist on Azure DevOps. The Azure equivalents are **Automatically included reviewers** (branch policy) and **Required reviewers** (PR policy). Do not copy `CODEOWNERS.example` into an Azure DevOps repository.
 
 #### Verification
 
@@ -423,15 +443,28 @@ Create a merge request with a schema-violating ADR and confirm the pipeline fail
 
 If you rename `architecture-decision-log/` to something else (e.g., `adrs/` or `decisions/`), update the path references in:
 1. The pipeline file (trigger paths and script commands)
-2. `CODEOWNERS` (if using GitHub)
+2. `CODEOWNERS` (if using GitHub) or Automatically included reviewers (if on Azure DevOps)
 
 ### Adding Additional Validation
 
 To add custom validation rules (e.g., enforcing naming conventions, checking for required tags), modify [`scripts/validate-adr.py`](../scripts/validate-adr.py). The validator is designed to be extended — add your checks in the `validate_file()` function between the schema validation and the return statement.
 
-### Removing Example Validation
+### Removing Example Validation (Consumer-Mode Guarantee)
 
-The shipped pipelines use [`scripts/run-validation.sh`](../scripts/run-validation.sh), which auto-discovers ADR directories. By default it validates `architecture-decision-log/` and `examples-reference/` separately, so the fictional reference ADRs do not reserve IDs in the live ADR namespace. If you delete `examples-reference/`, no pipeline edits are required — the helper simply skips missing directories.
+The shipped pipelines use [`scripts/run-validation.sh`](../scripts/run-validation.sh), which auto-discovers ADR directories. By default it validates `architecture-decision-log/` and `examples-reference/` separately, so the fictional reference ADRs do not reserve IDs in the live ADR namespace.
+
+**Consumer-mode guarantee:** after deleting `examples-reference/`, the following all continue to work without any pipeline or configuration edits:
+
+| Component | Behaviour when `examples-reference/` is absent |
+|-----------|------------------------------------------------|
+| `scripts/run-validation.sh` | Skips the two example corpora; validates `architecture-decision-log/` only |
+| `.githooks/pre-commit` | Skips example rendering; renders `architecture-decision-log/` and regenerates `llms-full.txt` as usual |
+| CI lint steps (all platforms) | Skip the examples-reference lint block cleanly |
+| `make lint` / `make render` | Skip examples-reference targets |
+| `scripts/check-generated-artifacts.sh` | Skips the examples-reference freshness check |
+| Test suite (`make test`) | All tests pass — assertions about `examples-reference/` are conditional |
+
+This is regression-tested by [`tests/test_no_examples_shape.py`](../tests/test_no_examples_shape.py).
 
 ---
 ## Approval Identity Verification

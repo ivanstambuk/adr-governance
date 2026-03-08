@@ -14,13 +14,13 @@ Thank you for considering contributing to the ADR Governance framework!
 1. **Fork the repository** and create a feature branch.
 2. **Make your changes.** Follow the existing code style:
    - Python: PEP 8, type hints encouraged
-   - YAML: validated by `yamllint` with the repo's `.yamllint.yml` config
+   - YAML: validated by `yamllint` with the repo's `.yamllint.yml` config (invoked as `python3 -m yamllint` for PATH independence)
    - Markdown: one sentence per line preferred for clean diffs
 3. **Validate** before submitting:
    ```bash
    pip install -r requirements.txt
-   python3 scripts/validate-adr.py architecture-decision-log/ examples-reference/
-   yamllint -c .yamllint.yml architecture-decision-log/ examples-reference/
+   python3 scripts/validate-adr.py architecture-decision-log/
+   python3 -m yamllint -c .yamllint.yml architecture-decision-log/
    ```
 4. **Open a pull request** against `main`. Describe what you changed and why.
 

@@ -386,7 +386,7 @@ alternatives:
           B --> C["Goroutine-like<br/>lightweight threads"]
           C --> D["Code looks synchronous<br/>no async/await needed"]
 
-          E{Rust's Experience (pre-1.0)}
+          E{"Rust's Experience<br/>(pre-1.0)"}
           E --> F["❌ Mandatory runtime<br/>even for Hello World"]
           E --> G["❌ Segmented stacks<br/>break FFI"]
           E --> H["❌ Hidden overhead<br/>violates zero-cost"]

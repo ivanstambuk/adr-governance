@@ -1,0 +1,148 @@
+adr:
+  id: ADR-0000-fixture-decision
+  title: Use Widget over Gadget for internal processing
+  y_statement: >-
+    **In the context of** the internal processing pipeline, **facing** the need
+    for a reliable and maintainable processing component, **we decided for**
+    Widget **and neglected** Gadget and a hybrid Widget/Gadget approach,
+    **to achieve** a single, well-tested processing path that simplifies
+    debugging and reduces operational overhead, **accepting** slightly higher
+    per-unit cost and limited vendor flexibility, **because** Widget is the
+    only component that meets all three reliability, maintainability, and
+    latency requirements without infrastructure modifications.
+  status: accepted
+  created_at: "2026-01-10T09:00:00Z"
+  last_modified: "2026-01-25T14:30:00Z"
+  version: "1.0"
+  schema_version: "1.0.0"
+  project: Internal Processing Pipeline
+  component: Processing Engine
+  tags:
+    - processing
+    - widget
+    - reliability
+  priority: high
+  decision_type: technology
+  decision_level: operational
+authors:
+  - name: Alice Smith
+    role: Platform Architect
+    email: alice.smith@example.com
+reviewers:
+  - name: Bob Jones
+    role: Engineering Lead
+    email: bob.jones@example.com
+decision_owner:
+  name: Carol White
+  role: VP Engineering
+  email: carol.white@example.com
+approvals:
+  - name: Carol White
+    role: VP Engineering
+    identity: "@carolwhite"
+    approved_at: "2026-01-24T10:00:00Z"
+    signature_id: sig-fixture-001
+context:
+  description: |
+    The team must choose a processing component for the internal pipeline.
+    Two components are standardized: Widget (application-layer) and Gadget
+    (infrastructure-layer). Both meet functional requirements, but differ in
+    operational characteristics.
+  business_drivers:
+    - Reduce operational incident rate by 40%
+    - Support 10x traffic growth over 18 months
+  technical_drivers:
+    - Widget operates at the application layer and survives infrastructure changes
+    - Gadget requires infrastructure-level configuration per deployment
+  constraints:
+    - Must work with existing CI/CD pipeline without modifications
+    - Must not require additional infrastructure provisioning
+  assumptions:
+    - Current traffic patterns will continue scaling linearly
+    - Widget vendor maintains backward compatibility for 3+ years
+architecturally_significant_requirements:
+  functional:
+    - id: F-001
+      description: Processing component must handle 10K events/second at peak
+    - id: F-002
+      description: Component must support idempotent reprocessing
+  non_functional:
+    - id: NF-001
+      description: Processing latency must be under 50ms at p99
+    - id: NF-002
+      description: Component must be deployable without downtime
+alternatives:
+  - name: Widget
+    description: |
+      Application-layer processing component. Self-contained, operates
+      independently of infrastructure configuration.
+    pros:
+      - No infrastructure changes required
+      - Battle-tested in production for 5+ years
+    cons:
+      - Slightly higher per-unit cost
+      - Limited vendor ecosystem
+    estimated_cost: medium
+    risk: low
+  - name: Gadget
+    description: |
+      Infrastructure-layer processing component. Requires infrastructure-level
+      configuration but offers raw performance advantages.
+    pros:
+      - Marginally faster raw throughput
+      - Larger vendor ecosystem
+    cons:
+      - Requires infrastructure provisioning per deployment
+      - Complex debugging due to infrastructure coupling
+    estimated_cost: high
+    risk: medium
+    rejection_rationale: Requires infrastructure changes per deployment and adds operational complexity that outweighs the marginal performance benefit.
+decision:
+  chosen_alternative: Widget
+  rationale: |
+    - Operates at application layer — no infrastructure changes required
+    - Production-proven for 5+ years with high reliability
+    - Single processing path simplifies debugging and operations
+  tradeoffs: |
+    - Slightly higher per-unit cost (~15% premium)
+    - Smaller vendor ecosystem limits future flexibility
+  decision_date: "2026-01-24"
+  confidence: high
+consequences:
+  positive:
+    - Unified processing path reduces operational complexity
+    - No infrastructure changes required for deployment
+  negative:
+    - Per-unit cost is ~15% higher than Gadget
+    - Lock-in to Widget vendor ecosystem
+confirmation:
+  description: "Verified via load test covering 10K events/second peak. Latency at p99 confirmed under 50ms."
+  artifact_ids:
+    - "LOAD-TEST-widget-10k-peak"
+    - "POC-2026-01-widget-integration"
+dependencies:
+  internal:
+    - CI/CD pipeline (no changes required)
+    - Monitoring stack (standard integration)
+  external:
+    - Widget vendor (3-year support agreement)
+references:
+  - title: Widget Technical Specification
+    url: https://example.com/widget-spec
+  - title: Gadget Technical Specification
+    url: https://example.com/gadget-spec
+lifecycle:
+  review_cycle_months: 12
+  next_review_date: "2027-01-24"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+audit_trail:
+  - event: created
+    by: Alice Smith
+    at: "2026-01-10T09:00:00Z"
+  - event: approved
+    by: Carol White
+    at: "2026-01-24T10:00:00Z"

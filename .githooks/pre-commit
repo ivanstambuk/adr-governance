@@ -54,14 +54,22 @@ if [ -n "$STAGED_ADL" ]; then
     git add "architecture-decision-log/rendered/"
 fi
 
-# Render examples-reference/ if changed
+# Render examples-reference/ if changed and directory still exists
 if [ -n "$STAGED_EXAMPLES" ]; then
-    echo "🔄 ADR changes detected in examples-reference/ — rendering Markdown..."
-    python3 scripts/render-adr.py \
-        --output-dir "examples-reference/rendered/" \
-        --generate-index \
-        "examples-reference/fictional/" "examples-reference/real-world/"
-    git add "examples-reference/rendered/"
+    EXAMPLE_DIRS=()
+    for dir in "examples-reference/fictional/" "examples-reference/real-world/"; do
+        if [ -d "$dir" ] && ls "$dir"/*.yaml >/dev/null 2>&1; then
+            EXAMPLE_DIRS+=("$dir")
+        fi
+    done
+    if [ "${#EXAMPLE_DIRS[@]}" -gt 0 ]; then
+        echo "🔄 ADR changes detected in examples-reference/ — rendering Markdown..."
+        python3 scripts/render-adr.py \
+            --output-dir "examples-reference/rendered/" \
+            --generate-index \
+            "${EXAMPLE_DIRS[@]}"
+        git add "examples-reference/rendered/"
+    fi
 fi
 
 echo "✅ Rendered ADR Markdown staged for commit"
