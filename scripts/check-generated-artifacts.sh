@@ -30,7 +30,11 @@ check_directory() {
 
     if [ -d "$source_dir" ] && list_adr_sources "$source_dir" | grep -q .; then
         while IFS= read -r source_file; do
-            cp "$source_file" "$snapshot_source_dir"/
+            local rel_path
+            rel_path="${source_file#"$source_dir"}"
+            local dest_dir="$snapshot_source_dir/$(dirname "$rel_path")"
+            mkdir -p "$dest_dir"
+            cp "$source_file" "$dest_dir/"
         done < <(list_adr_sources "$source_dir")
         python3 scripts/render-adr.py --output-dir "$expected_dir" --generate-index "$snapshot_source_dir/" >/dev/null
     fi
@@ -81,7 +85,7 @@ echo "=== Generated artifact freshness ==="
 
 check_directory \
     "architecture-decision-log/" \
-    "rendered" \
+    "architecture-decision-log/rendered" \
     "rendered ADR Markdown" \
     "make render"
 
