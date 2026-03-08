@@ -741,11 +741,11 @@ dependency tracking eliminates manual dependency arrays.
 
 ### Negative
 
-- Significant community backlash during the RFC phase — the initial reaction was so negative that Evan You had to publish a direct response clarifying the API would not replace the Options API
+- Significant community backlash during the RFC phase — Evan You had to publish a direct response clarifying the API would not replace the Options API
 - Two mental models coexist in the ecosystem — tutorials, blog posts, and libraries may use either API, creating confusion for newcomers
-- ref vs. reactive confusion — developers must understand both primitives, their differences, and when to use which (the RFC explicitly acknowledged this as "too early to mandate a best practice")
-- The .value unwrapping adds verbosity — accessing ref values requires .value in JavaScript (auto-unwrapped in templates), which feels ceremonious compared to Options API's direct property access
-- Vue's Reactivity Transform (an experimental attempt to eliminate .value) was introduced in 3.2 and deprecated in 3.3 — proving that compiler magic to hide reactivity costs has its own problems
+- ref vs. reactive confusion — developers must understand both primitives and when to use which (RFC acknowledged as "too early to mandate a best practice")
+- The .value unwrapping adds verbosity — accessing ref values requires .value in JavaScript, which feels ceremonious compared to Options API's direct access
+- Vue's Reactivity Transform (introduced in 3.2, deprecated in 3.3) proved that compiler magic to hide reactivity costs has its own problems
 - The Options API documentation and tutorials became "legacy" in perception even though the API remains fully supported, creating anxiety among existing Vue 2 developers
 
 ## Confirmation
@@ -817,13 +817,13 @@ Community adoption validation:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Evan You | 2019-07-10 | RFC-0013 (Composition API) published to vuejs/rfcs repository. Originally called "Function-based Component API" in the initial June 2019 proposal. Intense community backlash followed on GitHub, Hacker News, and Reddit.
+| `created` | Evan You | 2019-07-10 | RFC-0013 published. Originally called "Function-based Component API." Intense community backlash followed on GitHub, Hacker News, and Reddit.
  |
-| `updated` | Evan You | 2019-09-01 | @vue/composition-api plugin released, providing a Vue 2 backport for experimentation and feedback collection. Evan You published a public response to community backlash, clarifying the Composition API is additive and the Options API will not be deprecated.
+| `updated` | Evan You | 2019-09-01 | @vue/composition-api Vue 2 backport released. Evan You published public response to backlash: Composition API is additive, Options API will not be deprecated.
  |
-| `approved` | Vue.js Core Team | 2020-09-18 | Vue 3.0 "One Piece" released with Composition API as a built-in feature. The Options API remains fully supported. Composition API positioned as an advanced feature for complex components and logic reuse.
+| `approved` | Vue.js Core Team | 2020-09-18 | Vue 3.0 "One Piece" released with Composition API built-in. Options API remains fully supported. Composition API positioned for complex components and logic reuse.
  |
 | `updated` | Vue.js Core Team | 2021-08-10 | Vue 3.2 released with the `<script setup>` compile-time syntactic sugar for Single-File Components, eliminating the verbose return statement and making Composition API the more concise option.
  |
-| `updated` | Vue.js Core Team | 2022-02-07 | Vue 3 becomes the default version on vuejs.org. Documentation rewritten with Composition API as the primary recommended approach (with an Options API toggle for each example). Pinia replaces Vuex as the recommended state management library.
+| `updated` | Vue.js Core Team | 2022-02-07 | Vue 3 became the default on vuejs.org. Documentation rewritten with Composition API as primary approach. Pinia replaced Vuex as recommended state management.
  |

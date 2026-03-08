@@ -718,15 +718,15 @@ every identified limitation of the Webpack-based build pipeline:
 - React Server Components compilation unified — single-pass server/client compilation eliminates the dual-compiler overhead and enables tighter integration between rendering environments
 - Build performance scales with CPU cores — Rust-based parallelization utilizes all available cores for module resolution, transformation, and graph construction, unlike Webpack's single-threaded architecture
 - Dev/prod behavior consistency improved — Turbopack aims for development builds that closely match production, reducing the class of bugs caused by dev/prod discrepancies
-- Incremental rebuild performance decoupled from application size — function-level caching means editing a single file in a 10,000-module application rebuilds only the affected functions, not the entire module graph
+- Incremental rebuild performance decoupled from application size — function-level caching rebuilds only affected functions, not the entire module graph
 
 ### Negative
 
-- Webpack plugin ecosystem fragmentation — projects relying on custom Webpack plugins face a difficult choice between staying on Webpack or finding Turbopack alternatives, creating ecosystem bifurcation
-- Benchmark credibility damage from "700x faster" claim — the exaggerated marketing generated criticism from Evan You and the broader community, creating a skepticism that persisted even as Turbopack matured and delivered genuine improvements
-- Vendor dependency on Vercel deepened — Next.js's build infrastructure now depends entirely on a Vercel-controlled project, raising concerns about what happens if Vercel's priorities diverge from community needs
-- Multi-year transition period — the gap between announcement (Oct 2022) and production stability (Oct 2025) meant developers lived with uncertainty about whether to invest in Webpack configuration or wait for Turbopack
-- Community perception of "Not Invented Here" syndrome — some developers viewed Turbopack as Vercel reinventing an existing solution (Vite) rather than adopting a proven community tool, fracturing the frontend tooling ecosystem further
+- Webpack plugin ecosystem fragmentation — projects relying on custom Webpack plugins must choose between staying on Webpack or finding Turbopack alternatives
+- Benchmark credibility damage from "700x faster" claim — exaggerated marketing generated lasting skepticism even as Turbopack delivered genuine improvements
+- Vendor dependency on Vercel deepened — Next.js build infrastructure now depends entirely on a Vercel-controlled project, raising concerns about priority divergence
+- Multi-year transition period — announcement (Oct 2022) to production stability (Oct 2025) left developers uncertain about Webpack vs. Turbopack investment
+- "Not Invented Here" perception — some developers viewed Turbopack as reinventing Vite rather than adopting a proven community tool, fracturing the ecosystem
 
 ## Confirmation
 
@@ -797,13 +797,13 @@ confirming its viability:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Tobias Koppers | 2022-10-25 | Turbopack announced at Next.js Conf 2022 as an alpha bundler integrated with Next.js 13. Vercel claimed Turbopack was "up to 700x faster than Webpack" and "10x faster than Vite" for large applications. Tobias Koppers (Webpack's original creator, who joined Vercel in 2021) presented the architectural rationale: function-level incremental memoization, unified multi-environment module graph, and native Rust parallelization.
+| `created` | Tobias Koppers | 2022-10-25 | Turbopack announced at Next.js Conf 2022 as alpha with Next.js 13. Claimed "700x faster than Webpack." Koppers presented function-level memoization and Rust parallelization.
  |
-| `updated` | Vercel Engineering | 2022-11-15 | Evan You (Vite/Vue.js creator) publicly challenged Turbopack's benchmark claims, demonstrating that Vite was benchmarked without SWC optimization enabled and that rounding artifacts exaggerated the performance gap (15ms rounded to 0.01s vs 87ms rounded to 0.09s, making a 6x difference appear as 10x). Vercel revised its benchmark methodology and shifted to more conservative, application-specific performance claims.
+| `updated` | Vercel Engineering | 2022-11-15 | Evan You publicly challenged benchmark claims, showing Vite was benchmarked without SWC and rounding artifacts exaggerated gaps. Vercel revised methodology.
  |
-| `updated` | Next.js Core Team | 2024-04-01 | Next.js 14.2 released with 99.8% of development tests passing on Turbopack, reaching 100% shortly after. The team had focused exclusively on the development experience (next dev) based on community feedback, deferring production builds to ensure maximum stability for the most impactful use case.
+| `updated` | Next.js Core Team | 2024-04-01 | Next.js 14.2 reached 99.8% test parity with Webpack (100% shortly after). Team focused on dev experience, deferring production builds.
  |
-| `approved` | Vercel Engineering | 2024-10-21 | Next.js 15 released with Turbopack development mode declared stable. All 6,599 development tests passing. Performance measurements on vercel.com showed 76.7% faster server startup, 96.3% faster Fast Refresh, and 45.8% faster initial route compilation. Turbopack activated via next dev --turbo flag. Webpack remained available as fallback for projects with incompatible plugins.
+| `approved` | Vercel Engineering | 2024-10-21 | Next.js 15 released with stable Turbopack dev mode. All 6,599 tests passing. 76.7% faster startup, 96.3% faster Fast Refresh on vercel.com.
  |
-| `updated` | Next.js Core Team | 2025-10-01 | Next.js 16 released with Turbopack stable for both development and production builds. Turbopack became the default bundler for all new Next.js projects. Performance improvements included 2-5x faster production builds and up to 10x faster Fast Refresh. File system caching stabilized in Next.js 16.1 (December 2025), enabling persistent caching across dev server restarts. Standalone Turbopack and plugin API planned for 2026.
+| `updated` | Next.js Core Team | 2025-10-01 | Next.js 16 released with Turbopack stable for dev and production. Became default bundler. File system caching stabilized in 16.1. Standalone Turbopack planned for 2026.
  |

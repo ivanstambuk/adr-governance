@@ -784,19 +784,19 @@ philosophy and backward compatibility:
 
 ### Positive
 
-- Universal reactivity achieved — $state, $derived, $effect work identically in .svelte components, .svelte.js modules, and .svelte.ts files, eliminating the artificial boundary that confined reactivity to component files
-- Dependency tracking reliability restored — runtime evaluation-based tracking replaces compile-time static analysis, meaning reactive expressions survive refactoring into functions, closures, and separate modules without silent breakage
-- Five separate concepts unified — let-reactivity, $: labels, export let, lifecycle functions, and stores are replaced by $state, $derived, $effect, and $props, reducing the total API surface
-- Fine-grained signal-powered DOM updates deliver surgical re-rendering — only the specific DOM nodes affected by a state change are updated, improving performance over Svelte 3/4's component-level invalidation
+- Universal reactivity achieved — $state, $derived, $effect work identically in .svelte, .svelte.js, and .svelte.ts files, eliminating the component-file boundary
+- Dependency tracking reliability restored — runtime evaluation-based tracking survives refactoring into functions and separate modules without silent breakage
+- Five separate concepts unified — let-reactivity, $: labels, export let, lifecycle functions, and stores replaced by $state, $derived, $effect, and $props
+- Fine-grained signal-powered DOM updates deliver surgical re-rendering — only affected DOM nodes updated, improving over Svelte 3/4's component-level invalidation
 - TypeScript integration substantially improved — all rune primitives provide full type inference, and $props with destructuring enables compile-time type checking for component interfaces
-- Store API rendered optional for most use cases — reactive state in .svelte.js modules provides cross-component state sharing with the same primitives used inside components, eliminating the need for writable/readable/derived in the majority of scenarios
+- Store API rendered optional — reactive state in .svelte.js modules provides cross-component sharing with the same primitives, eliminating writable/readable/derived for most cases
 
 ### Negative
 
-- Community perception of identity loss — vocal Svelte developers criticized runes as "making Svelte look like React," arguing that the function-call syntax ($state, $effect) erodes the framework's "write less code" differentiator that attracted them in the first place
-- Ecosystem migration effort — while backward compatible, component libraries, SvelteKit documentation, tutorials, and learning resources must eventually update from Svelte 4 syntax to runes, creating a sustained maintenance burden
-- Two coexisting syntaxes during transition — Svelte 4 and Svelte 5 syntax both work in the same project, which can confuse newcomers who encounter both styles in existing codebases
-- $effect overuse risk — developers accustomed to React's useEffect may overuse $effect where $derived would suffice, potentially replicating the performance and correctness issues that React's community has documented extensively
+- Community perception of identity loss — vocal developers criticized runes as "making Svelte look like React," arguing it erodes the "write less code" differentiator
+- Ecosystem migration effort — component libraries, documentation, and tutorials must update from Svelte 4 to runes syntax, creating sustained maintenance burden
+- Two coexisting syntaxes during transition — Svelte 4 and 5 both work in the same project, which can confuse newcomers encountering both styles
+- $effect overuse risk — developers may overuse $effect where $derived would suffice, replicating React useEffect anti-patterns
 - Increased verbosity for simplest cases — the counter example (Svelte's canonical demo) requires more characters with runes, weakening the framework's marketing narrative of minimalism
 
 ## Confirmation
@@ -869,13 +869,13 @@ confirming its viability and ecosystem adoption:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Rich Harris | 2023-09-20 | Rich Harris published "Introducing runes" blog post on svelte.dev, presenting the design rationale for replacing Svelte's implicit $: reactivity with explicit signal-based runes. The post acknowledged that "like every other framework, we've come to the realisation that Knockout was right all along" and explained how compile-time dependency tracking broke on refactoring. A preview site with interactive playground was launched simultaneously.
+| `created` | Rich Harris | 2023-09-20 | "Introducing runes" blog post published. Acknowledged "Knockout was right all along" and explained how compile-time tracking broke on refactoring. Preview site launched.
  |
-| `updated` | Svelte Core Team | 2023-10-15 | Community feedback incorporated from the Svelte 5 preview site and Discord channel. Significant backlash from developers who felt runes made "Svelte look like React" was addressed by clarifying that runes are compiler primitives (not runtime functions like Hooks) and preserve direct variable assignment. The $bindable rune was refined based on two-way binding feedback.
+| `updated` | Svelte Core Team | 2023-10-15 | Community feedback incorporated from preview site and Discord. "Svelte looks like React" backlash addressed by clarifying runes are compiler primitives, not runtime functions.
  |
-| `updated` | Svelte Core Team | 2024-06-01 | Svelte 5 release candidates published with refined rune APIs. Migration script (npx sv migrate svelte-5) developed to automate conversion from Svelte 4 to runes syntax. Vue's Reactivity Transform was officially removed in Vue 3.4 (February 2024), providing additional validation for Svelte's more explicit approach to compiler-driven reactivity.
+| `updated` | Svelte Core Team | 2024-06-01 | Svelte 5 release candidates published. Migration script developed. Vue's Reactivity Transform removal (Vue 3.4) validated Svelte's more explicit approach.
  |
-| `approved` | Rich Harris | 2024-10-22 | Svelte 5.0 released with runes as an opt-in feature. Existing Svelte 4 components work unchanged as a drop-in replacement. The runes API was finalized: $state, $derived, $effect, $props, $bindable, $inspect. Legacy syntax documented in a separate "legacy APIs" section of svelte.dev. Rich Harris noted this was "the most significant release since Svelte 3" which originally introduced the reactive system now being replaced.
+| `approved` | Rich Harris | 2024-10-22 | Svelte 5.0 released with runes as opt-in. Existing Svelte 4 components work unchanged. Described as "most significant release since Svelte 3."
  |
-| `updated` | Svelte Core Team | 2025-03-01 | Svelte ecosystem migration progressing. SvelteKit fully supports runes. Major component libraries began migration from Svelte 4 to runes syntax. Community sentiment shifted from initial backlash to acceptance: developers reported that runes simplified complex applications despite the initial verbosity increase. Svelte 5 adoption growing steadily with positive feedback on TypeScript integration and universal reactivity.
+| `updated` | Svelte Core Team | 2025-03-01 | SvelteKit fully supports runes. Major libraries began migration. Community sentiment shifted from backlash to acceptance with positive TypeScript feedback.
  |

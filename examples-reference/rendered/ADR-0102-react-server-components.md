@@ -561,5 +561,5 @@ integrated with Relay for data fetching at massive scale.
  |
 | `updated` | Next.js Team (Vercel) | 2022-10-25 | Next.js 13 released with App Router providing the first production- ready RSC implementation. Components in the app/ directory are Server Components by default.
  |
-| `approved` | React Core Team | 2024-12-05 | React 19 released, fully stabilizing Server Components and Server Actions as part of React core. Four years of development from RFC to stable release. Additional frameworks (React Router v7, TanStack Start) adopted RSC support.
+| `approved` | React Core Team | 2024-12-05 | React 19 released, stabilizing Server Components and Server Actions. Four-year RFC-to-stable cycle; React Router v7 and TanStack Start adopted RSC support.
  |

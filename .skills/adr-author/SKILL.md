@@ -87,15 +87,19 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
   - **`because`**: One core reason — the full rationale belongs in `decision.rationale`
 - `authors` — who is writing this
 - `decision_owner` — who is accountable
-- `context` — summary, business_drivers, technical_drivers, constraints, assumptions
+- `context` — description, business_drivers, technical_drivers, constraints, assumptions
 - `architecturally_significant_requirements` — embedded functional and non-functional ASRs
 - `alternatives` — at least 2 (include more if naturally discussed), each with name, **thorough description** (multi-paragraph architecture explanation with Mermaid diagrams), pros, cons, estimated_cost (only if user-provided), risk (only if user-provided), rejection_rationale (for non-chosen alternatives)
 - `decision` — chosen_alternative, rationale, tradeoffs, decision_date, confidence **(all values must come from the user's answers — do not invent defaults)**
 - `consequences` — positive, negative
+
+  **Target: 15–25 words per consequence item.** Each item should state a single clear outcome — not a paragraph. If it needs explanation, the detail belongs in `decision.rationale` or `decision.tradeoffs`.
 - `confirmation` — description of how implementation will be verified (artifact_ids added later)
 - `architecturally_significant_requirements` — extract functional and non-functional ASRs from the interview answers (technical drivers, constraints, performance targets, compliance mandates). Target 2-7 per category based on the decision's complexity — strategic/high-priority decisions typically need 4-6, simple operational decisions may need only 2. **Vary the count naturally; do NOT always use exactly 3 functional + 3 non-functional.** If none are obvious from the conversation, ask the user explicitly.
 - `dependencies` — internal and external dependency tracking
 - `audit_trail` — initial `created` event
+
+  **Target: 15–30 words per entry's `details` field.** Audit trail entries are log entries, not essays. Format: "What happened + one sentence of significance." The full context belongs in `context.description` and `decision.rationale`.
 - `lifecycle` — set `review_cycle_months` based on `decision_level` × `confidence`:
 
   | Level \\ Confidence | `low` | `medium` | `high` |

@@ -813,11 +813,11 @@ how to incrementally fix it, the incremental path was not viable.
 ### Positive
 
 - Plugin resolution errors — the #1 ESLint support request — were eliminated by using native JavaScript module loading instead of custom require reimplementation
-- Configuration is fully introspectable — because flat config is an array of plain JavaScript objects, tools can programmatically inspect exactly which rules apply to any file
+- Configuration is fully introspectable — flat config is an array of plain JavaScript objects, enabling programmatic rule inspection
 - Modern defaults (ecmaVersion "latest", sourceType "module") mean most projects need zero language configuration, eliminating the confusing ecmaVersion + env dance
 - Single config file per project eliminates the cascade problem — no more unexpected rules from ancestor directory configs
 - TypeScript config files (eslint.config.ts) with defineConfig() provide full type safety and auto-completion
-- The broader JavaScript ecosystem aligned — Vite, Next.js, Rollup, and other tools all use JS/TS config files, making ESLint's flat config feel consistent with the toolchain
+- Broader JavaScript ecosystem aligned — Vite, Next.js, Rollup all use JS/TS config, making flat config feel consistent with the toolchain
 - The eslintrc codebase — which the team was "afraid to touch" — was fully removed in v10, dramatically reducing ESLint's maintenance burden
 - Community-driven improvements (defineConfig, extends, TypeScript configs) demonstrated that the flat config architecture was extensible without fundamental changes
 
@@ -826,8 +826,8 @@ how to incrementally fix it, the incremental path was not viable.
 - Millions of existing projects had to migrate their eslintrc configs — despite migration tooling, this was a significant ecosystem-wide effort
 - The 18-month RFC debate was "the most contentious RFC in ESLint history" — the internal team conflict consumed significant maintainer energy
 - Plugin ecosystem compatibility lagged behind ESLint v9 — popular plugins like eslint-plugin-import took months to ship native flat config support
-- Initial flat config DX was rough — TypeScript support, a simple extends mechanism, and global ignores clarification were all added based on community feedback after the initial release
-- The transition period (v8 experimental → v9 default → v10 removal) spanned 4 years, during which both config systems coexisted and documentation had to cover both
+- Initial flat config DX was rough — TypeScript support, extends mechanism, and global ignores were all added based on community feedback after release
+- Transition period (v8 experimental → v9 default → v10 removal) spanned 4 years with both systems coexisting and documentation covering both
 - FlatCompat became a long-lived dependency for projects using legacy shareable configs — the "transitional" bridge lasted longer than anticipated
 
 ## Confirmation
@@ -898,15 +898,15 @@ Migration ecosystem:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Nicholas C. Zakas | 2019-01-01 | RFC #9 (Config File Simplification) opened in the eslint/rfcs repository. Described by Zakas as "the most contentious RFC proposal in the history of ESLint" — the team was nearly evenly split between those who wanted to start from scratch and those who believed eslintrc could be saved with more iterations.
+| `created` | Nicholas C. Zakas | 2019-01-01 | RFC #9 (Config File Simplification) opened. Described by Zakas as "the most contentious RFC in ESLint history" — team nearly evenly split.
  |
-| `updated` | ESLint TSC | 2020-07-01 | RFC approved after 18 months of revisions and debate. The final design established the core principles: single config file, native module loading, array-based flat cascade, glob-based file matching, and plugins as imported objects.
+| `updated` | ESLint TSC | 2020-07-01 | RFC approved after 18 months of debate. Core principles established: single config file, native module loading, array-based cascade, and plugins as imports.
  |
-| `updated` | Nicholas C. Zakas | 2022-08-01 | Flat config shipped as experimental feature in ESLint v8.21.0. Available through the API only (Linter and ESLint classes), not yet through the CLI. Zakas published a three-part blog series explaining the background, design, and developer preview.
+| `updated` | Nicholas C. Zakas | 2022-08-01 | Flat config shipped experimentally in ESLint v8.21.0. Available through API only, not CLI. Zakas published three-part blog series explaining the design.
  |
-| `approved` | ESLint TSC | 2024-04-05 | ESLint v9.0.0 released with flat config as the default configuration system. The eslintrc system deprecated but still available via ESLINT_USE_FLAT_CONFIG=false environment variable. Node.js 18.18.0+ required. Multiple deprecated APIs removed.
+| `approved` | ESLint TSC | 2024-04-05 | ESLint v9.0.0 released with flat config as default. eslintrc deprecated but available via ESLINT_USE_FLAT_CONFIG=false. Node.js 18.18.0+ required.
  |
-| `updated` | ESLint Core Team | 2025-02-01 | Community-driven improvements shipped: defineConfig() helper for TypeScript type safety, re-introduced extends key for simpler config composition, and native TypeScript config file support (eslint.config.ts). These addressed the most common community feedback about flat config's initial developer experience.
+| `updated` | ESLint Core Team | 2025-02-01 | Community-driven improvements shipped: defineConfig() for type safety, re-introduced extends key, and native TypeScript config support (eslint.config.ts).
  |
-| `updated` | ESLint Core Team | 2026-02-01 | ESLint v10.0.0 released with complete removal of the eslintrc configuration system. The .eslintrc files, .eslintignore files, eslintrc-specific CLI flags (--no-eslintrc, --env), and ESLINT_USE_FLAT_CONFIG environment variable are no longer recognized. eslint-env comments in source code are reported as errors. Flat config is now the sole configuration system.
+| `updated` | ESLint Core Team | 2026-02-01 | ESLint v10.0.0 released with complete eslintrc removal. .eslintrc, .eslintignore, eslintrc CLI flags, and eslint-env comments no longer recognized. Flat config is now the sole system.
  |

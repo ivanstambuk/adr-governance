@@ -734,9 +734,8 @@ consequences:
       Pin/Unpin is consistently cited as the most confusing concept in
       Rust — surveys show it as a major barrier to learning async
     - >-
-      The function coloring problem creates a hard boundary between sync
-      and async code — converting a sync codebase to async requires
-      rewriting the entire call chain
+      Function coloring creates a hard sync/async boundary — converting
+      a sync codebase to async requires rewriting the entire call chain
     - Ecosystem fragmentation between Tokio and async-std caused years
       of library incompatibility (async-std has since been retired,
       with smol as successor)
@@ -830,40 +829,32 @@ audit_trail:
     by: Taylor Cramer (cramertj)
     at: "2018-05-07T00:00:00Z"
     details: >
-      RFC 2394 (async/await syntax) accepted by the Rust lang team. Based
-      on the zero-cost futures foundation (Aaron Turon, 2016) and the
-      experience removing green threads (RFC 230, 2014). Companion RFC
-      2592 accepted for the Future trait in std.
+      RFC 2394 (async/await syntax) accepted. Built on zero-cost futures
+      (Turon 2016) and green thread removal (RFC 230). Companion RFC 2592
+      accepted.
   - event: updated
     by: withoutboats
     at: "2019-04-15T00:00:00Z"
     details: >
-      Pin/Unpin design stabilized in Rust 1.33, enabling safe
-      self-referential futures. The postfix .await syntax decided after
-      extensive community debate. These were prerequisites for async/await
-      stabilization.
+      Pin/Unpin stabilized in Rust 1.33 for safe self-referential futures.
+      Postfix .await syntax decided after extensive community debate.
   - event: approved
     by: Rust Lang Team
     at: "2019-09-30T00:00:00Z"
     details: >
-      Async/await approved for stabilization targeting Rust 1.39. The
-      feature was described as a "minimum viable product" — core syntax
-      and semantics only, with async traits, closures, and iteration
-      deferred to future releases.
+      Async/await approved for stabilization in Rust 1.39. Described as a
+      "minimum viable product" — async traits, closures, and iteration
+      deferred.
   - event: updated
     by: Rust Release Team
     at: "2019-11-07T00:00:00Z"
     details: >
-      Rust 1.39 released with stable async/await. Niko Matsakis published
-      the announcement blog post "Async-await on stable Rust!" describing
-      it as one of the most significant additions since Rust 1.0. The
-      Tokio ecosystem immediately began migration from futures 0.1 to
+      Rust 1.39 released with stable async/await. Described as one of the
+      most significant additions since Rust 1.0. Tokio began migration to
       std::future.
   - event: updated
     by: Rust Lang Team
     at: "2023-12-28T00:00:00Z"
     details: >
-      Rust 1.75 stabilized async fn in traits, resolving one of the
-      biggest usability gaps in async Rust. This eliminated the need for
-      the async_trait proc macro and its associated heap allocation
-      overhead for most use cases.
+      Rust 1.75 stabilized async fn in traits, eliminating the need for
+      the async_trait proc macro and its heap allocation overhead.

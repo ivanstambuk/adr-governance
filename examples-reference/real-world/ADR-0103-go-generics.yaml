@@ -785,33 +785,27 @@ audit_trail:
     by: Ian Lance Taylor
     at: "2021-01-12T00:00:00Z"
     details: >
-      Formal type parameters proposal filed as Go issue #43651. Design
-      document by Ian Lance Taylor and Robert Griesemer published,
-      representing the culmination of 12+ years of generics exploration
-      including the rejected contracts designs (2018, 2019).
+      Type parameters proposal filed as issue #43651. Design by Taylor and
+      Griesemer after 12+ years of exploration including rejected contracts
+      designs.
   - event: approved
     by: Russ Cox
     at: "2021-02-11T00:00:00Z"
     details: >
-      Type parameters proposal accepted by the Go team after extensive
-      community review. The design met the acceptance criteria of being
-      "good enough, and simple enough" for inclusion in Go. Implementation
-      targeted for Go 1.18.
+      Proposal accepted after extensive community review. Met acceptance
+      criteria of "good enough, and simple enough." Implementation targeted
+      for Go 1.18.
   - event: updated
     by: Go Team
     at: "2022-03-15T00:00:00Z"
     details: >
-      Go 1.18 released with generics as the headline feature. Type
-      parameters, interface type sets, type inference, and the `any`
-      and `comparable` predeclared types shipped. GC-shape stenciling
-      with dictionaries used as the implementation strategy. Compiler
-      approximately 15% slower than Go 1.17.
+      Go 1.18 released with generics. Type parameters, interface type sets,
+      type inference, and any/comparable shipped. Compiler ~15% slower than
+      1.17.
   - event: updated
     by: Go Team
     at: "2023-08-08T00:00:00Z"
     details: >
-      Go 1.21 released with generic slices, maps, and cmp packages
-      promoted to the standard library. Compiler performance recovered
-      to near Go 1.17 levels. Community adoption of generics growing
-      but measured — consistent with the team's guidance to use generics
-      judiciously.
+      Go 1.21 released with generic slices, maps, and cmp packages in
+      stdlib. Compiler performance recovered. Community adoption growing
+      but measured.

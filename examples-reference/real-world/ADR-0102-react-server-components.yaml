@@ -712,7 +712,6 @@ audit_trail:
     by: React Core Team
     at: "2024-12-05T00:00:00Z"
     details: >
-      React 19 released, fully stabilizing Server Components and Server
-      Actions as part of React core. Four years of development from RFC to
-      stable release. Additional frameworks (React Router v7, TanStack
-      Start) adopted RSC support.
+      React 19 released, stabilizing Server Components and Server Actions.
+      Four-year RFC-to-stable cycle; React Router v7 and TanStack Start
+      adopted RSC support.

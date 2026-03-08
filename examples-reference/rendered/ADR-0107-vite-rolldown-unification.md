@@ -773,10 +773,10 @@ rebuild from scratch:
 
 ### Positive
 
-- Dev/prod behavioral inconsistency eliminated — a single Rolldown engine processes source code in both environments, removing the entire class of bugs caused by differing esbuild and Rollup behaviors
-- Production build times reduced by 3x to 16x — GitLab from 2.5 minutes to 40 seconds, Excalidraw from 22.9 seconds to 1.4 seconds, PLAID Inc. from 80 seconds to 5 seconds
+- Dev/prod behavioral inconsistency eliminated — a single Rolldown engine in both environments removes the entire class of esbuild/Rollup divergence bugs
+- Production build times reduced 3x–16x — GitLab from 2.5 min to 40s, Excalidraw from 22.9s to 1.4s, PLAID from 80s to 5s
 - Memory usage during builds reduced by up to 100x — GitLab's build memory dropped by two orders of magnitude, enabling builds on resource-constrained CI environments
-- Unified Oxc toolchain eliminates duplicated parsing and serialization — source code is parsed once by Oxc's parser with a shared AST, rather than separately by esbuild and Rollup
+- Unified Oxc toolchain eliminates duplicated parsing — source is parsed once with a shared AST rather than separately by esbuild and Rollup
 - Rollup plugin ecosystem preserved — 2000+ existing plugins continue to work with minimal or no changes, protecting the community's investment
 - Future full-bundle dev mode enabled — Rolldown's performance makes it feasible to serve bundled files during development, solving the network request explosion for large applications
 - Built-in features (CJS support, CSS bundling, Module Federation, advanced chunk splitting) reduce third-party plugin dependencies
@@ -873,15 +873,15 @@ confirming the decision's viability and adoption trajectory:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Evan You | 2024-03-01 | Rolldown development initiated as part of VoidZero's unified toolchain vision. Evan You identified that Vite's dual-bundler architecture (esbuild for dev, Rollup for prod) was creating growing dev/prod inconsistencies and performance ceilings. The decision was to build a new Rust-based bundler with Rollup-compatible plugin API rather than incrementally patching the existing architecture.
+| `created` | Evan You | 2024-03-01 | Rolldown development initiated as part of VoidZero's unified toolchain vision. Vite's dual-bundler architecture creating dev/prod inconsistencies and performance ceilings.
  |
-| `updated` | VoidZero Engineering Team | 2024-10-01 | VoidZero Inc. publicly announced at ViteConf 2024 with $4.6M seed funding led by Accel. The company's mission was explicitly tied to building Rolldown and Oxc as the unified toolchain for Vite. Early benchmarks showed Rolldown outperforming both esbuild and Rollup. Team includes former Rspack core contributors and creators of Oxc and Vitest.
+| `updated` | VoidZero Engineering Team | 2024-10-01 | VoidZero Inc. announced at ViteConf 2024 with $4.6M seed funding. Early benchmarks showed Rolldown outperforming both esbuild and Rollup.
  |
-| `updated` | Vite Core Team | 2024-11-26 | Vite 6.0 released with the experimental Environment API, laying architectural groundwork for Rolldown integration. Evan You described Vite 6 as "the most significant major release since Vite 2." VoidZero's Rolldown development progress confirmed — aiming to make Rolldown the unified bundler for Vite in both dev and production.
+| `updated` | Vite Core Team | 2024-11-26 | Vite 6.0 released with experimental Environment API, laying groundwork for Rolldown integration. Described as "the most significant release since Vite 2."
  |
-| `updated` | VoidZero Engineering Team | 2025-06-01 | Rolldown-vite announced as a drop-in replacement package with initial feature parity. Early adopter results published: GitLab reduced build time from 2.5 minutes to 40 seconds with 100x memory reduction; Excalidraw achieved 16x speedup. Three-phase rollout plan confirmed: separate package, merge into Vite, full bundle mode default. Vite ecosystem CI forked and run against rolldown-vite with tests passing for most frameworks.
+| `updated` | VoidZero Engineering Team | 2025-06-01 | Rolldown-vite announced as drop-in replacement. Early results: GitLab 2.5 min→40s with 100x memory reduction; Excalidraw 16x speedup. Three-phase rollout confirmed.
  |
-| `approved` | Evan You | 2025-06-24 | Vite 7.0 released with official recommendation to try rolldown-vite as a drop-in replacement. Confirmed that Rolldown will become the default bundler for Vite in a future major version. Vite now downloaded 31 million times per week. The decision to adopt Rolldown is validated by real-world adoption across enterprise users and positive ecosystem feedback.
+| `approved` | Evan You | 2025-06-24 | Vite 7.0 released recommending rolldown-vite as drop-in replacement. Rolldown confirmed as future default bundler. Vite at 31M weekly downloads.
  |
-| `updated` | Rolldown Core Team | 2026-01-15 | Rolldown reached Release Candidate status, indicating production readiness. Rolldown-vite became the default bundler in the Vite 8 beta. The three-phase rollout progressed to Phase Two preparation, with plans to merge rolldown-vite into the main Vite codebase. Community adoption reports collected at vitejs/rolldown-vite-perf-wins repository.
+| `updated` | Rolldown Core Team | 2026-01-15 | Rolldown reached RC status. Rolldown-vite became default bundler in Vite 8 beta. Phase Two preparation underway to merge into main Vite codebase.
  |
