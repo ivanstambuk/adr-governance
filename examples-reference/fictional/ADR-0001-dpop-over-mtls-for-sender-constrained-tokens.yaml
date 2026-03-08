@@ -59,7 +59,7 @@ approvals:
     approved_at: "2026-01-25T09:00:00Z"
     signature_id: sig-dpop-002
 context:
-  summary: |
+  description: |
     NovaTrust has adopted OAuth 2.1 (RFC 9700) as its API authorization framework. The specification
     mandates sender-constrained tokens to prevent token theft and replay. Two mechanisms are
     standardized: mTLS certificate-bound tokens (RFC 8705) and DPoP proof-of-possession (RFC 9449).

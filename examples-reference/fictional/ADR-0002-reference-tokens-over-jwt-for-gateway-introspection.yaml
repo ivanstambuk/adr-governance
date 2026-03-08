@@ -56,7 +56,7 @@ approvals:
     approved_at: "2026-02-01T09:00:00Z"
     signature_id: sig-reftok-002
 context:
-  summary: |
+  description: |
     With OAuth 2.1 adopted, NovaTrust must decide the format of access tokens issued by PingFederate. Self-contained JWTs encode all claims (scopes, subject, cnf, expiry) directly in the token, allowing offline validation by resource servers. Opaque reference tokens are short random strings that resource servers resolve via the Token Introspection endpoint (RFC 7662). This is a classic tradeoff: JWTs give low-latency validation but cannot be instantly revoked, while reference tokens give instant revocation but require an introspection call per request. Our API gateway (PingAccess) sits in front of all 200+ APIs and is the primary enforcement point. The choice affects latency, revocation capability, token size in logs, and regulatory auditability.
 
     ```mermaid

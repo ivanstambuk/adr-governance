@@ -406,9 +406,9 @@ def validate_file(
         # Top-level Markdown fields
         ctx = data.get("context", {})
         if isinstance(ctx, dict):
-            summary = ctx.get("summary", "")
-            if isinstance(summary, str):
-                markdown_fields.append(("context.summary", summary))
+            ctx_desc = ctx.get("description", "")
+            if isinstance(ctx_desc, str):
+                markdown_fields.append(("context.description", ctx_desc))
 
         if isinstance(decision, dict):
             for field_name in ("rationale", "tradeoffs"):

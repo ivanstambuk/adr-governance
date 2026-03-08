@@ -41,7 +41,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 10. If an ADR is already `accepted`, its decision core is immutable in place; material changes require a new superseding ADR
 11. Extension fields: any key starting with `x-` is allowed at the top level
 12. `draft` still means a schema-valid, substantially complete ADR; the distinction from `proposed` is governance state, not missing core sections
-13. `adr.y_statement` should target **100–150 words**. It is the most information-dense *summary* of the decision — not a second rationale. Each of the 7 clauses should be concise: use just names in `neglected`, one headline in `facing`, top 2 tradeoffs in `accepting`, and one core reason in `because`. Detail belongs in the dedicated sections (`context.summary`, `decision.rationale`, `decision.tradeoffs`, `consequences`).
+13. `adr.y_statement` should target **100–150 words**. It is the most information-dense *summary* of the decision — not a second rationale. Each of the 7 clauses should be concise: use just names in `neglected`, one headline in `facing`, top 2 tradeoffs in `accepting`, and one core reason in `because`. Detail belongs in the dedicated sections (`context.description`, `decision.rationale`, `decision.tradeoffs`, `consequences`).
 
 ## Enum Values
 
@@ -72,7 +72,7 @@ The following fields support **full Markdown** including embedded Mermaid diagra
 
 | Field | Description |
 |-------|-------------|
-| `context.summary` | Narrative problem statement; embed architecture diagrams |
+| `context.description` | Narrative problem statement; embed architecture diagrams |
 | `alternatives[].description` | **Thorough** architectural description of each option. Not a summary — write multiple paragraphs covering how the design works, data flows, integration points. **Embedding Mermaid diagrams is strongly encouraged** (sequence, flowchart, C4). Include **code examples** for technology decisions, **evolution timeline tables** for multi-phase decisions, and **empirical evidence** for tried-and-removed alternatives (e.g., "36% FFI overhead"). Document **syntax/design debates** as architecturally significant choices. |
 | `decision.rationale` | Explain *why*; use bullet lists, headers, diagrams |
 | `decision.tradeoffs` | Acknowledged tradeoffs accepted with this decision |

@@ -115,7 +115,7 @@ def extract_decision_summary(adr: dict) -> dict:
     return {
         "id": meta.get("id", ""),
         "title": meta.get("title", ""),
-        "summary": meta.get("summary", ""),
+        "description": meta.get("description", ""),
         "status": meta.get("status", ""),
         "decision_type": meta.get("decision_type", ""),
         "tags": meta.get("tags", []),
@@ -166,7 +166,7 @@ def format_markdown(decisions: list[dict]) -> str:
 
         lines.append("")
 
-        if d.get("summary"):
+        if d.get("description"):
             lines.append(f"**Summary:** {d['summary'].strip()}")
             lines.append("")
 

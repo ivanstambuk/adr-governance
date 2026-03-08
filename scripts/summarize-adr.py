@@ -83,7 +83,7 @@ def summarize_email(data: dict, source_path: str = "") -> str:
     lines.append("")
 
     # Summary / elevator pitch
-    summary = adr.get("summary", "")
+    summary = adr.get("description", "")
     if summary:
         lines.append(f"> {summary.strip()}")
         lines.append("")
@@ -193,7 +193,7 @@ def summarize_chat(data: dict, source_path: str = "") -> str:
     lines = []
     lines.append(f"**{adr_id}: {title}**")
 
-    summary = adr.get("summary", "")
+    summary = adr.get("description", "")
     if summary:
         # First sentence only
         first_sentence = summary.strip().split(". ")[0]

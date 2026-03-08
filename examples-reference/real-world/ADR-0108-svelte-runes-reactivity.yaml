@@ -72,7 +72,7 @@ approvals:
     approved_at: "2024-10-22T00:00:00Z"
     signature_id: null
 context:
-  summary: |
+  description: |
     Svelte is a web UI framework with 81,000+ GitHub stars that takes a
     fundamentally different approach from React and Vue: instead of shipping
     a runtime library, Svelte uses a compiler to transform declarative

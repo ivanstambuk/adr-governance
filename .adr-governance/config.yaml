@@ -76,7 +76,7 @@ governance:
     - "alternatives" # any change to alternatives array
     - "consequences" # positive or negative consequences
     - "approvals" # adding/removing/changing approvers
-    - "context.summary" # changing the problem statement (not drivers/constraints)
+    - "context.description" # changing the problem statement (not drivers/constraints)
 
   # ──────────────────────────────────────────────────────────────────────
   # Accepted ADRs — Immutable Decision Core

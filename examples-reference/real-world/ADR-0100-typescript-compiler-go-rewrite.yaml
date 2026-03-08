@@ -51,7 +51,7 @@ approvals:
     approved_at: "2025-03-11T00:00:00Z"
     signature_id: null
 context:
-  summary: >
+  description: >
     The TypeScript compiler and language services are written in TypeScript,
     running on Node.js. While this self-hosted architecture served the project
     well for over a decade, it has reached fundamental performance ceilings.

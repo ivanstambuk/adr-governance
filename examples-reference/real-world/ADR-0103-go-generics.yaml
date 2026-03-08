@@ -67,7 +67,7 @@ approvals:
     approved_at: "2021-02-11T00:00:00Z"
     signature_id: null
 context:
-  summary: |
+  description: |
     Go was released on November 10, 2009. Less than 24 hours later, the first
     comment about generics appeared in the golang-nuts mailing list. For the
     next 12+ years, the lack of generics was consistently listed as one of the

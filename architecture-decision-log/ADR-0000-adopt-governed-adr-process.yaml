@@ -39,7 +39,7 @@ approvals:
     approved_at: "2026-03-05T18:00:00Z"
     signature_id: null
 context:
-  summary:
+  description:
     Architecture teams make dozens of significant decisions per year — technology choices, security protocols,
     vendor selections, and process changes. These decisions are often captured in meeting notes, Confluence pages, and
     Slack threads, leading to lost context, repeated discussions, and inconsistent application. We need a structured, version-controlled,

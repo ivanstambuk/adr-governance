@@ -61,7 +61,7 @@ approvals:
     approved_at: "2024-12-05T00:00:00Z"
     signature_id: null
 context:
-  summary: |
+  description: |
     React has been the dominant frontend UI library since its introduction in
     2013, with over 232,000 GitHub stars and adoption across millions of web
     applications. For its first decade, React's architecture was fundamentally

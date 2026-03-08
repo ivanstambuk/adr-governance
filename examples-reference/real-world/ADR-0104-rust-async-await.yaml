@@ -72,7 +72,7 @@ approvals:
     approved_at: "2019-09-30T00:00:00Z"
     signature_id: null
 context:
-  summary: |
+  description: |
     Rust's journey to async/await is one of the most architecturally
     consequential design decisions in modern programming language history.
     It spans from Rust's pre-1.0 green threads experiment through the

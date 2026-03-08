@@ -118,8 +118,8 @@ def render_adr(data: dict) -> str:
     lines.append("")
     lines.append("## Context")
     lines.append("")
-    if context.get("summary"):
-        lines.append(context["summary"].strip())
+    if context.get("description"):
+        lines.append(context["description"].strip())
         lines.append("")
 
     for section_key, section_title in [("business_drivers", "Business Drivers"), ("technical_drivers", "Technical Drivers"),

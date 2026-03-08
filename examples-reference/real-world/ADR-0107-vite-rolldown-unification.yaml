@@ -73,7 +73,7 @@ approvals:
     approved_at: "2025-06-24T00:00:00Z"
     signature_id: null
 context:
-  summary: |
+  description: |
     Vite is one of the most widely used frontend build tools, powering over
     31 million npm downloads per week and serving as the shared infrastructure
     layer for 15+ major web frameworks including React, Vue, Svelte, Solid,

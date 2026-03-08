@@ -58,7 +58,7 @@ approvals:
     approved_at: "2025-12-19T10:00:00Z"
     signature_id: sig-ed25519-002
 context:
-  summary: |
+  description: |
     NovaTrust's PingFederate IdP and all JWT-producing services currently use RS256 (RSA-2048 with PKCS#1 v1.5 padding) for signing ID tokens, access tokens (when issued as JWTs), SAML assertions, and DPoP proofs. With 5000+ token issuances per second at peak, RSA-2048 signing is the primary CPU bottleneck on the PingFederate cluster. EdDSA with Ed25519 (RFC 8037, JWS algorithm "EdDSA") offers vastly superior signing performance, smaller key sizes, and resistance to implementation pitfalls (no padding oracle attacks, no nonce reuse vulnerabilities as in ECDSA). However, Ed25519 is newer and has less universal library support than RSA. We must choose the signing algorithm for all new JWT/JWS production.
 
     ```mermaid

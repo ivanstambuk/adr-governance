@@ -59,7 +59,7 @@ approvals:
     approved_at: "2026-02-28T09:00:00Z"
     signature_id: sig-stepup-002
 context:
-  summary: |
+  description: |
     NovaTrust's banking APIs require step-up authentication for high-value operations: wire transfers > €10K, beneficiary management, and PSD2 dynamic linking for payment initiation. When a user triggers a high-value operation, the API gateway (PingAccess) challenges the user for additional authentication (biometric, FIDO2, or OTP) via RFC 9470 `insufficient_user_authentication`. After successful step-up, the system must persist proof that the user has completed the higher authentication level so that subsequent high-value requests within a time window do not re-challenge. Two patterns exist: (A) enrich the IdP session (PingFederate) with the authentication level and let the access token's `acr` claim reflect it, or (B) issue a custom JWE-encrypted cookie directly from the API gateway containing the step-up proof. This decision determines how step-up proof is created, stored, validated, and eventually expired.
 
     ```mermaid

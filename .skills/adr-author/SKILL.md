@@ -69,7 +69,7 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 
 - `adr` — metadata (id, title, status, timestamps, tags, priority, decision_type, decision_level, y_statement)
 - `adr.y_statement` — **auto-generate** from the collected interview answers. Do NOT ask the user to write this. The Y-Statement **must** contain all 7 structural clauses in this exact order (see `docs/glossary.md` → "Y-Statement" for the canonical template mapping):
-  1. "In the context of [context.summary],"
+  1. "In the context of [context.description],"
   2. "facing [key driver],"
   3. "we decided for [decision.chosen_alternative]"
   4. "and neglected [rejected alternatives],"
@@ -78,7 +78,7 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
   7. "because [decision.rationale]."
   If any clause is missing, rewrite until all 7 are present. Present to the user for confirmation.
 
-  **Target length: 100–150 words.** The Y-Statement is a *summary*, not a rationale — it must be a single scannable paragraph. If it exceeds 150 words, you are duplicating content that belongs in `context.summary`, `decision.rationale`, or `decision.tradeoffs`. Apply these per-clause brevity rules:
+  **Target length: 100–150 words.** The Y-Statement is a *summary*, not a rationale — it must be a single scannable paragraph. If it exceeds 150 words, you are duplicating content that belongs in `context.description`, `decision.rationale`, or `decision.tradeoffs`. Apply these per-clause brevity rules:
   - **`facing`**: One headline problem (not a list of drivers) — the drivers belong in `context`
   - **`we decided for`**: Name + one key differentiator — the detailed description belongs in `alternatives[].description`
   - **`and neglected`**: Just alternative names — no parenthetical descriptions ("Vite" not "Vite (the community-favorite alternative backed by Evan You)")
@@ -204,7 +204,7 @@ When reviewing, check for:
 
 The following fields support **full Markdown** including embedded Mermaid diagrams via code fences:
 
-- `context.summary` — narrative problem statement; embed architecture diagrams here
+- `context.description` — narrative problem statement; embed architecture diagrams here
 - `alternatives[].description` — **thorough** architectural description of each option; write multiple paragraphs explaining how the design works, data flows, and integration points. **Embedding Mermaid diagrams (sequence, flowchart, C4) is strongly encouraged.** Include:
   - **Code examples** for technology decisions — show what the developer experience looks like with each alternative. Concrete code makes tradeoffs visceral.
   - **Evolution timeline tables** for decisions that evolved over multiple phases or years — a timeline table makes the design trajectory clear at a glance.
@@ -219,7 +219,7 @@ Use YAML literal block scalars (`|`) for multiline content. Example:
 
 ```yaml
 context:
-  summary: |
+  description: |
     The system currently uses approach X.
 
     ```mermaid

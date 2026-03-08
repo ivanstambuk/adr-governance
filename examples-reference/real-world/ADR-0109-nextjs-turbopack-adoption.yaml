@@ -69,7 +69,7 @@ approvals:
     approved_at: "2022-10-25T00:00:00Z"
     signature_id: null
 context:
-  summary: |
+  description: |
     Next.js is the most widely deployed React framework with 128,000+ GitHub
     stars and millions of production applications. Since its release 8 years
     ago, Next.js has relied on Webpack as its bundling foundation. Webpack

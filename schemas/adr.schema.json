@@ -195,14 +195,14 @@
         "context": {
             "type": "object",
             "required": [
-                "summary"
+                "description"
             ],
             "additionalProperties": false,
             "properties": {
-                "summary": {
+                "description": {
                     "type": "string",
                     "minLength": 20,
-                    "description": "Narrative summary of the problem and context. Supports Markdown with embedded Mermaid diagrams, code blocks, and rich formatting."
+                    "description": "Narrative description of the problem and context. Supports Markdown with embedded Mermaid diagrams, code blocks, and rich formatting."
                 },
                 "business_drivers": {
                     "type": "array",

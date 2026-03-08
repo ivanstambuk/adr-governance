@@ -111,7 +111,7 @@ The Y-Statement is a **curated distillation**, not a mechanical derivation. It r
 
 | Y-Statement Part | Schema Source |
 |---|---|
-| "In the context of..." | `context.summary` |
+| "In the context of..." | `context.description` |
 | "facing..." | `context.business_drivers` + `context.technical_drivers` |
 | "we decided for..." | `decision.chosen_alternative` |
 | "and neglected..." | `alternatives[].name` (where not chosen) |

@@ -59,7 +59,7 @@ approvals:
     approved_at: "2025-12-14T11:00:00Z"
     signature_id: sig-ppid-002
 context:
-  summary: |
+  description: |
     NovaTrust's PingFederate IdP issues OIDC ID tokens with a `sub` claim to all relying parties (RPs). The OIDC Core specification (§8) defines two subject identifier types: `public` (same `sub` value for a user across all RPs) and `pairwise` (unique pseudonymous `sub` per RP). Currently, all RPs receive the same public `sub` — the user's internal UUID. This allows any two colluding RPs to correlate users across services. With 35+ internal RPs, 15 partner bank RPs, and upcoming EUDI Wallet relying party integrations, the GDPR data minimization principle and eIDAS 2.0 unlinkability requirements demand that we prevent cross-RP user correlation unless explicitly authorized.
 
     ```mermaid

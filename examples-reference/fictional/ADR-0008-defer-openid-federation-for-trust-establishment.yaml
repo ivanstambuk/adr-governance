@@ -41,7 +41,7 @@ reviewers:
     role: API Platform Lead
     email: priya.sharma@novatrust.example.com
 context:
-  summary: |
+  description: |
     NovaTrust currently establishes trust with partner identity providers (banks, fintechs, insurance
     companies) through manual metadata exchange — downloading SAML/OIDC metadata XML, verifying
     certificates out-of-band, and configuring each partner connection in PingFederate manually.

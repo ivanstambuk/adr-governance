@@ -64,7 +64,7 @@ DEFAULT_SUBSTANTIVE_FIELDS = [
     "alternatives",
     "consequences",
     "approvals",
-    "context.summary",
+    "context.description",
 ]
 
 DEFAULT_IMMUTABLE_AFTER_ACCEPTANCE_FIELDS = [

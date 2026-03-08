@@ -100,7 +100,7 @@ def format_context_summaries(context_adrs: list[dict]) -> str:
         title = meta.get("title", "?")
         status = meta.get("status", "?")
         chosen = decision.get("chosen_alternative", "?")
-        summary = meta.get("summary", "")
+        summary = meta.get("description", "")
 
         lines.append(f"### {adr_id}: {title}")
         lines.append(f"**Status:** {status} | **Chosen:** {chosen}")
@@ -128,7 +128,7 @@ You must be thorough but constructive. For each issue you find, explain
 into the following categories:
 
 ### 1. Semantic Clarity
-- Is the problem statement (`context.summary`) unambiguous? Could two readers
+- Is the problem statement (`context.description`) unambiguous? Could two readers
   interpret it differently?
 - Does the rationale clearly connect the chosen alternative to the stated
   drivers and constraints?

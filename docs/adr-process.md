@@ -386,7 +386,7 @@ Changes to fields that affect the *decision itself*. For ADRs that are still mut
 | `alternatives.*` | Changes the options that were evaluated |
 | `consequences.*` | Modifies the expected outcomes |
 | `approvals.*` | Adds, removes, or changes approver records |
-| `context.summary` | Reframes the problem statement |
+| `context.description` | Reframes the problem statement |
 
 #### Tier 2 — Maintenance Changes (no ADR re-approval required)
 
@@ -502,7 +502,7 @@ A deferred ADR can be re-proposed when the blocking condition is resolved.
 1. **Determine what changed.** The author or decision owner identifies why the ADR is now ready — new information, resolved dependency, changed priority, or elapsed time.
 2. **Open a new PR** (preferred) or reopen the original PR:
    - Update `adr.status` to `proposed`
-   - Update `context.summary` if the landscape has changed
+   - Update `context.description` if the landscape has changed
    - Add an `updated` event to `audit_trail` explaining why the ADR is being re-proposed
 3. Follow the standard review process (§3.3–3.4).
 

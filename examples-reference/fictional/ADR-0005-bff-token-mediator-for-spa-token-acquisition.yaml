@@ -61,7 +61,7 @@ approvals:
     approved_at: "2026-02-20T09:00:00Z"
     signature_id: sig-bff-002
 context:
-  summary: |
+  description: |
     NovaTrust is rebuilding the customer banking portal as a React single-page application (SPA). SPAs are public OAuth clients — they cannot hold a client secret because all code runs in the browser. The SPA needs to obtain access tokens to call backend APIs. Two patterns exist: (1) the SPA directly performs the OAuth 2.1 Authorization Code + PKCE flow and stores tokens in browser memory, or (2) a Backend-for-Frontend (BFF) / Token Mediator component performs the OAuth flow server-side and issues secure HTTP-only cookies to the SPA. The choice affects token storage security (XSS exposure), CSRF handling, and the overall security posture of the banking portal where high-value transactions are at stake.
 
     ```mermaid

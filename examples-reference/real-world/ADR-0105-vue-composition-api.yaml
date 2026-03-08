@@ -66,7 +66,7 @@ approvals:
     approved_at: "2020-09-18T00:00:00Z"
     signature_id: null
 context:
-  summary: |
+  description: |
     Vue.js is one of the three dominant frontend JavaScript frameworks,
     with over 208,000 GitHub stars on the Vue 2 repository and adoption
     across millions of applications worldwide. Vue's core appeal has
