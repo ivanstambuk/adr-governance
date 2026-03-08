@@ -12,6 +12,34 @@
 
 ---
 
+## Table of Contents
+
+- [Purpose](#purpose)
+- [Reading Guide](#reading-guide)
+- **Y-Statement — `adr.y_statement`**
+  - [What It Does](#what-it-does)
+  - [Academic Lineage](#academic-lineage)
+  - [Comparative Analysis](#comparative-analysis)
+  - [Design Decisions](#design-decisions)
+- **Definition of Done — ecADR Checklist**
+  - [Academic Lineage](#academic-lineage-zimmermanns-ecadr-framework)
+  - [Coverage Analysis](#coverage-analysis-ecadr-vs-our-framework)
+  - [Rejected Alternatives](#rejected-alternatives)
+- **Architectural Significance Test**
+  - [Academic Lineage](#academic-lineage-zimmermanns-seven-criteria)
+  - [Coverage Analysis](#coverage-analysis)
+  - [Rejected Alternatives](#rejected-alternatives-1)
+- **Definition of Ready — START Checklist**
+  - [Academic Lineage](#academic-lineage-zimmermanns-start-framework)
+  - [Coverage Analysis](#coverage-analysis-start-vs-our-framework)
+  - [Rejected Alternatives](#rejected-alternatives-2)
+- **Verbosity Guidance**
+  - [Academic Lineage](#academic-lineage-dprs-three-verbosity-levels)
+  - [How Our Schema Maps](#how-our-schema-maps-to-verbosity)
+  - [Rejected Alternatives](#rejected-alternatives-3)
+
+---
+
 ## Purpose
 
 The [Schema Field Rationale](schema-field-rationale.md) answers: *"For every field in our schema, why does it exist?"*

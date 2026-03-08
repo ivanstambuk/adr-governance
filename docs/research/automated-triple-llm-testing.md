@@ -6,6 +6,49 @@
 
 ---
 
+## Table of Contents
+
+- [1. Motivation](#1-motivation)
+- **Architecture**
+  - [2.1 Components](#21-components)
+  - [2.2 LLM Selection Strategy](#22-llm-selection-strategy)
+- **Scenario Design**
+  - [3.1 Scenario Schema](#31-scenario-schema)
+  - [3.2 Scenario Categories](#32-scenario-categories)
+- **Conversation Orchestration**
+  - [4.1 Turn-by-Turn Flow](#41-turn-by-turn-flow)
+  - [4.2 Termination Conditions](#42-termination-conditions)
+  - [4.3 Token & Cost Tracking](#43-token--cost-tracking)
+- **Post-Conversation Analysis**
+  - [5.1 Schema Validation](#51-schema-validation-deterministic)
+  - [5.2 Quality Review](#52-quality-review-deterministic)
+  - [5.3 Analyst LLM Review](#53-analyst-llm-review-ai-powered)
+- [6. Output Structure](#6-output-structure)
+- **Metrics & Success Criteria**
+  - [7.1 Per-Run Metrics](#71-per-run-metrics)
+  - [7.2 Cross-Run Goals](#72-cross-run-goals)
+- **Implementation Plan**
+  - [Phase 1: Core Harness](#phase-1-core-harness-mvp)
+  - [Phase 2: Analyst & Metrics](#phase-2-analyst--metrics)
+  - [Phase 3: Real-World Scenarios](#phase-3-real-world-scenarios)
+  - [Phase 4: Feedback Loop](#phase-4-feedback-loop)
+- **Technical Requirements**
+  - [9.1 Dependencies](#91-dependencies)
+  - [9.2 LiteLLM Configuration](#92-litellm-configuration)
+  - [9.3 System Prompt Strategy](#93-system-prompt-strategy)
+  - [9.4 Bundle Variants to Test](#94-bundle-variants-to-test)
+- [10. README Integration](#10-readme-integration)
+- **Design Decisions**
+  - [Q1. Bundle size vs. quality](#q1-bundle-size-vs-quality-tradeoff)
+  - [Q2. User LLM evasiveness](#q2-user-llm-evasiveness-calibration)
+  - [Q3. Determinism & temperature](#q3-determinism--temperature-strategy)
+  - [Q4. Cost control](#q4-cost-control)
+  - [Q5. GitHub PR extraction](#q5-github-pr-extraction-attribution--ethics)
+  - [Q6. Thinking/reasoning models](#q6-thinkingreasoning-models-for-the-analyst)
+- [12. Next Steps](#12-next-steps)
+
+---
+
 ## 1. Motivation
 
 The ADR authoring skill (Socratic interview mode) is the framework's most complex capability. It involves multi-turn dialogue, schema adherence, Y-Statement synthesis, coherence checking, and YAML generation. Today this is tested manually — a human uploads the bundle and goes through the interview. This doesn't scale.

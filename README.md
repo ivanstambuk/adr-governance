@@ -9,6 +9,27 @@
 
 A schema-governed, AI-native **Architecture Decision Record (ADR)** framework for teams that want their architectural decisions to be **structured**, **traceable**, and **asynchronous** — not debated in meetings, forgotten in Slack threads, or buried in wiki pages nobody reads.
 
+## Table of Contents
+
+- **The Problem**
+  - [Broken decision-making](#1-the-decision-making-process-is-broken)
+  - [No traceability](#2-decisions-arent-traceable-or-enforceable)
+  - [Tooling can't scale](#3-traditional-tooling-cant-scale)
+- [What This Provides](#what-this-provides)
+- [Philosophy](#philosophy)
+- [ADR Lifecycle](#adr-lifecycle)
+- [AI-Assisted Authoring & Pre-Review](#ai-assisted-authoring--pre-review)
+- [ADL as Source of Truth](#adl-as-source-of-truth)
+- [Quick Start — Adopting for Your Organization](#quick-start--adopting-for-your-organization)
+- [ADR Meta-Model](#adr-meta-model)
+- [CI/CD Setup](#cicd-setup)
+- [Rendered Markdown](#rendered-markdown-human-friendly-views)
+- **Example ADRs**
+  - [Fictional Examples](#fictional-examples)
+  - [Real-World Examples](#real-world-examples)
+- [Automated Quality Testing (Triple-LLM Harness)](#automated-quality-testing-triple-llm-harness)
+- [License](#license)
+
 ## The Problem
 
 Most teams make **Architecture Decisions (ADs)** every week. Few document them well. Decisions happen in meetings, context is lost the moment people leave the room, and six months later nobody can explain *why* something was built the way it was.

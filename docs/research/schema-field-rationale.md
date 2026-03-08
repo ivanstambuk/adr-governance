@@ -11,6 +11,74 @@
 
 ---
 
+## Table of Contents
+
+- [Purpose](#purpose)
+- [Reading Guide](#reading-guide)
+- **`adr` — Core Metadata**
+  - [1.1 `adr.id`](#11-adrid)
+  - [1.2 `adr.title`](#12-adrtitle)
+  - [1.3 `adr.y_statement`](#13-adry_statement)
+  - [1.4 `adr.status`](#14-adrstatus)
+  - [1.5 `adr.created_at` / `adr.last_modified`](#15-adrcreated_at--adrlast_modified)
+  - [1.6 `adr.version` / `adr.schema_version`](#16-adrversion--adrschema_version)
+  - [1.7 `adr.project` / `adr.component`](#17-adrproject--adrcomponent)
+  - [1.8 `adr.tags`](#18-adrtags)
+  - [1.9 `adr.priority`](#19-adrpriority)
+  - [1.10 `adr.decision_type`](#110-adrdecision_type)
+  - [1.11 `adr.decision_level`](#111-adrdecision_level)
+  - [1.12 `scope` / `phase` — Evaluated, Redundant](#112-scope--phase-metadata-️-evaluated--redundant)
+- **People & Governance**
+  - [2.0 `$defs/person` Reusable Type](#20-defsperson-reusable-type)
+  - [2.1 `authors`](#21-authors)
+  - [2.2 `decision_owner`](#22-decision_owner)
+  - [2.3 `reviewers`](#23-reviewers)
+  - [2.4 `approvals`](#24-approvals)
+- **`context` — Problem Space**
+  - [3.1 `context.description`](#31-contextdescription)
+  - [3.2 `context.business_drivers` / `context.technical_drivers`](#32-contextbusiness_drivers--contexttechnical_drivers)
+  - [3.3 `context.constraints`](#33-contextconstraints)
+  - [3.4 `context.assumptions`](#34-contextassumptions)
+- **`architecturally_significant_requirements`**
+  - [4.0 `$defs/architecturally_significant_requirement`](#40-defsarchitecturally_significant_requirement-reusable-type)
+  - [4.1 ASR Structure: `functional[]` / `non_functional[]`](#41-asr-structure-functional--non_functional)
+  - [4.2 QAS `measure` Field — Rejected](#42-qas-measure-field--rejected)
+  - [4.3 NFR Landing Zones — Rejected](#43-nfr-landing-zones--rejected)
+- **`alternatives` — Option Analysis**
+  - [5.1 Alternatives Array Structure](#51-alternatives-array-structure)
+  - [5.1.1 `alternatives[].name`](#511-alternativesname)
+  - [5.2 `alternatives[].description`](#52-alternativesdescription-markdown-native)
+  - [5.3 `alternatives[].pros` / `alternatives[].cons`](#53-alternativespros--alternativescons)
+  - [5.4 `alternatives[].estimated_cost` / `alternatives[].risk`](#54-alternativesestimated_cost--alternativesrisk)
+  - [5.5 `alternatives[].rejection_rationale`](#55-alternativesrejection_rationale)
+- **`decision` — The Choice**
+  - [6.1 `decision.chosen_alternative`](#61-decisionchosen_alternative)
+  - [6.2 `decision.rationale`](#62-decisionrationale)
+  - [6.3 `decision.tradeoffs`](#63-decisiontradeoffs)
+  - [6.4 `decision.decision_date`](#64-decisiondecision_date)
+  - [6.5 `decision.confidence`](#65-decisionconfidence)
+- **`consequences` — Impact Assessment**
+  - [7.1 `consequences.positive` / `consequences.negative`](#71-consequencespositive--consequencesnegative)
+- **`confirmation` — Verification**
+  - [8.1 `confirmation.description` / `confirmation.artifact_ids`](#81-confirmationdescription--confirmationartifact_ids)
+- **`dependencies` — Impact Scope**
+  - [9.1 `dependencies.internal` / `dependencies.external`](#91-dependenciesinternal--dependenciesexternal)
+- **`references` — Evidence & Standards**
+  - [10.1 `references[]`](#101-references)
+- **`lifecycle` — Decision Management**
+  - [11.1 `lifecycle.review_cycle_months` / `lifecycle.next_review_date`](#111-lifecyclereview_cycle_months--lifecyclenext_review_date)
+  - [11.2 `lifecycle.superseded_by` / `lifecycle.supersedes`](#112-lifecyclesuperseded_by--lifecyclesupersedes)
+  - [11.3 `lifecycle.archival`](#113-lifecyclearchival)
+- **`audit_trail` — Event Log**
+  - [12.1 `audit_trail[]`](#121-audit_trail)
+- **Extension Fields & Schema Mechanics**
+  - [13.1 `x-*` Extension Fields](#131-x--extension-fields)
+  - [13.2 `additionalProperties: false`](#132-additionalproperties-false)
+  - [13.3 Conditional Requirements](#133-conditional-requirements-allofifthen)
+- [Sources](#sources)
+
+---
+
 ## Purpose
 
 The [ADR Template Comparison](adr-template-comparison.md) answers: *"What do other templates look like?"*  

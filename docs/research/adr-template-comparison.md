@@ -9,6 +9,54 @@
 
 ---
 
+## Table of Contents
+
+- [1. Purpose](#1-purpose)
+- [2. Templates Surveyed](#2-templates-surveyed)
+- **Template-by-Template Analysis**
+  - [3.1 Nygard (2011)](#31-nygard-2011--the-original)
+  - [3.2 MADR 4.0 (2024)](#32-madr-40-2024--markdown-any-decision-record)
+  - [3.3 smadr (2025)](#33-structured-madr--smadr-2025--machine-readable-extension)
+  - [3.4 Tyree–Akerman (2005)](#34-tyreeakerman-2005--ieee-enterprise-template)
+  - [3.5 Y-Statements (2012)](#35-y-statements-2012--ultra-minimal)
+  - [3.6 Alexandrian](#36-alexandrian-pattern-language)
+  - [3.7 Business Case (Henderson)](#37-business-case-henderson)
+  - [3.8 Planguage (Tom Gilb)](#38-planguage-tom-gilb)
+  - [3.9 EdgeX Foundry](#39-edgex-foundry-linux-foundation)
+  - [3.10 Merson (CMU/SEI)](#310-merson-cmusei)
+  - [3.11 NHS Wales](#311-nhs-wales-gig-cymru)
+  - [3.12 Gareth Morgan](#312-gareth-morgan-solution-architecture-decisions)
+  - [3.13 DRF](#313-drf--decision-reasoning-format-reasoning-formats)
+  - [3.14 adr-governance](#314-adr-governance-this-repo)
+- [4. Feature Comparison Matrix](#4-feature-comparison-matrix)
+- [5. Unique Contributions](#5-unique-contributions-of-each-template)
+- **Analysis: Where Templates Fall Short**
+  - [6.1 No Structured Implications](#61-no-template-has-structured-implications)
+  - [6.2 No Deployment/Rollback Planning](#62-no-template-has-deploymentrollback-planning)
+  - [6.3 No Monitoring or SLA](#63-no-template-has-monitoring-or-sla)
+  - [6.4 No Governance Enforcement](#64-no-template-has-decision-governance-enforcement--except-morgan)
+  - [6.5 No Structured Impact Assessment](#65-no-template-has-structured-impact-assessment--except-edgex)
+  - [6.6 No Rejected Alternative Rationale](#66-no-template-captures-rationale-for-rejected-alternatives--except-merson-and-drf)
+- **Synthesis**
+  - [7.1 Where Our Schema Leads](#71-where-our-schema-leads)
+  - [7.2 Features Inspired by Others](#72-features-inspired-by-other-templates)
+  - [7.3 Features Evaluated and Excluded](#73-features-evaluated-and-excluded)
+- [8. Template Positioning Map](#8-template-positioning-map)
+- [9. Conclusion](#9-conclusion)
+- **ADR Ecosystem Insights**
+  - [10.1 Fitness Functions](#101-fitness-functions-for-decisions-as-code)
+  - [10.2 Decision Guardian](#102-decision-guardian--pr-level-enforcement)
+  - [10.3 Teamwork Advice](#103-teamwork-advice-henderson)
+  - [10.4 Related Formalisms](#104-related-formalisms)
+  - [10.5 Company-Specific Guidance](#105-company-specific-adr-guidance)
+  - [10.6 Architectural Decisions — The Making Of](#106-architectural-decisions--the-making-of-zimmermann)
+  - [10.7 Skeptical Architecture](#107-skeptical-architecture-cervantes--woods)
+  - [10.8 Architectural Retrospectives](#108-architectural-retrospectives-cervantes--woods)
+  - [10.9 Microsoft Azure — Confidence Level](#109-microsoft-azure--confidence-level)
+- [References](#references)
+
+---
+
 ## 1. Purpose
 
 This document surveys and compares the major Architecture Decision Record (ADR) template formats in use today. The goal is to:
@@ -458,6 +506,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | **Metadata** | | | | | | | | | | | | | | |
 | Unique ID | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ | 🟡 | ✅ | ✅ |
 | Title | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | ✅ | 🟡 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Structured Decision Summary | ❌ | 🟡 | 🟡 | ❌ | ✅ | 🟡 | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Status | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
 | Date(s) | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
 | Author(s) | ❌ | 🟡 | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
@@ -468,7 +517,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | JSON Schema Validation | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ |
 | **Context & Problem** | | | | | | | | | | | | | | |
 | Problem Statement | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ | 🟡 | 🟡 | ✅ | ✅ | ✅ | ✅ | 🟡 | ✅ |
-| Summary / Elevator Pitch | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ~~✅~~ ❌ |
+| Summary / Elevator Pitch | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | Business Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Technical Drivers | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Decision Drivers | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ |
@@ -506,8 +555,8 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | Impact Assessment (structured) | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Context Validation (policy) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Risk & Compliance** | | | | | | | | | | | | | | |
-| Risk Assessment (overall) | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ~~✅~~ ❌ |
-| Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ~~✅~~ ❌ |
+| Risk Assessment (overall) | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Compliance Audit Table | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Constraint Sourcing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Cross-References** | | | | | | | | | | | | | | |

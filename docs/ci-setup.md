@@ -2,6 +2,33 @@
 
 This guide explains how to set up automated ADR validation as a **pre-merge gate** on your CI/CD platform. Once configured, every pull request (or merge request) and every push to `main` will run the validation pipeline. The shipped CI templates intentionally do **not** narrow execution by file path, because governance-critical source changes live outside ADR YAML as well.
 
+## Table of Contents
+
+- [What Gets Validated](#what-gets-validated)
+- [Prerequisites](#prerequisites)
+- **LLM-Ready Setup Prompts**
+  - [GitHub Actions](#prompt-github-actions)
+  - [Azure DevOps](#prompt-azure-devops)
+  - [GCP Cloud Build](#prompt-gcp-cloud-build)
+  - [AWS CodeBuild](#prompt-aws-codebuild)
+  - [GitLab CI/CD](#prompt-gitlab-cicd)
+- [Pipeline Comparison](#pipeline-comparison)
+- **Platform Setup (Manual)**
+  - [GitHub Actions](#github-actions)
+  - [Azure DevOps](#azure-devops)
+  - [GCP Cloud Build](#gcp-cloud-build)
+  - [AWS CodeBuild](#aws-codebuild)
+  - [GitLab CI/CD](#gitlab-cicd)
+- [Customization](#customization)
+- **Approval Identity Verification**
+  - [How it works](#how-it-works)
+  - [Prerequisites](#prerequisites-1)
+  - [Platform-specific configuration](#platform-specific-configuration)
+  - [Configuring mandatory reviewers](#configuring-mandatory-reviewers)
+  - [Validation behavior](#validation-behavior)
+  - [Governance config file](#governance-config-file)
+- [Troubleshooting](#troubleshooting)
+
 ## What Gets Validated
 
 The validation pipeline runs four checks:

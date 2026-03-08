@@ -9,6 +9,39 @@
 
 ---
 
+## Table of Contents
+
+- [1. Purpose](#1-purpose)
+- [2. Processes Surveyed](#2-processes-surveyed)
+- **Process-by-Process Analysis**
+  - [3.1 Nygard (2011)](#31-nygard-2011--the-original-process)
+  - [3.2 AWS Prescriptive Guidance (2022)](#32-aws-prescriptive-guidance-2022)
+  - [3.3 ThoughtWorks Advice Process (~2019)](#33-thoughtworks-architecture-advice-process-2019)
+  - [3.4 Spotify RFC → ADR (2020)](#34-spotify-rfc--adr-2020)
+  - [3.5 UK GOV.UK Framework (2023)](#35-uk-govuk-framework-2023)
+  - [3.6 Decentraland Standards Track (2021)](#36-decentraland-standards-track-2021)
+- [4. Status Values Comparison](#4-status-values-comparison-matrix)
+- [5. Process Feature Comparison](#5-process-feature-comparison-matrix)
+- **Key Dimensions**
+  - [6.1 Centralized vs. Decentralized Approval](#61-centralized-vs-decentralized-approval)
+  - [6.2 Immutability Model](#62-immutability-model)
+  - [6.3 RFC-Before-ADR Pattern](#63-rfc-before-adr-pattern)
+  - [6.4 Enforcement Mechanisms](#64-enforcement-mechanisms)
+- **Where Processes Fall Short**
+  - [7.1 No Complete State Machine](#71-no-process-has-a-complete-state-machine)
+  - [7.2 No Self-Documenting Process](#72-no-process-documents-the-process-itself-inside-the-adr)
+  - [7.3 No Periodic Review](#73-no-process-has-periodic-review)
+- **Synthesis & Recommendations**
+  - [8.1 Our Process Should Be](#81-our-process-should-be)
+  - [8.2 Recommended State Machine](#82-recommended-state-machine-for-adr-governance)
+  - [8.3 Should We Add `draft`?](#83-should-we-add-draft)
+- [9. Our Schema's Process Coverage](#9-our-schemas-process-coverage-today)
+- [10. ADR Anti-Patterns (from AWS)](#10-adr-anti-patterns-from-aws)
+- [11. Conclusion](#11-conclusion)
+- [References](#references)
+
+---
+
 ## 1. Purpose
 
 This document surveys and compares the major **ADR governance processes** — the workflows, state machines, review protocols, and lifecycle models that govern how ADRs move from idea to accepted decision and beyond. This is distinct from the [template comparison](adr-template-comparison.md), which covers what goes *inside* an ADR.

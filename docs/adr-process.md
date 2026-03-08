@@ -22,6 +22,37 @@ This document defines the process for proposing, reviewing, approving, and maint
 
 > See the full sections below for detailed workflows.
 
+## Table of Contents
+
+- **Roles & Lifecycle**
+  - [1. Roles](#1-roles)
+  - [2. Status Lifecycle](#2-status-lifecycle)
+- **Proposing a New ADR**
+  - [3.0 Architectural Significance Test](#30-should-you-write-an-adr--architectural-significance-test)
+  - [3.0.1 Verbosity Guidance](#301-how-much-detail--verbosity-guidance)
+  - [3.1 Draft Phase](#31-draft-phase)
+  - [3.1.1 Definition of Ready — START Checklist](#311-definition-of-ready--start-checklist)
+  - [3.2 Proposal Phase](#32-proposal-phase)
+  - [3.3 Review Phase](#33-review-phase)
+  - [3.3.1 Definition of Done — ecADR Checklist](#331-definition-of-done--ecadr-checklist)
+  - [3.4 Approval Phase](#34-approval-phase)
+  - [3.4.1 Approval Identity Rule](#341-approval-identity-rule)
+  - [3.4.2 Single ADR per PR](#342-single-adr-per-pr)
+  - [3.4.3 Sequential ADR Numbering](#343-sequential-adr-numbering)
+  - [3.4.4 Change Classification](#344-change-classification)
+  - [3.4.4 ADR Administrator](#344-adr-administrator)
+  - [3.5 Rejection](#35-rejection)
+- **Other Workflows**
+  - [4. Re-proposing a Deferred ADR](#4-workflow-re-proposing-a-deferred-adr)
+  - [5. Superseding an Existing ADR](#5-workflow-superseding-an-existing-adr)
+  - [6. Deprecating an ADR](#6-workflow-deprecating-an-adr)
+  - [7. Confirming Implementation](#7-workflow-confirming-implementation)
+  - [8. Archival](#8-archival)
+  - [9. Periodic Review](#9-periodic-review)
+- **Schema & Infrastructure**
+  - [10. Schema Versioning Policy](#10-schema-versioning-policy)
+  - [11. Branch Protection Rules](#11-branch-protection-rules-recommended)
+
 ---
 
 ## 1. Roles
