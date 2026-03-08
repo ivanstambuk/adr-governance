@@ -72,7 +72,7 @@ The following fields support **full Markdown** including embedded Mermaid diagra
 | Field | Description |
 |-------|-------------|
 | `context.summary` | Narrative problem statement; embed architecture diagrams |
-| `alternatives[].description` | **Thorough** architectural description of each option. Not a summary — write multiple paragraphs covering how the design works, data flows, integration points. **Embedding Mermaid diagrams is strongly encouraged** (sequence, flowchart, C4). |
+| `alternatives[].description` | **Thorough** architectural description of each option. Not a summary — write multiple paragraphs covering how the design works, data flows, integration points. **Embedding Mermaid diagrams is strongly encouraged** (sequence, flowchart, C4). Include **code examples** for technology decisions, **evolution timeline tables** for multi-phase decisions, and **empirical evidence** for tried-and-removed alternatives (e.g., "36% FFI overhead"). Document **syntax/design debates** as architecturally significant choices. |
 | `decision.rationale` | Explain *why*; use bullet lists, headers, diagrams |
 | `decision.tradeoffs` | Acknowledged tradeoffs accepted with this decision |
 | `confirmation.description` | Verification evidence and implementation proof |

@@ -168,6 +168,8 @@ When reviewing, check for:
 7. **Audit trail**: Is the trail consistent with the status?
 8. **Rejection rationale**: For each non-chosen alternative, is `rejection_rationale` populated explaining why it was not selected?
 9. **Diagram quality**: Are embedded Mermaid diagrams used where a visual would clarify architecture or flow?
+10. **Code examples**: For technology decisions, do the alternative descriptions include concrete code snippets that demonstrate the developer experience? Code examples make the motivation visceral — a reader seeing verbose combinator chains immediately understands why a new syntax was needed.
+11. **Empirical evidence**: If an alternative was actually tried and removed (not just theoretically rejected), is this prominently stated? An empirical rejection ("we tried it and it failed") is far stronger than a theoretical one ("we think it wouldn't work").
 
 ## How to supersede an ADR
 
@@ -184,7 +186,11 @@ When reviewing, check for:
 The following fields support **full Markdown** including embedded Mermaid diagrams via code fences:
 
 - `context.summary` — narrative problem statement; embed architecture diagrams here
-- `alternatives[].description` — **thorough** architectural description of each option; write multiple paragraphs explaining how the design works, data flows, and integration points. **Embedding Mermaid diagrams (sequence, flowchart, C4) is strongly encouraged.**
+- `alternatives[].description` — **thorough** architectural description of each option; write multiple paragraphs explaining how the design works, data flows, and integration points. **Embedding Mermaid diagrams (sequence, flowchart, C4) is strongly encouraged.** Include:
+  - **Code examples** for technology decisions — show what the developer experience looks like with each alternative. Concrete code makes tradeoffs visceral.
+  - **Evolution timeline tables** for decisions that evolved over multiple phases or years — a timeline table makes the design trajectory clear at a glance.
+  - **Empirical evidence** for tried-and-removed alternatives — if the project actually implemented and later removed an alternative, state this prominently with specific measurements (e.g., "36% FFI overhead" or "#1 complaint for 5 years").
+  - **Syntax/design debates** as architecturally significant — surface tension points (e.g., postfix vs. prefix syntax) are genuine design decisions with real consequences, not trivial bikeshedding.
 - `decision.rationale` — explain *why*; use bullet lists, headers, or diagrams
 - `decision.tradeoffs` — what was given up
 - `confirmation.description` — verification evidence
