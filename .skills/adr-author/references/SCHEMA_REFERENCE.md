@@ -41,6 +41,7 @@ The ADR meta-model is defined as a JSON Schema (Draft 2020-12) at `schemas/adr.s
 10. If an ADR is already `accepted`, its decision core is immutable in place; material changes require a new superseding ADR
 11. Extension fields: any key starting with `x-` is allowed at the top level
 12. `draft` still means a schema-valid, substantially complete ADR; the distinction from `proposed` is governance state, not missing core sections
+13. `adr.y_statement` should target **100–150 words**. It is the most information-dense *summary* of the decision — not a second rationale. Each of the 7 clauses should be concise: use just names in `neglected`, one headline in `facing`, top 2 tradeoffs in `accepting`, and one core reason in `because`. Detail belongs in the dedicated sections (`context.summary`, `decision.rationale`, `decision.tradeoffs`, `consequences`).
 
 ## Enum Values
 

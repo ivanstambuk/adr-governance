@@ -4,42 +4,22 @@ adr:
     Adopt Turbopack as Next.js's bundler, replacing Webpack with a Rust-based
     incremental bundler built by Webpack's creator Tobias Koppers
   y_statement: >-
-    In the context of Next.js's build pipeline architecture, facing increasing
-    developer frustration with Webpack's slow compilation and Hot Module
-    Replacement times — especially in large applications with thousands of
-    modules, the inability to parallelize bundling across CPU cores due to
-    JavaScript's single-threaded architecture, and the need for a unified
-    module graph supporting both server and client environments for React
-    Server Components — we decided for Turbopack, a Rust-based incremental
-    bundler designed from scratch by Tobias Koppers (Webpack's original
-    creator) with function-level caching, native parallelization, and a
-    unified multi-environment module graph, and neglected keeping Webpack as
-    the default bundler with incremental optimizations, adopting Vite as the
-    bundler (the community-favorite alternative backed by Evan You), adopting
-    esbuild as the bundler (fast but limited production optimization), adopting
-    Rolldown (the emerging unified Rust-based bundler from VoidZero), and
-    building a minimal custom in-house bundler without Webpack lineage, to
-    achieve up to 76.7% faster local server startup, up to 96.3% faster code
-    updates with Fast Refresh, a unified compiler that handles server and
-    client environments in a single pass eliminating dual-compiler
-    coordination overhead, and native CPU parallelization that removes
-    JavaScript's single-threaded bottleneck, accepting that Turbopack does
-    not support Webpack plugins — breaking compatibility with the largest
-    plugin ecosystem in frontend development, that the initial "700x faster"
-    marketing claims were publicly challenged as misleading by Evan You and
-    the broader community, that Turbopack took over two years from
-    announcement to stable dev release and production builds are still
-    maturing, and that Turbopack is built and controlled by Vercel creating
-    a vendor dependency for Next.js's core build infrastructure, because
-    Webpack's JavaScript-based architecture had reached a fundamental
-    performance ceiling where further optimization yielded diminishing returns,
-    the creator of Webpack himself concluded that a ground-up Rust rewrite
-    was necessary rather than incremental improvement, no existing bundler
-    met all requirements simultaneously (unified multi-environment graph,
-    minimal breaking changes, support for both App Router and Pages Router),
-    and Vercel's ability to own the roadmap ensures Turbopack can evolve
-    alongside Next.js features like React Server Components and Server
-    Functions.
+    In the context of Next.js's build pipeline, facing Webpack's slow
+    compilation and Hot Module Replacement at scale, single-threaded JavaScript
+    architecture limiting parallelization, and the need for a unified module
+    graph supporting React Server Components, we decided for Turbopack — a
+    Rust-based incremental bundler designed by Webpack's creator Tobias Koppers
+    with function-level caching and native parallelization — and neglected
+    keeping Webpack with incremental optimizations, adopting Vite, adopting
+    esbuild, adopting Rolldown, and building a custom in-house bundler, to
+    achieve 76.7% faster server startup, 96.3% faster Fast Refresh, unified
+    server/client compilation in a single pass, and native CPU parallelization,
+    accepting Webpack plugin ecosystem incompatibility, controversial initial
+    marketing claims, a three-year stabilization timeline, and Vercel vendor
+    dependency, because Webpack's creator himself concluded a ground-up Rust
+    rewrite was necessary, and no existing bundler provided a unified
+    multi-environment graph with minimal breaking changes for both App Router
+    and Pages Router.
   status: accepted
   created_at: "2022-10-25T00:00:00Z"
   last_modified: "2025-10-01T00:00:00Z"

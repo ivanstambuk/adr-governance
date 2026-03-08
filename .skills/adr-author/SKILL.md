@@ -77,6 +77,14 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
   6. "accepting [tradeoffs],"
   7. "because [decision.rationale]."
   If any clause is missing, rewrite until all 7 are present. Present to the user for confirmation.
+
+  **Target length: 100–150 words.** The Y-Statement is a *summary*, not a rationale — it must be a single scannable paragraph. If it exceeds 150 words, you are duplicating content that belongs in `context.summary`, `decision.rationale`, or `decision.tradeoffs`. Apply these per-clause brevity rules:
+  - **`facing`**: One headline problem (not a list of drivers) — the drivers belong in `context`
+  - **`we decided for`**: Name + one key differentiator — the detailed description belongs in `alternatives[].description`
+  - **`and neglected`**: Just alternative names — no parenthetical descriptions ("Vite" not "Vite (the community-favorite alternative backed by Evan You)")
+  - **`to achieve`**: Top 2–3 outcomes — the full list belongs in `consequences.positive`
+  - **`accepting`**: Top 2 tradeoffs — the full list belongs in `decision.tradeoffs`
+  - **`because`**: One core reason — the full rationale belongs in `decision.rationale`
 - `authors` — who is writing this
 - `decision_owner` — who is accountable
 - `context` — summary, business_drivers, technical_drivers, constraints, assumptions
