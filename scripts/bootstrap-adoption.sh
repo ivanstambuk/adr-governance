@@ -154,13 +154,12 @@ data["confirmation"] = {
     ],
 }
 
-# Add reviewers if missing
-if "reviewers" not in data or not data.get("reviewers"):
-    data["reviewers"] = [{
-        "name": name,
-        "role": "Adopter",
-        "email": email,
-    }]
+# Always overwrite reviewers with adopter details
+data["reviewers"] = [{
+    "name": name,
+    "role": "Adopter",
+    "email": email,
+}]
 
 # Audit trail — replace with adoption event
 data["audit_trail"] = [
@@ -285,6 +284,14 @@ info "Enabling pre-commit hook..."
 git config core.hooksPath .githooks
 ok "Git hooks path set to .githooks"
 
+# ── 8. Safe remote handling ──────────────────────────────────────────────
+if git remote get-url origin 2>/dev/null | grep -q 'adr-governance'; then
+  info "Renaming 'origin' to 'upstream-template' (safety: avoid accidental push to template repo)..."
+  git remote rename origin upstream-template
+  ok "Remote renamed: origin → upstream-template"
+  warn "Add your own remote: git remote add origin <YOUR_REPO_URL>"
+fi
+
 # ── 8. Validate ──────────────────────────────────────────────────────────
 info "Running validation..."
 if bash scripts/run-validation.sh; then
@@ -301,17 +308,20 @@ else
 fi
 
 echo ""
-echo -e "${GREEN}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║  🎉 Adoption bootstrap complete!                       ║${NC}"
-echo -e "${GREEN}╠══════════════════════════════════════════════════════════╣${NC}"
-echo -e "${GREEN}║                                                        ║${NC}"
-echo -e "${GREEN}║  Next steps:                                           ║${NC}"
-echo -e "${GREEN}║  1. Review the updated ADR-0000                        ║${NC}"
-echo -e "${GREEN}║  2. git add -A && git commit -m 'chore: adopt ADR      ║${NC}"
-echo -e "${GREEN}║     governance for $ORG'${NC}"
-echo -e "${GREEN}║  3. Configure branch protection / build policies       ║${NC}"
-echo -e "${GREEN}║     (see docs/ci-setup.md)                             ║${NC}"
-echo -e "${GREEN}║  4. Run: bash scripts/adoption-doctor.sh               ║${NC}"
-echo -e "${GREEN}║  5. Run: bash scripts/create-validation-smoke-test.sh  ║${NC}"
-echo -e "${GREEN}║                                                        ║${NC}"
-echo -e "${GREEN}╚══════════════════════════════════════════════════════════╝${NC}"
+echo -e "${GREEN}╔══════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║  🎉 Adoption bootstrap complete!                             ║${NC}"
+echo -e "${GREEN}╠══════════════════════════════════════════════════════════════╣${NC}"
+echo -e "${GREEN}║                                                              ║${NC}"
+echo -e "${GREEN}║  Next steps:                                                 ║${NC}"
+echo -e "${GREEN}║  1. Review the updated ADR-0000                              ║${NC}"
+echo -e "${GREEN}║  2. Add your remote:                                         ║${NC}"
+echo -e "${GREEN}║     git remote add origin <YOUR_REPO_URL>                    ║${NC}"
+echo -e "${GREEN}║  3. Commit:                                                  ║${NC}"
+echo -e "${GREEN}║     git add -A && git commit -m 'chore: adopt ADR governance'║${NC}"
+echo -e "${GREEN}║  4. Run: bash scripts/adoption-doctor.sh                     ║${NC}"
+echo -e "${GREEN}║  5. Run: bash scripts/create-validation-smoke-test.sh        ║${NC}"
+echo -e "${GREEN}║     (requires a clean working tree — commit first!)           ║${NC}"
+echo -e "${GREEN}║  6. Configure branch protection (see docs/ci-setup.md)       ║${NC}"
+echo -e "${GREEN}║  7. Push: git push -u origin main                            ║${NC}"
+echo -e "${GREEN}║                                                              ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════════════════════════════╝${NC}"

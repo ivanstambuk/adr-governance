@@ -152,64 +152,49 @@ See **[`docs/decision-enforcement.md`](docs/decision-enforcement.md)** for SDD w
 
 ## Quick Start — Adopting for Your Organization
 
-> **⚡ Fastest path — scripted bootstrap.** Run the bootstrap script to set up everything in one command:
->
-> ```bash
-> bash scripts/bootstrap-adoption.sh \
->   --platform azure \
->   --org "My Organisation" \
->   --name "Jane Doe" \
->   --email "jane.doe@contoso.com" \
->   --identity "jane.doe@contoso.com" \
->   --team "[MyProject]\Architecture" \
->   --remove-examples
-> ```
->
-> Then verify with `bash scripts/adoption-doctor.sh` and smoke-test CI with `bash scripts/create-validation-smoke-test.sh`.
-
-> **🤖 AI-agent path.** Fill in [`.adr-governance/adoption.yaml`](.adr-governance/adoption.yaml) and tell your AI assistant: *"Read `.adr-governance/adoption.yaml` and run `bootstrap-adoption.sh` with the values from that file."*
-
-<details>
-<summary><strong>AI prompt method</strong> — paste into any AI coding assistant</summary>
+> **⚡ Fastest path.** Paste this into any AI coding assistant (Antigravity, Claude Code, Codex, Copilot). Fill in the placeholders first, then copy the entire block.
 
 ```
-I'm adopting the adr-governance framework (https://github.com/ivanstambuk/adr-governance) for my organization.
+I'm adopting the adr-governance framework.
 
-Please help me:
-1. Fork or clone the repo into my organization as a new repository named "architecture-decisions".
-2. Delete the examples-reference/ directory (those are fictional reference ADRs). All scripts, hooks, CI, and tests will keep working after deletion.
-3. Update ADR-0000 (architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml):
-   - Replace authors, decision_owner, reviewers, and approvals with my name/identity
-   - Update adr.project to my organization name
-   - Update timestamps and audit trail entries
-4. Update .adr-governance/config.yaml:
-   - Replace admins[].identity with my Git identity
-   - Set adr_directory to architecture-decision-log (default)
-5. Set up CI validation as a required merge gate for my platform.
-6. Enable the pre-commit hook (git config core.hooksPath .githooks).
-7. Configure reviewer ownership:
-   - GitHub: copy CODEOWNERS.example to .github/CODEOWNERS and replace team handles
-   - Azure DevOps: add "Automatically included reviewers" in branch policies (CODEOWNERS does not exist on Azure DevOps)
-   - GitLab: add approval rules in Settings → Merge Requests
-8. Set identity format for approvals[].identity:
-   - GitHub: @username (e.g., @janedoe)
-   - Azure DevOps: Azure email or UPN (e.g., jane.doe@contoso.com)
-   - GitLab: GitLab username (e.g., janedoe)
-9. Verify the setup by creating a test branch with an intentionally malformed ADR and opening a PR to confirm the check fails.
+1. Clone https://github.com/ivanstambuk/adr-governance into a new repo.
+2. Run the bootstrap script with my details:
 
-My organization name is: [INSERT ORG NAME]
-My CI platform is: [GitHub Actions / Azure DevOps / GCP Cloud Build / AWS CodeBuild / GitLab CI]
-My architecture team handle is: [INSERT TEAM HANDLE, e.g., @myorg/architects]
-My name is: [INSERT YOUR NAME]
-My Git identity is: [INSERT YOUR GIT USERNAME]
+bash scripts/bootstrap-adoption.sh \
+  --platform PLATFORM \
+  --org "ORG_NAME" \
+  --name "FULL_NAME" \
+  --email "EMAIL" \
+  --identity "IDENTITY" \
+  --team "TEAM" \
+  --remove-examples
+
+Where:
+  PLATFORM = github | azure | gcp | aws | gitlab
+  ORG_NAME = my organisation name
+  FULL_NAME = my full name
+  EMAIL = my email address
+  IDENTITY = approval identity for my platform:
+    GitHub:    @username (e.g., @janedoe)
+    Azure:     email or UPN (e.g., jane.doe@contoso.com) — NOT a username
+    GitLab:    username (e.g., janedoe)
+  TEAM = architecture team handle:
+    GitHub:    @org/team-slug
+    Azure:     Azure DevOps group (e.g., "[MyProject]\Architecture")
+    GitLab:    @group/subgroup
+
+3. Add my repo remote: git remote add origin <MY_REPO_URL>
+4. Commit: git add -A && git commit -m "chore: adopt ADR governance"
+5. Run: bash scripts/adoption-doctor.sh
+6. Run: bash scripts/create-validation-smoke-test.sh  (requires clean tree — step 4 first)
+7. Configure branch protection / build policies (see docs/ci-setup.md).
+8. Push: git push -u origin main
 ```
-
-</details>
 
 ---
 
 <details>
-<summary><h3>Manual Setup</h3> <em>If you used the bootstrap script or AI prompt above, skip this section.</em></summary>
+<summary><h3>Manual Setup</h3> <em>If you used the AI prompt above, skip this section.</em></summary>
 
 #### 1. Create your ADR repository
 
@@ -380,18 +365,6 @@ Automated validation is the enforcement mechanism that makes the governance proc
 
 **Step-by-step setup instructions**, platform-specific enforcement configuration, troubleshooting, and **LLM-ready prompts** (copy-paste into any AI assistant to have it set up CI for you) are in **[`docs/ci-setup.md`](docs/ci-setup.md)**.
 
-## Rendered Markdown (Human-Friendly Views)
-
-ADRs are authored and stored as **structured YAML** — optimised for machine consumption, validation, and AI-assisted workflows. But humans need a readable format too. Every ADR YAML file has a corresponding **Markdown rendering** in [`architecture-decision-log/rendered/`](architecture-decision-log/rendered/), auto-generated via a Git pre-commit hook. Both the YAML source and its Markdown rendering are committed together — reviewers approve both in the same PR, and CI verifies that committed renderings and `llms-full.txt` stay current.
-
-- **[`architecture-decision-log/rendered/architecture-decision-log.md`](architecture-decision-log/rendered/architecture-decision-log.md)** — the decision log index with status, dates, and clickable links
-- **`architecture-decision-log/rendered/ADR-NNNN-*.md`** — individual ADR renderings with a provenance disclaimer
-
-> **⚠️ Do not edit files in `architecture-decision-log/rendered/` directly.** They are auto-generated from the YAML source.
-
-See **[`docs/rendering.md`](docs/rendering.md)** for pre-commit hook setup, manual rendering commands, CI freshness checks, and the rationale behind the dual-format model.
-
-
 ## Example ADRs
 
 The [`examples-reference/`](examples-reference/) directory contains example ADRs organized in two categories:
@@ -450,46 +423,6 @@ See the [rendered example index](examples-reference/rendered/architecture-decisi
 Additionally, [`architecture-decision-log/ADR-0000`](architecture-decision-log/ADR-0000-adopt-governed-adr-process.yaml) is a meta-ADR documenting the AD to adopt this governance process itself.
 
 > **Bootstrap exception:** ADR-0000 was self-approved by the initial author as the bootstrapping meta-decision. The "no self-approval" rule (§3.4) applies to all subsequent ADRs.
-
-## Automated Quality Testing (Triple-LLM Harness)
-
-The framework includes an automated testing harness ([`tests/llm_harness.py`](tests/llm_harness.py)) that validates ADR authoring quality by simulating realistic authoring conversations between three LLMs:
-
-| Role | Purpose | Default Model |
-|------|---------|---------------|
-| **Interviewer** | Runs the Socratic ADR authoring dialogue | GPT-5.2 Medium |
-| **User** | Plays a domain expert answering questions | GLM-5 |
-| **Analyst** | Reviews the generated ADR for quality | GPT-5.4 High |
-
-### How It Works
-
-1. A YAML **scenario** defines the decision context, persona, and expected coverage
-2. The **Interviewer** and **User** LLMs conduct a multi-turn ADR authoring conversation
-3. The resulting ADR YAML is **validated** against the schema and **reviewed** by the Analyst LLM
-4. Quality metrics are computed: schema compliance, field completeness, Y-Statement presence, ASR coverage
-
-### Running the Harness
-
-```bash
-# Install dependencies
-pip install google-genai anthropic pyyaml jsonschema
-
-# Run a single scenario
-python3 tests/llm_harness.py tests/scenarios/fictional-001-api-versioning.yaml
-
-# Run all scenarios (results go to tests/llm_runs/)
-python3 tests/llm_harness.py tests/scenarios/*.yaml
-```
-
-### Scenario Categories
-
-| Category | Description | Examples |
-|----------|-------------|---------|
-| **Fictional** | Synthetic decision contexts | API versioning, monolith decomposition, secrets management |
-| **GitHub PR-based** | Extracted from real PRs | *(planned)* |
-| **Existing ADR-based** | Round-trip validation against reference ADRs | *(planned)* |
-
-See [`docs/research/automated-triple-llm-testing.md`](docs/research/automated-triple-llm-testing.md) for the full design document.
 
 ## License
 
