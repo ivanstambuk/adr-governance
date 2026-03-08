@@ -1,0 +1,713 @@
+adr:
+  id: ADR-0102-react-server-components
+  title: Introduce React Server Components for zero-bundle-size server-first rendering
+  y_statement: >-
+    In the context of the React rendering architecture, facing growing
+    JavaScript bundle sizes that degrade performance on slower networks and
+    devices, client-server data fetching waterfalls that harm time to
+    interactive, and the inability to directly access server-side resources
+    from React components, we decided for introducing React Server Components
+    — a new component type that renders exclusively on the server with zero
+    client-side JavaScript — and neglected enhancing traditional SSR with
+    progressive hydration only, adopting a GraphQL-centric data layer as
+    the standard, creating a server-rendering DSL separate from React, and
+    continuing with client-only rendering, to achieve zero-bundle-size server
+    rendering, elimination of client-server waterfalls through collocated
+    data fetching, and seamless interleaving of server and client components
+    in a unified React tree, accepting increased architectural complexity from
+    the server/client component boundary, framework dependence for production
+    implementation, and a fundamental mental model shift for React developers,
+    because the component model is the right abstraction level for the
+    server/client split — allowing developers to choose per-component where
+    code runs rather than per-page or per-route, while preserving React's
+    composability and enabling automatic code splitting at the boundary.
+  status: accepted
+  created_at: "2020-12-21T00:00:00Z"
+  last_modified: "2024-12-05T00:00:00Z"
+  version: "1.0"
+  schema_version: "1.0.0"
+  project: React
+  component: Rendering Architecture
+  tags:
+    - rendering
+    - server-components
+    - performance
+    - bundle-size
+    - data-fetching
+    - server-client-boundary
+    - architecture
+    - javascript
+  priority: critical
+  decision_type: technology
+  decision_level: strategic
+authors:
+  - name: Sebastian Markbage
+    role: React Core Team, RSC Research Lead
+    email: sebastian.markbage@meta.example.com
+  - name: Dan Abramov
+    role: React Core Team, Developer Advocate
+    email: dan.abramov@meta.example.com
+  - name: Lauren Tan
+    role: React Core Team, Relay Integration Lead
+    email: lauren.tan@meta.example.com
+  - name: Joseph Savona
+    role: React Core Team, Compiler Lead
+    email: joseph.savona@meta.example.com
+  - name: Andrew Clark
+    role: React Core Team
+    email: andrew.clark@meta.example.com
+decision_owner:
+  name: React Core Team (Meta)
+  role: Framework Architecture Team
+  email: react-core@meta.example.com
+approvals:
+  - name: React Core Team
+    role: Framework Architecture Team
+    identity: "@reactjs"
+    approved_at: "2024-12-05T00:00:00Z"
+    signature_id: null
+context:
+  summary: |
+    React has been the dominant frontend UI library since its introduction in
+    2013, with over 232,000 GitHub stars and adoption across millions of web
+    applications. For its first decade, React's architecture was fundamentally
+    client-centric: all components rendered in the browser, all JavaScript
+    shipped to the client, and data fetching happened through API calls from
+    the client to the server.
+
+    By 2020, this architecture had created three compounding problems:
+
+    ```mermaid
+    graph TD
+        subgraph "The Problem (Client-Only React)"
+          A[React App] -->|ships all JS| B["Large Bundle<br/>(300KB+ for typical app)"]
+          B --> C["Slow Initial Load<br/>(especially mobile/3G)"]
+          A --> D{Data Fetching}
+          D -->|client request 1| E[API Server]
+          E -->|response 1| D
+          D -->|client request 2| F[Database]
+          D -->|renders child| G{Child Data Fetch}
+          G -->|client request 3| E
+          G -->|waterfall| H["Slow Time to Interactive"]
+        end
+
+        style B fill:#f66,stroke:#333,color:#000
+        style C fill:#f66,stroke:#333,color:#000
+        style H fill:#f66,stroke:#333,color:#000
+    ```
+
+    1. **Bundle size growth**: Every React component ships its JavaScript to the
+       client, even components that display static content (markdown renderers,
+       syntax highlighters, date formatters). A typical React application ships
+       300KB+ of JavaScript before any application logic.
+
+    2. **Client-server waterfalls**: Data fetching happens sequentially — a parent
+       component fetches data, renders, then its child components fetch their
+       data, creating cascading network round trips. Each waterfall step adds
+       network latency.
+
+    3. **No direct server access**: React components cannot directly access
+       databases, file systems, or internal microservices. Every data access
+       requires an explicit API endpoint, adding engineering overhead and
+       latency.
+
+    Traditional Server-Side Rendering (SSR) addressed some of these issues by
+    generating HTML on the server, but SSR still ships all JavaScript to the
+    client for hydration — every component's code is downloaded even if it
+    never needs to be interactive. SSR also doesn't solve waterfalls at the
+    component level.
+
+    The React team, led by Sebastian Markbage, explored a fundamentally different
+    approach: what if components could declare whether they run on the server or
+    the client, and the framework could automatically handle the boundary?
+  business_drivers:
+    - React is the most widely used frontend framework with 232k+ GitHub stars
+      — performance improvements benefit millions of applications and billions
+      of end users
+    - Mobile-first and emerging-market users on slower networks are
+      disproportionately affected by large JavaScript bundles
+    - Meta's own applications (Facebook, Instagram) require server-side
+      performance optimization at massive scale
+    - Competitive pressure from server-first frameworks (Remix, SvelteKit,
+      Astro) that offer better out-of-the-box performance
+    - Developer productivity improvements from eliminating boilerplate API
+      layers between frontend components and backend data
+  technical_drivers:
+    - JavaScript bundle sizes grow linearly with application complexity —
+      every imported library ships to every user regardless of interactivity
+    - Client-server data fetching waterfalls add cumulative network latency
+      proportional to component tree depth
+    - Components rendering static content (markdown, syntax highlighting,
+      formatting) ship unnecessary JavaScript to the client
+    - useEffect-based data fetching creates render-fetch-render-fetch cycles
+      that are difficult to optimize
+    - Code splitting via React.lazy requires manual effort and cannot
+      automatically split at the server/client boundary
+    - Existing SSR sends all component JavaScript for hydration even when
+      components are never interactive
+  constraints:
+    - Must be backward compatible — existing React applications must continue
+      to work without modification (client components remain the default in
+      non-framework contexts)
+    - Must integrate with React's existing component model — server components
+      are React components, not a separate abstraction
+    - Must support streaming — server components can stream results
+      incrementally using React Suspense
+    - Must be serializable — server component output must be serializable to
+      the React Server Component Payload (RSC Payload) format for transmission
+    - Server components cannot use client-side APIs (useState, useEffect,
+      event handlers, browser APIs)
+    - Requires a bundler integration layer — framework authors (Next.js,
+      React Router) must implement the server/client boundary in their build
+      tooling
+  assumptions:
+    - Framework authors (Next.js, Remix, React Router) will implement the
+      bundler integration needed to support server components in production
+    - The mental model shift (server vs. client components, 'use client'
+      directive) is learnable by the React developer community
+    - The performance benefits of zero-bundle-size components outweigh the
+      architectural complexity for most applications
+    - Server infrastructure (Node.js or edge runtimes) is available for
+      applications adopting server components
+    - The RSC wire format (React Server Component Payload) is stable enough
+      for production use across framework versions
+architecturally_significant_requirements:
+  functional:
+    - id: F-001
+      description: >
+        Server Components must render on the server and produce a serialized
+        React tree (RSC Payload) — not HTML — that the client can reconcile
+        with the existing component tree without full page reloads
+    - id: F-002
+      description: >
+        Server Components must support async/await for data fetching directly
+        within the component body, eliminating the need for useEffect or
+        external data fetching libraries for server-side data access
+    - id: F-003
+      description: >
+        The 'use client' directive must create a clear, enforceable boundary
+        between server and client code, preventing server-only code from being
+        bundled into the client JavaScript
+  non_functional:
+    - id: NF-001
+      description: >
+        Server Components must contribute zero bytes to the client JavaScript
+        bundle — their code, dependencies, and imported libraries must never
+        be downloaded by the browser
+    - id: NF-002
+      description: >
+        Server Components must support streaming via React Suspense, allowing
+        partial rendering results to reach the client before all data
+        fetching completes
+    - id: NF-003
+      description: >
+        The server/client component boundary must enable automatic code
+        splitting — client components referenced by server components are
+        automatically split into separate chunks without manual React.lazy
+alternatives:
+  - name: React Server Components with server/client component model
+    description: |
+      Introduce a new component execution model where React components can
+      declare whether they run on the server or the client. By default,
+      components are Server Components — they execute on the server, have
+      direct access to databases and file systems, and their code is never
+      sent to the client. Components that need interactivity (state, effects,
+      event handlers) opt in to client execution via the `'use client'`
+      directive.
+
+      The architecture introduces three component types:
+
+      - **Server Components** (default): Run on the server, zero client JS,
+        can be `async`, can access backend resources directly
+      - **Client Components** (`'use client'`): Run on the client (and
+        optionally pre-rendered on server via SSR), support all React hooks
+        and browser APIs
+      - **Shared Components**: Pure components with no server or client
+        dependencies — can run in either environment
+
+      Server Components produce a **React Server Component Payload (RSC
+      Payload)** — a JSON-like serialized representation of the React tree
+      with "holes" for Client Components. The client receives this payload,
+      fills in the Client Component slots with their interactive JavaScript,
+      and reconciles the tree.
+
+      ```mermaid
+      graph TD
+          subgraph "Server"
+            A["Server Component<br/>(async, DB access)"] --> B["RSC Payload<br/>(serialized React tree)"]
+            A --> C["'use client' boundary"]
+          end
+
+          subgraph "Client"
+            B -->|stream| D["React Runtime"]
+            C -->|JS chunk| E["Client Component<br/>(useState, onClick)"]
+            D --> F["Reconciled UI"]
+            E --> F
+          end
+
+          subgraph "Key Properties"
+            G["✅ Zero bundle size<br/>for server code"]
+            H["✅ Direct DB access<br/>in components"]
+            I["✅ Automatic code<br/>splitting at boundary"]
+          end
+
+          style G fill:#2d8,stroke:#333,color:#000
+          style H fill:#2d8,stroke:#333,color:#000
+          style I fill:#2d8,stroke:#333,color:#000
+      ```
+
+      **Bundle size impact:**
+
+      | Scenario | Client-Only | With RSC | Reduction |
+      |----------|:----------:|:-------:|:---------:|
+      | Markdown renderer | ~50KB | 0 KB | 100% |
+      | Syntax highlighter | ~80KB | 0 KB | 100% |
+      | Date formatting lib | ~20KB | 0 KB | 100% |
+      | Interactive form | ~15KB | ~15KB | 0% |
+      | Mixed page (typical) | ~300KB | ~80KB | ~73% |
+
+      The model is designed for incremental adoption: existing React apps
+      continue to work unchanged, and developers can progressively move
+      non-interactive components to server execution.
+    pros:
+      - Zero-bundle-size for all server-rendered content — libraries like
+        markdown parsers, syntax highlighters, and formatters never ship to
+        the client
+      - Eliminates client-server waterfalls — data fetching happens on the
+        server, colocated with the component that needs it
+      - Direct access to databases, file systems, and microservices from
+        within React components — no API boilerplate needed
+      - Automatic code splitting at the server/client boundary — no manual
+        React.lazy configuration required
+      - Streaming via Suspense — partial results reach the client before all
+        data fetching completes, improving perceived performance
+      - Preserves React's composability — server and client components
+        interleave naturally in the same component tree
+      - The component is the right abstraction level for the server/client
+        split — more granular than per-page or per-route decisions
+      - Backward compatible — existing client-only React apps continue to
+        work without modification
+    cons:
+      - Significant mental model shift — developers must understand server
+        vs. client execution contexts and their constraints
+      - Requires framework integration — production RSC support requires
+        sophisticated bundler (Next.js, React Router, TanStack Start)
+      - Server Components cannot use React hooks (useState, useEffect) or
+        browser APIs — requires careful component decomposition
+      - Increased architectural complexity — the server/client boundary
+        introduces new categories of serialization errors
+      - Initial framework lock-in perception — Next.js was the only
+        production-ready RSC implementation for years
+      - Library ecosystem adaptation required — existing React libraries must
+        add RSC compatibility or be wrapped in client components
+      - Debugging complexity — errors can originate on server or client,
+        and the RSC Payload format is not human-readable
+      - Server infrastructure requirement — applications need Node.js or
+        edge runtime environments
+    estimated_cost: high
+    risk: high
+  - name: Enhanced SSR with progressive hydration only
+    description: |
+      Improve the existing Server-Side Rendering (SSR) approach with
+      progressive (or selective/partial) hydration. Under this model, the
+      server renders the full page to HTML, but instead of hydrating the
+      entire page at once, the client progressively hydrates components based
+      on priority, visibility (viewport intersection), or user interaction.
+
+      React 18 already introduced Suspense-based streaming SSR and
+      selective hydration. This alternative proposes making progressive
+      hydration the primary performance optimization, without introducing
+      a new component type or execution model.
+
+      ```mermaid
+      graph TD
+          A[Server] -->|full HTML| B[Client Browser]
+          B --> C{Progressive Hydration}
+          C -->|viewport visible| D["Hydrate Above-fold<br/>(immediately)"]
+          C -->|user scrolls| E["Hydrate Below-fold<br/>(on demand)"]
+          C -->|user interacts| F["Hydrate Interactive<br/>(on event)"]
+
+          B --> G["All JS still shipped"]
+          G --> H["❌ No bundle reduction"]
+
+          style D fill:#2d8,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Simpler mental model — no new component types, no server/client
+        boundary to manage
+      - Faster Time to Interactive for above-the-fold content
+      - Works with existing React component patterns and hooks
+      - No framework-level bundler integration required
+      - Existing SSR knowledge transfers directly
+    cons:
+      - All JavaScript still ships to the client — no bundle size reduction
+        for non-interactive components
+      - Hydration itself has a cost — even deferred hydration eventually
+        executes all component JavaScript
+      - Does not eliminate client-server waterfalls — data fetching still
+        happens via API calls from the client
+      - No direct server resource access from components
+      - Does not solve the "abstraction tax" — every imported library ships
+        to every user
+    estimated_cost: medium
+    risk: low
+    rejection_rationale: >
+      Progressive hydration optimizes when JavaScript executes on the client
+      but does not reduce what ships to the client. All component code,
+      including non-interactive components like markdown renderers and date
+      formatters, is still downloaded. This approach addresses Time to
+      Interactive but not bundle size, data fetching waterfalls, or direct
+      server resource access — the three core problems RSC was designed to
+      solve.
+  - name: GraphQL-centric data layer as the standard React data pattern
+    description: |
+      Standardize on GraphQL (particularly Relay) as the recommended data
+      fetching solution for React applications. GraphQL enables components
+      to declare their data requirements as colocated fragments, and Relay's
+      compiler can optimize data fetching by aggregating fragments into
+      single requests, performing ahead-of-time query compilation, and
+      enabling incremental data delivery.
+
+      Meta already uses Relay extensively for Facebook and Instagram. This
+      alternative proposes making GraphQL+Relay the official recommendation
+      for data fetching in React, with first-class integration into React's
+      Suspense model.
+
+      ```mermaid
+      graph TD
+          A["Component Tree"] --> B["GraphQL Fragments<br/>(colocated data requirements)"]
+          B --> C["Relay Compiler"]
+          C --> D["Optimized Query<br/>(single network request)"]
+          D --> E["GraphQL Server"]
+          E --> F["Data Response"]
+          F --> G["Component Rendering"]
+
+          H["✅ Colocated data<br/>requirements"]
+          I["❌ Requires GraphQL<br/>infrastructure"]
+          J["❌ All JS still<br/>ships to client"]
+
+          style H fill:#2d8,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+          style J fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Eliminates data fetching waterfalls via query aggregation and
+        preloading
+      - Colocated data requirements — each component declares what it needs
+      - Relay compiler enables advanced optimizations (ahead-of-time query
+        compilation, data normalization, incremental delivery)
+      - Proven at massive scale at Meta (Facebook, Instagram)
+      - Strong type safety when combined with TypeScript
+    cons:
+      - Requires GraphQL server infrastructure — significant adoption barrier
+        for teams without existing GraphQL investment
+      - Does not reduce client JavaScript bundle size — all component code
+        still ships to the client
+      - Complex setup — Relay requires a compiler, schema, and specific
+        project structure
+      - Not universal — many data sources (REST APIs, databases, file
+        systems) require a GraphQL adapter layer
+      - Community resistance — many React developers prefer simpler data
+        fetching (fetch, SWR, React Query) over GraphQL's complexity
+      - Imposes an opinionated architecture on a library that has historically
+        been "just the view layer"
+    estimated_cost: high
+    risk: medium
+    rejection_rationale: >
+      While GraphQL+Relay solves data fetching waterfalls through query
+      aggregation, it does not address bundle size (all component JavaScript
+      still ships to the client) and requires significant infrastructure
+      investment (GraphQL server, Relay compiler, schema). Imposing GraphQL
+      as the standard data pattern would fundamentally change React's
+      positioning from "just the view layer" to an opinionated full-stack
+      framework, alienating developers who prefer REST or direct database
+      access. RSC achieves the same colocation benefit (data fetching inside
+      components) without requiring GraphQL infrastructure.
+  - name: Server-rendering DSL separate from React
+    description: |
+      Create a separate domain-specific language (DSL) or template syntax
+      for server-rendered content, distinct from React's JSX component model.
+      Server-rendered portions of the application would use this DSL, while
+      interactive portions would continue to use standard React components.
+
+      This is conceptually similar to how frameworks like Astro created
+      separate "island" syntaxes, or how PHP/ERB templates handle server
+      rendering separately from client-side JavaScript.
+
+      ```mermaid
+      graph TD
+          A["Application"] --> B{Two Syntaxes}
+          B -->|server DSL| C["Server Templates<br/>(different language)"]
+          B -->|React JSX| D["Client Components"]
+          C --> E["HTML Output"]
+          D --> F["Interactive UI"]
+
+          G{Outcome}
+          G --> H["❌ Two languages<br/>to learn"]
+          G --> I["❌ No shared<br/>component model"]
+          G --> J["❌ Breaks React's<br/>composability"]
+
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+          style J fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Clear separation between server and client code at the syntax level
+      - Server DSL can be optimized specifically for server rendering without
+        React's runtime overhead
+      - No ambiguity about where code runs — different languages for
+        different environments
+    cons:
+      - Breaks React's unified component model — developers must learn two
+        different syntaxes
+      - Components cannot be freely composed across the boundary — server
+        templates and React components are incompatible abstractions
+      - Duplicates effort — patterns and components must be implemented
+        twice in different syntaxes
+      - Fragments the React ecosystem — libraries must support both the
+        DSL and React components
+      - Loses React's existing tooling, type checking, and developer
+        experience for server-rendered content
+    estimated_cost: high
+    risk: high
+    rejection_rationale: >
+      A separate server-rendering DSL would break React's core value
+      proposition: a unified component model where UI is composed from
+      reusable components regardless of rendering environment. Server
+      Components achieve the same server-rendering benefits while preserving
+      the React component abstraction — a Server Component is a React
+      component that happens to run on the server, not a fundamentally
+      different construct. Maintaining two syntaxes would fragment the
+      ecosystem and increase developer cognitive load.
+  - name: >-
+      Status quo — client-only rendering with manual code splitting
+    description: |
+      Continue with React's existing client-only rendering model. Address
+      performance concerns through manual code splitting (React.lazy +
+      Suspense), tree shaking, and developer education about bundle
+      optimization. Rely on external data fetching libraries (React Query,
+      SWR, Apollo) for server communication.
+
+      ```mermaid
+      graph LR
+          A["React App"] -->|all JS| B["Client Bundle"]
+          B --> C["React.lazy<br/>(manual splitting)"]
+          B --> D["Tree Shaking"]
+          A --> E["API Layer<br/>(REST / GraphQL)"]
+          E --> F["Server"]
+
+          G["❌ Bundle grows<br/>with app complexity"]
+          H["❌ Manual splitting<br/>is error-prone"]
+
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - Zero architectural change — no new concepts to learn
+      - Maximum flexibility — React remains "just the view layer"
+      - Existing ecosystem of data fetching libraries works unchanged
+      - No server infrastructure required — works with static hosting
+      - Simplest mental model for developers
+    cons:
+      - Bundle size grows linearly with application features — no structural
+        solution to JavaScript bloat
+      - Client-server waterfalls remain inevitable with component-level data
+        fetching
+      - Manual code splitting is error-prone and requires ongoing vigilance
+      - No direct server resource access — every data interaction requires
+        an API layer
+      - Competitive disadvantage against server-first frameworks (Remix,
+        Astro, SvelteKit) offering smaller bundles and faster loads
+      - Fails to address growing performance expectations from mobile and
+        emerging-market users
+    estimated_cost: low
+    risk: medium
+    rejection_rationale: >
+      Continuing with client-only rendering provides no structural solution
+      to bundle size growth, client-server waterfalls, or the lack of direct
+      server resource access. Manual code splitting requires ongoing developer
+      effort and is error-prone. As applications grow in complexity, bundle
+      sizes grow proportionally. Server-first frameworks like Astro, Remix,
+      and SvelteKit were already demonstrating that smaller bundles, colocated
+      data fetching, and server rendering produce measurably better user
+      experiences — React risked falling behind its competitors without a
+      first-class server rendering architectural pattern.
+decision:
+  chosen_alternative: React Server Components with server/client component model
+  rationale: |
+    - The component model is the right abstraction level for the server/client
+      split — developers choose per-component where code runs, which is more
+      granular and composable than per-page (SSR) or per-route decisions
+
+    - Zero-bundle-size server rendering addresses the root cause of bundle bloat:
+      non-interactive components (markdown renderers, formatters, data
+      transformations) contribute zero bytes to the client JavaScript bundle
+
+    - Colocated data fetching eliminates client-server waterfalls by allowing
+      async Server Components to fetch data directly from databases, file systems,
+      and microservices — no API boilerplate required
+
+    - Automatic code splitting at the 'use client' boundary eliminates the need
+      for manual React.lazy configuration, reducing developer effort and
+      eliminating a common source of optimization errors
+
+    - The RSC architecture is composable: server and client components interleave
+      naturally in the same tree, preserving React's core compositional model
+
+    - Streaming via Suspense enables progressive rendering — partial results
+      reach the client before all data fetching completes, improving perceived
+      performance without manual progressive hydration configuration
+
+    - Backward compatibility is preserved — existing client-only React apps
+      continue to work, and the 'use client' directive is additive, not breaking
+  tradeoffs: |
+    - Mental model complexity accepted as the cost of architectural power — the
+      server/client boundary requires developers to reason about serialization,
+      component constraints, and execution environments, but the React team
+      judged this preferable to the alternative of growing bundle sizes and
+      waterfalls
+
+    - Framework dependence for production use accepted because the bundler
+      integration required for RSC is genuinely complex (module resolution,
+      client references, streaming) and framework authors are better positioned
+      to implement it than individual application developers
+
+    - Initial Next.js exclusivity accepted as a bootstrap strategy — Next.js
+      13 (October 2022) shipped the first production RSC implementation, with
+      broader framework support (React Router, TanStack Start) following as
+      the architecture matured
+
+    - Library ecosystem disruption accepted because the 'use client' boundary
+      is an opt-in mechanism — existing libraries continue to work as client
+      components, and ecosystem adaptation can happen gradually
+
+    - Server infrastructure requirement accepted because the performance
+      benefits of zero-bundle-size rendering are most impactful for the
+      applications that warrant server infrastructure
+  decision_date: "2020-12-21"
+  confidence: high
+consequences:
+  positive:
+    - Non-interactive components contribute zero bytes to client bundles —
+      libraries like markdown parsers, syntax highlighters, and date formatters
+      are entirely server-side
+    - Client-server waterfalls eliminated for server-rendered content — data
+      fetching happens on the server, colocated with the component
+    - Direct database and file system access from React components — no API
+      layer boilerplate for server-side data
+    - Automatic code splitting at the server/client boundary reduces manual
+      optimization effort
+    - Streaming via Suspense delivers partial results before all data fetching
+      completes, improving perceived performance
+    - Server-first architecture aligns React with the broader industry trend
+      toward server-rendered web applications
+    - Preserves backward compatibility — existing React applications continue
+      to work without modification
+  negative:
+    - Significant mental model shift required for the React developer community
+      — server vs. client component constraints, serialization boundaries
+    - Initial framework lock-in perception due to Next.js being the sole
+      production RSC implementation for 2+ years (2022-2024)
+    - Community controversy and division — debates about complexity, loss of
+      simplicity, perceived Vercel/Meta influence on React's direction
+    - Library ecosystem adaptation burden — authors must add 'use client'
+      directives or restructure for RSC compatibility
+    - Debugging complexity increases — errors can originate on server or
+      client, RSC Payload is not human-readable
+    - Server infrastructure requirement limits adoption for applications
+      deployed to static hosting (GitHub Pages, S3)
+    - Long stabilization period — 4 years from RFC (Dec 2020) to stable
+      release (React 19, Dec 2024) created uncertainty in the ecosystem
+confirmation:
+  description: |
+    React Server Components were proposed in RFC 0188 (December 2020) and
+    stabilized in React 19 (December 5, 2024).
+
+    Key milestones confirming implementation:
+    - **React 18 (March 2022)**: Experimental RSC support introduced alongside
+      Suspense for streaming SSR
+    - **Next.js 13 (October 2022)**: First production RSC implementation via
+      the App Router, with components as Server Components by default
+    - **Next.js 13.4 (May 2023)**: App Router marked stable and production-ready
+    - **React 19 (December 2024)**: Server Components and Server Actions
+      fully stabilized as part of React core
+    - **React Router v7 and TanStack Start**: Additional frameworks adopted
+      RSC support, reducing Next.js exclusivity
+
+    Meta uses Server Components in production across Facebook and Instagram,
+    integrated with Relay for data fetching at massive scale.
+  artifact_ids:
+    - "https://github.com/reactjs/rfcs/blob/main/text/0188-server-components.md"
+    - "https://react.dev/blog/2020/12/21/data-fetching-with-react-server-components"
+    - "https://react.dev/blog/2024/12/05/react-19"
+    - "https://nextjs.org/blog/next-13"
+    - "https://nextjs.org/blog/next-13-4"
+    - "https://react.dev/reference/rsc/server-components"
+dependencies:
+  internal:
+    - React Suspense — streaming and progressive rendering foundation
+    - React 18 concurrent features — streaming SSR and selective hydration
+    - React Flight protocol — RSC Payload serialization format
+    - React compiler (experimental) — automatic memoization for RSC
+  external:
+    - Next.js 13+ App Router — first production RSC framework integration
+    - React Router v7 — RSC support in the Remix successor
+    - TanStack Start — emerging RSC-compatible framework
+    - Node.js or edge runtimes — server execution environment
+    - Bundler integration (webpack, Turbopack) — server/client boundary
+      handling
+references:
+  - title: "RFC 0188: React Server Components"
+    url: "https://github.com/reactjs/rfcs/blob/main/text/0188-server-components.md"
+  - title: "React Blog: Introducing Zero-Bundle-Size React Server Components"
+    url: "https://react.dev/blog/2020/12/21/data-fetching-with-react-server-components"
+  - title: "React Blog: React 19 Release"
+    url: "https://react.dev/blog/2024/12/05/react-19"
+  - title: "React Docs: Server Components Reference"
+    url: "https://react.dev/reference/rsc/server-components"
+  - title: "Next.js Blog: Next.js 13 (App Router Introduction)"
+    url: "https://nextjs.org/blog/next-13"
+  - title: "Next.js Blog: Next.js 13.4 (App Router Stable)"
+    url: "https://nextjs.org/blog/next-13-4"
+  - title: "Josh W. Comeau: Making Sense of React Server Components"
+    url: "https://www.joshwcomeau.com/react/server-components/"
+lifecycle:
+  review_cycle_months: 12
+  next_review_date: "2025-12-21"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+audit_trail:
+  - event: created
+    by: React Core Team
+    at: "2020-12-21T00:00:00Z"
+    details: >
+      RFC 0188 published proposing React Server Components. Introductory talk
+      by Dan Abramov and Lauren Tan demonstrating zero-bundle-size server
+      rendering and colocated data fetching. Research led by Sebastian
+      Markbage.
+  - event: updated
+    by: React Core Team
+    at: "2022-03-29T00:00:00Z"
+    details: >
+      React 18 released with experimental Server Component support and
+      foundational concurrent features (Suspense for streaming SSR,
+      selective hydration).
+  - event: updated
+    by: Next.js Team (Vercel)
+    at: "2022-10-25T00:00:00Z"
+    details: >
+      Next.js 13 released with App Router providing the first production-
+      ready RSC implementation. Components in the app/ directory are Server
+      Components by default.
+  - event: approved
+    by: React Core Team
+    at: "2024-12-05T00:00:00Z"
+    details: >
+      React 19 released, fully stabilizing Server Components and Server
+      Actions as part of React core. Four years of development from RFC to
+      stable release. Additional frameworks (React Router v7, TanStack
+      Start) adopted RSC support.
