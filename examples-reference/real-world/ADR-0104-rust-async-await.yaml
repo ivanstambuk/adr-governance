@@ -1,0 +1,851 @@
+adr:
+  id: ADR-0104-rust-async-await
+  title: >-
+    Adopt stackless coroutines with lazy futures and no built-in runtime for
+    Rust async/await
+  y_statement: >-
+    In the context of adding asynchronous programming support to Rust, facing
+    the need for ergonomic, high-performance concurrent I/O without sacrificing
+    Rust's zero-cost abstraction guarantees or FFI compatibility, we decided for
+    stackless coroutines compiled to state machines with lazy (poll-based)
+    evaluation, postfix .await syntax, and no built-in runtime, and neglected
+    green threads with a built-in runtime (the Go/Erlang model, which Rust had
+    pre-1.0 and removed), eager futures evaluation (the JavaScript/C-sharp
+    model), a generalized effects system or monads, and continuing with
+    callback-based futures combinators only, to achieve zero-cost async
+    abstractions where the compiler generates optimal state machines with no
+    hidden allocations, full FFI compatibility, and runtime-agnostic design
+    that works from embedded systems to cloud servers, accepting the complexity
+    of Pin/Unpin for self-referential futures, the function coloring problem
+    separating sync and async worlds, ecosystem fragmentation across competing
+    runtimes (Tokio vs async-std), and a steep learning curve that makes async
+    Rust one of the most challenging aspects of the language, because stackless
+    coroutines were the only approach that preserved Rust's core guarantees of
+    zero-cost abstractions, no mandatory runtime, and safe FFI interoperability
+    while enabling competitive async I/O performance.
+  status: accepted
+  created_at: "2018-05-07T00:00:00Z"
+  last_modified: "2019-11-07T00:00:00Z"
+  version: "1.0"
+  schema_version: "1.0.0"
+  project: Rust
+  component: Language / Async Runtime Model
+  tags:
+    - async-await
+    - concurrency
+    - stackless-coroutines
+    - futures
+    - zero-cost-abstractions
+    - language-design
+    - runtime-agnostic
+  priority: critical
+  decision_type: technology
+  decision_level: strategic
+authors:
+  - name: Taylor Cramer (cramertj)
+    role: RFC 2394 Author, Async/Await Implementation Lead
+    email: taylor.cramer@rust.example.com
+  - name: Aaron Turon
+    role: Zero-Cost Futures Proposer (2016)
+    email: aaron.turon@rust.example.com
+  - name: withoutboats
+    role: Pin/Unpin Designer, Async Implementation Lead
+    email: withoutboats@rust.example.com
+decision_owner:
+  name: Rust Lang Team
+  role: Language Design Team
+  email: lang-team@rust-lang.example.com
+reviewers:
+  - name: Niko Matsakis
+    role: Rust Core Team, Async Stabilization Blog Author
+    email: niko.matsakis@rust.example.com
+  - name: Alex Crichton
+    role: Rust Libs Team, Futures Crate Maintainer
+    email: alex.crichton@rust.example.com
+  - name: Rust Community
+    role: RFC Process Reviewers
+    email: community@rust-lang.example.com
+approvals:
+  - name: Rust Lang Team
+    role: Language Design Team
+    identity: "@rust-lang/lang"
+    approved_at: "2018-05-07T00:00:00Z"
+    signature_id: null
+  - name: Rust Core Team
+    role: Stabilization Approval
+    identity: "@rust-lang/core"
+    approved_at: "2019-09-30T00:00:00Z"
+    signature_id: null
+context:
+  summary: |
+    Rust's journey to async/await is one of the most architecturally
+    consequential design decisions in modern programming language history.
+    It spans from Rust's pre-1.0 green threads experiment through the
+    zero-cost futures revolution to the stabilization of async/await in
+    Rust 1.39 (November 2019).
+
+    **The core tension:** Rust is a systems programming language that
+    promises zero-cost abstractions, no mandatory runtime, and safe
+    interoperability with C. These constraints make asynchronous programming
+    fundamentally harder than in languages like Go (which has a built-in
+    runtime with goroutines) or JavaScript (which has a single-threaded
+    event loop). Rust needed a concurrent I/O solution that was:
+    - As fast as hand-written state machines
+    - Compatible with `#[no_std]` embedded environments
+    - Safe across FFI boundaries (no hidden stack switching)
+    - Memory-safe without garbage collection
+
+    ```mermaid
+    graph TD
+        subgraph "Rust's Async Evolution"
+          A["Pre-1.0: Green Threads<br/>(libgreen + librustuv)"] -->|removed 2014| B["Post-1.0: mio<br/>(raw epoll/kqueue)"]
+          B -->|2016| C["futures 0.1 crate<br/>(Aaron Turon)"]
+          C -->|2018| D["RFC 2394: async/await<br/>(cramertj)"]
+          D -->|2019| E["Pin/Unpin design<br/>(withoutboats)"]
+          E -->|Nov 2019| F["Rust 1.39:<br/>async/await stable"]
+        end
+
+        subgraph "The Challenge"
+          G["Zero-cost abstractions"] --> H{How to do async?}
+          I["No mandatory runtime"] --> H
+          J["Safe FFI"] --> H
+          K["No GC"] --> H
+          H --> L["Stackless coroutines<br/>+ lazy futures<br/>+ no built-in runtime"]
+        end
+
+        style A fill:#f66,stroke:#333,color:#000
+        style F fill:#2d8,stroke:#333,color:#000
+        style L fill:#2d8,stroke:#333,color:#000
+    ```
+
+    **Historical context — the green threads experiment:**
+
+    Before Rust 1.0, the language included a green-threading runtime
+    (`libgreen`) with segmented stacks, similar to Go's goroutines. This
+    was removed via RFC 230 in late 2014 because:
+    - It imposed a mandatory runtime on all Rust programs, even those not
+      using async I/O
+    - Segmented stacks caused performance overhead and complicated FFI
+      (C functions don't know about segmented stacks)
+    - It violated Rust's principle of not paying for what you don't use
+
+    The removal of green threads left a critical gap. The community built
+    the `mio` library for raw cross-platform async I/O, but hand-writing
+    state machines with mio was extremely low-level and error-prone. Aaron
+    Turon's zero-cost futures design (2016) provided a composable, safe
+    abstraction layer, and the futures-based ecosystem (built around Tokio)
+    demonstrated that ergonomic async I/O was possible in Rust — but only
+    with complex combinator chains that were difficult to read and debug.
+    Async/await syntax was needed to make this ecosystem accessible.
+  business_drivers:
+    - >-
+      Rust's adoption in network services (Cloudflare, Discord, AWS,
+      Dropbox) required ergonomic async I/O to compete with Go and Node.js
+    - >-
+      The Rust 2018 edition goals explicitly targeted making async networking
+      a first-class use case — "Rust should be the go-to language for
+      writing high performance network services"
+    - The futures combinator-based ecosystem was powerful but too complex
+      for most developers — adoption was limited to expert-level Rust users
+    - >-
+      Network services are one of Rust's primary adoption vectors —
+      inability to ergonomically write async code was a major barrier to
+      growth
+  technical_drivers:
+    - >-
+      Hand-writing state machines with mio was error-prone and not
+      composable — no way to abstract over async operations
+    - >-
+      The futures 0.1 combinator API required complex nested closures,
+      making code difficult to read, debug, and maintain
+    - Sharing state across await points in combinator-based code required
+      Arc or join chaining, adding significant verbosity
+    - >-
+      The async/await pattern had proven successful in C-sharp, JavaScript,
+      Python, and Kotlin — Rust needed a similar ergonomic surface
+    - The green threads removal (RFC 230) left no built-in concurrency
+      abstraction — async/await would fill this gap
+  constraints:
+    - Must be zero-cost — async code must compile to the same machine code
+      as hand-written state machines, with no hidden allocations
+    - Must not require a built-in runtime — Rust's philosophy demands that
+      users don't pay for what they don't use
+    - Must work in no_std environments — embedded systems and kernels
+      cannot use heap allocation or OS threading
+    - Must be safe across FFI boundaries — no hidden stack switching that
+      would corrupt C call stacks
+    - Must integrate with Rust's ownership and borrowing system — async
+      code must be memory-safe without garbage collection
+    - Must support cancellation via drop — dropping a future must safely
+      cancel the operation
+    - Must not introduce new calling conventions or ABI changes
+  assumptions:
+    - The community will converge on a dominant async runtime (Tokio)
+      despite the lack of a standard one
+    - The complexity of Pin/Unpin will be hidden behind library APIs for
+      most users, who will primarily interact with async/await syntax
+    - >-
+      The "function coloring" problem (sync vs async divide) is an
+      acceptable tradeoff for the explicitness and safety it provides
+    - Future language improvements (async traits, async closures, async
+      iteration) will incrementally improve ergonomics
+    - The 12-year+ effort to find the right async model demonstrates that
+      no simpler solution exists that satisfies all of Rust's constraints
+architecturally_significant_requirements:
+  functional:
+    - id: F-001
+      description: >
+        Async functions must return a Future that is lazy — no code
+        executes until the future is polled by an executor. This ensures
+        predictable execution and enables cancellation via drop.
+    - id: F-002
+      description: >
+        The await expression must be postfix (.await) to enable natural
+        chaining with the ? error-propagation operator and method calls,
+        maintaining Rust's left-to-right reading order.
+    - id: F-003
+      description: >
+        Async functions must be compiled to state machines that capture
+        only the variables live across await points, minimizing the
+        future's in-memory size without heap allocation.
+  non_functional:
+    - id: NF-001
+      description: >
+        Zero-cost abstraction — async/await must compile to the same
+        quality of machine code as manually implemented Future trait
+        impls, with no runtime overhead beyond what a hand-written state
+        machine would require.
+    - id: NF-002
+      description: >
+        Runtime-agnostic — the language feature must define only the
+        Future trait and async/await syntax, with all scheduling and
+        execution delegated to external runtime crates.
+    - id: NF-003
+      description: >
+        no_std compatible — async/await must work without the standard
+        library, enabling use in embedded systems, kernels, and
+        WebAssembly targets.
+alternatives:
+  - name: Stackless coroutines with lazy futures and no built-in runtime
+    description: |
+      Compile async functions into anonymous state machines that implement
+      the `Future` trait. Each `await` point becomes a state transition.
+      The compiler generates an enum-like structure containing only the
+      variables live across await points. Futures are **lazy** — calling
+      an async function returns a `Future` immediately without executing
+      any code. The future must be explicitly polled by an external
+      **executor** (runtime) to make progress.
+
+      ```rust
+      // What you write:
+      async fn fetch_data(url: &str) -> Result<String, Error> {
+          let response = http_get(url).await?;
+          let body = response.text().await?;
+          Ok(body)
+      }
+
+      // What the compiler generates (conceptually):
+      enum FetchDataFuture<'a> {
+          Start { url: &'a str },
+          WaitingForResponse { url: &'a str, fut: HttpGetFuture<'a> },
+          WaitingForBody { fut: TextFuture },
+          Done,
+      }
+      impl<'a> Future for FetchDataFuture<'a> {
+          type Output = Result<String, Error>;
+          fn poll(self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
+              // State machine transitions...
+          }
+      }
+      ```
+
+      The **Pin** type ensures self-referential futures (which contain
+      internal references across await points) cannot be moved in memory,
+      preventing dangling pointers. Most users never interact with Pin
+      directly — it operates behind the scenes.
+
+      The postfix `.await` syntax was chosen after extensive debate
+      (one of the longest RFC discussions in Rust history) because it
+      chains naturally with `?` for error propagation:
+      `http_get(url).await?.text().await?`
+
+      ```mermaid
+      graph TD
+          subgraph "Compilation Model"
+            A["async fn"] -->|compiler transform| B["State Machine<br/>(enum of states)"]
+            B --> C["impl Future<br/>(poll-based)"]
+            C --> D["Executor polls<br/>(Tokio, async-std, smol)"]
+          end
+
+          subgraph "Key Properties"
+            E["Lazy evaluation"] --> F["No work until polled"]
+            G["Stackless"] --> H["No per-task stack<br/>allocation"]
+            I["Pin/Unpin"] --> J["Safe self-referential<br/>futures"]
+            K["No built-in runtime"] --> L["User chooses executor"]
+          end
+
+          subgraph "Zero-Cost Guarantee"
+            M["async/await code"] --> N["Same machine code as<br/>hand-written state machine"]
+            N --> O["✅ Zero overhead"]
+          end
+
+          style O fill:#2d8,stroke:#333,color:#000
+      ```
+
+      **Design evolution timeline:**
+
+      | Year | Milestone | Key Change |
+      |------|-----------|------------|
+      | 2012-2014 | Green threads (libgreen) | Built-in runtime, segmented stacks |
+      | 2014 | RFC 230: Remove runtime | Green threads removed pre-1.0 |
+      | 2016 | Zero-cost futures | Aaron Turon's foundational design |
+      | 2018 | RFC 2394: async/await | Language syntax, lazy futures |
+      | 2018 | RFC 2592: Future in std | Future trait in standard library |
+      | 2019 | Pin/Unpin stabilized | Safe self-referential futures |
+      | 2019 | .await syntax decided | Postfix after intense bikeshed debate |
+      | 2019 | Rust 1.39 | async/await stabilized |
+      | 2023 | Rust 1.75 | async fn in traits stabilized |
+    pros:
+      - Zero-cost abstraction — compiles to the same machine code as
+        hand-written state machines with no hidden allocations
+      - No mandatory runtime — users choose Tokio, async-std, smol, or
+        write their own executor for embedded/no_std environments
+      - Compile-time size — future size is known at compile time, enabling
+        stack allocation and optimal memory layout
+      - Full FFI compatibility — no hidden stack switching that would
+        corrupt C call stacks or require special C-side handling
+      - Cancellation via drop — dropping a future safely cancels the
+        operation, integrating with Rust's RAII ownership model
+      - Explicit yield points — every .await is visible in the code,
+        making it clear where concurrent interleaving can occur
+      - Postfix .await chains naturally with ? for ergonomic error
+        handling in async context
+      - Works in no_std environments — can run on embedded microcontrollers
+        and in WebAssembly without heap allocation
+      - Lazy evaluation prevents unintended side effects — a future that
+        is never polled never executes
+    cons:
+      - Pin/Unpin complexity — self-referential futures require the Pin
+        abstraction, one of Rust's most confusing concepts
+      - >-
+        Function coloring problem — async functions cannot be called from
+        sync code without a runtime, creating a divide in the ecosystem
+      - Ecosystem fragmentation — no standard runtime led to Tokio vs
+        async-std incompatibility and library silos
+      - Steep learning curve — async Rust is consistently cited as the
+        hardest part of learning the language
+      - Lazy futures are surprising for newcomers — forgetting to .await
+        a future means no work is done (silent no-op)
+      - >-
+        No built-in async traits until Rust 1.75 — async fn in traits
+        required the async_trait proc macro with heap allocation overhead
+      - >-
+        Send + 'static bounds required for spawning tasks add significant
+        annotation burden and constrain API design
+      - Cancellation safety is subtle — dropping a future mid-execution
+        can leave resources in unexpected states
+    estimated_cost: high
+    risk: high
+  - name: >-
+      Green threads with built-in runtime (Go/Erlang model)
+    description: |
+      Provide lightweight, runtime-managed threads (green threads or
+      goroutines) with a built-in scheduler. Async code looks identical
+      to synchronous code — no async/await syntax, no function coloring,
+      no separate Future type. The runtime handles scheduling, stack
+      management, and I/O multiplexing transparently.
+
+      Rust **actually had this pre-1.0** via `libgreen` with segmented
+      stacks, making this not a theoretical alternative but a rejected
+      implementation that was tried and removed.
+
+      ```mermaid
+      graph TD
+          A["Green Thread Model"] --> B["Built-in Runtime<br/>(scheduler + I/O reactor)"]
+          B --> C["Goroutine-like<br/>lightweight threads"]
+          C --> D["Code looks synchronous<br/>no async/await needed"]
+
+          E{Rust's Experience (pre-1.0)}
+          E --> F["❌ Mandatory runtime<br/>even for Hello World"]
+          E --> G["❌ Segmented stacks<br/>break FFI"]
+          E --> H["❌ Hidden overhead<br/>violates zero-cost"]
+          E --> I["❌ Stack size unpredictable<br/>at compile time"]
+
+          J["RFC 230 (2014)"] --> K["Removed from Rust"]
+
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+          style K fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - No function coloring — async and sync code use the same syntax
+        and calling conventions
+      - Simpler mental model — developers write sequential code and the
+        runtime handles concurrency transparently
+      - No Pin/Unpin complexity — no self-referential state machines
+      - Proven successful in Go, Erlang, and other managed-runtime
+        languages
+      - No ecosystem fragmentation — single built-in runtime
+    cons:
+      - Mandatory runtime overhead — every Rust program pays the cost
+        even if it never uses async I/O
+      - >-
+        Segmented stacks break FFI — C functions cannot run on green
+        thread stacks without special handling, violating Rust's C
+        interoperability guarantee
+      - Hidden allocation — each green thread requires its own stack
+        (typically 4-8KB minimum), with unpredictable growth
+      - Not zero-cost — the abstraction imposes overhead that hand-written
+        code would not have
+      - Incompatible with no_std — embedded systems and kernels cannot
+        use a built-in async runtime
+      - Rust actually tried this and removed it — pre-1.0 experience
+        proved it was too opinionated for a systems language
+    estimated_cost: high
+    risk: high
+    rejection_rationale: >
+      Rust had green threads (libgreen) before 1.0 and removed them via
+      RFC 230 based on direct experience. The mandatory runtime violated
+      Rust's "don't pay for what you don't use" principle — even trivial
+      programs like Hello World included the async runtime. Segmented
+      stacks caused a 36% overhead on FFI calls to C code, which is
+      unacceptable for a systems language that promises zero-cost C
+      interoperability. Stack sizes were unpredictable at compile time,
+      preventing the kind of static analysis that Rust's ownership system
+      enables. The green threads model works for Go because Go accepts a
+      mandatory runtime and garbage collector — Rust's constraints make
+      this approach fundamentally incompatible.
+  - name: Eager futures evaluation (JavaScript/C-sharp model)
+    description: |
+      Make async functions **eager** — calling an async function
+      immediately begins execution, running the body up to the first
+      await point before returning the future. This is how
+      JavaScript/TypeScript, C#, Python, and Dart implement async/await.
+      The caller gets some immediate execution, and the future
+      represents only the remaining work after the first suspension.
+
+      This is sometimes called "hot" async functions — the future is
+      already "running" when you get it back.
+
+      ```mermaid
+      graph LR
+          A["async fn called"] --> B["Execute body<br/>immediately"]
+          B --> C{First .await?}
+          C -->|no await| D["Return result<br/>immediately"]
+          C -->|reaches await| E["Suspend and<br/>return Future"]
+
+          F{Lazy vs Eager}
+          F --> G["Lazy (Rust): ✅ Predictable<br/>no work until polled"]
+          F --> H["Eager (JS/C#): ⚠️ Partial<br/>execution before return"]
+
+          style G fill:#2d8,stroke:#333,color:#000
+          style H fill:#f96,stroke:#333,color:#000
+      ```
+    pros:
+      - Familiar to JavaScript, C-sharp, and Python developers — matches
+        the mental model from the most popular async/await languages
+      - Initialization code runs immediately — useful for parameter
+        validation and early error detection
+      - Cancellation semantics are simpler — partially executed futures
+        have already done their initial work
+    cons:
+      - Violates Rust's lazy evaluation principle — creating a future
+        triggers side effects even if the future is never polled
+      - Makes cancellation semantics confusing — how much work has
+        already been done when you drop an un-polled future?
+      - Implementation complexity — the compiler must generate an
+        additional yield point before the first await, conditional on
+        whether each await is the first in the body
+      - >-
+        Inconsistent with Rust's iterators — iterators are lazy (no
+        work until .next() is called), and futures should follow the
+        same principle
+      - >-
+        Macro-generated awaits create unpredictable behavior — whether
+        code runs eagerly depends on whether an await appears before
+        it, which may be generated by macros
+    estimated_cost: medium
+    risk: medium
+    rejection_rationale: >
+      The RFC explicitly rejected "hot async functions" because Rust's
+      entire futures system is built around the principle that futures
+      do nothing unless polled. Cancellation is dropping the future
+      precisely because of this guarantee. Allowing partial eager
+      execution would create confusion about how much work has already
+      been performed when a future is dropped or never awaited. It
+      would also be inconsistent with Rust's lazy iterators and would
+      complicate the compiler implementation significantly. As the RFC
+      states: "Allowing for partial, eager execution is likely to lead
+      to significant confusion and bugs."
+  - name: Generalized effects system or monads (Haskell model)
+    description: |
+      Instead of async/await specifically, implement a generalized
+      **algebraic effects system** or **monadic do-notation** that can
+      express async I/O as one of many effect types (alongside
+      exceptions, state, nondeterminism, etc.). This would provide
+      async/await as a special case of a more general mechanism.
+
+      Languages like Haskell use monadic IO for all side effects.
+      Research languages like Koka and Eff use algebraic effects.
+      This alternative would make Rust's async support a subfeature of
+      a more powerful and general abstraction.
+
+      ```mermaid
+      graph TD
+          A["Generalized Effects System"] --> B{Effect Types}
+          B --> C["Async I/O"]
+          B --> D["Exceptions"]
+          B --> E["State"]
+          B --> F["Nondeterminism"]
+
+          G{Assessment for Rust}
+          G --> H["❌ Insufficiently<br/>researched for Rust"]
+          G --> I["❌ Academic maturity<br/>not production-ready"]
+          G --> J["❌ Would delay async<br/>by years"]
+
+          style H fill:#f66,stroke:#333,color:#000
+          style I fill:#f66,stroke:#333,color:#000
+          style J fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - More expressive — a single mechanism for async, error handling,
+        state, and other effects
+      - Potentially solves the function coloring problem — effects can
+        be polymorphic over async/sync
+      - Theoretically elegant — algebraic effects have strong formal
+        foundations
+      - future-proof — would not need separate async/await syntax later
+    cons:
+      - >-
+        Insufficient research for Rust — no design existed that was
+        compatible with Rust's ownership system and zero-cost
+        requirements
+      - Would delay async support by years — Rust's 2018 goals required
+        shipping async networking that year
+      - Academic maturity — algebraic effects were not production-ready
+        in any mainstream language
+      - Complexity — effects systems add significant cognitive overhead
+        and type system complexity
+      - Unknown performance characteristics — effects with Rust's
+        ownership model had not been explored
+    estimated_cost: high
+    risk: high
+    rejection_rationale: >
+      The RFC explicitly acknowledges this alternative: "While it is
+      hypothetically plausible that some generalization beyond async/await
+      could be supported by Rust, there has not been enough research in
+      this area to support it in the near-term." The Rust 2018 edition
+      goals emphasized shipping over research, and the futures-based
+      async/await model was the "most logical thing to implement at this
+      stage in Rust's evolution." Effects systems remain an active
+      research area but have not been integrated into any major systems
+      programming language.
+  - name: >-
+      Status quo — continue with futures combinators and no async/await syntax
+    description: |
+      Continue without first-class async/await language support. Developers
+      would keep using the futures combinator API (`.and_then()`, `.map()`,
+      `.join()`) to compose asynchronous operations. The `futures` crate
+      and Tokio runtime would remain the primary tools.
+
+      This alternative represents the state of Rust async from 2016 to
+      2018 — powerful but extremely verbose and hard to learn.
+
+      ```rust
+      // Futures 0.1 combinators (pre-async/await)
+      fn fetch_data(url: String) -> impl Future<Item = String, Error = Error> {
+          http_get(url)
+              .and_then(|response| {
+                  response.text()
+              })
+              .map(|body| {
+                  body
+              })
+              .map_err(|e| {
+                  Error::from(e)
+              })
+      }
+      ```
+
+      ```mermaid
+      graph TD
+          A["Combinators Only"] --> B["Nested .and_then() chains"]
+          A --> C["Complex error handling"]
+          A --> D["Arc for shared state"]
+
+          B --> E["❌ Deeply nested<br/>callback pyramids"]
+          C --> F["❌ Type errors are<br/>incomprehensible"]
+          D --> G["❌ Verbose and<br/>error-prone"]
+
+          H["Developer Experience"] --> I{Adoption Impact}
+          I --> J["Only expert-level<br/>Rust users succeed"]
+
+          style E fill:#f66,stroke:#333,color:#000
+          style F fill:#f66,stroke:#333,color:#000
+          style G fill:#f66,stroke:#333,color:#000
+          style J fill:#f66,stroke:#333,color:#000
+      ```
+    pros:
+      - No language changes required — lower risk, no compiler changes
+      - Combinator-based approach already works and has production users
+      - Library-level evolution can continue without language commitment
+      - Simpler compiler — no state machine generation or Pin/Unpin needed
+    cons:
+      - Combinator chains are verbose and deeply nested — callback
+        pyramid problem similar to early JavaScript promises
+      - >-
+        Sharing state across await points requires Arc or complex join
+        chaining, adding significant boilerplate
+      - Type errors in combinator chains are notoriously incomprehensible
+        — deeply nested generic types produce multi-page error messages
+      - Debugging is extremely difficult — combinator chains obscure the
+        actual control flow
+      - Only accessible to expert-level Rust developers — the learning
+        curve limits async Rust adoption
+      - Cannot match the ergonomics of async/await in competing languages
+        (Go, JavaScript, C-sharp, Kotlin)
+    estimated_cost: low
+    risk: low
+    rejection_rationale: >
+      The combinator-based approach had proven that Rust could do high-
+      performance async I/O, but the ergonomics were so poor that
+      adoption was limited to expert-level developers. The RFC motivation
+      states: "Using state which needs to be shared across await points
+      was extremely unergonomic — requiring either Arcs or join chaining
+      — and while combinators were often more ergonomic than manually
+      writing a future, they still often led to messy sets of nested and
+      chained callbacks." The Rust 2018 goals explicitly targeted making
+      async networking accessible, and combinator-only approaches could
+      not achieve this.
+decision:
+  chosen_alternative: Stackless coroutines with lazy futures and no built-in runtime
+  rationale: |
+    The stackless coroutines design was chosen because it is the **only**
+    approach that satisfies all of Rust's constraints simultaneously:
+
+    1. **Zero-cost abstraction**: The compiler transforms async/await into
+       state machines that produce the same machine code as hand-written
+       Future implementations. No hidden heap allocations, no runtime
+       overhead beyond what manual code would require.
+
+    2. **No mandatory runtime**: Unlike green threads (which require
+       scheduling infrastructure in every binary), stackless coroutines
+       need only a `poll()` function and a `Waker` — the simplest possible
+       contract between the language and the executor. Users choose Tokio
+       for network servers, smol for simplicity, or write a custom
+       executor for bare-metal embedded.
+
+    3. **FFI safety**: Stackless coroutines never switch stacks. An async
+       function suspended at an `.await` point can safely coexist with C
+       code on the same thread without the stack corruption risks that
+       plagued libgreen's segmented stacks. This was validated by Rust's
+       pre-1.0 experience removing green threads specifically because of
+       FFI overhead.
+
+    4. **Lazy evaluation**: Futures doing nothing until polled provides
+       three critical properties: (a) predictable execution — no side
+       effects from merely creating a future; (b) cancellation via drop
+       — dropping an un-polled future is guaranteed to have no effect;
+       (c) consistency with Rust's lazy iterators.
+
+    5. **Postfix `.await` syntax**: After one of the most extensive syntax
+       debates in Rust history, postfix was chosen because it chains
+       naturally with `?`: `http_get(url).await?.text().await?` reads
+       left-to-right without nesting parentheses, consistent with Rust's
+       method-chaining style.
+
+    6. **The green threads experiment proved the alternative fails**:
+       Rust didn't reject green threads theoretically — it had them,
+       measured the 36% FFI overhead, and removed them. This empirical
+       evidence made the decision significantly more confident.
+  tradeoffs: |
+    - **Pin/Unpin complexity accepted** because self-referential futures
+      are fundamental to the model (references across await points),
+      and the alternative (requiring all futures to be `Unpin`) would
+      eliminate the zero-cost guarantee by forcing heap allocations.
+      The team accepted that Pin would be "the most confusing part of
+      Rust" for the sake of correctness and performance.
+
+    - **Function coloring accepted** because the explicit distinction
+      between sync and async code prevents a class of bugs where
+      blocking operations accidentally halt an async executor. Languages
+      that avoid coloring (Go) achieve this by making everything async,
+      which requires the mandatory runtime that Rust rejects.
+
+    - **Ecosystem fragmentation accepted** because the alternative
+      (a standard runtime) would impose a one-size-fits-all solution
+      on a language that serves everything from embedded microcontrollers
+      to cloud servers. The bet is that the ecosystem will converge
+      naturally (and Tokio has indeed become the de facto standard).
+
+    - **Steep learning curve accepted** because the complexity is
+      inherent to the problem (safe async without GC), not to the
+      solution. Simplifying the model would require compromising
+      either safety (eliminating Pin), performance (adding a runtime),
+      or expressiveness (limiting what async code can do).
+
+    - **"Minimum viable product" approach accepted** — Rust 1.39
+      stabilized the core async/await syntax but left async closures,
+      async traits, async iteration, and many other features as future
+      work, following Rust's tradition of shipping conservative initial
+      features and expanding based on experience.
+  decision_date: "2019-11-07"
+  confidence: high
+consequences:
+  positive:
+    - Rust's async I/O performance matches or exceeds C++ and Go in
+      benchmarks — validated by production deployments at Discord,
+      Cloudflare, AWS (Firecracker, Lambda), and Dropbox
+    - The Tokio runtime became the de facto standard, powering a large
+      ecosystem of production-grade async libraries (hyper, reqwest,
+      tonic, sqlx, axum)
+    - no_std async works on embedded microcontrollers — Embassy
+      framework proves async Rust works on ARM Cortex-M with no heap
+    - Postfix .await with ? provides the most ergonomic error handling
+      in any async language — reads naturally left-to-right
+    - Cancellation via drop integrates with Rust's ownership model —
+      resource cleanup is automatic and deterministic
+    - The async ecosystem attracted major industry adoption — Rust is
+      now a top choice for network services and infrastructure
+    - async fn in traits (Rust 1.75) resolved one of the biggest
+      usability gaps, eliminating the need for the async_trait macro
+  negative:
+    - >-
+      Pin/Unpin is consistently cited as the most confusing concept in
+      Rust — surveys show it as a major barrier to learning async
+    - >-
+      The function coloring problem creates a hard boundary between sync
+      and async code — converting a sync codebase to async requires
+      rewriting the entire call chain
+    - Ecosystem fragmentation between Tokio and async-std caused years
+      of library incompatibility (async-std has since been retired,
+      with smol as successor)
+    - >-
+      Async Rust's learning curve is the steepest of any mainstream
+      language's async implementation — combining ownership, Pin, Send
+      bounds, and runtime concepts
+    - Compiler error messages for async code are often confusing —
+      deeply nested future types produce hard-to-read diagnostics
+    - >-
+      The "minimum viable product" approach meant years without async
+      fn in traits, async closures, or async iteration — users relied
+      on proc macros and workarounds
+    - Accidental blocking in async code (calling sync operations from
+      async context) remains a common production bug
+confirmation:
+  description: |
+    Async/await was stabilized in Rust 1.39 on November 7, 2019. The
+    announcement blog post by Niko Matsakis was titled "Async-await on
+    stable Rust!" and described it as one of the most significant
+    additions since Rust 1.0.
+
+    Key milestones confirming implementation and adoption:
+    - **May 2018**: RFC 2394 (async/await syntax) accepted
+    - **April 2018**: RFC 2592 (Future trait in std) accepted
+    - **Rust 1.36 (July 2019)**: Future trait stabilized in std
+    - **Rust 1.39 (November 2019)**: async/await syntax stabilized
+    - **2020-2022**: Tokio 1.0 released, ecosystem matured
+    - **Rust 1.75 (December 2023)**: async fn in traits stabilized
+    - **2024-2025**: Async closures and further async improvements
+
+    Production validation:
+    - **Discord**: Migrated from Go to Rust async for performance
+    - **Cloudflare**: Workers runtime built on async Rust
+    - **AWS**: Firecracker (Lambda) and other services use async Rust
+    - **Dropbox**: Rebuilt sync engine in async Rust
+    - **Embassy**: Proves async Rust works on bare-metal embedded (no_std)
+  artifact_ids:
+    - "https://rust-lang.github.io/rfcs/2394-async_await.html"
+    - "https://rust-lang.github.io/rfcs/2592-futures.html"
+    - "https://blog.rust-lang.org/2019/11/07/Async-await-stable.html"
+    - "https://github.com/rust-lang/rfcs/blob/master/text/0230-remove-runtime.md"
+    - "https://tokio.rs/"
+    - "https://embassy.dev/"
+dependencies:
+  internal:
+    - Future trait (std::future::Future) — the core abstraction defining
+      pollable asynchronous computations
+    - Pin type (std::pin::Pin) — ensures self-referential futures cannot
+      be moved in memory after being polled
+    - Waker/Context (std::task) — the mechanism by which executors are
+      notified when a future can make progress
+    - Generator transform — the compiler's state machine generation
+      pass that transforms async functions into Future impls
+  external:
+    - Tokio — de facto standard async runtime (executor, reactor, timers)
+    - mio — cross-platform async I/O abstraction (epoll, kqueue, IOCP)
+    - futures crate — utility combinators and executor traits
+    - hyper/reqwest — HTTP client/server libraries built on Tokio
+    - Embassy — async runtime for embedded no_std environments
+references:
+  - title: >-
+      RFC 2394: async/await Notation for Ergonomic Asynchronous I/O
+    url: "https://rust-lang.github.io/rfcs/2394-async_await.html"
+  - title: >-
+      RFC 2592: futures_api — Future Trait in Standard Library
+    url: "https://rust-lang.github.io/rfcs/2592-futures.html"
+  - title: >-
+      RFC 230: Remove Runtime System from Standard Library
+    url: "https://github.com/rust-lang/rfcs/blob/master/text/0230-remove-runtime.md"
+  - title: >-
+      Rust Blog: Async-await on stable Rust! (Niko Matsakis)
+    url: "https://blog.rust-lang.org/2019/11/07/Async-await-stable.html"
+  - title: >-
+      withoutboats: Why Rust's async is the way it is
+    url: "https://without.boats/blog/why-async-rust/"
+  - title: "Zero-cost futures in Rust (Aaron Turon, 2016)"
+    url: "https://aturon.github.io/blog/2016/08/11/futures/"
+  - title: "Tokio — Asynchronous Runtime for Rust"
+    url: "https://tokio.rs/"
+lifecycle:
+  review_cycle_months: 12
+  next_review_date: "2020-11-07"
+  superseded_by: null
+  supersedes: null
+  archival:
+    archived_at: null
+    archive_reason: null
+audit_trail:
+  - event: created
+    by: Taylor Cramer (cramertj)
+    at: "2018-05-07T00:00:00Z"
+    details: >
+      RFC 2394 (async/await syntax) accepted by the Rust lang team. Based
+      on the zero-cost futures foundation (Aaron Turon, 2016) and the
+      experience removing green threads (RFC 230, 2014). Companion RFC
+      2592 accepted for the Future trait in std.
+  - event: updated
+    by: withoutboats
+    at: "2019-04-15T00:00:00Z"
+    details: >
+      Pin/Unpin design stabilized in Rust 1.33, enabling safe
+      self-referential futures. The postfix .await syntax decided after
+      extensive community debate. These were prerequisites for async/await
+      stabilization.
+  - event: approved
+    by: Rust Lang Team
+    at: "2019-09-30T00:00:00Z"
+    details: >
+      Async/await approved for stabilization targeting Rust 1.39. The
+      feature was described as a "minimum viable product" — core syntax
+      and semantics only, with async traits, closures, and iteration
+      deferred to future releases.
+  - event: updated
+    by: Rust Release Team
+    at: "2019-11-07T00:00:00Z"
+    details: >
+      Rust 1.39 released with stable async/await. Niko Matsakis published
+      the announcement blog post "Async-await on stable Rust!" describing
+      it as one of the most significant additions since Rust 1.0. The
+      Tokio ecosystem immediately began migration from futures 0.1 to
+      std::future.
+  - event: updated
+    by: Rust Lang Team
+    at: "2023-12-28T00:00:00Z"
+    details: >
+      Rust 1.75 stabilized async fn in traits, resolving one of the
+      biggest usability gaps in async Rust. This eliminated the need for
+      the async_trait proc macro and its associated heap allocation
+      overhead for most use cases.
