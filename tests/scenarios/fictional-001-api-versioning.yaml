@@ -1,0 +1,53 @@
+scenario:
+  id: fictional-001
+  category: fictional
+  title: "API Versioning Strategy for Multi-Client Platform"
+  difficulty: medium
+
+persona:
+  name: "Alex Rivera"
+  role: "Backend Lead"
+  style: "concise, technically deep, occasionally evasive on cost questions"
+  knowledge_level: senior
+
+project:
+  name: "Nebula Commerce Platform"
+  domain: "E-commerce"
+  team_size: 12
+  tech_stack: ["Go", "PostgreSQL", "gRPC", "Kubernetes"]
+
+decision_context:
+  problem: |
+    Our REST API serves 200+ clients (mobile apps, web frontends, partner
+    integrations). We need to evolve the API without breaking existing consumers.
+    Currently using ad-hoc versioning with /v1/ URL prefix but no formal strategy,
+    no deprecation policy, and no client migration tooling.
+  expected_decision_type: technology
+  expected_decision_level: tactical
+  expected_alternatives:
+    - "URL path versioning (/v1/, /v2/)"
+    - "Header-based versioning (Accept header / custom header)"
+    - "Query parameter versioning (?version=2)"
+  ground_truth_notes: |
+    A good ADR should identify that URL path versioning is simplest for
+    developers to understand but creates routing complexity and forces
+    full-path duplication. Header-based is more RESTful but harder to test
+    in browsers and curl. Query parameter is a middle ground but semantically
+    odd since version isn't a resource filter. The chosen approach should
+    weigh developer experience, cacheability, gateway routing, and the
+    deprecation lifecycle for 200+ consumers.
+
+user_behavior:
+  initial_message: |
+    I want to create an ADR for our API versioning approach. We have a
+    REST API serving over 200 clients and we've been doing versioning
+    ad-hoc with /v1/ prefixes. We need a proper strategy.
+  answer_style: |
+    Answer questions directly but don't volunteer extra information unless
+    asked. When asked about costs, be somewhat vague initially ("I'd need
+    to check with the team on exact estimates"). When pushed on risks,
+    acknowledge them honestly. Respond using numbered format matching the
+    interviewer's questions. Keep answers to 2-4 sentences each.
+  evasion_points:
+    - "migration effort estimates"
+    - "client communication plan"

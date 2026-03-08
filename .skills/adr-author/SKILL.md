@@ -59,7 +59,7 @@ Ask the user for:
 4. **Priority**: `low` | `medium` | `high` | `critical`
 5. **Context**: What problem are we solving? What are the business and technical drivers?
 6. **Constraints**: What are the non-negotiable boundaries?
-7. **Alternatives**: At least 2 options — for each, a **thorough architectural description** (multi-paragraph, with Mermaid diagrams showing data flows/integration points), pros, cons, estimated cost, and risk level
+7. **Alternatives**: At least 3 options (minimum 2 if the user insists after pushback) — for each, a **thorough architectural description** (multi-paragraph, with Mermaid diagrams showing data flows/integration points), pros, cons, estimated cost (only if the user provides it), and risk level (only if the user provides it)
 8. **Recommendation**: Which alternative and why?
 9. **Confidence**: `low` | `medium` | `high` — how confident are we in this decision?
 
@@ -81,10 +81,11 @@ Use the template at `assets/adr-template.yaml` as the starting point. Fill in al
 - `decision_owner` — who is accountable
 - `context` — summary, business_drivers, technical_drivers, constraints, assumptions
 - `architecturally_significant_requirements` — embedded functional and non-functional ASRs
-- `alternatives` — at least 2, each with name, **thorough description** (multi-paragraph architecture explanation with Mermaid diagrams), pros, cons, estimated_cost, risk, rejection_rationale (for non-chosen alternatives)
-- `decision` — chosen_alternative, rationale, tradeoffs, decision_date, confidence
+- `alternatives` — at least 2 (include more if naturally discussed), each with name, **thorough description** (multi-paragraph architecture explanation with Mermaid diagrams), pros, cons, estimated_cost (only if user-provided), risk (only if user-provided), rejection_rationale (for non-chosen alternatives)
+- `decision` — chosen_alternative, rationale, tradeoffs, decision_date, confidence **(all values must come from the user's answers — do not invent defaults)**
 - `consequences` — positive, negative
 - `confirmation` — description of how implementation will be verified (artifact_ids added later)
+- `architecturally_significant_requirements` — extract at least 2 functional or non-functional ASRs from the interview answers (technical drivers, constraints, performance targets, compliance mandates). If none are obvious from the conversation, ask the user explicitly.
 - `dependencies` — internal and external dependency tracking
 - `audit_trail` — initial `created` event
 

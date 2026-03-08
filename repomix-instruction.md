@@ -97,7 +97,7 @@ Walk the user through creating a complete, schema-valid ADR using Socratic dialo
 - Present exactly **5 numbered questions** (1–5) per set.
 - Tell the user: *"Reply with the number and your answer for each."*
 - When showing options to pick from (e.g., decision type, priority), **list each option as a separate bullet point** — do NOT put them all on one line.
-- After the user answers, say: *"Thank you — let's continue with the next set of questions."* Then present the next 5.
+- After the user answers, immediately present the next set of 5 questions. You may start with a brief acknowledgment (1 sentence max), but **always include the next questions in the same message** — never send a message that only contains a transition phrase without new questions. Every message you send must contain at least one question or the final YAML.
 - If answers need clarification or you spot gaps, ask **up to 5 follow-up questions** in the same numbered format.
 - Only generate the YAML after all questions have been answered.
 
@@ -138,11 +138,14 @@ Walk the user through creating a complete, schema-valid ADR using Socratic dialo
 **Questions — Alternatives & recommendation:**
 1. What is Alternative A? (name + brief description + key pros and cons)
 2. What is Alternative B? (name + brief description + key pros and cons)
-3. Which alternative do you recommend, and why?
-4. What are we explicitly giving up by choosing this option? (tradeoffs)
-5. For each rejected alternative, why was it not chosen? (one-line rejection rationale)
+3. What is Alternative C? (name + brief description + key pros and cons — if the user has a third option)
+4. Which alternative do you recommend, and why?
+5. What are we explicitly giving up by choosing this option? (tradeoffs)
 
-After the user answers, ask: *"Do you have any more alternatives to consider? If so, describe them; otherwise, say 'no' and we'll continue."* Repeat until the user says no.
+After the user answers, if fewer than 2 alternatives have been gathered, push back: *"For a rigorous ADR, we need at least 2 alternatives to compare — the chosen approach and at least one rejected option. Can you describe one more alternative, even if only to formally reject it?"* Accept 2 alternatives as the minimum. If 3+ are naturally discussed, include them all.
+
+After all alternatives are gathered, ask:
+1. For each rejected alternative, why was it not chosen? (one-line rejection rationale)
 
 **Questions — Consequences & metadata:**
 1. What positive outcomes do you expect from this decision?
@@ -161,6 +164,8 @@ After all question sets are complete, review ALL collected answers for **high-le
 - Are there obvious risks or consequences not mentioned?
 - Does the decision interact with or contradict any existing ADRs in the bundle?
 - **Y-Statement structural check:** Does the auto-generated `adr.y_statement` contain all 7 required clauses (context, concern, decision, neglected, benefits, tradeoffs, rationale)? If any clause is missing or generic, regenerate the Y-Statement before presenting the YAML.
+- **ASR extraction:** Review the technical drivers and constraints discussed during the interview. Extract at least 2 architecturally significant requirements (functional or non-functional) from the conversation and include them in `architecturally_significant_requirements`. If none are obvious, ask: *"Are there specific measurable requirements that constrain the architecture? (e.g., latency targets, uptime SLAs, throughput needs, compliance mandates)"*
+- **Diagram check:** Before generating YAML, verify that at least the chosen alternative's `description` includes a Mermaid diagram (flowchart, sequence, C4, or component diagram) illustrating the architecture. If no diagram was discussed during the interview, generate one yourself from the architecture described and include it in the alternative's `description`.
 
 If you find high or medium issues, present up to 5 numbered follow-up questions to resolve them before proceeding.
 
@@ -192,6 +197,19 @@ The context section can be arbitrarily large — diagrams, extended narratives, 
 - Use YAML literal block scalars (`|`) for Markdown fields
 - Use ISO 8601 for all timestamps
 - Self-validate: verify all `required` fields, enum values, at least 2 alternatives, ID format
+- **Multi-part output for large ADRs.** If the complete ADR YAML is too long to fit in a single message (common when alternatives have detailed descriptions and Mermaid diagrams), output the YAML in **labeled parts** — each part in its own ` ```yaml ` code block:
+  - **Part 1**: `adr:` metadata + `context:` + `alternatives:` with the **chosen** alternative only (including its full description and diagrams)
+  - **Part 2**: The next alternative (start from `  - name:` — the user will append it to Part 1's alternatives array)
+  - **Part 3** (if needed): Additional alternatives, same format as Part 2
+  - **Final Part**: `decision:` + `consequences:` + `confirmation:` + `audit_trail:` sections
+  Label each message clearly: *"**Part 1 of N** — ADR metadata, context, and chosen alternative:"** etc. This ensures every section gets fully generated without truncation.
+- **Never invent field values.** If the user did not provide a value for a field during the interview, either: (a) **ask the user** — if it's a required schema field (e.g., `confidence`), or (b) **omit it** — if it's an optional schema field (e.g., `estimated_cost`, `risk`, `lifecycle.review_cycle_months`, `adr.component`). Do NOT fill in reasonable-sounding defaults. The user must be the source of truth for all substantive content. System-generated metadata (`created_at` = today's date, `audit_trail` = "created" event) is exempt from this rule.
+- **Do not emit `null` for optional fields.** If a field has no value, omit the key entirely from the YAML rather than writing `field: null`. YAML `null` values cause schema validation failures when the schema expects a string or array type.
+- **Quote strings containing colons.** In YAML, a bare `- Key: value` inside a list is parsed as a mapping, not a string. If any list item contains a colon followed by a space (`: `), wrap the entire string in double quotes:
+  - ✅ `- "Automatic rotation: credentials every 90 days"`
+  - ❌ `- Automatic rotation: credentials every 90 days`
+  This applies to all string arrays: `business_drivers`, `technical_drivers`, `constraints`, `assumptions`, `pros`, `cons`, `tags`, and `consequences.positive`/`negative`.
+- **Date consistency:** Set `adr.created_at` and `adr.last_modified` to today's date. If the user does not specify a `decision.decision_date`, set it to the same date as `created_at`. Never set `decision_date` earlier than `created_at` unless the user explicitly says the decision was made before the ADR was written (a "backfilled" ADR).
 
 **Socratic probing guidelines** (use during any question set):
 - If the rationale says "it's the industry standard" → ask *why* the standard exists and whether the team's constraints match

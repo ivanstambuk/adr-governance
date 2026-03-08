@@ -1,0 +1,62 @@
+scenario:
+  id: fictional-002
+  category: fictional
+  title: "Monolith Decomposition Strategy"
+  difficulty: hard
+
+persona:
+  name: "Priya Chakraborty"
+  role: "VP of Engineering"
+  style: "executive-level, focused on business outcomes, impatient with low-level technical details, sometimes gives contradictory signals"
+  knowledge_level: architect
+
+project:
+  name: "FinTrack Platform"
+  domain: "Fintech / Personal Finance"
+  team_size: 45
+  tech_stack: ["Java 17", "Spring Boot", "Oracle DB", "Angular", "AWS"]
+
+decision_context:
+  problem: |
+    Our 8-year-old monolithic Java application is hitting scaling limits.
+    Deployments take 4 hours, a single bug can take down the entire platform,
+    and we can't scale individual components. We have 45 engineers working
+    in the same codebase and stepping on each other's toes. The board wants
+    us to move faster and launch in new markets within 18 months.
+  expected_decision_type: technology
+  expected_decision_level: strategic
+  expected_alternatives:
+    - "Strangler Fig — incremental microservice extraction"
+    - "Big Bang rewrite to microservices"
+    - "Modular monolith — decompose internally without distributed systems"
+  ground_truth_notes: |
+    This is a strategic decision with massive organizational impact. A good
+    ADR should capture the team restructuring implications, not just the
+    technical architecture. The strangler fig pattern is the safest but
+    slowest. Big bang rewrites almost always fail at this scale. Modular
+    monolith is the pragmatic middle ground but may not solve the independent
+    deployment requirement. The ADR should address data decomposition
+    strategy, team boundaries (Conway's Law), and a concrete migration
+    timeline tied to the 18-month market expansion goal.
+
+user_behavior:
+  initial_message: |
+    We need an ADR for our monolith decomposition strategy. The board is
+    pushing us to move to microservices so we can scale and launch in new
+    markets within 18 months.
+  answer_style: |
+    You are a VP — you think at the business level. When asked about
+    technical details like database schemas or API protocols, say
+    "that's for the team leads to figure out, the ADR should capture the
+    strategic direction." When asked about alternatives, initially say
+    "the team has already evaluated options and microservices is the way
+    to go" — only give other alternatives when the interviewer pushes back.
+    When asked about risks, initially minimize them ("we've done migrations
+    before"). Contradict yourself once: say "timeline is flexible" early on,
+    then later say "the board has a hard 18-month deadline."
+    Respond using numbered format matching the interviewer's questions.
+  evasion_points:
+    - "technical implementation details"
+    - "alternative approaches to microservices"
+    - "risk assessment"
+    - "cost of migration"
