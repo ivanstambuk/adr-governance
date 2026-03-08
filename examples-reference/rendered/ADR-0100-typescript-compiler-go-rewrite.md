@@ -66,27 +66,19 @@ The TypeScript compiler and language services are written in TypeScript, running
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The Go compiler must pass the existing TypeScript test suite with 99.999% semantic compatibility — this is a port, not a rewrite, and behavioral equivalence is the primary correctness criterion.
- |
-| `F-002` | File-by-file porting strategy must maintain structural correspondence between TypeScript and Go source files to enable incremental validation and side-by-side comparison during the transition period.
- |
-| `F-003` | The native compiler must adopt Language Server Protocol (LSP) for editor integration, replacing the custom tsserver protocol used by the JavaScript-based compiler.
- |
-| `F-004` | The native compiler must produce single static binaries for all major platforms (Windows, macOS, Linux) without requiring a runtime installation (Node.js, .NET, JVM).
- |
+| `F-001` | The Go compiler must pass the existing TypeScript test suite with 99.999% semantic compatibility — this is a port, not a rewrite, and behavioral equivalence is the primary correctness criterion. |
+| `F-002` | File-by-file porting strategy must maintain structural correspondence between TypeScript and Go source files to enable incremental validation and side-by-side comparison during the transition period. |
+| `F-003` | The native compiler must adopt Language Server Protocol (LSP) for editor integration, replacing the custom tsserver protocol used by the JavaScript-based compiler. |
+| `F-004` | The native compiler must produce single static binaries for all major platforms (Windows, macOS, Linux) without requiring a runtime installation (Node.js, .NET, JVM). |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Command-line type-checking build time must improve by at least 10x compared to the JavaScript-based compiler on codebases exceeding 100k lines (validated on VS Code 1.5M-line codebase).
- |
-| `NF-002` | Memory usage must decrease by at least 50% compared to the JavaScript-based compiler for equivalent workloads, with further optimization potential in subsequent releases.
- |
-| `NF-003` | Editor startup time (language service initialization) must improve by at least 8x compared to the JavaScript-based language service on large projects.
- |
-| `NF-004` | The parallel maintenance period (TypeScript 6.x JS + TypeScript 7.x native) must not degrade the release cadence or feature velocity of the JavaScript-based compiler during transition.
- |
+| `NF-001` | Command-line type-checking build time must improve by at least 10x compared to the JavaScript-based compiler on codebases exceeding 100k lines (validated on VS Code 1.5M-line codebase). |
+| `NF-002` | Memory usage must decrease by at least 50% compared to the JavaScript-based compiler for equivalent workloads, with further optimization potential in subsequent releases. |
+| `NF-003` | Editor startup time (language service initialization) must improve by at least 8x compared to the JavaScript-based language service on large projects. |
+| `NF-004` | The parallel maintenance period (TypeScript 6.x JS + TypeScript 7.x native) must not degrade the release cadence or feature velocity of the JavaScript-based compiler during transition. |
 
 ## Alternatives Considered
 
@@ -441,7 +433,5 @@ The TypeScript Go port is published at github.com/microsoft/typescript-go under 
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Anders Hejlsberg | 2025-03-11 | Announced native Go port of TypeScript compiler (Project Corsa/Strada). Published github.com/microsoft/typescript-go repository. Benchmarks show 10x build-time speedup and 50% memory reduction on large codebases.
- |
-| `approved` | Anders Hejlsberg | 2025-03-11 | Decision approved by TypeScript Technical Fellow. Roadmap established: TypeScript 5.8/5.9 current releases, TypeScript 6.x (JS) continues development, TypeScript 7.0 (native Go) targets feature-complete language service by end of 2025.
- |
+| `created` | Anders Hejlsberg | 2025-03-11 | Announced native Go port of TypeScript compiler (Project Corsa/Strada). Published github.com/microsoft/typescript-go repository. Benchmarks show 10x build-time speedup and 50% memory reduction on large codebases. |
+| `approved` | Anders Hejlsberg | 2025-03-11 | Decision approved by TypeScript Technical Fellow. Roadmap established: TypeScript 5.8/5.9 current releases, TypeScript 6.x (JS) continues development, TypeScript 7.0 (native Go) targets feature-complete language service by end of 2025. |

@@ -113,29 +113,20 @@ iteration learning from community feedback and rejected approaches.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | Functions and types must support type parameter declarations using square-bracket syntax, with type arguments inferred by the compiler when possible to minimize verbosity at call sites
- |
-| `F-002` | Type constraints must be expressed as interfaces, extended to support type sets (union types using | operator) and approximate type constraints (using ~ for underlying types), unifying constraints with Go's existing interface concept
- |
-| `F-003` | Generic functions must work correctly with all of Go's existing features — channels, goroutines, slices, maps, structs, methods — without special cases or restrictions beyond those specified in constraints
- |
-| `F-004` | The compiler must perform bidirectional type inference — inferring type arguments from function arguments, return value context, and constraint satisfaction — so that most generic function calls require no explicit type arguments at the call site
- |
-| `F-005` | All existing Go 1.x programs must compile and execute identically under the generics-enabled compiler — the Go 1 compatibility promise must not be broken by any aspect of the generics design including the new `any` predeclared identifier
- |
+| `F-001` | Functions and types must support type parameter declarations using square-bracket syntax, with type arguments inferred by the compiler when possible to minimize verbosity at call sites |
+| `F-002` | Type constraints must be expressed as interfaces, extended to support type sets (union types using | operator) and approximate type constraints (using ~ for underlying types), unifying constraints with Go's existing interface concept |
+| `F-003` | Generic functions must work correctly with all of Go's existing features — channels, goroutines, slices, maps, structs, methods — without special cases or restrictions beyond those specified in constraints |
+| `F-004` | The compiler must perform bidirectional type inference — inferring type arguments from function arguments, return value context, and constraint satisfaction — so that most generic function calls require no explicit type arguments at the call site |
+| `F-005` | All existing Go 1.x programs must compile and execute identically under the generics-enabled compiler — the Go 1 compatibility promise must not be broken by any aspect of the generics design including the new `any` predeclared identifier |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Compilation speed must not degrade beyond acceptable limits — the generics implementation must maintain Go's hallmark fast build times (initial target: no more than 15-20% regression in Go 1.18)
- |
-| `NF-002` | Runtime performance of generic code must be comparable to hand-written type-specific code — the GC-shape-stenciling implementation must avoid boxing overhead for types with the same memory layout
- |
-| `NF-003` | The generics design must introduce the minimum possible number of new concepts — no new keywords, no separate constraint language, and complexity must fall on generic library authors rather than on users calling generic functions
- |
-| `NF-004` | Binary size increase from GC-shape stenciling must be controlled — types with identical memory layouts (GC shapes) must share a single compiled instantiation to prevent C++-style code bloat from full monomorphization
- |
+| `NF-001` | Compilation speed must not degrade beyond acceptable limits — the generics implementation must maintain Go's hallmark fast build times (initial target: no more than 15-20% regression in Go 1.18) |
+| `NF-002` | Runtime performance of generic code must be comparable to hand-written type-specific code — the GC-shape-stenciling implementation must avoid boxing overhead for types with the same memory layout |
+| `NF-003` | The generics design must introduce the minimum possible number of new concepts — no new keywords, no separate constraint language, and complexity must fall on generic library authors rather than on users calling generic functions |
+| `NF-004` | Binary size increase from GC-shape stenciling must be controlled — types with identical memory layouts (GC shapes) must share a single compiled instantiation to prevent C++-style code bloat from full monomorphization |
 
 ## Alternatives Considered
 
@@ -606,11 +597,7 @@ addressed the core community need.
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Ian Lance Taylor | 2021-01-12 | Type parameters proposal filed as issue #43651. Design by Taylor and Griesemer after 12+ years of exploration including rejected contracts designs.
- |
-| `approved` | Russ Cox | 2021-02-11 | Proposal accepted after extensive community review. Met acceptance criteria of "good enough, and simple enough." Implementation targeted for Go 1.18.
- |
-| `updated` | Go Team | 2022-03-15 | Go 1.18 released with generics. Type parameters, interface type sets, type inference, and any/comparable shipped. Compiler ~15% slower than 1.17.
- |
-| `updated` | Go Team | 2023-08-08 | Go 1.21 released with generic slices, maps, and cmp packages in stdlib. Compiler performance recovered. Community adoption growing but measured.
- |
+| `created` | Ian Lance Taylor | 2021-01-12 | Type parameters proposal filed as issue #43651. Design by Taylor and Griesemer after 12+ years of exploration including rejected contracts designs. |
+| `approved` | Russ Cox | 2021-02-11 | Proposal accepted after extensive community review. Met acceptance criteria of "good enough, and simple enough." Implementation targeted for Go 1.18. |
+| `updated` | Go Team | 2022-03-15 | Go 1.18 released with generics. Type parameters, interface type sets, type inference, and any/comparable shipped. Compiler ~15% slower than 1.17. |
+| `updated` | Go Team | 2023-08-08 | Go 1.21 released with generic slices, maps, and cmp packages in stdlib. Compiler performance recovered. Community adoption growing but measured. |

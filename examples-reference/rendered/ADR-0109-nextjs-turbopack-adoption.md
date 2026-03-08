@@ -142,31 +142,21 @@ as the person who understood Webpack's design most deeply.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | Turbopack must support a unified module graph that handles both server and client environments in a single compilation pass, eliminating the dual-compiler coordination overhead required by Webpack for React Server Components.
- |
-| `F-002` | Turbopack must support both Next.js App Router and Pages Router with full feature parity, including React Server Components, Server Functions, CSS Modules, image optimization, and all existing Next.js routing conventions.
- |
-| `F-003` | Turbopack must provide Hot Module Replacement (Fast Refresh) that preserves component state across code changes, with update times that remain fast regardless of total application size due to incremental computation.
- |
-| `F-004` | Turbopack must support Webpack loaders through a compatibility layer, allowing projects to use existing loaders for custom file transformations while migrating away from Webpack-specific plugins.
- |
-| `F-005` | Turbopack must provide lazy bundling that only compiles the modules required for the currently requested route, keeping memory usage and initial compilation times proportional to the requested code rather than total application size.
- |
+| `F-001` | Turbopack must support a unified module graph that handles both server and client environments in a single compilation pass, eliminating the dual-compiler coordination overhead required by Webpack for React Server Components. |
+| `F-002` | Turbopack must support both Next.js App Router and Pages Router with full feature parity, including React Server Components, Server Functions, CSS Modules, image optimization, and all existing Next.js routing conventions. |
+| `F-003` | Turbopack must provide Hot Module Replacement (Fast Refresh) that preserves component state across code changes, with update times that remain fast regardless of total application size due to incremental computation. |
+| `F-004` | Turbopack must support Webpack loaders through a compatibility layer, allowing projects to use existing loaders for custom file transformations while migrating away from Webpack-specific plugins. |
+| `F-005` | Turbopack must provide lazy bundling that only compiles the modules required for the currently requested route, keeping memory usage and initial compilation times proportional to the requested code rather than total application size. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Local server startup must be measurably faster than Webpack — the target is at least 50% improvement for large applications, with Vercel's own applications (vercel.com) serving as the primary benchmark.
- |
-| `NF-002` | Fast Refresh (HMR) updates must complete in under 200ms for typical code changes, maintaining sub-second feedback loops regardless of total application module count.
- |
-| `NF-003` | All 6,599 Next.js development tests must pass with Turbopack before the stable release, ensuring behavioral parity with Webpack across 8 years of accumulated edge cases.
- |
-| `NF-004` | Development builds must closely match production behavior to reduce dev/prod discrepancies — differences in module resolution, CSS ordering, and code transformation between dev and prod are a significant source of production bugs.
- |
-| `NF-005` | Turbopack must parallelize computation across all available CPU cores, with performance scaling proportional to core count for module resolution, transformation, and graph construction workloads.
- |
+| `NF-001` | Local server startup must be measurably faster than Webpack — the target is at least 50% improvement for large applications, with Vercel's own applications (vercel.com) serving as the primary benchmark. |
+| `NF-002` | Fast Refresh (HMR) updates must complete in under 200ms for typical code changes, maintaining sub-second feedback loops regardless of total application module count. |
+| `NF-003` | All 6,599 Next.js development tests must pass with Turbopack before the stable release, ensuring behavioral parity with Webpack across 8 years of accumulated edge cases. |
+| `NF-004` | Development builds must closely match production behavior to reduce dev/prod discrepancies — differences in module resolution, CSS ordering, and code transformation between dev and prod are a significant source of production bugs. |
+| `NF-005` | Turbopack must parallelize computation across all available CPU cores, with performance scaling proportional to core count for module resolution, transformation, and graph construction workloads. |
 
 ## Alternatives Considered
 
@@ -797,13 +787,8 @@ confirming its viability:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Tobias Koppers | 2022-10-25 | Turbopack announced at Next.js Conf 2022 as alpha with Next.js 13. Claimed "700x faster than Webpack." Koppers presented function-level memoization and Rust parallelization.
- |
-| `updated` | Vercel Engineering | 2022-11-15 | Evan You publicly challenged benchmark claims, showing Vite was benchmarked without SWC and rounding artifacts exaggerated gaps. Vercel revised methodology.
- |
-| `updated` | Next.js Core Team | 2024-04-01 | Next.js 14.2 reached 99.8% test parity with Webpack (100% shortly after). Team focused on dev experience, deferring production builds.
- |
-| `approved` | Vercel Engineering | 2024-10-21 | Next.js 15 released with stable Turbopack dev mode. All 6,599 tests passing. 76.7% faster startup, 96.3% faster Fast Refresh on vercel.com.
- |
-| `updated` | Next.js Core Team | 2025-10-01 | Next.js 16 released with Turbopack stable for dev and production. Became default bundler. File system caching stabilized in 16.1. Standalone Turbopack planned for 2026.
- |
+| `created` | Tobias Koppers | 2022-10-25 | Turbopack announced at Next.js Conf 2022 as alpha with Next.js 13. Claimed "700x faster than Webpack." Koppers presented function-level memoization and Rust parallelization. |
+| `updated` | Vercel Engineering | 2022-11-15 | Evan You publicly challenged benchmark claims, showing Vite was benchmarked without SWC and rounding artifacts exaggerated gaps. Vercel revised methodology. |
+| `updated` | Next.js Core Team | 2024-04-01 | Next.js 14.2 reached 99.8% test parity with Webpack (100% shortly after). Team focused on dev experience, deferring production builds. |
+| `approved` | Vercel Engineering | 2024-10-21 | Next.js 15 released with stable Turbopack dev mode. All 6,599 tests passing. 76.7% faster startup, 96.3% faster Fast Refresh on vercel.com. |
+| `updated` | Next.js Core Team | 2025-10-01 | Next.js 16 released with Turbopack stable for dev and production. Became default bundler. File system caching stabilized in 16.1. Standalone Turbopack planned for 2026. |

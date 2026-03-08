@@ -155,27 +155,19 @@ infrastructure for 15+ frameworks made solving these problems urgent.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | Rolldown must implement a Rollup-compatible plugin API that allows existing Rollup and Vite plugins to function with minimal or no modifications, including support for all standard plugin hooks (resolveId, load, transform, renderChunk, generateBundle).
- |
-| `F-002` | The unified bundler must handle both dependency pre-bundling (currently esbuild's role) and production bundling (currently Rollup's role) through a single tool, eliminating the need for separate dev and prod bundling pipelines.
- |
-| `F-003` | Rolldown must support built-in TypeScript and JSX transformation via the Oxc transformer, replacing esbuild's transform capabilities while maintaining compatible output for all major frameworks.
- |
-| `F-004` | The migration must follow a phased, non-breaking rollout — a temporary separate package (rolldown-vite) must function as a drop-in replacement for vite before Rolldown is merged into the main Vite codebase.
- |
+| `F-001` | Rolldown must implement a Rollup-compatible plugin API that allows existing Rollup and Vite plugins to function with minimal or no modifications, including support for all standard plugin hooks (resolveId, load, transform, renderChunk, generateBundle). |
+| `F-002` | The unified bundler must handle both dependency pre-bundling (currently esbuild's role) and production bundling (currently Rollup's role) through a single tool, eliminating the need for separate dev and prod bundling pipelines. |
+| `F-003` | Rolldown must support built-in TypeScript and JSX transformation via the Oxc transformer, replacing esbuild's transform capabilities while maintaining compatible output for all major frameworks. |
+| `F-004` | The migration must follow a phased, non-breaking rollout — a temporary separate package (rolldown-vite) must function as a drop-in replacement for vite before Rolldown is merged into the main Vite codebase. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Production build times must improve by at least 3x compared to Rollup-based builds for typical applications, with larger projects seeing improvements of 10x or greater as demonstrated by early adopter benchmarks.
- |
-| `NF-002` | Memory usage during production builds must be significantly reduced compared to the current Rollup-based pipeline, with enterprise-scale applications seeing reductions of 4x to 100x as demonstrated by GitLab and Appwrite benchmarks.
- |
-| `NF-003` | Dev/prod behavioral consistency must be achieved — the same bundler engine processing source code in both environments eliminates the class of bugs caused by differing module resolution and transformation behavior.
- |
-| `NF-004` | All 15+ major framework integrations (React, Vue, Svelte, Solid, Astro, Nuxt, SvelteKit) must continue working through the transition with minimal or no changes to their Vite plugins.
- |
+| `NF-001` | Production build times must improve by at least 3x compared to Rollup-based builds for typical applications, with larger projects seeing improvements of 10x or greater as demonstrated by early adopter benchmarks. |
+| `NF-002` | Memory usage during production builds must be significantly reduced compared to the current Rollup-based pipeline, with enterprise-scale applications seeing reductions of 4x to 100x as demonstrated by GitLab and Appwrite benchmarks. |
+| `NF-003` | Dev/prod behavioral consistency must be achieved — the same bundler engine processing source code in both environments eliminates the class of bugs caused by differing module resolution and transformation behavior. |
+| `NF-004` | All 15+ major framework integrations (React, Vue, Svelte, Solid, Astro, Nuxt, SvelteKit) must continue working through the transition with minimal or no changes to their Vite plugins. |
 
 ## Alternatives Considered
 
@@ -873,15 +865,9 @@ confirming the decision's viability and adoption trajectory:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Evan You | 2024-03-01 | Rolldown development initiated as part of VoidZero's unified toolchain vision. Vite's dual-bundler architecture creating dev/prod inconsistencies and performance ceilings.
- |
-| `updated` | VoidZero Engineering Team | 2024-10-01 | VoidZero Inc. announced at ViteConf 2024 with $4.6M seed funding. Early benchmarks showed Rolldown outperforming both esbuild and Rollup.
- |
-| `updated` | Vite Core Team | 2024-11-26 | Vite 6.0 released with experimental Environment API, laying groundwork for Rolldown integration. Described as "the most significant release since Vite 2."
- |
-| `updated` | VoidZero Engineering Team | 2025-06-01 | Rolldown-vite announced as drop-in replacement. Early results: GitLab 2.5 min→40s with 100x memory reduction; Excalidraw 16x speedup. Three-phase rollout confirmed.
- |
-| `approved` | Evan You | 2025-06-24 | Vite 7.0 released recommending rolldown-vite as drop-in replacement. Rolldown confirmed as future default bundler. Vite at 31M weekly downloads.
- |
-| `updated` | Rolldown Core Team | 2026-01-15 | Rolldown reached RC status. Rolldown-vite became default bundler in Vite 8 beta. Phase Two preparation underway to merge into main Vite codebase.
- |
+| `created` | Evan You | 2024-03-01 | Rolldown development initiated as part of VoidZero's unified toolchain vision. Vite's dual-bundler architecture creating dev/prod inconsistencies and performance ceilings. |
+| `updated` | VoidZero Engineering Team | 2024-10-01 | VoidZero Inc. announced at ViteConf 2024 with $4.6M seed funding. Early benchmarks showed Rolldown outperforming both esbuild and Rollup. |
+| `updated` | Vite Core Team | 2024-11-26 | Vite 6.0 released with experimental Environment API, laying groundwork for Rolldown integration. Described as "the most significant release since Vite 2." |
+| `updated` | VoidZero Engineering Team | 2025-06-01 | Rolldown-vite announced as drop-in replacement. Early results: GitLab 2.5 min→40s with 100x memory reduction; Excalidraw 16x speedup. Three-phase rollout confirmed. |
+| `approved` | Evan You | 2025-06-24 | Vite 7.0 released recommending rolldown-vite as drop-in replacement. Rolldown confirmed as future default bundler. Vite at 31M weekly downloads. |
+| `updated` | Rolldown Core Team | 2026-01-15 | Rolldown reached RC status. Rolldown-vite became default bundler in Vite 8 beta. Phase Two preparation underway to merge into main Vite codebase. |

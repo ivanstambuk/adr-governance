@@ -169,25 +169,18 @@ be incrementally saved.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The flat config system must use a single eslint.config.js file (supporting .js, .mjs, .cjs, .ts, .mts, .cts extensions) at the project root that exports an array of configuration objects, each with optional files and ignores glob patterns for file matching.
- |
-| `F-002` | Plugins must be imported as JavaScript objects using native import or require statements, with user-defined namespace keys in the plugins object, eliminating string-based plugin resolution and the eslint-plugin- prefix convention.
- |
-| `F-003` | The FlatCompat utility class must translate existing eslintrc configurations (extends, environments, plugins referenced by string) into flat config arrays, enabling incremental migration without rewriting all configs at once.
- |
+| `F-001` | The flat config system must use a single eslint.config.js file (supporting .js, .mjs, .cjs, .ts, .mts, .cts extensions) at the project root that exports an array of configuration objects, each with optional files and ignores glob patterns for file matching. |
+| `F-002` | Plugins must be imported as JavaScript objects using native import or require statements, with user-defined namespace keys in the plugins object, eliminating string-based plugin resolution and the eslint-plugin- prefix convention. |
+| `F-003` | The FlatCompat utility class must translate existing eslintrc configurations (extends, environments, plugins referenced by string) into flat config arrays, enabling incremental migration without rewriting all configs at once. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Configuration resolution must require only a single upward directory search for the eslint.config.js file, dramatically reducing disk I/O compared to eslintrc's per-directory cascade search.
- |
-| `NF-002` | The flat config array must be fully introspectable at runtime — because configs are plain JavaScript objects in an array, tools can inspect exactly which rules apply to any file without opaque string-based extends resolution.
- |
-| `NF-003` | The defineConfig() helper function must provide full TypeScript type definitions for configuration objects, enabling auto-completion, type checking, and deprecation warnings in TypeScript-aware editors.
- |
-| `NF-004` | The migration path from eslintrc to flat config must span at least two major ESLint versions — eslintrc support must remain available during the transition period to avoid forcing immediate migration of the plugin ecosystem.
- |
+| `NF-001` | Configuration resolution must require only a single upward directory search for the eslint.config.js file, dramatically reducing disk I/O compared to eslintrc's per-directory cascade search. |
+| `NF-002` | The flat config array must be fully introspectable at runtime — because configs are plain JavaScript objects in an array, tools can inspect exactly which rules apply to any file without opaque string-based extends resolution. |
+| `NF-003` | The defineConfig() helper function must provide full TypeScript type definitions for configuration objects, enabling auto-completion, type checking, and deprecation warnings in TypeScript-aware editors. |
+| `NF-004` | The migration path from eslintrc to flat config must span at least two major ESLint versions — eslintrc support must remain available during the transition period to avoid forcing immediate migration of the plugin ecosystem. |
 
 ## Alternatives Considered
 
@@ -898,15 +891,9 @@ Migration ecosystem:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Nicholas C. Zakas | 2019-01-01 | RFC #9 (Config File Simplification) opened. Described by Zakas as "the most contentious RFC in ESLint history" — team nearly evenly split.
- |
-| `updated` | ESLint TSC | 2020-07-01 | RFC approved after 18 months of debate. Core principles established: single config file, native module loading, array-based cascade, and plugins as imports.
- |
-| `updated` | Nicholas C. Zakas | 2022-08-01 | Flat config shipped experimentally in ESLint v8.21.0. Available through API only, not CLI. Zakas published three-part blog series explaining the design.
- |
-| `approved` | ESLint TSC | 2024-04-05 | ESLint v9.0.0 released with flat config as default. eslintrc deprecated but available via ESLINT_USE_FLAT_CONFIG=false. Node.js 18.18.0+ required.
- |
-| `updated` | ESLint Core Team | 2025-02-01 | Community-driven improvements shipped: defineConfig() for type safety, re-introduced extends key, and native TypeScript config support (eslint.config.ts).
- |
-| `updated` | ESLint Core Team | 2026-02-01 | ESLint v10.0.0 released with complete eslintrc removal. .eslintrc, .eslintignore, eslintrc CLI flags, and eslint-env comments no longer recognized. Flat config is now the sole system.
- |
+| `created` | Nicholas C. Zakas | 2019-01-01 | RFC #9 (Config File Simplification) opened. Described by Zakas as "the most contentious RFC in ESLint history" — team nearly evenly split. |
+| `updated` | ESLint TSC | 2020-07-01 | RFC approved after 18 months of debate. Core principles established: single config file, native module loading, array-based cascade, and plugins as imports. |
+| `updated` | Nicholas C. Zakas | 2022-08-01 | Flat config shipped experimentally in ESLint v8.21.0. Available through API only, not CLI. Zakas published three-part blog series explaining the design. |
+| `approved` | ESLint TSC | 2024-04-05 | ESLint v9.0.0 released with flat config as default. eslintrc deprecated but available via ESLINT_USE_FLAT_CONFIG=false. Node.js 18.18.0+ required. |
+| `updated` | ESLint Core Team | 2025-02-01 | Community-driven improvements shipped: defineConfig() for type safety, re-introduced extends key, and native TypeScript config support (eslint.config.ts). |
+| `updated` | ESLint Core Team | 2026-02-01 | ESLint v10.0.0 released with complete eslintrc removal. .eslintrc, .eslintignore, eslintrc CLI flags, and eslint-env comments no longer recognized. Flat config is now the sole system. |

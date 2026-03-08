@@ -398,11 +398,11 @@ Additionally, [`architecture-decision-log/ADR-0000`](architecture-decision-log/A
 
 The framework includes an automated testing harness ([`tests/llm_harness.py`](tests/llm_harness.py)) that validates ADR authoring quality by simulating realistic authoring conversations between three LLMs:
 
-| Role | Purpose | Model |
-|------|---------|-------|
-| **Interviewer** | Runs the Socratic ADR authoring dialogue | Gemini 2.5 Pro |
-| **User** | Plays a domain expert answering questions | Claude 3.5 Sonnet |
-| **Analyst** | Reviews the generated ADR for quality | Gemini 2.5 Pro |
+| Role | Purpose | Default Model |
+|------|---------|---------------|
+| **Interviewer** | Runs the Socratic ADR authoring dialogue | GPT-5.2 Medium |
+| **User** | Plays a domain expert answering questions | GLM-5 |
+| **Analyst** | Reviews the generated ADR for quality | GPT-5.4 High |
 
 ### How It Works
 

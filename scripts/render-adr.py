@@ -33,6 +33,16 @@ def render_disclaimer(source_yaml_relpath: str) -> str:
     ])
 
 
+def table_cell(value: str) -> str:
+    """Collapse newlines and normalize whitespace for Markdown table cells.
+
+    GitHub's Markdown parser treats newlines inside table rows as row
+    terminators, breaking the table layout.  This helper folds multiline
+    YAML scalars into a single line suitable for a table cell.
+    """
+    return " ".join(str(value).split())
+
+
 def render_adr(data: dict) -> str:
     """Render a parsed ADR YAML dict to a Markdown string."""
     lines = []
@@ -145,7 +155,7 @@ def render_adr(data: dict) -> str:
             lines.append("| ID | Description |")
             lines.append("|----|-------------|")
             for r in functional:
-                lines.append(f"| `{r.get('id', '')}` | {r.get('description', '')} |")
+                lines.append(f"| `{r.get('id', '')}` | {table_cell(r.get('description', ''))} |")
             lines.append("")
         if non_functional:
             lines.append("### Non-Functional")
@@ -153,7 +163,7 @@ def render_adr(data: dict) -> str:
             lines.append("| ID | Description |")
             lines.append("|----|-------------|")
             for r in non_functional:
-                lines.append(f"| `{r.get('id', '')}` | {r.get('description', '')} |")
+                lines.append(f"| `{r.get('id', '')}` | {table_cell(r.get('description', ''))} |")
             lines.append("")
 
     # --- Alternatives ---
@@ -314,7 +324,7 @@ def render_adr(data: dict) -> str:
             event = e.get("event", "")
             by = e.get("by", "")
             at = str(e.get("at", ""))[:10]  # date portion only
-            details = e.get("details", "")
+            details = table_cell(e.get("details", ""))
             lines.append(f"| `{event}` | {by} | {at} | {details} |")
         lines.append("")
 

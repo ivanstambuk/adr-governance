@@ -126,31 +126,21 @@ Async/await syntax was needed to make this ecosystem accessible.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | Async functions must return a Future that is lazy — no code executes until the future is polled by an executor. This ensures predictable execution and enables cancellation via drop.
- |
-| `F-002` | The await expression must be postfix (.await) to enable natural chaining with the ? error-propagation operator and method calls, maintaining Rust's left-to-right reading order.
- |
-| `F-003` | Async functions must be compiled to state machines that capture only the variables live across await points, minimizing the future's in-memory size without heap allocation.
- |
-| `F-004` | The design must support self-referential futures through the Pin<T> and Unpin system — async state machines that borrow across await points must remain in a fixed memory location, and Pin must enforce this invariant at compile time.
- |
-| `F-005` | Async functions must compose with Rust's existing error handling — returning Result types, using the ? operator for early return, and propagating errors through .await chains without requiring separate error-handling patterns.
- |
+| `F-001` | Async functions must return a Future that is lazy — no code executes until the future is polled by an executor. This ensures predictable execution and enables cancellation via drop. |
+| `F-002` | The await expression must be postfix (.await) to enable natural chaining with the ? error-propagation operator and method calls, maintaining Rust's left-to-right reading order. |
+| `F-003` | Async functions must be compiled to state machines that capture only the variables live across await points, minimizing the future's in-memory size without heap allocation. |
+| `F-004` | The design must support self-referential futures through the Pin<T> and Unpin system — async state machines that borrow across await points must remain in a fixed memory location, and Pin must enforce this invariant at compile time. |
+| `F-005` | Async functions must compose with Rust's existing error handling — returning Result types, using the ? operator for early return, and propagating errors through .await chains without requiring separate error-handling patterns. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Zero-cost abstraction — async/await must compile to the same quality of machine code as manually implemented Future trait impls, with no runtime overhead beyond what a hand-written state machine would require.
- |
-| `NF-002` | Runtime-agnostic — the language feature must define only the Future trait and async/await syntax, with all scheduling and execution delegated to external runtime crates.
- |
-| `NF-003` | no_std compatible — async/await must work without the standard library, enabling use in embedded systems, kernels, and WebAssembly targets.
- |
-| `NF-004` | The compiler must determine the exact size of each future at compile time — no dynamic allocation for the future's state unless explicitly boxed by the developer, enabling stack allocation of futures in performance-critical paths.
- |
-| `NF-005` | Async code must not require heap allocation in any code path — enabling use in no_alloc environments (embedded, kernel) where only static or stack allocation is available.
- |
+| `NF-001` | Zero-cost abstraction — async/await must compile to the same quality of machine code as manually implemented Future trait impls, with no runtime overhead beyond what a hand-written state machine would require. |
+| `NF-002` | Runtime-agnostic — the language feature must define only the Future trait and async/await syntax, with all scheduling and execution delegated to external runtime crates. |
+| `NF-003` | no_std compatible — async/await must work without the standard library, enabling use in embedded systems, kernels, and WebAssembly targets. |
+| `NF-004` | The compiler must determine the exact size of each future at compile time — no dynamic allocation for the future's state unless explicitly boxed by the developer, enabling stack allocation of futures in performance-critical paths. |
+| `NF-005` | Async code must not require heap allocation in any code path — enabling use in no_alloc environments (embedded, kernel) where only static or stack allocation is available. |
 
 ## Alternatives Considered
 
@@ -628,13 +618,8 @@ Production validation:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Taylor Cramer (cramertj) | 2018-05-07 | RFC 2394 (async/await syntax) accepted. Built on zero-cost futures (Turon 2016) and green thread removal (RFC 230). Companion RFC 2592 accepted.
- |
-| `updated` | withoutboats | 2019-04-15 | Pin/Unpin stabilized in Rust 1.33 for safe self-referential futures. Postfix .await syntax decided after extensive community debate.
- |
-| `approved` | Rust Lang Team | 2019-09-30 | Async/await approved for stabilization in Rust 1.39. Described as a "minimum viable product" — async traits, closures, and iteration deferred.
- |
-| `updated` | Rust Release Team | 2019-11-07 | Rust 1.39 released with stable async/await. Described as one of the most significant additions since Rust 1.0. Tokio began migration to std::future.
- |
-| `updated` | Rust Lang Team | 2023-12-28 | Rust 1.75 stabilized async fn in traits, eliminating the need for the async_trait proc macro and its heap allocation overhead.
- |
+| `created` | Taylor Cramer (cramertj) | 2018-05-07 | RFC 2394 (async/await syntax) accepted. Built on zero-cost futures (Turon 2016) and green thread removal (RFC 230). Companion RFC 2592 accepted. |
+| `updated` | withoutboats | 2019-04-15 | Pin/Unpin stabilized in Rust 1.33 for safe self-referential futures. Postfix .await syntax decided after extensive community debate. |
+| `approved` | Rust Lang Team | 2019-09-30 | Async/await approved for stabilization in Rust 1.39. Described as a "minimum viable product" — async traits, closures, and iteration deferred. |
+| `updated` | Rust Release Team | 2019-11-07 | Rust 1.39 released with stable async/await. Described as one of the most significant additions since Rust 1.0. Tokio began migration to std::future. |
+| `updated` | Rust Lang Team | 2023-12-28 | Rust 1.75 stabilized async fn in traits, eliminating the need for the async_trait proc macro and its heap allocation overhead. |

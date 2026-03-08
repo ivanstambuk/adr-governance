@@ -148,21 +148,16 @@ a minimal foundation.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The test runner must provide test declaration (`test()`, `describe()`, `it()`), subtests, and lifecycle hooks (`before`, `after`, `beforeEach`, `afterEach`) as a programmatic API accessible via `import 'node:test'`.
- |
-| `F-002` | The test runner must support test discovery and execution via a CLI flag (`node --test`) that automatically finds and runs test files matching configurable glob patterns.
- |
-| `F-003` | The test runner must produce machine-readable TAP (Test Anything Protocol) output by default, enabling integration with existing TAP-consuming tools and CI systems.
- |
+| `F-001` | The test runner must provide test declaration (`test()`, `describe()`, `it()`), subtests, and lifecycle hooks (`before`, `after`, `beforeEach`, `afterEach`) as a programmatic API accessible via `import 'node:test'`. |
+| `F-002` | The test runner must support test discovery and execution via a CLI flag (`node --test`) that automatically finds and runs test files matching configurable glob patterns. |
+| `F-003` | The test runner must produce machine-readable TAP (Test Anything Protocol) output by default, enabling integration with existing TAP-consuming tools and CI systems. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | The test runner must have zero external dependencies — the entire implementation must be self-contained within the Node.js core, adding no new entries to the runtime's dependency tree.
- |
-| `NF-002` | The test runner must not measurably increase the Node.js binary size for applications that do not use it — the module must be lazily loaded only when explicitly imported or invoked via the --test flag.
- |
+| `NF-001` | The test runner must have zero external dependencies — the entire implementation must be self-contained within the Node.js core, adding no new entries to the runtime's dependency tree. |
+| `NF-002` | The test runner must not measurably increase the Node.js binary size for applications that do not use it — the module must be lazily loaded only when explicitly imported or invoked via the --test flag. |
 
 ## Alternatives Considered
 

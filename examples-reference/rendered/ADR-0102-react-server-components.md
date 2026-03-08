@@ -119,27 +119,19 @@ the client, and the framework could automatically handle the boundary?
 
 | ID | Description |
 |----|-------------|
-| `F-001` | Server Components must render on the server and produce a serialized React tree (RSC Payload) — not HTML — that the client can reconcile with the existing component tree without full page reloads
- |
-| `F-002` | Server Components must support async/await for data fetching directly within the component body, eliminating the need for useEffect or external data fetching libraries for server-side data access
- |
-| `F-003` | The 'use client' directive must create a clear, enforceable boundary between server and client code, preventing server-only code from being bundled into the client JavaScript
- |
-| `F-004` | Existing client-only React applications must continue to work without any modification — Server Components are additive to the React component model, not a replacement for Client Components
- |
+| `F-001` | Server Components must render on the server and produce a serialized React tree (RSC Payload) — not HTML — that the client can reconcile with the existing component tree without full page reloads |
+| `F-002` | Server Components must support async/await for data fetching directly within the component body, eliminating the need for useEffect or external data fetching libraries for server-side data access |
+| `F-003` | The 'use client' directive must create a clear, enforceable boundary between server and client code, preventing server-only code from being bundled into the client JavaScript |
+| `F-004` | Existing client-only React applications must continue to work without any modification — Server Components are additive to the React component model, not a replacement for Client Components |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Server Components must contribute zero bytes to the client JavaScript bundle — their code, dependencies, and imported libraries must never be downloaded by the browser
- |
-| `NF-002` | Server Components must support streaming via React Suspense, allowing partial rendering results to reach the client before all data fetching completes
- |
-| `NF-003` | The server/client component boundary must enable automatic code splitting — client components referenced by server components are automatically split into separate chunks without manual React.lazy
- |
-| `NF-004` | The RSC Payload wire format must be framework-agnostic — any framework implementing the React Flight protocol can serve and consume Server Component output, preventing lock-in to a single meta-framework
- |
+| `NF-001` | Server Components must contribute zero bytes to the client JavaScript bundle — their code, dependencies, and imported libraries must never be downloaded by the browser |
+| `NF-002` | Server Components must support streaming via React Suspense, allowing partial rendering results to reach the client before all data fetching completes |
+| `NF-003` | The server/client component boundary must enable automatic code splitting — client components referenced by server components are automatically split into separate chunks without manual React.lazy |
+| `NF-004` | The RSC Payload wire format must be framework-agnostic — any framework implementing the React Flight protocol can serve and consume Server Component output, preventing lock-in to a single meta-framework |
 
 ## Alternatives Considered
 
@@ -555,11 +547,7 @@ integrated with Relay for data fetching at massive scale.
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | React Core Team | 2020-12-21 | RFC 0188 published proposing React Server Components. Introductory talk by Dan Abramov and Lauren Tan demonstrating zero-bundle-size server rendering and colocated data fetching. Research led by Sebastian Markbage.
- |
-| `updated` | React Core Team | 2022-03-29 | React 18 released with experimental Server Component support and foundational concurrent features (Suspense for streaming SSR, selective hydration).
- |
-| `updated` | Next.js Team (Vercel) | 2022-10-25 | Next.js 13 released with App Router providing the first production- ready RSC implementation. Components in the app/ directory are Server Components by default.
- |
-| `approved` | React Core Team | 2024-12-05 | React 19 released, stabilizing Server Components and Server Actions. Four-year RFC-to-stable cycle; React Router v7 and TanStack Start adopted RSC support.
- |
+| `created` | React Core Team | 2020-12-21 | RFC 0188 published proposing React Server Components. Introductory talk by Dan Abramov and Lauren Tan demonstrating zero-bundle-size server rendering and colocated data fetching. Research led by Sebastian Markbage. |
+| `updated` | React Core Team | 2022-03-29 | React 18 released with experimental Server Component support and foundational concurrent features (Suspense for streaming SSR, selective hydration). |
+| `updated` | Next.js Team (Vercel) | 2022-10-25 | Next.js 13 released with App Router providing the first production- ready RSC implementation. Components in the app/ directory are Server Components by default. |
+| `approved` | React Core Team | 2024-12-05 | React 19 released, stabilizing Server Components and Server Actions. Four-year RFC-to-stable cycle; React Router v7 and TanStack Start adopted RSC support. |

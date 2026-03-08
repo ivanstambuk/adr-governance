@@ -157,23 +157,17 @@ would read and write project metadata.
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The [project] table must support all core metadata fields defined in the Python packaging core metadata specification, including name, version, description, authors, license, dependencies, optional-dependencies, URLs, entry-points, and classifiers.
- |
-| `F-002` | A dynamic field must allow projects to explicitly list which metadata fields will be provided by the build backend at build time, clearly distinguishing intentionally unspecified metadata from accidentally omitted metadata.
- |
-| `F-003` | Build backends must raise an error if a field is both statically specified and listed in dynamic, enforcing the all-or-nothing constraint that prevents ambiguous metadata provenance.
- |
+| `F-001` | The [project] table must support all core metadata fields defined in the Python packaging core metadata specification, including name, version, description, authors, license, dependencies, optional-dependencies, URLs, entry-points, and classifiers. |
+| `F-002` | A dynamic field must allow projects to explicitly list which metadata fields will be provided by the build backend at build time, clearly distinguishing intentionally unspecified metadata from accidentally omitted metadata. |
+| `F-003` | Build backends must raise an error if a field is both statically specified and listed in dynamic, enforcing the all-or-nothing constraint that prevents ambiguous metadata provenance. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | Metadata extraction must be possible without executing arbitrary Python code — tools must be able to parse the [project] table using a standard TOML parser without invoking a build backend for statically specified fields.
- |
-| `NF-002` | The metadata format must be consumable by tools written in any programming language — not just Python — enabling cross-ecosystem tooling for dependency analysis, security scanning, and IDE integration.
- |
-| `NF-003` | Adoption must be non-disruptive — projects using setup.py, setup.cfg, or tool-specific pyproject.toml sections must continue to work without modification until they choose to migrate.
- |
+| `NF-001` | Metadata extraction must be possible without executing arbitrary Python code — tools must be able to parse the [project] table using a standard TOML parser without invoking a build backend for statically specified fields. |
+| `NF-002` | The metadata format must be consumable by tools written in any programming language — not just Python — enabling cross-ecosystem tooling for dependency analysis, security scanning, and IDE integration. |
+| `NF-003` | Adoption must be non-disruptive — projects using setup.py, setup.cfg, or tool-specific pyproject.toml sections must continue to work without modification until they choose to migrate. |
 
 ## Alternatives Considered
 

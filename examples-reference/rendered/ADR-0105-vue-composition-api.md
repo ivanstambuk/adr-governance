@@ -145,25 +145,18 @@ abandoning its simplicity and becoming "React-like."
 
 | ID | Description |
 |----|-------------|
-| `F-001` | The setup() function must be called once per component instance before options resolution, receiving props and context as arguments, and must return an object whose properties are exposed to the component's template and Options API via this.
- |
-| `F-002` | Composition functions (composables) must be plain JavaScript functions that use reactive primitives (ref, reactive, computed, watch) and can be freely imported, composed, and shared between components without namespace collision or unclear property origins.
- |
-| `F-003` | The Composition API must coexist with the Options API within the same component — properties returned from setup() must be accessible alongside data, computed, and methods defined via the Options API.
- |
-| `F-004` | Lifecycle hooks must be available as importable functions (onMounted, onUnmounted, onUpdated, etc.) that can be called within setup() or composables, enabling lifecycle logic to be colocated with the feature code that needs it.
- |
+| `F-001` | The setup() function must be called once per component instance before options resolution, receiving props and context as arguments, and must return an object whose properties are exposed to the component's template and Options API via this. |
+| `F-002` | Composition functions (composables) must be plain JavaScript functions that use reactive primitives (ref, reactive, computed, watch) and can be freely imported, composed, and shared between components without namespace collision or unclear property origins. |
+| `F-003` | The Composition API must coexist with the Options API within the same component — properties returned from setup() must be accessible alongside data, computed, and methods defined via the Options API. |
+| `F-004` | Lifecycle hooks must be available as importable functions (onMounted, onUnmounted, onUpdated, etc.) that can be called within setup() or composables, enabling lifecycle logic to be colocated with the feature code that needs it. |
 
 ### Non-Functional
 
 | ID | Description |
 |----|-------------|
-| `NF-001` | TypeScript inference must work with plain variables and functions returned from setup() without manual type annotations — code written in TypeScript and plain JavaScript should look nearly identical.
- |
-| `NF-002` | Composition functions must incur no runtime overhead beyond the reactive primitives they use — no extra component instances, no wrapper objects, no proxy layers beyond Vue's reactivity system.
- |
-| `NF-003` | The Composition API must work without a build step — all APIs must be importable from the Vue package and usable in plain script tags, preserving Vue's progressive adoption model.
- |
+| `NF-001` | TypeScript inference must work with plain variables and functions returned from setup() without manual type annotations — code written in TypeScript and plain JavaScript should look nearly identical. |
+| `NF-002` | Composition functions must incur no runtime overhead beyond the reactive primitives they use — no extra component instances, no wrapper objects, no proxy layers beyond Vue's reactivity system. |
+| `NF-003` | The Composition API must work without a build step — all APIs must be importable from the Vue package and usable in plain script tags, preserving Vue's progressive adoption model. |
 
 ## Alternatives Considered
 
@@ -817,13 +810,8 @@ Community adoption validation:
 
 | Event | By | Date | Details |
 |-------|----|------|---------|
-| `created` | Evan You | 2019-07-10 | RFC-0013 published. Originally called "Function-based Component API." Intense community backlash followed on GitHub, Hacker News, and Reddit.
- |
-| `updated` | Evan You | 2019-09-01 | @vue/composition-api Vue 2 backport released. Evan You published public response to backlash: Composition API is additive, Options API will not be deprecated.
- |
-| `approved` | Vue.js Core Team | 2020-09-18 | Vue 3.0 "One Piece" released with Composition API built-in. Options API remains fully supported. Composition API positioned for complex components and logic reuse.
- |
-| `updated` | Vue.js Core Team | 2021-08-10 | Vue 3.2 released with the `<script setup>` compile-time syntactic sugar for Single-File Components, eliminating the verbose return statement and making Composition API the more concise option.
- |
-| `updated` | Vue.js Core Team | 2022-02-07 | Vue 3 became the default on vuejs.org. Documentation rewritten with Composition API as primary approach. Pinia replaced Vuex as recommended state management.
- |
+| `created` | Evan You | 2019-07-10 | RFC-0013 published. Originally called "Function-based Component API." Intense community backlash followed on GitHub, Hacker News, and Reddit. |
+| `updated` | Evan You | 2019-09-01 | @vue/composition-api Vue 2 backport released. Evan You published public response to backlash: Composition API is additive, Options API will not be deprecated. |
+| `approved` | Vue.js Core Team | 2020-09-18 | Vue 3.0 "One Piece" released with Composition API built-in. Options API remains fully supported. Composition API positioned for complex components and logic reuse. |
+| `updated` | Vue.js Core Team | 2021-08-10 | Vue 3.2 released with the `<script setup>` compile-time syntactic sugar for Single-File Components, eliminating the verbose return statement and making Composition API the more concise option. |
+| `updated` | Vue.js Core Team | 2022-02-07 | Vue 3 became the default on vuejs.org. Documentation rewritten with Composition API as primary approach. Pinia replaced Vuex as recommended state management. |
