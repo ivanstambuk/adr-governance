@@ -1702,6 +1702,7 @@ The landing zone **concept** is valuable educational content referenced in our v
 **Rejected alternatives:**
 - *Short description only (MADR "option title" style)* — a one-line description prevents future teams from understanding *what* was actually considered. The whole point of documenting alternatives is that someone might revisit them
 - *Separate `description` and `architecture_diagram` fields* — over-structures the content. Markdown-native descriptions naturally support embedded Mermaid diagrams without a dedicated field
+- *Fact/opinion separation (NHS Wales style)* — NHS Wales splits alternative evaluation into two distinct sections: `Options` (strictly factual descriptions — what each alternative *is*, how it works, what it costs) and `Options Analysis` (subjective evaluation — which option is better and why). The rationale is **cognitive bias reduction**: when you describe an option and simultaneously evaluate it, the description gets unconsciously colored by your opinion. Forcing authors to first describe all options neutrally, then analyze them separately, is a governance pattern from healthcare decision-making (drug evaluation committees, clinical pathway selection) where regulatory neutrality is critical. We rejected this separation for three reasons: (1) our `description` + `pros`/`cons` split already achieves a softer version of the same goal — `description` explains *what* the option is, `pros`/`cons` evaluate it; (2) in practice, architectural descriptions benefit from integrated evaluative context ("this approach uses event sourcing, which introduces eventual consistency" is more useful than separating the factual description from the consistency observation); (3) our AI-assisted review (`review-adr.py`) explicitly checks for strawman alternatives and biased framing, providing a process-level safeguard against the exact bias that fact/opinion separation prevents structurally. For teams in regulated environments where presentation neutrality is auditable, a dual-section approach can be implemented via `x-factual-description` extension fields alongside the standard `description`.
 
 ### 5.3 `alternatives[].pros` / `alternatives[].cons`
 
@@ -1748,8 +1749,109 @@ The landing zone **concept** is valuable educational content referenced in our v
 
 **Rejected alternatives:**
 - *smadr's 3D risk model (Technical/Schedule/Ecosystem)* — interesting but our per-option `risk` field combined with pros/cons provides equivalent coverage with less schema complexity
-- *SWOT per option (Business Case / Henderson)* — overlaps with pros/cons/cost/risk. SWOT is a management lens, not an engineering lens.
+- *SWOT per option (Business Case / Henderson)* — evaluated and rejected as a standalone analysis structure; see §5.4.1 below
 - *Numeric cost/risk (1–10)* — same false precision problem as numeric priority. Categorical labels are easier to reason about.
+
+### 5.4.1 SWOT Analysis per Option ❌ *Rejected*
+
+**Proposal:** Replace or supplement per-option `pros`/`cons`/`estimated_cost`/`risk` with a four-quadrant SWOT (Strengths, Weaknesses, Opportunities, Threats) analysis per alternative.
+
+#### Origins and Purpose
+
+SWOT analysis originates from strategic management research at Stanford Research Institute (Albert Humphrey, 1960s–70s). It was designed for **corporate strategic planning** — evaluating business units, market positions, and competitive strategies. The framework's core insight is a **two-dimensional classification** of factors affecting a decision:
+
+| | **Helpful** (to achieving the objective) | **Harmful** (to achieving the objective) |
+|---|---|---|
+| **Internal** (within organizational control) | **Strengths** — capabilities, resources, advantages | **Weaknesses** — limitations, gaps, vulnerabilities |
+| **External** (outside organizational control) | **Opportunities** — trends, market gaps, new technologies | **Threats** — competition, regulation, market shifts |
+
+The internal/external axis is SWOT's key differentiator from a simple pros/cons list. It separates factors the organization *controls* (and can act on) from factors it *cannot control* (and must monitor or adapt to).
+
+#### How Henderson's Business Case Template Uses SWOT
+
+Henderson's template mandates a full SWOT analysis per candidate option. In a vendor selection ADR, this would look like:
+
+| | PostgreSQL | DynamoDB |
+|---|---|---|
+| **Strengths** | ACID compliance, team familiarity, open source | Fully managed, auto-scaling, IAM integration |
+| **Weaknesses** | Manual scaling, ops overhead, no built-in sharding | Vendor lock-in, eventual consistency, limited query model |
+| **Opportunities** | Growing ecosystem (Citus, Supabase), cloud-managed options | Full AWS integration (Lambda triggers, Streams) |
+| **Threats** | Key maintainers leaving community, cloud vendor forks | AWS pricing model changes, single-vendor dependency |
+
+This is the **only** ADR template in our survey that uses SWOT. It is designed for **management-facing** vendor selection decisions where the internal/external distinction matters for procurement and risk governance.
+
+#### How Our Schema Covers the Same Ground
+
+Our per-option evaluation structure maps to SWOT's four quadrants:
+
+| SWOT Quadrant | Dimension | Our Equivalent | Coverage |
+|---|---|---|---|
+| **Strengths** | Internal + Helpful | `alternatives[].pros` | ✅ Captured — but without the "internal" qualifier |
+| **Weaknesses** | Internal + Harmful | `alternatives[].cons` | ✅ Captured — but without the "internal" qualifier |
+| **Opportunities** | External + Helpful | `alternatives[].pros` | ✅ Captured — collapsed into pros alongside strengths |
+| **Threats** | External + Harmful | `alternatives[].cons` + `alternatives[].risk` | ✅ Captured — collapsed into cons/risk alongside weaknesses |
+
+Additionally, our `dependencies.external` field captures the **external** dimension that SWOT highlights — factors outside organizational control that could affect the decision.
+
+#### What We Lose by Not Having SWOT
+
+The **internal vs. external axis** is the one dimension our current structure does not explicitly capture per option. In our schema:
+
+- A pro like "team has 5 years of PostgreSQL experience" (Strength — internal) and "PostgreSQL 17 adds incremental backup" (Opportunity — external) both go into the same `pros[]` array.
+- A con like "no built-in connection pooling" (Weakness — internal) and "Oracle could acquire PostgreSQL contributors" (Threat — external) both go into the same `cons[]` array.
+
+This means a reader scanning our pros/cons cannot immediately distinguish *"things we control and can leverage"* from *"external trends we should monitor but can't directly influence."*
+
+#### Rejection Rationale
+
+**Status: ❌ Rejected** for four reasons:
+
+1. **Audience mismatch.** SWOT is a strategic management tool designed for executive stakeholders evaluating market positions and vendor relationships. ADRs in our framework target **engineering teams** making architectural decisions. The internal/external distinction, while analytically valuable, adds a classification burden ("is 'developer experience' internal or external?") that rarely changes the decision outcome in engineering contexts.
+
+2. **Classification ambiguity.** Many factors resist clean internal/external categorization:
+   - "Our team is small" — internal weakness, or external constraint from hiring market?
+   - "The library has excellent documentation" — external opportunity, or internal strength because we chose it?
+   - "Cloud costs are increasing" — external threat, or internal weakness in cost management?
+   
+   These classification debates consume authoring time without adding proportional decision clarity. Pros/cons avoids this entirely.
+
+3. **Redundancy with existing fields.** Our schema already captures the information SWOT would provide, distributed across purpose-built fields:
+   - Strengths/Weaknesses → `pros[]` / `cons[]`
+   - Opportunities/Threats (external dimension) → `dependencies.external` + `context.assumptions`
+   - Risk from threats → `alternatives[].risk`
+   - Cost dimension → `alternatives[].estimated_cost`
+   
+   Adding SWOT would create a **parallel evaluation structure** that overlaps with four existing fields, forcing authors to decide where each insight belongs.
+
+4. **Domain-specificity.** Henderson's template is explicitly designed for **vendor selection and platform adoption** — contexts where the Opportunity/Threat dimension (market trends, competitive dynamics, vendor viability) is central to the decision. Most architectural decisions in our scope — authentication protocols, data models, service boundaries — are primarily evaluated on technical merit (Strengths/Weaknesses), not market positioning (Opportunities/Threats).
+
+#### When SWOT Might Be Appropriate
+
+For teams using our framework for vendor selection or platform adoption decisions (Henderson's original use case), SWOT can be added via extension fields:
+
+```yaml
+extension_fields:
+  x-swot:
+    option_name: "PostgreSQL"
+    strengths:
+      - "ACID compliance, team familiarity"
+    weaknesses:
+      - "Manual scaling, ops overhead"
+    opportunities:
+      - "Growing ecosystem (Citus, Supabase)"
+    threats:
+      - "Key maintainers leaving community"
+```
+
+This preserves our schema's engineering focus while enabling SWOT for contexts that benefit from it.
+
+#### Credits
+
+| Concept | Source |
+|---|---|
+| SWOT framework | Humphrey, A. (1960s–70s), Stanford Research Institute |
+| SWOT per ADR candidate | Henderson, J., *Business Case* ADR template |
+| Internal/external factor classification | Strategic management literature (Learned et al., *Business Policy*, 1969) |
 
 ### 5.5 `alternatives[].rejection_rationale`
 
@@ -2404,6 +2506,8 @@ Archival is appropriate for ADRs in terminal states that no longer contribute to
 | **Required?** | Optional |
 
 **Precedent:** smadr has a compliance audit table. EdgeX has a change log with PR links. **No other template has an append-only lifecycle event log.**
+
+Our `audit_trail` is functionally equivalent to EdgeX's Change Log — both record state transitions with timestamps and attribution — but goes further with typed events (`created`, `proposed`, `approved`, `reviewed`, `updated`, `superseded`, `deprecated`, `archived`). The one feature EdgeX has that we don't is a dedicated PR URL field per event; in our schema, PR links can be included in the free-text `details` field. Since our GitOps-based process means every state transition is a PR, the git history provides this linkage implicitly. See the [template comparison §7.2 partial coverage table](adr-template-comparison.md#72-features-inspired-by-other-templates) for the full analysis.
 
 **Rationale:** The audit trail records *every* lifecycle event — creation, updates, reviews, approvals, rejections, supersessions, deprecations, and archival. Each event captures *who*, *when*, and *what happened*. This satisfies auditability requirements for regulated environments and provides a complete decision history.
 

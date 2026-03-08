@@ -520,7 +520,7 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | Summary / Elevator Pitch | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
 | Business Drivers | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Technical Drivers | ❌ | 🟡 | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Decision Drivers | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ |
+| Decision Drivers | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ✅ |
 | Constraints | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ✅ | ✅ |
 | Assumptions | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | 🟡 | ❌ | ❌ | ✅ | ✅ |
 | **Requirements** | | | | | | | | | | | | | | |
@@ -549,13 +549,13 @@ Legend: ✅ = Present and structured | 🟡 = Present but free-text/minimal | �
 | Stakeholders | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ | 🟡 | ❌ | ❌ | 🟡 |
 | Formal Approvals | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Audit Trail | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| Change Log (with PR links) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Change Log (with PR links) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | 🟡 |
 | Use Case Traceability | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Governance Enforcement | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ | ❌ | ❌ |
-| Impact Assessment (structured) | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Context Validation (policy) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Governance Enforcement | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 | ✅ | ❌ | 🟡 |
+| Impact Assessment (structured) | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | 🟡 |
+| Context Validation (policy) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | 🟡 |
 | **Risk & Compliance** | | | | | | | | | | | | | | |
-| Risk Assessment (overall) | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Risk Assessment (overall) | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | 🟡 | ❌ | ❌ | ❌ | ❌ | ❌ | 🟡 |
 | Residual Risk | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Compliance Audit Table | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Constraint Sourcing | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
@@ -626,13 +626,19 @@ These were considered for our schema but removed as they belong in operational r
 
 Gareth Morgan is the only template that asks: *"How will compliance with this decision be ensured?"* This is distinct from MADR's `Confirmation` (which asks "how do we verify implementation?") — Morgan asks about **ongoing enforcement**, not just initial validation.
 
-Our schema partially addresses this through `audit_trail` and `lifecycle.review_cycle_months`, but does not include a dedicated `governance_enforcement` field. ADRs capture decisions — enforcement is the responsibility of downstream tooling and processes. Architecture should not point to code; code should point to architecture. Teams enforce decisions through their own mechanisms: CODEOWNERS, PR templates with ADR compliance checklists, ArchUnit fitness functions, CI policies, etc. Our `confirmation` section captures *how implementation is verified*; ongoing enforcement is an operational concern, not a decision record concern.
+Our schema does not include a dedicated `governance_enforcement` field, but our framework provides **more actual governance enforcement than any template in the survey** — including Morgan's. The distinction is that Morgan documents enforcement *intent* in a free-text field, while our framework *implements* enforcement through CI infrastructure and process:
+
+- **Schema-level:** `confirmation.description` captures the verification plan; `confirmation.artifact_ids` links to fitness functions, ArchUnit rules, and test suites; `lifecycle.review_cycle_months` mandates periodic review cadence; `audit_trail` provides append-only traceability.
+- **CI-level:** Approval identity verification ensures `approvals[].identity` matches actual PR approvers; the immutable decision core prevents rewriting accepted ADRs; change classification (Tier 1/Tier 2) requires re-approval for substantive changes; schema validation runs on every PR.
+- **Process-level:** The AI-assisted pre-review (`review-adr.py`) checks for conflicts; the ecADR Definition of Done includes 10 acceptance criteria; §7 of `adr-process.md` mandates that code reviewers check whether proposed changes violate accepted ADRs.
+
+The reason this is 🟡 rather than ✅ in the matrix is that our enforcement is distributed across process and CI rather than captured as a dedicated field in the ADR YAML itself — the ADR *record* does not contain a section where the author explicitly states "compliance will be enforced via X." Our `confirmation` section partially covers this (especially when `artifact_ids` references fitness functions), but it is framed as implementation verification rather than ongoing governance enforcement. The architectural position remains: architecture should not point to code; code should point to architecture. Enforcement is an operational concern best implemented through CI, CODEOWNERS, and fitness functions rather than documented in each individual decision record.
 
 ### 6.5 No Template Has Structured Impact Assessment — Except EdgeX
 
 EdgeX Foundry uniquely asks authors to enumerate: services/modules impacted, model/DTO changes, API impact, configuration changes, and devops impact. This is a lightweight **change impact analysis** that no other template captures.
 
-Our schema does not include a dedicated `impact_assessment` section. EdgeX's context (change proposals for a specific, well-defined codebase with known services and DTOs) differs from ours (architectural pattern decisions where impacted systems depend on the adopting organization). Impact information is already captured across `dependencies.internal` (what systems are involved), `consequences.negative` (operational costs), and `decision.tradeoffs` (what teams must adapt). A dedicated section would create overlap and author confusion about field boundaries. Teams needing EdgeX-style structured impact can use `x-impact-assessment` via extension fields.
+Our schema does not include a dedicated `impact_assessment` section, but impact information is already captured across `dependencies.internal` (what systems are involved), `consequences.negative` (operational costs), `decision.tradeoffs` (what teams must adapt), and `adr.component` (the scoped component). EdgeX's context (change proposals for a specific, well-defined codebase with known services and DTOs) differs from ours (architectural pattern decisions where impacted systems depend on the adopting organization). A dedicated section would create overlap and author confusion about field boundaries. This is 🟡 in the matrix: the substance (what’s impacted and how) is distributed across multiple fields rather than consolidated in a single per-category structured section. Teams needing EdgeX-style structured impact can use `x-impact-assessment` via extension fields.
 
 ### 6.6 No Template Captures Rationale for Rejected Alternatives — Except Merson and DRF
 
@@ -664,9 +670,21 @@ Key features adopted from other templates (with full rationale in the field-leve
 
 Additionally, several insights were incorporated into **process documentation** rather than the schema: the Architectural Significance Test (Zimmermann §10.6 → `adr-process.md` §3.0), retrospective questions (Cervantes & Woods §10.8), and PoC/experiment artifact type prefixes for `confirmation.artifact_ids` (§10.7/§10.6).
 
+Five features from other templates are **partially covered** by our schema and process (🟡 in the matrix), though through different mechanisms than the originating template:
+
+| Feature (origin) | What our framework provides | What it doesn’t provide | Why 🟡 |
+|---|---|---|---|
+| **Change Log with PR links** (EdgeX) | `audit_trail` provides a structured, append-only state transition log with typed events (`created`, `approved`, `superseded`, etc.), timestamps, and attribution. Functionally equivalent to EdgeX’s Change Log. | No dedicated `pr_url` field per event. PR links can be included in the free-text `details` field but are not structurally required. | The state transition log exists; only the PR URL linkage is free-text rather than structured. The GitOps-based process means every transition IS a PR, so the git history provides the linkage implicitly. |
+| **Governance Enforcement** (Morgan) | More actual enforcement than any template: CI approval identity verification, immutable decision core, change classification (Tier 1/2), AI-assisted pre-review, ecADR checklist, and §7 code review mandate. See §6.4 for full details. | No dedicated schema field where the author states “compliance will be enforced via X.” Our `confirmation` section covers implementation verification, not ongoing enforcement intent. | Enforcement is *implemented* through CI and process rather than *described* in a schema field. Arguably stronger in practice than Morgan’s free-text prompt. |
+| **Context Validation** (DRF/CRF) | `review-adr.py --context-from` performs AI-assisted cross-referencing against the full ADL; ecADR item 2 mandates conflict detection; reviewer checklist item 7 requires human verification. The ADL functions as the organizational context for architecturally significant decisions. See §9 for full details. | No typed `context_validation.context_refs[]` with structured `validation_status`. Validation outcomes are not recorded in the ADR YAML. | Validation is *semantic* (LLM + human) rather than *structural* (typed entity references). The capability is real and multi-layered, but results aren’t captured as schema fields. |
+| **Impact Assessment** (EdgeX) | Impact information is distributed across `dependencies.internal` (affected systems), `consequences.negative` (operational costs), `decision.tradeoffs` (adaptation required), and `adr.component` (scoped component). See §6.5 for full details. | No single structured section with per-category breakdown (API changes, config changes, model/DTO changes, devops impact). | The substance is captured across multiple fields; only the per-category structure is missing. EdgeX’s format is designed for a single, well-defined codebase — ours targets broader architectural patterns where impacted systems vary by adopting organization. |
+| **Risk Assessment (overall)** (smadr/Planguage) | Risk signal is distributed across `alternatives[].risk` (per-option risk rating: low/medium/high/critical — the chosen alternative’s risk IS the decision’s risk), `consequences.negative` (concrete risk outcomes), `decision.tradeoffs` (consciously accepted risks), and `decision.confidence` (low confidence ≡ higher risk). | No single standalone “Overall Risk: HIGH” field or multi-dimensional risk breakdown (Technical/Schedule/Ecosystem as in smadr). | The risk picture is richer in aggregate than a single label, but distributed across four fields rather than consolidated in one dedicated risk assessment section. |
+
 ### 7.3 Features Evaluated and Excluded
 
-Features deliberately excluded, with rationale: `related_principles` (Tyree-Akerman), `governance_enforcement` (Morgan), `impact_assessment` (EdgeX), 3D `risk_per_option` (smadr), `neutral_consequences` (MADR), unified `decision_drivers` (MADR/smadr), `swot_per_option` (Henderson), `context_validation` (DRF), standalone `risk_assessment`, and Decision Guardian integration. Exclusion rationale is documented inline alongside related adopted fields — see §6.1 (no structured implications), §6.4 (no governance enforcement), and §6.5 (no structured impact assessment) in the [template comparison](adr-template-comparison.md#6-analysis-where-standard-templates-fall-short), as well as per-field rejected alternatives in [schema-field-rationale.md](schema-field-rationale.md).
+Features deliberately excluded, with rationale: `related_principles` (Tyree-Akerman), 3D `risk_per_option` (smadr), `neutral_consequences` (MADR), unified `decision_drivers` (MADR/smadr), `swot_per_option` (Henderson), and Decision Guardian integration. Exclusion rationale is documented inline alongside related adopted fields — see §6.1 (no structured implications) in the [template comparison](adr-template-comparison.md#6-analysis-where-standard-templates-fall-short), as well as per-field rejected alternatives in [schema-field-rationale.md](schema-field-rationale.md).
+
+Five features previously listed as excluded are now rated 🟡 (partially covered): `governance_enforcement` (Morgan — covered through CI and process, see §6.4), `context_validation` (DRF/CRF — covered through semantic cross-referencing, see §9), `change_log_with_pr_links` (EdgeX — covered through `audit_trail`, see §7.2), `impact_assessment` (EdgeX — distributed across `dependencies.internal`, `consequences.negative`, and `decision.tradeoffs`, see §6.5), and `risk_assessment` (smadr/Planguage — distributed across `alternatives[].risk`, `consequences.negative`, `decision.tradeoffs`, and `decision.confidence`, see §7.2). See the partial coverage table in §7.2 for detailed rationale on each.
 
 ---
 
@@ -711,7 +729,7 @@ Having surveyed **14 templates** (13 external + our own), `adr-governance` sits 
 
 The tradeoff is **weight**: a full `adr-governance` ADR is significantly heavier than a Nygard or MADR record. This is acceptable for enterprise use cases (e.g., IAM decisions in regulated financial services) but would be overkill for a startup documenting database choices.
 
-The closest philosophical neighbor is **DRF** (reasoning-first, machine-readable, validation-oriented), but it takes a fundamentally different architectural approach (two complementary specs vs. one unified schema) and is still in early draft (v0.1.0). Its organizational context graph (CRF) is a promising concept worth monitoring as it matures.
+The closest philosophical neighbor is **DRF** (reasoning-first, machine-readable, validation-oriented), but it takes a fundamentally different architectural approach (two complementary specs vs. one unified schema) and is still in early draft (v0.1.0). CRF's organizational context graph models policies, systems, budgets, and capabilities as separate typed entities with explicit validation status — a structural approach to context validation. Our framework achieves a comparable outcome through process-level enforcement: `review-adr.py --context-from` performs AI-assisted cross-referencing against the full ADL, the ecADR Definition of Done (§3.3.1 item 2) mandates conflict detection, and the reviewer checklist (§3.3 item 7) requires human verification. The architectural difference is that our context validation is *semantic* (LLM inference + human judgement) rather than *structural* (typed entity references with `validation_status` fields), and validation outcomes are not captured as schema fields in the ADR itself. Within a bounded context, our ADL functions as the organizational context graph for architecturally significant decisions — teams using the framework for other projects can cross-validate against this ADL via the `--context-from` flag and the `project`/`component` scoping fields.
 
 ---
 
