@@ -407,7 +407,7 @@ alternatives:
         may create less organized code
       - >-
         Verbose return statement — setup() requires explicitly returning
-        all template-exposed properties (addressed later by <script setup>
+        all template-exposed properties (addressed later by `<script setup>`
         in Vue 3.2)
       - Two mental models in one framework — the community now has two
         ways to write components, creating potential confusion and
@@ -940,7 +940,7 @@ consequences:
     - Full TypeScript inference without manual annotations — TypeScript
       adoption in the Vue ecosystem accelerated significantly after
       Vue 3
-    - The "<script setup>" syntax (Vue 3.2) eliminated the verbose
+    - The `<script setup>` syntax (Vue 3.2) eliminated the verbose
       return statement, making Composition API components more concise
       than Options API equivalents
     - >-
@@ -1014,7 +1014,7 @@ dependencies:
       ref, reactive, computed, watch, and automatic dependency tracking
     - Vue Runtime Core — component lifecycle, template rendering, and
       virtual DOM integration with setup() return values
-    - Single-File Component (SFC) compiler — support for <script setup>
+    - Single-File Component (SFC) compiler — support for `<script setup>`
       compile-time sugar introduced in Vue 3.2
     - provide/inject API — dependency injection mechanism used by
       composables for cross-component communication
@@ -1082,7 +1082,7 @@ audit_trail:
     by: Vue.js Core Team
     at: "2021-08-10T00:00:00Z"
     details: >
-      Vue 3.2 released with the <script setup> compile-time syntactic
+      Vue 3.2 released with the `<script setup>` compile-time syntactic
       sugar for Single-File Components, eliminating the verbose return
       statement and making Composition API the more concise option.
   - event: updated

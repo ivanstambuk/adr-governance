@@ -290,7 +290,7 @@ graph TD
 - Mental overhead of ref vs. reactive — developers must understand both primitives and when to use each
 - The .value unwrapping ceremony — accessing reactive references requires .value in JavaScript (auto-unwrapped in templates), adding verbosity
 - Risk of spaghetti code — increased flexibility without the Options API's structural guardrails means undisciplined developers may create less organized code
-- Verbose return statement — setup() requires explicitly returning all template-exposed properties (addressed later by <script setup> in Vue 3.2)
+- Verbose return statement — setup() requires explicitly returning all template-exposed properties (addressed later by `<script setup>` in Vue 3.2)
 - Two mental models in one framework — the community now has two ways to write components, creating potential confusion and divergent practices
 - Community backlash — the initial RFC generated intense negative reaction from developers who perceived the change as abandoning Vue's simplicity
 
@@ -732,7 +732,7 @@ dependency tracking eliminates manual dependency arrays.
 - Complex components can organize code by logical concern — related state, computed values, and methods colocated in composable functions
 - Composable functions ("use*" convention) became the standard logic reuse pattern, replacing mixins — VueUse library (10k+ GitHub stars) provides 200+ production-ready composables
 - Full TypeScript inference without manual annotations — TypeScript adoption in the Vue ecosystem accelerated significantly after Vue 3
-- The "<script setup>" syntax (Vue 3.2) eliminated the verbose return statement, making Composition API components more concise than Options API equivalents
+- The `<script setup>` syntax (Vue 3.2) eliminated the verbose return statement, making Composition API components more concise than Options API equivalents
 - Backward compatibility preserved — existing Vue 2 Options API code continues to work in Vue 3 without modification, enabling gradual migration
 - Vue 2 backport (@vue/composition-api) enabled early adoption and validation before Vue 3 release
 - The API inspired other frameworks — SolidJS and Qwik adopted similar reactive primitive patterns
@@ -786,7 +786,7 @@ Community adoption validation:
 **Internal:**
 - Vue Reactivity System (@vue/reactivity) — the foundation providing ref, reactive, computed, watch, and automatic dependency tracking
 - Vue Runtime Core — component lifecycle, template rendering, and virtual DOM integration with setup() return values
-- Single-File Component (SFC) compiler — support for <script setup> compile-time sugar introduced in Vue 3.2
+- Single-File Component (SFC) compiler — support for `<script setup>` compile-time sugar introduced in Vue 3.2
 - provide/inject API — dependency injection mechanism used by composables for cross-component communication
 
 **External:**
@@ -821,7 +821,7 @@ Community adoption validation:
  |
 | `approved` | Vue.js Core Team | 2020-09-18 | Vue 3.0 "One Piece" released with Composition API as a built-in feature. The Options API remains fully supported. Composition API positioned as an advanced feature for complex components and logic reuse.
  |
-| `updated` | Vue.js Core Team | 2021-08-10 | Vue 3.2 released with the <script setup> compile-time syntactic sugar for Single-File Components, eliminating the verbose return statement and making Composition API the more concise option.
+| `updated` | Vue.js Core Team | 2021-08-10 | Vue 3.2 released with the `<script setup>` compile-time syntactic sugar for Single-File Components, eliminating the verbose return statement and making Composition API the more concise option.
  |
 | `updated` | Vue.js Core Team | 2022-02-07 | Vue 3 becomes the default version on vuejs.org. Documentation rewritten with Composition API as the primary recommended approach (with an Options API toggle for each example). Pinia replaces Vuex as the recommended state management library.
  |
