@@ -28,8 +28,7 @@ __pycache__/
 # Generated bundle (regenerate with ./scripts/bundle.sh)
 adr-governance-bundle.md
 
-# Work trackers (local only)
-docs/research/schema-rationale-tracker.md
+
 
 # LLM test harness output (regenerate with tests/llm_harness.py)
 tests/llm_runs/

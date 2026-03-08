@@ -46,10 +46,10 @@ fi
 if [ -n "$STAGED_ADL" ]; then
     echo "🔄 ADR changes detected in architecture-decision-log/ — rendering Markdown..."
     python3 scripts/render-adr.py \
-        --output-dir "rendered/" \
+        --output-dir "architecture-decision-log/rendered/" \
         --generate-index \
         "architecture-decision-log/"
-    git add "rendered/"
+    git add "architecture-decision-log/rendered/"
 fi
 
 # Render examples-reference/ if changed

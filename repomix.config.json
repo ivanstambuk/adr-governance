@@ -28,7 +28,7 @@
             "scripts/render-adr.py",
             "scripts/extract-decisions.py",
             "scripts/bundle.sh",
-            "rendered/**",
+            "architecture-decision-log/rendered/**",
             "docs/research/**",
             ".github/**",
             "*.lock",

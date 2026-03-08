@@ -4,7 +4,7 @@
 Usage:
     python3 scripts/render-adr.py examples-reference/ADR-0001-*.yaml
     python3 scripts/render-adr.py examples-reference/           # render all in directory
-    python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/
+    python3 scripts/render-adr.py --output-dir architecture-decision-log/rendered/ --generate-index architecture-decision-log/
 """
 
 import argparse
@@ -350,7 +350,7 @@ def generate_index(entries: list) -> str:
     """
     lines = [
         "<!-- ⚠️ AUTO-GENERATED — DO NOT EDIT -->",
-        "<!-- Regenerate: python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/ -->",
+        "<!-- Regenerate: python3 scripts/render-adr.py --output-dir architecture-decision-log/rendered/ --generate-index architecture-decision-log/ -->",
         "",
         "# Architecture Decision Log",
         "",

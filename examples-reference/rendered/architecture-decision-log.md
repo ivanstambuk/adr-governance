@@ -1,5 +1,5 @@
 <!-- ⚠️ AUTO-GENERATED — DO NOT EDIT -->
-<!-- Regenerate: python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/ -->
+<!-- Regenerate: python3 scripts/render-adr.py --output-dir architecture-decision-log/rendered/ --generate-index architecture-decision-log/ -->
 
 # Architecture Decision Log
 

@@ -8,8 +8,8 @@ ADRs are authored and stored as **structured YAML** — optimised for machine co
 
 | Path | Description |
 |------|-------------|
-| [`rendered/architecture-decision-log.md`](../rendered/architecture-decision-log.md) | Decision log index — clickable links, status, and decision dates |
-| `rendered/ADR-NNNN-*.md` | Individual ADR renderings with a provenance disclaimer |
+| [`architecture-decision-log/rendered/architecture-decision-log.md`](../architecture-decision-log/rendered/architecture-decision-log.md) | Decision log index — clickable links, status, and decision dates |
+| `architecture-decision-log/rendered/ADR-NNNN-*.md` | Individual ADR renderings with a provenance disclaimer |
 | [`examples-reference/rendered/`](../examples-reference/rendered/) | Rendered example ADRs (fictional reference set) |
 
 > **⚠️ Do not edit files in `rendered/` directly.** They are auto-generated from the YAML source. Each rendered file includes a `[!CAUTION]` banner and an HTML comment pointing to the authoritative source YAML.
@@ -27,14 +27,14 @@ git config core.hooksPath .githooks
 ```
 
 After this, any commit that touches `architecture-decision-log/*.yaml` will automatically:
-1. Render all ADR YAML files to `rendered/*.md` with a provenance disclaimer
-2. Regenerate [`rendered/architecture-decision-log.md`](../rendered/architecture-decision-log.md) (the decision log index)
+1. Render all ADR YAML files to `architecture-decision-log/rendered/*.md` with a provenance disclaimer
+2. Regenerate [`architecture-decision-log/rendered/architecture-decision-log.md`](../architecture-decision-log/rendered/architecture-decision-log.md) (the decision log index)
 3. Stage the rendered files alongside the YAML changes
 
 The hook also regenerates `llms-full.txt` when any source documentation file changes (README, adr-process, glossary, schema reference, or ci-setup).
 
 The hook is a local convenience, not the trust boundary. CI also regenerates and verifies the committed artifacts below without mutating the worktree:
-- `rendered/`
+- `architecture-decision-log/rendered/`
 - `examples-reference/rendered/`
 - `llms-full.txt`
 
@@ -48,8 +48,8 @@ The Repomix web-chat bundle (`adr-governance-bundle.md`) is intentionally differ
 # Single file to stdout (no disclaimer — useful for previewing)
 python3 scripts/render-adr.py architecture-decision-log/ADR-0001-*.yaml
 
-# Render to rendered/ with disclaimer + index
-python3 scripts/render-adr.py --output-dir rendered/ --generate-index architecture-decision-log/
+# Render to architecture-decision-log/rendered/ with disclaimer + index
+python3 scripts/render-adr.py --output-dir architecture-decision-log/rendered/ --generate-index architecture-decision-log/
 
 # Render example ADRs
 python3 scripts/render-adr.py --output-dir examples-reference/rendered/ --generate-index examples-reference/

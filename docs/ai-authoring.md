@@ -131,4 +131,4 @@ python3 scripts/summarize-adr.py architecture-decision-log/ADR-0001.yaml \
 python3 scripts/summarize-adr.py -o meeting-recap.md architecture-decision-log/
 ```
 
-Each summary links back to the full YAML source. For a richer, rendered view, point stakeholders to the auto-generated Markdown in [`rendered/`](../rendered/).
+Each summary links back to the full YAML source. For a richer, rendered view, point stakeholders to the auto-generated Markdown in [`architecture-decision-log/rendered/`](../architecture-decision-log/rendered/).
