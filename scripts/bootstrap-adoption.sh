@@ -254,6 +254,19 @@ case "$PLATFORM" in
     ;;
 esac
 
+# ── 3b. Install AI agent skill ──────────────────────────────────────────
+if [ -d ".skills/adr-author" ]; then
+  if [ "$PLATFORM" = "github" ]; then
+    info "Installing ADR author skill for GitHub Copilot..."
+    mkdir -p .github/skills
+    cp -a .skills/adr-author .github/skills/adr-author
+    ok "Skill installed → .github/skills/adr-author/ (GitHub Copilot auto-discovers it)"
+  else
+    info "ADR author skill available at .skills/adr-author/"
+    info "To install for GitHub Copilot: mkdir -p .github/skills && cp -a .skills/adr-author .github/skills/adr-author"
+  fi
+fi
+
 # ── 4. Optionally remove examples-reference/ ─────────────────────────────
 if $REMOVE_EXAMPLES; then
   if [ -d "examples-reference" ]; then

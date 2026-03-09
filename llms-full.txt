@@ -191,6 +191,18 @@ Where:
 8. Push: git push -u origin main
 ```
 
+### AI Agent Skill
+
+The repo ships an **ADR author skill** (`.skills/adr-author/`) that teaches AI coding assistants how to create, review, validate, and summarize ADRs using the governed meta-model.
+
+**GitHub Copilot** — the bootstrap script installs it automatically when `--platform github`. For manual install:
+
+```bash
+mkdir -p .github/skills && cp -a .skills/adr-author .github/skills/adr-author
+```
+
+**Other tools** (Antigravity, Claude Code, etc.) — the skill is auto-discovered from `.skills/` with no extra setup.
+
 ---
 
 <details>
